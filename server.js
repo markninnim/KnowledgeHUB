@@ -16,7 +16,7 @@ app.use(session({
   secret: SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 8 } // 8 hours
+  cookie: { maxAge: 1000 * 60 * 60 * 8, secure: false } // 8 hours
 }));
 
 // ── Auth guard ───────────────────────────────────────────────
