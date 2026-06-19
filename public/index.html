@@ -1,1 +1,166 @@
-<!DOCTYPE html><html><head><title>Survey Quote App</title></head><body><div id='root'></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FPG Brand Hub</title>
+<style>
+body { font-family: sans-serif; margin: 0; background: #f5f7fa; }
+.sidebar { width: 220px; background: #003768; height: 100vh; position: fixed; padding: 24px 0; }
+.sidebar h2 { color: #fcb034; font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+.sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; }
+.sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
+.main { margin-left: 220px; padding: 40px; }
+.hero { background: #003768; color: #fff; padding: 40px; border-radius: 10px; margin-bottom: 32px; }
+.hero h1 { font-size: 28px; margin: 8px 0; }
+.hero p { color: rgba(255,255,255,.7); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.card { background: #fff; border: 1px solid #e8ecf0; border-radius: 8px; padding: 20px; }
+.card h3 { color: #003768; font-size: 14px; margin: 8px 0 4px; }
+.card p { color: #6b7c8f; font-size: 12px; }
+.badge { display: inline-block; background: #f5f7fa; color: #6b7c8f; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
+.badge.ready { background: rgba(0,119,68,.1); color: #007744; }
+.btn { display: inline-block; background: #003768; color: #fff; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; margin-top: 8px; }
+.btn.off { background: #e8ecf0; color: #999; pointer-events: none; }
+.section { display: none; }
+.section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div style="padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 12px;">
+    <div style="width: 28px; height: 3px; background: #fcb034; border-radius: 2px; margin-bottom: 8px;"></div>
+    <div style="color: #fff; font-size: 13px; font-weight: 700;">Finance Planning Group</div>
+    <div style="color: #fcb034; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Brand Hub</div>
+  </div>
+  <h2>Assets</h2>
+  <a href="#" onclick="show('logos',this)" class="active">Logo Files</a>
+  <a href="#" onclick="show('templates',this)">Templates</a>
+  <a href="#" onclick="show('social',this)">Social Assets</a>
+  <a href="#" onclick="show('guidelines',this)">Guidelines PDF</a>
+  <h2 style="margin-top: 16px;">Brand Specs</h2>
+  <a href="#" onclick="show('colours',this)">Colours</a>
+  <a href="#" onclick="show('typography',this)">Typography</a>
+  <a href="#" onclick="show('voice',this)">Brand Voice</a>
+  <div style="position: absolute; bottom: 20px; padding: 0 20px;">
+    <a href="/logout" style="color: rgba(255,255,255,.5); font-size: 12px; text-decoration: none;">Sign out</a>
+  </div>
+</div>
+<div class="main">
+  <div id="logos" class="section active">
+    <div class="hero">
+      <div style="width: 32px; height: 3px; background: #fcb034; border-radius: 2px; margin-bottom: 12px;"></div>
+      <h1>FPG Brand Hub</h1>
+      <p>Your single source for all Finance Planning Group brand assets.</p>
+    </div>
+    <h2 style="color: #003768; margin-bottom: 16px;">Logo Files</h2>
+    <div class="grid">
+      <div class="card"><div style="background:#ff9a00;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">AI</div><h3>FPG Logo Master</h3><p>Master artwork for all print production.</p><br><span class="badge ready" id="badge-ai">Upload pending</span><br><a href="/download/logos/fpg-logo-master.ai" class="btn off" id="btn-ai">Download</a></div>
+      <div class="card"><div style="background:#007aff;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">EPS</div><h3>FPG Logo EPS</h3><p>Vector EPS for press and large-format print.</p><br><span class="badge" id="badge-eps">Upload pending</span><br><a href="/download/logos/fpg-logo.eps" class="btn off" id="btn-eps">Download</a></div>
+      <div class="card"><div style="background:#34c759;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">SVG</div><h3>FPG Logo SVG</h3><p>Scalable vector for web and digital use.</p><br><span class="badge" id="badge-svg">Upload pending</span><br><a href="/download/logos/fpg-logo.svg" class="btn off" id="btn-svg">Download</a></div>
+      <div class="card"><div style="background:#6b7c8f;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">PNG</div><h3>Logo Transparent PNG</h3><p>High-res PNG with transparent background.</p><br><span class="badge" id="badge-png">Upload pending</span><br><a href="/download/logos/fpg-logo-transparent.png" class="btn off" id="btn-png">Download</a></div>
+    </div>
+  </div>
+  <div id="templates" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Templates</h2>
+    <div class="grid">
+      <div class="card"><div style="background:#d34829;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">PPT</div><h3>PowerPoint Template</h3><p>Master deck with all slide layouts.</p><br><span class="badge">Upload pending</span><br><a href="/download/templates/fpg-presentation-template.pptx" class="btn off">Download</a></div>
+      <div class="card"><div style="background:#d42020;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">PDF</div><h3>FPG Letterhead</h3><p>Branded letterhead for correspondence.</p><br><span class="badge">Upload pending</span><br><a href="/download/templates/fpg-letterhead.pdf" class="btn off">Download</a></div>
+      <div class="card"><div style="background:#003768;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">ZIP</div><h3>Email Signature Kit</h3><p>HTML signatures for Outlook and Gmail.</p><br><span class="badge">Upload pending</span><br><a href="/download/templates/fpg-email-signatures.zip" class="btn off">Download</a></div>
+    </div>
+  </div>
+  <div id="social" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Social Media Assets</h2>
+    <div class="grid">
+      <div class="card"><h3>LinkedIn Header</h3><p>1584 x 396px branded banner.</p><br><span class="badge">Upload pending</span><br><a href="/download/social/fpg-linkedin-header.png" class="btn off">Download</a></div>
+      <div class="card"><h3>Facebook Cover</h3><p>820 x 312px branded cover.</p><br><span class="badge">Upload pending</span><br><a href="/download/social/fpg-facebook-cover.png" class="btn off">Download</a></div>
+      <div class="card"><h3>Instagram Profile</h3><p>1000 x 1000px profile image.</p><br><span class="badge">Upload pending</span><br><a href="/download/social/fpg-instagram-profile.png" class="btn off">Download</a></div>
+      <div class="card"><h3>Social Template Pack</h3><p>Canva templates for all post types.</p><br><span class="badge">Upload pending</span><br><a href="/download/social/fpg-social-templates.zip" class="btn off">Download</a></div>
+    </div>
+  </div>
+  <div id="guidelines" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Brand Guidelines PDF</h2>
+    <div class="grid">
+      <div class="card"><div style="background:#d42020;color:#fff;width:40px;height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">PDF</div><h3>FPG Brand Guidelines 2026</h3><p>8-page guide covering colour, typography, logo, imagery and voice.</p><br><span class="badge" id="badge-pdf">Upload pending</span><br><a href="/download/guidelines/FPG_Brand_Guidelines.pdf" class="btn off" id="btn-pdf">Download</a></div>
+    </div>
+  </div>
+  <div id="colours" class="section">
+    <h2 style="color: #003768; margin-bottom: 8px;">Colour Palette</h2>
+    <p style="color: #6b7c8f; margin-bottom: 24px;">Click any swatch to copy the hex code.</p>
+    <div class="grid">
+      <div class="card" onclick="copy('#003768')" style="cursor:pointer"><div style="height:60px;background:#003768;border-radius:4px;margin-bottom:8px;"></div><strong>Hero Blue</strong><br><code>#003768</code><br><small style="color:#6b7c8f">RGB 0, 55, 104</small></div>
+      <div class="card" onclick="copy('#fcb034')" style="cursor:pointer"><div style="height:60px;background:#fcb034;border-radius:4px;margin-bottom:8px;"></div><strong>Hero Orange</strong><br><code>#FCB034</code><br><small style="color:#6b7c8f">RGB 252, 176, 52</small></div>
+      <div class="card" onclick="copy('#2e99d5')" style="cursor:pointer"><div style="height:60px;background:#2e99d5;border-radius:4px;margin-bottom:8px;"></div><strong>Accent Blue</strong><br><code>#2E99D5</code><br><small style="color:#6b7c8f">RGB 46, 153, 213</small></div>
+      <div class="card" onclick="copy('#f5f7fa')" style="cursor:pointer"><div style="height:60px;background:#f5f7fa;border:1px solid #e8ecf0;border-radius:4px;margin-bottom:8px;"></div><strong>Off White</strong><br><code>#F5F7FA</code><br><small style="color:#6b7c8f">Backgrounds</small></div>
+      <div class="card" onclick="copy('#6b7c8f')" style="cursor:pointer"><div style="height:60px;background:#6b7c8f;border-radius:4px;margin-bottom:8px;"></div><strong>Mid Grey</strong><br><code>#6B7C8F</code><br><small style="color:#6b7c8f">Body copy</small></div>
+      <div class="card" onclick="copy('#1a2a3a')" style="cursor:pointer"><div style="height:60px;background:#1a2a3a;border-radius:4px;margin-bottom:8px;"></div><strong>Dark Grey</strong><br><code>#1A2A3A</code><br><small style="color:#6b7c8f">Headlines</small></div>
+    </div>
+  </div>
+  <div id="typography" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Typography</h2>
+    <div style="background:#003768;color:#fff;padding:28px;border-radius:8px;margin-bottom:16px;">
+      <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Primary — Headings</div>
+      <div style="font-size:32px;font-weight:700;color:#fcb034;">Gilroy Bold</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:8px;">Available at myfonts.com (commercial licence)</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e8ecf0;padding:28px;border-radius:8px;margin-bottom:24px;">
+      <div style="font-size:11px;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Secondary — Body</div>
+      <div style="font-size:28px;color:#003768;">Plus Jakarta Sans</div>
+      <div style="font-size:12px;color:#6b7c8f;margin-top:8px;">Free at fonts.google.com</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#003768;color:#fff;"><th style="padding:10px 14px;text-align:left;">Style</th><th style="padding:10px 14px;text-align:left;">Font</th><th style="padding:10px 14px;text-align:left;">Size</th><th style="padding:10px 14px;text-align:left;">Usage</th></tr></thead>
+      <tbody>
+        <tr style="background:#f5f7fa;"><td style="padding:9px 14px;">Display</td><td>Gilroy Bold</td><td>36pt</td><td>Hero panels</td></tr>
+        <tr><td style="padding:9px 14px;">H1</td><td>Gilroy Bold</td><td>24pt</td><td>Page titles</td></tr>
+        <tr style="background:#f5f7fa;"><td style="padding:9px 14px;">H2</td><td>Gilroy Bold</td><td>18pt</td><td>Sub-headings</td></tr>
+        <tr><td style="padding:9px 14px;">Body</td><td>Plus Jakarta Sans</td><td>10pt</td><td>All body copy</td></tr>
+        <tr style="background:#f5f7fa;"><td style="padding:9px 14px;">CTA</td><td>Gilroy Bold</td><td>11pt</td><td>Buttons</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="voice" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Brand Voice</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+      <div style="background:#003768;border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Direct</div><div style="color:rgba(255,255,255,.7);font-size:12px;">No jargon. Say it plainly.</div></div>
+      <div style="background:#003768;border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Human</div><div style="color:rgba(255,255,255,.7);font-size:12px;">Real language, real care.</div></div>
+      <div style="background:#003768;border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Confident</div><div style="color:rgba(255,255,255,.7);font-size:12px;">We know our subject.</div></div>
+      <div style="background:#003768;border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Responsible</div><div style="color:rgba(255,255,255,.7);font-size:12px;">Hard truths with care.</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:#f0fff6;border-left:4px solid #007744;padding:18px;border-radius:8px;"><div style="font-size:10px;font-weight:700;color:#007744;text-transform:uppercase;margin-bottom:8px;">Write this</div><p style="font-style:italic;">"If you die tomorrow, your family could lose the house. We can make sure they don't."</p></div>
+      <div style="background:#fff0f0;border-left:4px solid #cc0000;padding:18px;border-radius:8px;"><div style="font-size:10px;font-weight:700;color:#cc0000;text-transform:uppercase;margin-bottom:8px;">Not this</div><p style="font-style:italic;">"Our flexible protection solutions offer comprehensive peace-of-mind coverage."</p></div>
+    </div>
+  </div>
+</div>
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;"></div>
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  return false;
+}
+function copy(hex) {
+  navigator.clipboard.writeText(hex);
+  var t = document.getElementById('toast');
+  t.textContent = 'Copied ' + hex;
+  t.style.opacity = 1;
+  setTimeout(function(){ t.style.opacity = 0; }, 2000);
+}
+fetch('/api/assets').then(r => r.json()).then(function(data) {
+  var cats = {logos: ['fpg-logo-master.ai','fpg-logo.eps','fpg-logo.svg','fpg-logo-transparent.png'], guidelines: ['FPG_Brand_Guidelines.pdf']};
+  if (data.logos && data.logos.includes('fpg-logo-master.ai')) {
+    document.getElementById('badge-ai').textContent = 'Ready';
+    document.getElementById('badge-ai').className = 'badge ready';
+    document.getElementById('btn-ai').className = 'btn';
+  }
+  if (data.guidelines && data.guidelines.includes('FPG_Brand_Guidelines.pdf')) {
+    document.getElementById('badge-pdf').textContent = 'Ready';
+    document.getElementById('badge-pdf').className = 'badge ready';
+    document.getElementById('btn-pdf').className = 'btn';
+  }
+}).catch(function(){});
+</script>
+</body>
+</html>
