@@ -30,6 +30,13 @@ function requireAuth(req, res, next) {
 // Public assets are gated — we serve them via a route, not express.static
 app.use('/static', express.static(path.join(__dirname, 'public/static')));
 
+// ── Public logo (for display only) ──────────────────────────
+app.get('/public-logo', (req, res) => {
+  const p = require('path').join(__dirname, 'public/assets/logos/fpg-logo-transparent.png');
+  if (require('fs').existsSync(p)) res.sendFile(p);
+  else res.status(404).send('Not found');
+});
+
 // ── Login routes ─────────────────────────────────────────────
 app.get('/login', (req, res) => {
   if (req.session.authenticated) return res.redirect('/');
