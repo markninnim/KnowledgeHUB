@@ -217,7 +217,9 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
       const bgColour = rgb(248/255, 250/255, 253/255); // #f8fafd page background
       const whatIfSize = 22;
       const pages = pdfDoc.getPages();
-      for (let i = 1; i < pages.length; i++) {
+      const whatIfPages = [4, 6, 8, 10]; // pages 5, 7, 9, 11 (0-indexed)
+      for (let i = 0; i < pages.length; i++) {
+        if (!whatIfPages.includes(i)) continue;
         const p = pages[i];
         const { height: ph } = p.getSize();
         const wy = ph - 71; // "What if..." y position
