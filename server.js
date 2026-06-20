@@ -1,8 +1,10 @@
 require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const path    = require('path');
-const fs      = require('fs');
+const express  = require('express');
+const session  = require('express-session');
+const path     = require('path');
+const fs       = require('fs');
+const { PDFDocument, rgb } = require('pdf-lib');
+const fontkit  = require('@pdf-lib/fontkit');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -175,6 +177,51 @@ app.get('/api/assets', requireAuth, (req, res) => {
   }
 
   res.json(manifest);
+});
+
+// ── Personalised brochure ─────────────────────────────────────
+app.get('/personalise-brochure', requireAuth, async (req, res) => {
+  try {
+    const customerName = (req.query.customer || '').trim().slice(0, 80);
+    const brokerName   = (req.query.broker   || '').trim().slice(0, 80);
+
+    const pdfPath  = path.join(__dirname, 'public/assets/brochures/fpg-protection-brochure-2026.pdf');
+    const fontPath = path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Regular.ttf');
+
+    const pdfBytes  = fs.readFileSync(pdfPath);
+    const fontBytes = fs.readFileSync(fontPath);
+
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    pdfDoc.registerFontkit(fontkit);
+    const font = await pdfDoc.embedFont(fontBytes);
+
+    const page = pdfDoc.getPages()[0];
+    const { height } = page.getSize();
+
+    const fontSize   = 11;
+    const x          = 55;
+    const lineHeight = 20;
+    // Place just below the subtitle — adjust yStart if needed
+    const yStart = height - 430;
+
+    const darkBlue = rgb(0.1, 0.16, 0.23);
+
+    if (customerName) {
+      page.drawText('Prepared for: ' + customerName, { x, y: yStart, size: fontSize, font, color: darkBlue });
+    }
+    if (brokerName) {
+      page.drawText('By: ' + brokerName, { x, y: yStart - lineHeight, size: fontSize, font, color: darkBlue });
+    }
+
+    const modifiedBytes = await pdfDoc.save();
+    const filename = 'FPG-Protection-Brochure' + (customerName ? '-' + customerName.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    res.send(Buffer.from(modifiedBytes));
+  } catch (err) {
+    console.error('Personalise brochure error:', err);
+    res.status(500).send('Could not personalise brochure: ' + err.message);
+  }
 });
 
 // ── Start ─────────────────────────────────────────────────────
