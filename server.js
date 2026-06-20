@@ -62,6 +62,34 @@ app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+// ── Video content download ────────────────────────────────────
+app.get('/download-video/:post/:filename', requireAuth, (req, res) => {
+  const safePost = req.params.post.replace(/\.\./g, '');
+  const safeFile = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, 'public/assets/video-content', safePost, safeFile);
+  if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+  res.download(filePath, safeFile);
+});
+
+// ── Video content manifest ────────────────────────────────────
+app.get('/api/video-content', requireAuth, (req, res) => {
+  const baseDir = path.join(__dirname, 'public/assets/video-content');
+  if (!fs.existsSync(baseDir)) return res.json([]);
+  const posts = fs.readdirSync(baseDir)
+    .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
+    .sort()
+    .map(name => ({
+      name,
+      files: fs.readdirSync(path.join(baseDir, name))
+        .filter(f => !f.startsWith('.'))
+        .map(f => {
+          const stat = fs.statSync(path.join(baseDir, name, f));
+          return { name: f, created: stat.birthtime || stat.mtime };
+        })
+    }));
+  res.json(posts);
+});
+
 // ── Social content download (nested: /download-post/:post/:filename) ──
 app.get('/download-post/:post/:filename', requireAuth, (req, res) => {
   const safePost = req.params.post.replace(/\.\./g, '');

@@ -76,7 +76,8 @@ html { height: 100%; }
   <a href="#" onclick="show('templates',this)">Templates</a>
   <a href="#" onclick="show('social',this)">Social Assets</a>
   <!-- <a href="#" onclick="show('guidelines',this)">Guidelines PDF</a> -->
-  <a href="#" onclick="show('social-content',this);loadSocialContent()">Social Content</a>
+  <a href="#" onclick="show('social-content',this);loadSocialContent()">Static Social Content</a>
+  <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
   <a href="#" onclick="show('brochures',this)">Brochures</a>
   <h2 style="margin-top: 16px;">Brand Specs</h2>
   <a href="#" onclick="show('colours',this)">Colours</a>
@@ -128,6 +129,10 @@ html { height: 100%; }
     <div class="grid">
       <div class="card"><div class="thumb" data-pdf="/download/guidelines/FPG_Brand_Guidelines.pdf"></div><h3>FPG Brand Guidelines 2026</h3><p>8-page guide covering colour, typography, logo, imagery and voice.</p><br><span class="badge" id="badge-pdf">Upload pending</span><br><a href="/download/guidelines/FPG_Brand_Guidelines.pdf" class="btn off" id="btn-pdf">Download</a><a href="/download/guidelines/FPG_Brand_Guidelines.pdf" class="btn-view off" id="view-pdf" onclick="openPreview(event,this)">View</a></div>
     </div>
+  </div>
+  <div id="video-content" class="section">
+    <h2 style="color: #003768; margin-bottom: 16px;">Video Social Content</h2>
+    <div id="video-content-body"><p style="color:#6b7c8f;">Loading...</p></div>
   </div>
   <div id="social-content" class="section">
     <h2 style="color: #003768; margin-bottom: 12px;">Social Content</h2>
@@ -312,6 +317,62 @@ var CP_PLATFORMS = [
   { name: 'Facebook',   file: '630 x 1200 - fb.jpg',         size: '630 × 1200',   url: 'https://www.facebook.com/' },
   { name: 'LinkedIn',   file: '627 x 1200 - li.jpg',         size: '627 × 1200',   url: 'https://www.linkedin.com/feed/' }
 ];
+function loadVideoContent() {
+  fetch('/api/video-content').then(function(r){ return r.json(); }).then(function(posts) {
+    var container = document.getElementById('video-content-body');
+    container.innerHTML = '';
+    if (!posts.length) {
+      container.innerHTML = '<p style="color:#6b7c8f;">No videos yet — drop folders into public/assets/video-content/</p>';
+      return;
+    }
+    posts.forEach(function(post) {
+      var title = post.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      var h3 = document.createElement('h3');
+      h3.textContent = title;
+      h3.style.cssText = 'color:#003768;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;';
+      container.appendChild(h3);
+      var grid = document.createElement('div'); grid.className = 'grid';
+      post.files.forEach(function(fileObj) {
+        var file = fileObj.name || fileObj;
+        var url  = '/download-video/' + encodeURIComponent(post.name) + '/' + encodeURIComponent(file);
+        var ext  = file.split('.').pop().toLowerCase();
+        var card = document.createElement('div'); card.className = 'card';
+        var thumb = document.createElement('div'); thumb.className = 'thumb';
+        if (['mp4','mov','webm'].includes(ext)) {
+          var vid = document.createElement('video');
+          vid.src = url; vid.muted = true; vid.style.cssText = 'max-height:104px;max-width:100%;border-radius:4px;';
+          thumb.appendChild(vid);
+        } else {
+          var img = document.createElement('img');
+          img.src = url; img.style.cssText = 'max-height:104px;max-width:100%;object-fit:contain;';
+          img.onerror = function(){ thumb.innerHTML = '<div class="type-badge" style="background:#6b7c8f;">VID</div>'; };
+          thumb.appendChild(img);
+        }
+        var h = document.createElement('h3'); h.textContent = file.replace(/\.[^.]+$/, '');
+        var badge = document.createElement('span'); badge.className = 'badge ready'; badge.textContent = 'Approved';
+        var br = document.createElement('br');
+        var dl = document.createElement('a'); dl.className = 'btn'; dl.href = url; dl.download = file; dl.innerHTML = '&#8659; Download';
+        card.appendChild(thumb); card.appendChild(h); card.appendChild(br); card.appendChild(badge); card.appendChild(br); card.appendChild(dl);
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
+
+      // Wording box
+      var storageKey = 'video-wording-' + post.name;
+      var wrapDiv = document.createElement('div'); wrapDiv.style.cssText = 'margin:12px 0 32px;width:100%;box-sizing:border-box;';
+      var label = document.createElement('div'); label.textContent = 'Approved Post Wording'; label.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;';
+      var ta = document.createElement('textarea');
+      ta.placeholder = 'Add post copy, captions or notes here…';
+      ta.value = localStorage.getItem(storageKey) || '';
+      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:80px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:sans-serif;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
+      ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); });
+      ta.addEventListener('focus', function(){ ta.style.borderColor='#003768'; });
+      ta.addEventListener('blur',  function(){ ta.style.borderColor='#e8ecf0'; });
+      wrapDiv.appendChild(label); wrapDiv.appendChild(ta);
+      container.appendChild(wrapDiv);
+    });
+  }).catch(function(){ document.getElementById('video-content-body').innerHTML = '<p style="color:#cc0000;">Could not load video content.</p>'; });
+}
 function openCp(postName, wording) {
   var postName = postName;
   document.getElementById('cp-title').textContent = 'Create Post — ' + postName.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
