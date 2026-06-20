@@ -214,16 +214,16 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
     // Add first name before "What if..." on inner pages
     const firstName = customerName ? customerName.split(' ')[0] : '';
     if (firstName) {
-      const bgColour = rgb(0.941, 0.949, 0.969); // light blue-grey page background
-      const whatIfSize = 18;
+      const bgColour = rgb(248/255, 250/255, 253/255); // #f8fafd page background
+      const whatIfSize = 22;
       const pages = pdfDoc.getPages();
       for (let i = 1; i < pages.length; i++) {
         const p = pages[i];
         const { height: ph } = p.getSize();
-        const wy = ph - 98; // "What if..." y position — adjust if needed
+        const wy = ph - 75; // "What if..." y position
         const wx = 71;
         // Cover existing "What if..." text with background rectangle
-        p.drawRectangle({ x: wx, y: wy - 4, width: 200, height: whatIfSize + 8, color: bgColour });
+        p.drawRectangle({ x: wx - 2, y: wy - 6, width: 280, height: whatIfSize + 10, color: bgColour });
         // Redraw as "FirstName, what if..."
         p.drawText(firstName + ', what if...', { x: wx, y: wy, size: whatIfSize, font, color: darkBlue });
       }
