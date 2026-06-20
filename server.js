@@ -188,7 +188,7 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
     const pdfPath  = path.join(__dirname, 'public/assets/brochures/fpg-protection-brochure-2026.pdf');
     const pdfBytes = fs.readFileSync(pdfPath);
 
-    const fontBytes = fs.readFileSync(path.join(__dirname, 'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2'));
+    const fontBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Regular.ttf'));
     const pdfDoc = await PDFDocument.load(pdfBytes);
     pdfDoc.registerFontkit(fontkit);
     const font = await pdfDoc.embedFont(fontBytes);
