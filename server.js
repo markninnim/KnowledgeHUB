@@ -214,7 +214,7 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
     // Add first name before "What if..." on inner pages
     const firstName = customerName ? customerName.split(' ')[0] : '';
     if (firstName) {
-      const bgColour = rgb(248/255, 250/255, 253/255); // #f8fafd page background
+      const bgColour = rgb(242/255, 245/255, 250/255); // page background adjusted
       const whatIfSize = 22;
       const pages = pdfDoc.getPages();
       const whatIfPages = [4, 6, 8, 10]; // pages 5, 7, 9, 11 (0-indexed)
