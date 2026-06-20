@@ -80,7 +80,7 @@ app.get('/api/social-content', requireAuth, (req, res) => {
     .sort()
     .map(name => ({
       name,
-      files: fs.readdirSync(path.join(baseDir, name)).filter(f => !f.startsWith('.'))
+      files: fs.readdirSync(path.join(baseDir, name)).filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
     }));
   res.json(posts);
 });
