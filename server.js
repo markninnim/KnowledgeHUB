@@ -196,9 +196,9 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
     const page = pdfDoc.getPages()[0];
     const { height } = page.getSize();
 
-    const fontSize   = 11;
+    const fontSize   = 12;
     const x          = 71;
-    const lineHeight = 20;
+    const lineHeight = 17;
     // Place just below the subtitle — adjust yStart if needed
     const yStart = height - 570;
 
