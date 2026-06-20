@@ -298,7 +298,7 @@ function loadBrochureDates() {
     brochures.forEach(function(f){ dateMap[f.name] = f.created; });
     document.querySelectorAll('.file-date[data-file]').forEach(function(el) {
       var d = dateMap[el.getAttribute('data-file')];
-      if (d) el.textContent = 'Added ' + fmt(new Date(d));
+      if (d) el.textContent = fmt(new Date(d));
     });
   });
 }
