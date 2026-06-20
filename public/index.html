@@ -78,7 +78,7 @@ html { height: 100%; }
   <!-- <a href="#" onclick="show('guidelines',this)">Guidelines PDF</a> -->
   <a href="#" onclick="show('social-content',this);loadSocialContent()">Static Social Content</a>
   <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
-  <a href="#" onclick="show('brochures',this)">Brochures</a>
+  <a href="#" onclick="show('brochures',this);loadBrochureDates()">Brochures</a>
   <h2 style="margin-top: 16px;">Brand Specs</h2>
   <a href="#" onclick="show('colours',this)">Colours</a>
   <a href="#" onclick="show('typography',this)">Typography</a>
@@ -155,7 +155,7 @@ html { height: 100%; }
         <div class="thumb" data-pdf="/download/brochures/fpg-protection-brochure-2026.pdf"></div>
         <h3>2026 Protection Brochure — Personalised</h3>
         <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Make your client meeting more memorable — personalise this brochure with their name printed throughout. Simply enter their name and yours, then hit download for that personal touch.</p>
-        <span class="badge ready">Approved</span><br>
+        <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
           <input id="pb-customer" type="text" placeholder="Customer name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:6px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
           <input id="pb-broker" type="text" placeholder="Broker name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:8px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
@@ -166,7 +166,7 @@ html { height: 100%; }
         <div class="thumb" data-pdf="/download/brochures/fpg-protection-brochure-2026.pdf"></div>
         <h3>2026 Protection Brochure</h3>
         <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Download the latest version of the 12-page Finance Planning protection brochure — ready to share with clients.</p>
-        <span class="badge ready">Approved</span><br>
+        <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <a href="/download/brochures/fpg-protection-brochure-2026.pdf" class="btn" style="display:block;text-align:center;margin-top:10px;box-sizing:border-box;">&#8659; Download</a>
       </div>
     </div>
@@ -289,6 +289,18 @@ function openPreview(e, el) {
   }
   document.getElementById('preview-title').textContent = title;
   document.getElementById('preview-modal').classList.add('open');
+}
+function loadBrochureDates() {
+  fetch('/api/assets').then(function(r){ return r.json(); }).then(function(manifest) {
+    var fmt = function(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
+    var brochures = manifest.brochures || [];
+    var dateMap = {};
+    brochures.forEach(function(f){ dateMap[f.name] = f.created; });
+    document.querySelectorAll('.file-date[data-file]').forEach(function(el) {
+      var d = dateMap[el.getAttribute('data-file')];
+      if (d) el.textContent = 'Added ' + fmt(new Date(d));
+    });
+  });
 }
 function downloadPersonalisedBrochure() {
   var customer = document.getElementById('pb-customer').value.trim();

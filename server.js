@@ -170,7 +170,12 @@ app.get('/api/assets', requireAuth, (req, res) => {
   for (const cat of categories) {
     const catPath = path.join(baseDir, cat);
     if (fs.existsSync(catPath)) {
-      manifest[cat] = fs.readdirSync(catPath).filter(f => !f.startsWith('.'));
+      manifest[cat] = fs.readdirSync(catPath)
+        .filter(f => !f.startsWith('.'))
+        .map(f => {
+          const stat = fs.statSync(path.join(catPath, f));
+          return { name: f, created: stat.birthtime || stat.mtime };
+        });
     } else {
       manifest[cat] = [];
     }
