@@ -227,37 +227,59 @@ function closePreview() {
 }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closePreview(); });
 var SIZE_LABELS = {
-  '627 x 1200 - li.jpg':       { label: 'LinkedIn',         size: '627 × 1200' },
-  '630 x 1200 - fb.jpg':       { label: 'Facebook',         size: '630 × 1200' },
-  '1080 x 1350 - ig.jpg':      { label: 'Instagram',        size: '1080 × 1350' },
-  '1080 x 1920 - tik.jpg':     { label: 'TikTok / Story',   size: '1080 × 1920' },
-  '1200 x 1200 - ig fb li.jpg':{ label: 'Square',           size: '1200 × 1200' }
+  '627 x 1200 - li.jpg':        { label: 'LinkedIn',       size: '627 × 1200' },
+  '630 x 1200 - fb.jpg':        { label: 'Facebook',       size: '630 × 1200' },
+  '1080 x 1350 - ig.jpg':       { label: 'Instagram',      size: '1080 × 1350' },
+  '1080 x 1920 - tik.jpg':      { label: 'TikTok / Story', size: '1080 × 1920' },
+  '1200 x 1200 - ig fb li.jpg': { label: 'Square',         size: '1200 × 1200' }
 };
+function makeSocialCard(postName, file) {
+  var info = SIZE_LABELS[file] || { label: file, size: '' };
+  var url  = '/download-post/' + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
+
+  var card  = document.createElement('div'); card.className = 'card';
+  var thumb = document.createElement('div'); thumb.className = 'thumb';
+  var img   = document.createElement('img');
+  img.style.cssText = 'max-height:104px;max-width:100%;object-fit:contain;';
+  img.onerror = function() { thumb.innerHTML = '<div class="type-badge" style="background:#6b7c8f;">IMG</div>'; };
+  img.src = url;
+  thumb.appendChild(img);
+
+  var h3 = document.createElement('h3'); h3.textContent = info.label;
+  var p  = document.createElement('p');  p.textContent  = info.size + 'px';
+  var br = document.createElement('br');
+  var badge = document.createElement('span'); badge.className = 'badge ready'; badge.textContent = 'Ready';
+  var br2 = document.createElement('br');
+  var dl  = document.createElement('a'); dl.className = 'btn'; dl.href = url; dl.download = file; dl.textContent = 'Download';
+  var vw  = document.createElement('a'); vw.className = 'btn-view'; vw.href = url; vw.textContent = 'View';
+  vw.onclick = function(e) { openPreview(e, vw); };
+
+  card.appendChild(thumb); card.appendChild(h3); card.appendChild(p);
+  card.appendChild(br); card.appendChild(badge); card.appendChild(br2);
+  card.appendChild(dl); card.appendChild(vw);
+  return card;
+}
 function loadSocialContent() {
-  fetch('/api/social-content').then(r => r.json()).then(function(posts) {
+  fetch('/api/social-content').then(function(r) { return r.json(); }).then(function(posts) {
     var container = document.getElementById('social-content-body');
-    if (!posts.length) { container.innerHTML = '<p style="color:#6b7c8f;">No posts uploaded yet. Add folders to public/assets/social-content/</p>'; return; }
-    var html = '';
+    container.innerHTML = '';
+    if (!posts.length) {
+      container.innerHTML = '<p style="color:#6b7c8f;">No posts yet — drop folders into public/assets/social-content/</p>';
+      return;
+    }
     posts.forEach(function(post) {
-      var title = post.name.replace(/\b\w/g, c => c.toUpperCase());
-      html += '<h3 style="color:#003768;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">' + title + '</h3>';
-      html += '<div class="grid">';
-      post.files.forEach(function(file) {
-        var info = SIZE_LABELS[file] || { label: file, size: '' };
-        var url = '/download-post/' + encodeURIComponent(post.name) + '/' + encodeURIComponent(file);
-        html += '<div class="card">'
-          + '<div class="thumb"><img src="' + url + '" onerror="this.parentNode.innerHTML=\'<div class=\\\"type-badge\\\" style=\\\"background:#6b7c8f;\\\">IMG</div>\'" style="max-height:104px;max-width:100%;object-fit:contain;"></div>'
-          + '<h3>' + info.label + '</h3>'
-          + '<p>' + info.size + 'px</p><br>'
-          + '<span class="badge ready">Ready</span><br>'
-          + '<a href="' + url + '" class="btn" download>Download</a>'
-          + '<a href="' + url + '" class="btn-view" onclick="openPreview(event,this)">View</a>'
-          + '</div>';
-      });
-      html += '</div>';
+      var title = post.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      var h3 = document.createElement('h3');
+      h3.textContent = title;
+      h3.style.cssText = 'color:#003768;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;';
+      container.appendChild(h3);
+      var grid = document.createElement('div'); grid.className = 'grid';
+      post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file)); });
+      container.appendChild(grid);
     });
-    container.innerHTML = html;
-  }).catch(function(){ document.getElementById('social-content-body').innerHTML = '<p style="color:#cc0000;">Could not load social content.</p>'; });
+  }).catch(function() {
+    document.getElementById('social-content-body').innerHTML = '<p style="color:#cc0000;">Could not load social content.</p>';
+  });
 }
 function renderPdfThumb(url, container) {
   pdfjsLib.getDocument(url).promise.then(function(pdf) {
