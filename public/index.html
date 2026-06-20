@@ -24,6 +24,7 @@ html { height: 100%; }
 .card p { color: #6b7c8f; font-size: 12px; }
 .badge { display: inline-block; background: #f5f7fa; color: #6b7c8f; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
 .badge.ready { background: rgba(0,119,68,.1); color: #007744; }
+.badge.expired { background: rgba(204,0,0,.1); color: #cc0000; }
 .btn { display: inline-block; background: #003768; color: #fff; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; margin-top: 8px; }
 .btn.off { background: #e8ecf0; color: #999; pointer-events: none; }
 .btn-view { display: inline-block; background: transparent; color: #003768; border: 1px solid #003768; padding: 5px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; margin-top: 8px; margin-left: 6px; cursor: pointer; }
@@ -249,7 +250,12 @@ function makeSocialCard(postName, fileObj) {
   var file = fileObj.name || fileObj;
   var info = SIZE_LABELS[file] || { label: file, size: '' };
   var url  = '/download-post/' + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
-  var dateStr = fileObj.created ? new Date(fileObj.created).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '';
+  var addedDate  = fileObj.created ? new Date(fileObj.created) : new Date();
+  var expiryDate = new Date(addedDate); expiryDate.setMonth(expiryDate.getMonth() + 6);
+  var isExpired  = new Date() > expiryDate;
+  var fmt = function(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
+  var addedStr  = fmt(addedDate);
+  var expiryStr = fmt(expiryDate);
 
   var card  = document.createElement('div'); card.className = 'card'; card.dataset.label = info.label;
   var thumb = document.createElement('div'); thumb.className = 'thumb';
@@ -261,15 +267,18 @@ function makeSocialCard(postName, fileObj) {
 
   var h3 = document.createElement('h3'); h3.textContent = info.label;
   var p  = document.createElement('p');  p.textContent  = info.size + 'px';
-  var dateEl = document.createElement('p'); dateEl.textContent = dateStr; dateEl.style.cssText = 'color:#aaa;font-size:11px;margin-top:2px;';
+  var dateEl   = document.createElement('p'); dateEl.style.cssText   = 'color:#aaa;font-size:11px;margin-top:2px;'; dateEl.textContent   = 'Added: ' + addedStr;
+  var expiryEl = document.createElement('p'); expiryEl.style.cssText = 'color:#aaa;font-size:11px;margin-top:1px;'; expiryEl.textContent = 'Expires: ' + expiryStr;
   var br = document.createElement('br');
-  var badge = document.createElement('span'); badge.className = 'badge ready'; badge.textContent = 'Ready';
+  var badge = document.createElement('span');
+  badge.className = isExpired ? 'badge expired' : 'badge ready';
+  badge.textContent = isExpired ? 'Requires Approval' : 'Approved';
   var br2 = document.createElement('br');
   var dl  = document.createElement('a'); dl.className = 'btn'; dl.href = url; dl.download = file; dl.textContent = 'Download';
   var vw  = document.createElement('a'); vw.className = 'btn-view'; vw.href = url; vw.textContent = 'View';
   vw.onclick = function(e) { openPreview(e, vw); };
 
-  card.appendChild(thumb); card.appendChild(h3); card.appendChild(p); card.appendChild(dateEl);
+  card.appendChild(thumb); card.appendChild(h3); card.appendChild(p); card.appendChild(dateEl); card.appendChild(expiryEl);
   card.appendChild(br); card.appendChild(badge); card.appendChild(br2);
   card.appendChild(dl); card.appendChild(vw);
   return card;
