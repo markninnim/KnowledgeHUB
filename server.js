@@ -3,7 +3,8 @@ const express  = require('express');
 const session  = require('express-session');
 const path     = require('path');
 const fs       = require('fs');
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { PDFDocument, rgb } = require('pdf-lib');
+const fontkit = require('@pdf-lib/fontkit');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -187,8 +188,10 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
     const pdfPath  = path.join(__dirname, 'public/assets/brochures/fpg-protection-brochure-2026.pdf');
     const pdfBytes = fs.readFileSync(pdfPath);
 
+    const fontBytes = fs.readFileSync(path.join(__dirname, 'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2'));
     const pdfDoc = await PDFDocument.load(pdfBytes);
-    const font   = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    pdfDoc.registerFontkit(fontkit);
+    const font = await pdfDoc.embedFont(fontBytes);
 
     const page = pdfDoc.getPages()[0];
     const { height } = page.getSize();
