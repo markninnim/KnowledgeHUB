@@ -235,10 +235,11 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
       const factp = pages[1];
       if (factp) {
         const { height: fph } = factp.getSize();
-        const fy = fph - 71; // adjust if needed
+        const factSize = 36;
+        const fy = fph - 620; // "It’s a fact..." is low on the page
         const fx = 55;
-        factp.drawRectangle({ x: fx - 2, y: fy - 6, width: 320, height: whatIfSize + 14, color: bgColour });
-        factp.drawText(`${firstName}, it’s a fact...`, { x: fx, y: fy, size: whatIfSize, font, color: orange });
+        factp.drawRectangle({ x: fx - 2, y: fy - 6, width: 420, height: factSize + 14, color: bgColour });
+        factp.drawText(`${firstName}, it’s a fact...`, { x: fx, y: fy, size: factSize, font, color: orange });
       }
     }
 
