@@ -313,6 +313,7 @@ var CP_PLATFORMS = [
   { name: 'LinkedIn',   file: '627 x 1200 - li.jpg',         size: '627 × 1200',   url: 'https://www.linkedin.com/feed/' }
 ];
 function openCp(postName, wording) {
+  var postName = postName;
   document.getElementById('cp-title').textContent = 'Create Post — ' + postName.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
   var body = document.getElementById('cp-body');
   body.innerHTML = '';
@@ -326,8 +327,25 @@ function openCp(postName, wording) {
   var copyBtn = document.createElement('button');
   copyBtn.textContent = 'Copy'; copyBtn.className = 'btn';
   copyBtn.style.cssText = 'align-self:flex-start;cursor:pointer;';
+  function formatText(text) {
+    return text.split('\n').map(function(l){ return l.trimEnd(); }).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  ta.addEventListener('paste', function(e){
+    e.preventDefault();
+    var pasted = (e.clipboardData || window.clipboardData).getData('text');
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    var current = ta.value;
+    ta.value = current.slice(0, start) + pasted + current.slice(end);
+    ta.value = formatText(ta.value);
+    localStorage.setItem('post-wording-' + postName, ta.value);
+  });
   copyBtn.onclick = function(){ navigator.clipboard.writeText(ta.value); copyBtn.textContent='Copied!'; setTimeout(function(){ copyBtn.textContent='Copy'; }, 2000); };
-  row.appendChild(ta); row.appendChild(copyBtn);
+  var fmtBtn = document.createElement('button');
+  fmtBtn.textContent = 'Format'; fmtBtn.className = 'btn'; fmtBtn.style.cssText = 'align-self:flex-start;margin-top:6px;cursor:pointer;background:#6b7c8f;';
+  fmtBtn.onclick = function(){ ta.value = formatText(ta.value); localStorage.setItem('post-wording-' + postName, ta.value); };
+  var btnCol = document.createElement('div'); btnCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+  btnCol.appendChild(copyBtn); btnCol.appendChild(fmtBtn);
+  row.appendChild(ta); row.appendChild(btnCol);
   body.appendChild(copyLabel); body.appendChild(row);
 
   // Platform rows
