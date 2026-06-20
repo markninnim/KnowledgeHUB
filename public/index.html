@@ -340,12 +340,7 @@ function openCp(postName, wording) {
     localStorage.setItem('post-wording-' + postName, ta.value);
   });
   copyBtn.onclick = function(){ navigator.clipboard.writeText(ta.value); copyBtn.textContent='Copied!'; setTimeout(function(){ copyBtn.textContent='Copy'; }, 2000); };
-  var fmtBtn = document.createElement('button');
-  fmtBtn.textContent = 'Format'; fmtBtn.className = 'btn'; fmtBtn.style.cssText = 'align-self:flex-start;margin-top:6px;cursor:pointer;background:#6b7c8f;';
-  fmtBtn.onclick = function(){ ta.value = formatText(ta.value); localStorage.setItem('post-wording-' + postName, ta.value); };
-  var btnCol = document.createElement('div'); btnCol.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
-  btnCol.appendChild(copyBtn); btnCol.appendChild(fmtBtn);
-  row.appendChild(ta); row.appendChild(btnCol);
+  row.appendChild(ta); row.appendChild(copyBtn);
   body.appendChild(copyLabel); body.appendChild(row);
 
   // Platform rows
