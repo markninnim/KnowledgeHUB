@@ -31,6 +31,23 @@ html { height: 100%; }
 .btn-view.off { border-color: #e8ecf0; color: #ccc; pointer-events: none; }
 #preview-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
 #preview-modal.open { display:flex; }
+#cp-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
+#cp-modal.open { display:flex; }
+#cp-box { background:#fff; border-radius:12px; width:90vw; max-width:720px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+#cp-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #e8ecf0; }
+#cp-header span { color:#003768; font-weight:700; font-size:14px; }
+#cp-header button { background:none; border:none; font-size:22px; cursor:pointer; color:#6b7c8f; }
+#cp-body { flex:1; overflow-y:auto; padding:20px; }
+.cp-copy-row { display:flex; gap:8px; margin-bottom:20px; }
+.cp-copy-row textarea { flex:1; min-height:80px; padding:10px; border:1px solid #e8ecf0; border-radius:8px; font-size:13px; font-family:sans-serif; resize:vertical; }
+.cp-platform { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid #f0f0f0; }
+.cp-platform img { width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #e8ecf0; flex-shrink:0; }
+.cp-platform-name { font-weight:700; font-size:13px; color:#003768; min-width:110px; }
+.cp-platform-size { font-size:11px; color:#aaa; }
+.cp-actions { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
+.btn-platform { display:inline-block; padding:6px 14px; border-radius:6px; font-size:12px; text-decoration:none; cursor:pointer; border:none; }
+.btn-dl { background:#003768; color:#fff; }
+.btn-open { background:transparent; border:1px solid #003768; color:#003768; }
 #preview-box { background:#fff; border-radius:12px; width:90vw; max-width:960px; height:85vh; display:flex; flex-direction:column; overflow:hidden; }
 #preview-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #e8ecf0; }
 #preview-title { color:#003768; font-weight:700; font-size:14px; }
@@ -192,6 +209,12 @@ html { height: 100%; }
     </div>
   </div>
 </div>
+<div id="cp-modal" onclick="if(event.target===this)closeCp()">
+  <div id="cp-box">
+    <div id="cp-header"><span id="cp-title"></span><button onclick="closeCp()">&#x2715;</button></div>
+    <div id="cp-body"></div>
+  </div>
+</div>
 <div id="preview-modal" onclick="if(event.target===this)closePreview()">
   <div id="preview-box">
     <div id="preview-header">
@@ -283,6 +306,57 @@ function makeSocialCard(postName, fileObj) {
   card.appendChild(dl); card.appendChild(vw);
   return card;
 }
+var CP_PLATFORMS = [
+  { name: 'Instagram',  file: '1080 x 1350 - ig.jpg',       size: '1080 × 1350',  url: 'https://www.instagram.com/' },
+  { name: 'TikTok',     file: '1080 x 1920 - tik.jpg',      size: '1080 × 1920',  url: 'https://www.tiktok.com/upload' },
+  { name: 'Facebook',   file: '630 x 1200 - fb.jpg',         size: '630 × 1200',   url: 'https://www.facebook.com/' },
+  { name: 'LinkedIn',   file: '627 x 1200 - li.jpg',         size: '627 × 1200',   url: 'https://www.linkedin.com/feed/' }
+];
+function openCp(postName, wording) {
+  document.getElementById('cp-title').textContent = 'Create Post — ' + postName.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  var body = document.getElementById('cp-body');
+  body.innerHTML = '';
+
+  // Wording
+  var copyLabel = document.createElement('div');
+  copyLabel.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;';
+  copyLabel.textContent = 'Post Copy';
+  var row = document.createElement('div'); row.className = 'cp-copy-row';
+  var ta = document.createElement('textarea'); ta.value = wording; ta.style.cssText = 'flex:1;min-height:80px;padding:10px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:sans-serif;resize:vertical;';
+  var copyBtn = document.createElement('button');
+  copyBtn.textContent = 'Copy'; copyBtn.className = 'btn';
+  copyBtn.style.cssText = 'align-self:flex-start;cursor:pointer;';
+  copyBtn.onclick = function(){ navigator.clipboard.writeText(ta.value); copyBtn.textContent='Copied!'; setTimeout(function(){ copyBtn.textContent='Copy'; }, 2000); };
+  row.appendChild(ta); row.appendChild(copyBtn);
+  body.appendChild(copyLabel); body.appendChild(row);
+
+  // Platform rows
+  var platLabel = document.createElement('div');
+  platLabel.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin:16px 0 10px;';
+  platLabel.textContent = 'Download Image & Open Platform';
+  body.appendChild(platLabel);
+
+  CP_PLATFORMS.forEach(function(p) {
+    var dlUrl = '/download-post/' + encodeURIComponent(postName) + '/' + encodeURIComponent(p.file);
+    var row = document.createElement('div'); row.className = 'cp-platform';
+    var img = document.createElement('img'); img.src = dlUrl; img.onerror = function(){ img.style.display='none'; };
+    var info = document.createElement('div');
+    var nameEl = document.createElement('div'); nameEl.className = 'cp-platform-name'; nameEl.textContent = p.name;
+    var sizeEl = document.createElement('div'); sizeEl.className = 'cp-platform-size'; sizeEl.textContent = p.size + 'px';
+    info.appendChild(nameEl); info.appendChild(sizeEl);
+    var actions = document.createElement('div'); actions.className = 'cp-actions';
+    var dl = document.createElement('a'); dl.className = 'btn-platform btn-dl'; dl.href = dlUrl; dl.download = p.file; dl.textContent = 'Download';
+    var open = document.createElement('a'); open.className = 'btn-platform btn-open'; open.href = p.url; open.target = '_blank'; open.textContent = 'Open ' + p.name;
+    actions.appendChild(dl); actions.appendChild(open);
+    row.appendChild(img); row.appendChild(info); row.appendChild(actions);
+    body.appendChild(row);
+  });
+
+  document.getElementById('cp-modal').classList.add('open');
+}
+function closeCp() {
+  document.getElementById('cp-modal').classList.remove('open');
+}
 function filterSocial(type, btn) {
   document.querySelectorAll('.sc-filter').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
@@ -329,8 +403,13 @@ function loadSocialContent() {
       ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); });
       ta.addEventListener('focus', function(){ ta.style.borderColor = '#003768'; });
       ta.addEventListener('blur',  function(){ ta.style.borderColor = '#e8ecf0'; });
+      var createBtn = document.createElement('button');
+      createBtn.textContent = '⬡ Create Post';
+      createBtn.style.cssText = 'margin-top:10px;background:#fcb034;color:#003768;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;';
+      (function(pn, t){ createBtn.onclick = function(){ openCp(pn, t.value); }; })(post.name, ta);
       wrapDiv.appendChild(label);
       wrapDiv.appendChild(ta);
+      wrapDiv.appendChild(createBtn);
       container.appendChild(wrapDiv);
     });
   }).catch(function() {
