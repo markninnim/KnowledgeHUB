@@ -358,7 +358,7 @@ function openCp(postName, wording) {
     var sizeEl = document.createElement('div'); sizeEl.className = 'cp-platform-size'; sizeEl.textContent = p.size + 'px';
     info.appendChild(nameEl); info.appendChild(sizeEl);
     var actions = document.createElement('div'); actions.className = 'cp-actions';
-    var dl = document.createElement('a'); dl.className = 'btn-platform btn-dl'; dl.href = dlUrl; dl.download = p.file; dl.textContent = 'Download';
+    var dl = document.createElement('a'); dl.className = 'btn-platform btn-dl'; dl.href = dlUrl; dl.download = p.file; dl.innerHTML = '&#8659; Download';
     var open = document.createElement('a'); open.className = 'btn-platform btn-open'; open.href = p.url; open.target = '_blank'; open.textContent = 'Open ' + p.name;
     actions.appendChild(dl); actions.appendChild(open);
     row.appendChild(img); row.appendChild(info); row.appendChild(actions);
