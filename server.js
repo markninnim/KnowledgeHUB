@@ -34,7 +34,7 @@ app.use('/static', express.static(path.join(__dirname, 'public/static')));
 
 // ── Public logo (for display only) ──────────────────────────
 app.get('/public-logo', (req, res) => {
-  const p = require('path').join(__dirname, 'public/assets/logos/fpg-logo-transparent.png');
+  const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');
   if (require('fs').existsSync(p)) res.sendFile(p);
   else res.status(404).send('Not found');
 });
