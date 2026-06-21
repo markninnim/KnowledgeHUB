@@ -365,8 +365,8 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const accentBlue = rgb(46/255, 153/255, 213/255);  // #2e99d5
     const darkGrey   = rgb(26/255, 42/255, 58/255);    // #1a2a3a
 
-    // White out existing text areas
-    page.drawRectangle({ x: 34, y: 33, width: 210, height: 52, color: rgb(1,1,1) });
+    // White out existing text areas (name baseline ~78 + 15pt cap height, down to phone ~33)
+    page.drawRectangle({ x: 34, y: 30, width: 230, height: 68, color: rgb(1,1,1) });
 
     // Draw name
     page.drawText(name, { x: 36.9, y: 78.1, size: 15, font: fontBold, color: darkBlue });
