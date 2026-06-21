@@ -405,7 +405,7 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const back = pdfDoc.getPages()[1];
     const { width: bw, height: bh } = back.getSize();
     const qrSize = 80;
-    back.drawRectangle({ x: (bw - qrSize) / 2, y: (bh - qrSize) / 2, width: qrSize, height: qrSize, color: rgb(1,1,1) });
+    back.drawRectangle({ x: (bw - qrSize) / 2, y: (bh - qrSize) / 2, width: qrSize, height: qrSize, color: rgb(232/255, 244/255, 251/255) });
     back.drawImage(qrImage, {
       x: (bw - qrSize) / 2,
       y: (bh - qrSize) / 2,
