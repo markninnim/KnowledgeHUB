@@ -371,11 +371,11 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const accentBlue = rgb(46/255, 153/255, 213/255);
     const darkGrey   = rgb(26/255, 42/255, 58/255);
 
-    page.drawRectangle({ x: 34, y: 30, width: 230, height: 68, color: rgb(1,1,1) });
-    page.drawText(fullName, { x: 36.9, y: 78.1, size: 15, font: fontBold, color: darkBlue });
-    page.drawText(title,    { x: 36.9, y: 66.7, size: 9,  font: fontMed,  color: accentBlue });
-    page.drawText(email,    { x: 36.9, y: 50.6, size: 9,  font: fontMed,  color: darkGrey });
-    page.drawText(phone,    { x: 36.9, y: 37.7, size: 9,  font: fontMed,  color: darkGrey });
+    page.drawRectangle({ x: 12, y: 10, width: 220, height: 62, color: rgb(1,1,1) });
+    page.drawText(fullName, { x: 15.874, y: 57.139, size: 15, font: fontBold, color: darkBlue });
+    page.drawText(title,    { x: 15.919, y: 45.650, size: 9,  font: fontMed,  color: accentBlue });
+    page.drawText(email,    { x: 15.874, y: 29.634, size: 9,  font: fontMed,  color: darkGrey });
+    page.drawText(phone,    { x: 15.874, y: 16.737, size: 9,  font: fontMed,  color: darkGrey });
 
     // ── Back page — vCard QR ──────────────────────────────────
     const vcard = [
