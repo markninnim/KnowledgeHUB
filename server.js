@@ -343,5 +343,5 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
 
 // ── Start ─────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`FPG Brand Hub running on port ${PORT}`);
+  console.log(`FPG Digital Asset Management Tool running on port ${PORT}`);
 });
