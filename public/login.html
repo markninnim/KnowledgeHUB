@@ -17,14 +17,14 @@
       --dark:    #1a2a3a;
     }
 
-    html, body {
-      height: 100%;
-      width: 100%;
-    }
-
     body {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       background: var(--blue);
+      margin: 0;
+    }
+
+    .page-wrap {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -195,6 +195,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+<div class="page-wrap">
   <div class="card">
     <div class="logo-area">
       <img src="/public-logo" alt="Finance Planning Group" style="height:56px;object-fit:contain;margin-bottom:8px;">
@@ -224,6 +225,7 @@
 
     <p class="footer-note">FPG internal use. For access contact <a href="mailto:mark.ninnim@financeplanning.co.uk" style="color:var(--grey);">mark.ninnim@financeplanning.co.uk</a></p>
   </div>
+</div>
 
   <script>
     // Show error if redirected with ?error=1
