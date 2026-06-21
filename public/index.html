@@ -597,7 +597,8 @@ html { height: 100%; }
     </div>
     <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Job Title</label><input id="bc-title" type="text" placeholder="e.g. Mortgage Adviser" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Email</label><input id="bc-email" type="email" placeholder="e.g. jane@financeplanning.co.uk" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
-    <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Mobile</label><input id="bc-phone" type="text" placeholder="e.g. 07700 900 123" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Mobile</label><input id="bc-phone" type="text" placeholder="e.g. 07700 900 123" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">LinkedIn / Website <span style="font-weight:400;color:#6b7c8f;">(optional)</span></label><input id="bc-url" type="url" placeholder="e.g. https://linkedin.com/in/janesmith" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     <button onclick="generateCard()" style="width:100%;padding:12px;background:#003768;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Card PDF</button>
     <div id="bc-msg" style="margin-top:12px;font-size:12px;color:#6b7c8f;text-align:center;display:none;"></div>
   </div>
@@ -1001,7 +1002,7 @@ async function generateCard() {
     const resp = await fetch('/generate-business-card', {
       method: 'POST',
       headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({salutation, firstName, lastName, title, email, phone})
+      body: new URLSearchParams({salutation, firstName, lastName, title, email, phone, url: document.getElementById('bc-url').value.trim()})
     });
     if (!resp.ok) throw new Error(await resp.text());
     const blob = await resp.blob();

@@ -353,6 +353,7 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const title      = (req.body.title || '').trim().slice(0, 80).toUpperCase();
     const email      = (req.body.email || '').trim().slice(0, 80);
     const phone      = (req.body.phone || '').trim().slice(0, 30);
+    const url        = (req.body.url   || '').trim().slice(0, 200);
 
     const templatePath = path.join(__dirname, 'public/assets/stationery/fpg-business-card-template.pdf');
     const pdfBytes = fs.readFileSync(templatePath);
@@ -389,6 +390,7 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
       email ? `EMAIL:${email}` : '',
       'ADR;TYPE=WORK:;;Hurstwood Grange;West Sussex;;RH17 8QX;UK',
       'URL:https://financeplanning.co.uk/',
+      url ? `URL:${url}` : '',
       'END:VCARD'
     ].filter(Boolean).join('\r\n');
 
