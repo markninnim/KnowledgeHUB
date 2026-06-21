@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FPG Brand Hub — Sign In</title>
+  <title>FPG Digital Asset Management Tool — Sign In</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -20,7 +20,7 @@
     body {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       background: var(--blue);
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -201,20 +201,8 @@
 <body>
   <div class="card">
     <div class="logo-area">
-      <div class="logo-lockup">
-        <div class="logo-icon">
-          <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="8" height="8" rx="2" fill="#fcb034"/>
-            <rect x="12" y="2" width="8" height="8" rx="2" fill="white" opacity=".7"/>
-            <rect x="2" y="12" width="8" height="8" rx="2" fill="white" opacity=".7"/>
-            <rect x="12" y="12" width="8" height="8" rx="2" fill="#2e99d5"/>
-          </svg>
-        </div>
-        <div class="logo-text">
-          <span class="brand">Finance Planning Group</span>
-          <span class="sub">Brand Hub</span>
-        </div>
-      </div>
+      <img src="/public-logo" alt="Finance Planning Group" style="height:56px;object-fit:contain;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--grey);letter-spacing:.5px;text-transform:uppercase;margin-top:4px;">Digital Asset Management</div>
     </div>
 
     <h1>Welcome back</h1>
@@ -235,7 +223,7 @@
           </svg>
         </button>
       </div>
-      <button type="submit" class="btn">Access Brand Hub</button>
+      <button type="submit" class="btn">Sign In</button>
     </form>
 
     <p class="footer-note">FPG internal use. For access, contact the brand team.</p>
