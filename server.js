@@ -5,6 +5,7 @@ const path     = require('path');
 const fs       = require('fs');
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBezierCurve, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
+const QRCode  = require('qrcode');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -345,10 +346,13 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
 // ── Business card generator ───────────────────────────────────
 app.post('/generate-business-card', requireAuth, async (req, res) => {
   try {
-    const name     = (req.body.name     || '').trim().slice(0, 60);
-    const title    = (req.body.title    || '').trim().slice(0, 80).toUpperCase();
-    const email    = (req.body.email    || '').trim().slice(0, 80);
-    const phone    = (req.body.phone    || '').trim().slice(0, 30);
+    const salutation = (req.body.salutation || 'Mr').trim();
+    const firstName  = (req.body.firstName  || '').trim().slice(0, 40);
+    const lastName   = (req.body.lastName   || '').trim().slice(0, 40);
+    const fullName   = `${firstName} ${lastName}`.trim();
+    const title      = (req.body.title || '').trim().slice(0, 80).toUpperCase();
+    const email      = (req.body.email || '').trim().slice(0, 80);
+    const phone      = (req.body.phone || '').trim().slice(0, 30);
 
     const templatePath = path.join(__dirname, 'public/assets/stationery/fpg-business-card-template.pdf');
     const pdfBytes = fs.readFileSync(templatePath);
@@ -360,27 +364,54 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const fontBold = await pdfDoc.embedFont(fontBoldBytes);
     const fontMed  = await pdfDoc.embedFont(fontMedBytes);
 
+    // ── Front page ────────────────────────────────────────────
     const page = pdfDoc.getPages()[0];
+    const darkBlue   = rgb(0/255, 55/255, 104/255);
+    const accentBlue = rgb(46/255, 153/255, 213/255);
+    const darkGrey   = rgb(26/255, 42/255, 58/255);
 
-    // Colours
-    const darkBlue   = rgb(0/255, 55/255, 104/255);   // #003768
-    const accentBlue = rgb(46/255, 153/255, 213/255);  // #2e99d5
-    const darkGrey   = rgb(26/255, 42/255, 58/255);    // #1a2a3a
-
-    // White out existing text areas (name baseline ~78 + 15pt cap height, down to phone ~33)
     page.drawRectangle({ x: 34, y: 30, width: 230, height: 68, color: rgb(1,1,1) });
+    page.drawText(fullName, { x: 36.9, y: 78.1, size: 15, font: fontBold, color: darkBlue });
+    page.drawText(title,    { x: 36.9, y: 66.7, size: 9,  font: fontMed,  color: accentBlue });
+    page.drawText(email,    { x: 36.9, y: 50.6, size: 9,  font: fontMed,  color: darkGrey });
+    page.drawText(phone,    { x: 36.9, y: 37.7, size: 9,  font: fontMed,  color: darkGrey });
 
-    // Draw name — Plus Jakarta Sans ExtraBold 15pt
-    page.drawText(name, { x: 36.9, y: 78.1, size: 15, font: fontBold, color: darkBlue });
-    // Draw title — Plus Jakarta Sans Medium 9pt uppercase
-    page.drawText(title, { x: 36.9, y: 66.7, size: 9, font: fontMed, color: accentBlue });
-    // Draw email — Plus Jakarta Sans Medium 9pt
-    page.drawText(email, { x: 36.9, y: 50.6, size: 9, font: fontMed, color: darkGrey });
-    // Draw phone — Plus Jakarta Sans Medium 9pt
-    page.drawText(phone, { x: 36.9, y: 37.7, size: 9, font: fontMed, color: darkGrey });
+    // ── Back page — vCard QR ──────────────────────────────────
+    const vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${lastName};${firstName};;;${salutation}`,
+      `FN:${salutation} ${fullName}`,
+      `ORG:Finance Planning Group`,
+      `TITLE:${title}`,
+      `TEL;TYPE=CELL:${phone}`,
+      `TEL;TYPE=WORK:01444 449400`,
+      email ? `EMAIL:${email}` : '',
+      'ADR;TYPE=WORK:;;Hurstwood Grange;West Sussex;;RH17 8QX;UK',
+      'URL:https://financeplanning.co.uk/',
+      'END:VCARD'
+    ].filter(Boolean).join('\r\n');
+
+    const qrPngBuffer = await QRCode.toBuffer(vcard, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 300,
+      color: { dark: '#003768', light: '#ffffff' }
+    });
+
+    const qrImage = await pdfDoc.embedPng(qrPngBuffer);
+    const back = pdfDoc.getPages()[1];
+    const { width: bw, height: bh } = back.getSize();
+    const qrSize = 80;
+    back.drawImage(qrImage, {
+      x: (bw - qrSize) / 2,
+      y: (bh - qrSize) / 2,
+      width: qrSize,
+      height: qrSize
+    });
 
     const modifiedBytes = await pdfDoc.save();
-    const safeName = (name || 'business-card').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const safeName = (fullName || 'business-card').replace(/[^a-z0-9]/gi, '-').toLowerCase();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="FPG-Business-Card-${safeName}.pdf"`);
     res.send(Buffer.from(modifiedBytes));
