@@ -355,10 +355,10 @@ app.post('/generate-business-card', requireAuth, async (req, res) => {
     const pdfDoc = await PDFDocument.load(pdfBytes);
     pdfDoc.registerFontkit(fontkit);
 
-    const varFontBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-VariableFont_wght.ttf'));
-    // Embed at ExtraBold (wght 800) for name, Medium (wght 500) for everything else
-    const fontBold = await pdfDoc.embedFont(varFontBytes, { features: { wght: 800 } });
-    const fontMed  = await pdfDoc.embedFont(varFontBytes, { features: { wght: 500 } });
+    const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
+    const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
+    const fontBold = await pdfDoc.embedFont(fontBoldBytes);
+    const fontMed  = await pdfDoc.embedFont(fontMedBytes);
 
     const page = pdfDoc.getPages()[0];
 
