@@ -3,7 +3,7 @@ const express  = require('express');
 const session  = require('express-session');
 const path     = require('path');
 const fs       = require('fs');
-const { PDFDocument, rgb } = require('pdf-lib');
+const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, curveTo, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 
 const app  = express();
@@ -13,7 +13,7 @@ const SECRET   = process.env.SESSION_SECRET || 'dev-secret-change-me';
 
 // ── Middleware ───────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.set('trust proxy', 1);
 app.use(session({
   secret: SECRET,
@@ -185,10 +185,11 @@ app.get('/api/assets', requireAuth, (req, res) => {
 });
 
 // ── Personalised brochure ─────────────────────────────────────
-app.get('/personalise-brochure', requireAuth, async (req, res) => {
+app.post('/personalise-brochure', requireAuth, async (req, res) => {
   try {
-    const customerName = (req.query.customer || '').trim().slice(0, 80);
-    const brokerName   = (req.query.broker   || '').trim().slice(0, 80);
+    const customerName   = (req.body.customer    || '').trim().slice(0, 80);
+    const brokerName     = (req.body.broker      || '').trim().slice(0, 80);
+    const brokerImageB64 = req.body.brokerImage  || null;
 
     const pdfPath  = path.join(__dirname, 'public/assets/brochures/fpg-protection-brochure-2026.pdf');
     const pdfBytes = fs.readFileSync(pdfPath);
@@ -246,6 +247,38 @@ app.get('/personalise-brochure', requireAuth, async (req, res) => {
         const fy = fph - Math.round(143.737 * mmToPt) - Math.round(factSize * 0.72);  // 143.737mm from top to cap height
         factp.drawRectangle({ x: fx - 2, y: fy - 6, width: 420, height: factSize + 14, color: bgColour });
         factp.drawText(`${firstName}, it’s a fact...`, { x: fx, y: fy, size: factSize, font, color: orange });
+      }
+    }
+
+    // ── Broker photo (circular, on cover) ──────────────────────
+    if (brokerImageB64) {
+      try {
+        const base64Data = brokerImageB64.replace(/^data:image\/\w+;base64,/, '');
+        const imgBuf = Buffer.from(base64Data, 'base64');
+        const isPng  = brokerImageB64.startsWith('data:image/png');
+        const brokerImg = isPng ? await pdfDoc.embedPng(imgBuf) : await pdfDoc.embedJpg(imgBuf);
+
+        const r  = 36;           // radius in points (~12.7mm)
+        const cx = 71 + r;       // left-aligned with text (x=71)
+        const cy = yStart - 17 - 20 - r; // below "By: [broker]" line
+        const K  = r * 0.5523;  // Bézier constant for circle
+
+        // Save state, set circular clip, draw image, restore
+        page.pushOperators(pushGraphicsState());
+        page.pushOperators(
+          moveTo(cx, cy + r),
+          curveTo(cx + K, cy + r, cx + r, cy + K, cx + r, cy),
+          curveTo(cx + r, cy - K, cx + K, cy - r, cx, cy - r),
+          curveTo(cx - K, cy - r, cx - r, cy - K, cx - r, cy),
+          curveTo(cx - r, cy + K, cx - K, cy + r, cx, cy + r),
+          closePath(),
+          clip(),
+          endPath()
+        );
+        page.drawImage(brokerImg, { x: cx - r, y: cy - r, width: r * 2, height: r * 2 });
+        page.pushOperators(popGraphicsState());
+      } catch (imgErr) {
+        console.warn('Broker image embed failed:', imgErr.message);
       }
     }
 

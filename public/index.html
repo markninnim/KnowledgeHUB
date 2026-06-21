@@ -166,8 +166,19 @@ html { height: 100%; }
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
           <input id="pb-customer" type="text" placeholder="Customer name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:6px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
-          <input id="pb-broker" type="text" placeholder="Broker name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:8px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
-          <button onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;border:none;cursor:pointer;text-align:center;">&#8659; Personalise &amp; Download</button>
+          <input id="pb-broker" type="text" placeholder="Broker name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div id="pb-img-preview" onclick="document.getElementById('pb-broker-img').click()" style="width:52px;height:52px;border-radius:50%;background:#f0f2f5;border:2px dashed #c0cad4;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aab4be" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#1a2a3a;font-weight:600;margin-bottom:2px;">Broker photo <span style="font-weight:400;color:#aab4be;">(optional)</span></div>
+              <a href="#" onclick="document.getElementById('pb-broker-img').click();return false;" style="font-size:11px;color:#003768;">Upload image</a>
+              <span id="pb-img-clear" style="display:none;font-size:11px;color:#cc0000;margin-left:8px;cursor:pointer;" onclick="clearBrokerImage()">Remove</span>
+            </div>
+          </div>
+          <input id="pb-broker-img" type="file" accept="image/png,image/jpeg,image/jpg" style="display:none;" onchange="previewBrokerImage(this)">
+          <button id="pb-download-btn" onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;border:none;cursor:pointer;text-align:center;">&#8659; Personalise &amp; Download</button>
         </div>
       </div>
       <div class="card">
@@ -497,11 +508,56 @@ function loadBrochureDates() {
     });
   });
 }
+function previewBrokerImage(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('pb-img-preview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+    preview.style.border = '2px solid #003768';
+    window._brokerImageData = e.target.result;
+    document.getElementById('pb-img-clear').style.display = 'inline';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function clearBrokerImage() {
+  window._brokerImageData = null;
+  var preview = document.getElementById('pb-img-preview');
+  preview.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aab4be" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  preview.style.border = '2px dashed #c0cad4';
+  document.getElementById('pb-broker-img').value = '';
+  document.getElementById('pb-img-clear').style.display = 'none';
+}
 function downloadPersonalisedBrochure() {
   var customer = document.getElementById('pb-customer').value.trim();
   var broker   = document.getElementById('pb-broker').value.trim();
-  var url = '/personalise-brochure?customer=' + encodeURIComponent(customer) + '&broker=' + encodeURIComponent(broker);
-  window.location.href = url;
+  var btn = document.getElementById('pb-download-btn');
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  fetch('/personalise-brochure', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customer: customer, broker: broker, brokerImage: window._brokerImageData || null })
+  })
+  .then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+    return r.blob();
+  })
+  .then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'FPG-Protection-Brochure' + (customer ? '-' + customer.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+    btn.innerHTML = '&#8659; Personalise &amp; Download';
+    btn.disabled = false;
+  })
+  .catch(function(err) {
+    alert('Could not personalise brochure: ' + err.message);
+    btn.innerHTML = '&#8659; Personalise &amp; Download';
+    btn.disabled = false;
+  });
 }
 function closePreview() {
   document.getElementById('preview-modal').classList.remove('open');
