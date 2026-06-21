@@ -17,10 +17,14 @@
       --dark:    #1a2a3a;
     }
 
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       background: var(--blue);
-      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -49,14 +53,6 @@
       position: relative;
     }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--orange), var(--accent));
-      border-radius: 12px 12px 0 0;
-    }
 
     .logo-area {
       text-align: center;
@@ -226,7 +222,7 @@
       <button type="submit" class="btn">Sign In</button>
     </form>
 
-    <p class="footer-note">FPG internal use. For access, contact the brand team.</p>
+    <p class="footer-note">FPG internal use. For access contact <a href="mailto:mark.ninnim@financeplanning.co.uk" style="color:var(--grey);">mark.ninnim@financeplanning.co.uk</a></p>
   </div>
 
   <script>
