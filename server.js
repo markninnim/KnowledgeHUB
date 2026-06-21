@@ -19,7 +19,7 @@ app.use(session({
   secret: SECRET,
   resave: true,
   saveUninitialized: true,
-  cookie: { maxAge: 1000 * 60 * 60 * 8, secure: process.env.NODE_ENV === 'production' } // 8 hours
+  cookie: { maxAge: 1000 * 60 * 60 * 24 * 365 * 10, secure: process.env.NODE_ENV === 'production' } // 10 years
 }));
 
 // ── Auth guard ───────────────────────────────────────────────
