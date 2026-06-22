@@ -1048,10 +1048,18 @@ function loadSocialContent() {
       msg.innerHTML = '<strong style="color:#003768;">Fun fact!</strong> The library currently contains <strong style="color:#003768;">' + posts.length + ' posts</strong> (each with 5 platform variations), giving you enough content to cover the next <strong style="color:#003768;">' + weeks + ' week' + (weeks !== 1 ? 's' : '') + '</strong> at the recommended 3 posts per week. We upload 2 new posts every day, so by the time you reach this point there will be a further <strong style="color:#003768;">' + extraWeeks + ' weeks</strong> of fresh content ready for your social media platforms. We do this to save you precious time that you can spend with your clients.';
       msg.style.display = 'block';
     }
+    var sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     posts.forEach(function(post) {
       var title = post.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
       var h3 = document.createElement('h3');
       h3.textContent = title;
+      var newestFile = post.files.reduce(function(latest, f) { return new Date(f.created) > new Date(latest.created) ? f : latest; }, post.files[0]);
+      if (newestFile && new Date(newestFile.created) < sixMonthsAgo) {
+        var expiredBadge = document.createElement('span');
+        expiredBadge.textContent = 'Approval expired';
+        expiredBadge.style.cssText = 'margin-left:10px;font-size:10px;font-weight:700;color:#cc0000;background:rgba(204,0,0,.1);padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;vertical-align:middle;';
+        h3.appendChild(expiredBadge);
+      }
       h3.style.cssText = 'color:#003768;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;';
       container.appendChild(h3);
       var grid = document.createElement('div'); grid.className = 'grid';
