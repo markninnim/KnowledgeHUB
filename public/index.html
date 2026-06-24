@@ -700,9 +700,24 @@ function show(id, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
+  window.location.hash = id;
   return false;
 }
+
+// Navigate to hash on load
+(function() {
+  var hash = window.location.hash.replace('#', '');
+  if (hash) {
+    var section = document.getElementById(hash);
+    var link = document.querySelector('.sidebar a[onclick*="show(\'' + hash + '\'"]');
+    if (section) {
+      // trigger the sidebar link click to also run any load callbacks
+      if (link) { link.click(); }
+      else { show(hash, null); }
+    }
+  }
+})();
 document.addEventListener('click', function(e) {
   var thumb = e.target.closest('.thumb');
   if (!thumb) return;
