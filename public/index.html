@@ -1316,12 +1316,6 @@ function closePriceModal() { document.getElementById('price-modal').style.displa
 
 loadLogosDates();
 
-// Navigate to hash on page load — runs after all functions are defined
-(function(){
-  var hash = window.location.hash.replace('#','');
-  if (hash && document.getElementById(hash)) navigateToSection(hash);
-})();
-
 fetch('/api/assets').then(r => r.json()).then(function(data) {
   // Activate all download + view buttons based on available files
   document.querySelectorAll('.btn.off, .btn-view.off').forEach(function(btn) {
@@ -1381,6 +1375,12 @@ function loadTemplatesDates() {
     });
   });
 }
+
+// Hash routing — navigate on load (called directly, no event wrapper needed)
+(function() {
+  var hash = window.location.hash.replace('#', '');
+  if (hash && document.getElementById(hash)) navigateToSection(hash);
+})();
 </script>
 </body>
 </html>
