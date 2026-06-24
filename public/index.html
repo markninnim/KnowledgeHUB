@@ -729,11 +729,6 @@ function navigateToSection(id) {
   if (sectionCallbacks[id]) sectionCallbacks[id]();
 }
 
-// Navigate on load if hash present
-(function(){
-  var hash = window.location.hash.replace('#','');
-  if (hash && document.getElementById(hash)) navigateToSection(hash);
-})();
 document.addEventListener('click', function(e) {
   var thumb = e.target.closest('.thumb');
   if (!thumb) return;
@@ -1316,6 +1311,12 @@ function openPriceModal(productName, tiers) {
 function closePriceModal() { document.getElementById('price-modal').style.display = 'none'; }
 
 loadLogosDates();
+
+// Navigate to hash on page load — runs after all functions are defined
+(function(){
+  var hash = window.location.hash.replace('#','');
+  if (hash && document.getElementById(hash)) navigateToSection(hash);
+})();
 
 fetch('/api/assets').then(r => r.json()).then(function(data) {
   // Activate all download + view buttons based on available files
