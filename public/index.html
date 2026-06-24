@@ -572,7 +572,7 @@ html { height: 100%; }
     <h2 style="color: #003768; margin-bottom: 16px;">Marketing Materials</h2>
     <p style="font-size:13px;color:#4a5a6a;line-height:1.75;margin:0 0 16px;">Marketing assets for print and digital use. All materials are brand-approved and ready to use.</p>
     <div class="grid">
-      <div class="card"><div class="thumb"><img src="/view-asset/marketing/FPG-Moving-Card-thumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Moving Card</h3><p>Branded card to send to clients when they move home.</p><br><span class="badge ready">Approved</span><br><a href="/download-asset/marketing/FPG-Moving-Card.pdf" class="btn">Download</a><a href="/view-asset/marketing/FPG-Moving-Card.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
+      <div class="card"><div class="thumb"><img src="/view-asset/marketing/FPG-Moving-Card-thumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Moving Card</h3><p>Branded card to send to clients when they move home.</p><br><span class="badge ready">Approved</span><br><a href="/download-asset/marketing/FPG-Moving-Card.pdf" class="btn">Download</a><a href="/view-asset/marketing/FPG-Moving-Card.pdf" class="btn-view" onclick="openPreview(event,this)">View</a><br><button onclick="openMcModal()" style="margin-top:8px;display:inline-block;background:#003768;color:#fff;padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;">Personalise My Card</button></div>
     </div>
   </div>
 
@@ -621,6 +621,26 @@ html { height: 100%; }
     <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Your Personal Web Page <span style="font-weight:400;color:#6b7c8f;">(optional)</span></label><input id="bc-url" type="url" placeholder="e.g. https://financeplanning.co.uk/mark-ninnim" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     <button onclick="generateCard()" style="width:100%;padding:12px;background:#003768;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Card PDF</button>
     <div id="bc-msg" style="margin-top:12px;font-size:12px;color:#6b7c8f;text-align:center;display:none;"></div>
+  </div>
+</div>
+
+<div id="mc-modal" onclick="if(event.target===this)closeMcModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:36px 40px;width:100%;max-width:440px;box-shadow:0 16px 48px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2 style="color:#003768;font-size:18px;margin:0;">Personalise Moving Card</h2>
+      <button onclick="closeMcModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
+    </div>
+    <p style="font-size:13px;color:#6b7c8f;margin:0 0 20px;">Your details will be added to the card with a personal QR code that saves your contact to the recipient's phone.</p>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <div style="flex:0 0 100px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Salutation</label><select id="mc-salutation" style="width:100%;padding:10px 8px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;"><option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option></select></div>
+      <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">First Name</label><input id="mc-firstname" type="text" placeholder="e.g. Mark" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+      <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Last Name</label><input id="mc-lastname" type="text" placeholder="e.g. Ninnim" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    </div>
+    <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Job Title</label><input id="mc-title" type="text" placeholder="e.g. Mortgage &amp; Protection Adviser" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Email</label><input id="mc-email" type="email" placeholder="e.g. mark.ninnim@financeplanning.co.uk" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Mobile</label><input id="mc-phone" type="text" placeholder="e.g. 07525 932 299" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
+    <button onclick="generateMovingCard()" style="width:100%;padding:12px;background:#003768;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Moving Card PDF</button>
+    <div id="mc-msg" style="margin-top:12px;font-size:12px;color:#6b7c8f;text-align:center;display:none;"></div>
   </div>
 </div>
 
@@ -1008,6 +1028,12 @@ function openCardModal() {
 function closeCardModal() {
   document.getElementById('card-modal').style.display = 'none';
 }
+function openMcModal() {
+  document.getElementById('mc-modal').style.display = 'flex';
+}
+function closeMcModal() {
+  document.getElementById('mc-modal').style.display = 'none';
+}
 async function generateCard() {
   const salutation = document.getElementById('bc-salutation').value.trim();
   const firstName  = document.getElementById('bc-firstname').value.trim();
@@ -1030,6 +1056,32 @@ async function generateCard() {
     const a    = document.createElement('a');
     a.href = url; a.download = 'FPG-Business-Card.pdf'; a.click();
     msg.textContent = 'Downloaded! Send the PDF to Mark to order printing.';
+  } catch(e) {
+    msg.textContent = 'Error: ' + e.message;
+  }
+}
+async function generateMovingCard() {
+  const salutation = document.getElementById('mc-salutation').value.trim();
+  const firstName  = document.getElementById('mc-firstname').value.trim();
+  const lastName   = document.getElementById('mc-lastname').value.trim();
+  const title      = document.getElementById('mc-title').value.trim();
+  const email      = document.getElementById('mc-email').value.trim();
+  const phone      = document.getElementById('mc-phone').value.trim().replace(/(\d{5})(\d{3})(\d{3})/, '$1 $2 $3');
+  const msg        = document.getElementById('mc-msg');
+  if (!firstName || !lastName) { msg.style.display='block'; msg.textContent='Please enter your name.'; return; }
+  msg.style.display='block'; msg.textContent='Generating your card...';
+  try {
+    const resp = await fetch('/generate-moving-card', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({salutation, firstName, lastName, title, email, phone})
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'FPG-Moving-Card.pdf'; a.click();
+    msg.textContent = 'Downloaded!';
   } catch(e) {
     msg.textContent = 'Error: ' + e.message;
   }
