@@ -459,6 +459,9 @@ app.post('/generate-moving-card', requireAuth, async (req, res) => {
     page.drawText(email,    { x: 56.85, y: 81.24,  size: 8,  font: fontMed,  color: darkGrey });
     page.drawText(phone,    { x: 56.85, y: 69.05,  size: 8,  font: fontMed,  color: darkGrey });
 
+    // Cover the existing QR placeholder area to the right of the business card on page 1
+    page.drawRectangle({ x: 285, y: 40, width: 160, height: 130, color: rgb(1,1,1) });
+
     // Generate vCard QR
     const vcard = [
       'BEGIN:VCARD', 'VERSION:3.0',
@@ -475,14 +478,18 @@ app.post('/generate-moving-card', requireAuth, async (req, res) => {
     ].filter(Boolean).join('\r\n');
 
     const qrPngBuffer = await QRCode.toBuffer(vcard, {
-      errorCorrectionLevel: 'M', margin: 1, width: 200,
+      errorCorrectionLevel: 'M', margin: 1, width: 300,
       color: { dark: '#003768', light: '#ffffff' }
     });
     const qrImage = await pdfDoc.embedPng(qrPngBuffer);
-    const qrSize = 70;
-    // Place QR to the right of the text block in the inner left panel
-    page.drawRectangle({ x: 290, y: 50, width: qrSize, height: qrSize, color: rgb(232/255, 244/255, 251/255) });
-    page.drawImage(qrImage, { x: 290, y: 50, width: qrSize, height: qrSize });
+
+    // Place QR on page 3 (index 3) — the back of the business card, centred in the light blue rectangle
+    // Light blue rect is approx x=42, y=42, width=230, height=155
+    const backPage = pdfDoc.getPages()[3];
+    const qrSize = 110;
+    const qrX = 42 + (230 - qrSize) / 2;  // centred horizontally in the rect
+    const qrY = 42 + (155 - qrSize) / 2;  // centred vertically in the rect
+    backPage.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
 
     const modifiedBytes = await pdfDoc.save();
     const safeName = fullName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
