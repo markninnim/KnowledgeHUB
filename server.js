@@ -258,10 +258,10 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
         return { fields: {
           [F_EMAIL]:            String(u.email).trim().toLowerCase(),
           [F_PASSWORD]:         hash,
-          [F_SAL]:              u.salutation  || '',
+          [F_SAL]:              u.salutation  || null,
           [F_FIRST]:            u.firstName   || '',
           [F_LAST]:             u.lastName    || '',
-          [F_TITLE]:            u.jobTitle    || '',
+          [F_TITLE]:            u.jobTitle    || null,
           [F_MOBILE]:           u.mobile      || '',
           [F_LANDLINE]:         u.landline    || '',
           [F_WEBSITE]:          u.website     || null,
