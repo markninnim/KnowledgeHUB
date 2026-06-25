@@ -858,7 +858,7 @@ html { height: 100%; }
 
   <!-- ── Supervisor Zone tab ───────────────────────────────── -->
   <div id="tab-supervisor-zone" class="tab-pane">
-    <div style="max-width:960px;margin:0 auto;padding:0 8px;">
+    <div style="max-width:1200px;margin:0 auto;padding:0 8px;">
       <!-- Header row -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
         <div>
@@ -875,7 +875,7 @@ html { height: 100%; }
           <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
           <div style="font-size:13px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:.5px;">Behind Target</div>
         </div>
-        <div id="sv-behind-list" style="display:grid;gap:12px;"></div>
+        <div id="sv-behind-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
       </div>
       <!-- On track section -->
       <div id="sv-ontrack-wrap" style="display:none;">
@@ -883,7 +883,7 @@ html { height: 100%; }
           <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
           <div style="font-size:13px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.5px;">On Track / Complete</div>
         </div>
-        <div id="sv-ontrack-list" style="display:grid;gap:12px;"></div>
+        <div id="sv-ontrack-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
       </div>
       <div id="sv-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading team…</div>
     </div>
