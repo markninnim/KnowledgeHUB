@@ -296,11 +296,12 @@ app.get('/api/supervisor/team', requireSupervisor, async (req, res) => {
 });
 
 // ── Learning zone config ──────────────────────────────────────
-const LV_TABLE   = 'tblGxOMw9SDUlzw1h';
-const LV_TITLE   = 'fldTYb4MSVDqIdr85';
-const LV_DESC    = 'fldAdn5cQl5CDKJF4';
-const LV_URL     = 'fldebTNSnIADrx4jv';
-const LV_ADDED   = 'fldBykZ17cGbybYAp';
+const LV_TABLE    = 'tblGxOMw9SDUlzw1h';
+const LV_TITLE    = 'fldTYb4MSVDqIdr85';
+const LV_DESC     = 'fldAdn5cQl5CDKJF4';
+const LV_URL      = 'fldebTNSnIADrx4jv';
+const LV_ADDED    = 'fldBykZ17cGbybYAp';
+const LV_CPD_TYPE = 'fldQoRx2AsSvTdwY6';
 const FEATURED_COUNT = 8;
 
 async function lvFetch(endpoint, options = {}) {
@@ -318,10 +319,11 @@ function lvRecordToVideo(record) {
   const f = record.fields;
   return {
     id:          record.id,
-    title:       f[LV_TITLE]  || '',
-    description: f[LV_DESC]   || '',
-    url:         f[LV_URL]    || '',
-    added:       f[LV_ADDED]  || record.createdTime || ''
+    title:       f[LV_TITLE]    || '',
+    description: f[LV_DESC]    || '',
+    url:         f[LV_URL]     || '',
+    added:       f[LV_ADDED]   || record.createdTime || '',
+    cpdType:     f[LV_CPD_TYPE]|| 'Mortgage'
   };
 }
 
@@ -338,12 +340,12 @@ app.get('/api/learning', requireAuth, async (req, res) => {
 
 // POST /api/admin/learning — add video
 app.post('/api/admin/learning', requireAdmin, async (req, res) => {
-  const { title, description, url } = req.body;
+  const { title, description, url, cpdType } = req.body;
   if (!title || !url) return res.status(400).json({ error: 'Title and URL required' });
   try {
     const data = await lvFetch('', {
       method: 'POST',
-      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString() } }], returnFieldsByFieldId: true })
+      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString(), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
     });
     res.json(lvRecordToVideo(data.records[0]));
   } catch (err) {
@@ -353,11 +355,11 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
 
 // PUT /api/admin/learning/:id — edit video
 app.put('/api/admin/learning/:id', requireAdmin, async (req, res) => {
-  const { title, description, url } = req.body;
+  const { title, description, url, cpdType } = req.body;
   try {
     const data = await lvFetch(`/${req.params.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url }, returnFieldsByFieldId: true })
+      body: JSON.stringify({ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_CPD_TYPE]: cpdType || 'Mortgage' }, returnFieldsByFieldId: true })
     });
     res.json(lvRecordToVideo(data));
   } catch (err) {
@@ -462,25 +464,29 @@ app.post('/api/cpd', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/cpd/video — auto-log a Learning Zone video
+// POST /api/cpd/video — auto-log a Learning Zone video (supports 50/50)
 app.post('/api/cpd/video', requireAuth, async (req, res) => {
   const { videoTitle, cpdType } = req.body;
   try {
     const today = new Date().toISOString().split('T')[0];
+    const makeRecord = (type, mins) => ({ fields: {
+      [CPD_ACTIVITY]: videoTitle || 'Learning Zone video',
+      [CPD_EMAIL]:    req.session.user.email,
+      [CPD_DATE]:     today,
+      [CPD_MINUTES]:  mins,
+      [CPD_CATEGORY]: 'Technical Knowledge',
+      [CPD_SOURCE]:   'Learning Zone',
+      [CPD_VTITLE]:   videoTitle || '',
+      [CPD_TYPE]:     type
+    }});
+    const records = cpdType === '50/50'
+      ? [makeRecord('Mortgage', 30), makeRecord('Protection', 30)]
+      : [makeRecord(cpdType || 'Mortgage', 60)];
     const data = await cpdFetch('', {
       method: 'POST',
-      body: JSON.stringify({ records: [{ fields: {
-        [CPD_ACTIVITY]: videoTitle || 'Learning Zone video',
-        [CPD_EMAIL]:    req.session.user.email,
-        [CPD_DATE]:     today,
-        [CPD_MINUTES]:  60,
-        [CPD_CATEGORY]: 'Technical Knowledge',
-        [CPD_SOURCE]:   'Learning Zone',
-        [CPD_VTITLE]:   videoTitle || '',
-        [CPD_TYPE]:     cpdType || 'Mortgage'
-      }}], returnFieldsByFieldId: true })
+      body: JSON.stringify({ records, returnFieldsByFieldId: true })
     });
-    res.json(cpdRecordToEntry(data.records[0]));
+    res.json((data.records || []).map(cpdRecordToEntry));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
