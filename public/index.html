@@ -104,7 +104,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
     <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Sales Process</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')">Selling Zone</button>
-    <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
+    <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">CPD Register</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:#003768;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
@@ -862,8 +862,8 @@ html { height: 100%; }
       <!-- Header row -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
         <div>
-          <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Supervisor Zone</h2>
-          <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Year-to-date team CPD</div>
+          <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Continuous Professional Development Register</h2>
+          <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">CPD register for your team</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
@@ -2830,6 +2830,17 @@ function renderSvDashboard(data) {
     var obj = { m: m, cpd: cpd, visible: visible, worstPct: worstPct };
     if (worstPct < 100) behind.push(obj); else onTrack.push(obj);
   });
+
+  // Update subtitle with supervisor name
+  var svName = '';
+  if (_svViewAsEmail) {
+    var sel = document.getElementById('sv-viewas-select');
+    if (sel) { var opt = sel.options[sel.selectedIndex]; svName = opt ? opt.text : _svViewAsEmail; }
+  } else if (_currentUser) {
+    svName = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') || _currentUser.email;
+  }
+  var subtitleEl = document.getElementById('sv-subtitle');
+  if (subtitleEl && svName) subtitleEl.textContent = 'CPD register for ' + svName + '’s team';
 
   // Stats bar
   var totalMins = members.reduce(function(s,m){ var c = cpdByMember[m.email]||{}; return s+(c.total||0); }, 0);
