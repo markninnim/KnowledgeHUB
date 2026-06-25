@@ -2847,16 +2847,16 @@ function renderSvDashboard(data) {
   if (sbCount) sbCount.textContent = onTrack.length + '/' + members.length;
 
   // Update subtitle
-  var subtitleEl = document.getElementById(‘sv-subtitle’);
+  var subtitleEl = document.getElementById('sv-subtitle');
   if (subtitleEl) {
-    if (_svViewAsEmail === ‘all’) {
-      subtitleEl.textContent = ‘CPD register — all advisers’;
+    if (_svViewAsEmail === 'all') {
+      subtitleEl.textContent = 'CPD register — all advisers';
     } else if (_svViewAsEmail) {
-      var sel2 = document.getElementById(‘sv-viewas-select’);
+      var sel2 = document.getElementById('sv-viewas-select');
       var svName2 = sel2 ? (sel2.options[sel2.selectedIndex] || {}).text || _svViewAsEmail : _svViewAsEmail;
       subtitleEl.textContent = 'CPD register for ' + svName2 + '\u2019s team';
     } else if (_currentUser) {
-      var svName3 = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(‘ ‘) || _currentUser.email;
+      var svName3 = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') || _currentUser.email;
       subtitleEl.textContent = 'CPD register for ' + svName3 + '\u2019s team';
     }
   }
