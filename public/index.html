@@ -83,27 +83,67 @@ html { height: 100%; }
 .thumb img { max-height:104px; max-width:100%; object-fit:contain; }
 .thumb canvas { max-height:104px; max-width:100%; }
 .thumb .type-badge { color:#fff; width:40px; height:40px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+.tab-nav { display:flex; align-items:center; gap:4px; margin-left:28px; }
+.tab-btn { background:none; border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; color:#6b7c8f; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
+.tab-btn:hover { background:#f5f7fa; color:#003768; }
+.tab-btn.active { background:#003768; color:#fff; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+.coming-soon { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; }
+.coming-soon svg { opacity:.15; margin-bottom:24px; }
+.coming-soon h2 { color:#003768; font-size:22px; margin:0 0 10px; }
+.coming-soon p { color:#6b7c8f; font-size:14px; max-width:360px; line-height:1.7; margin:0; }
 </style>
 </head>
 <body>
 <div class="topbar">
   <img src="/public-logo" alt="Finance Planning Group">
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
+    <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
+    <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
+    <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Sales Process</button>
+    <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')">Selling Zone</button>
+  </div>
 </div>
 <div class="sidebar">
-  <h2 style="margin-top: 8px;">Assets</h2>
-  <a href="#" onclick="show('brochures',this);loadBrochureDates()">Brochures</a>
-  <a href="#" onclick="show('graphics',this)">Graphics</a>
-  <a href="#" onclick="show('logos',this);loadLogosDates()">Logo Files</a>
-  <a href="#" onclick="show('marketing',this);loadMarketingDates()">Marketing Materials</a>
-  <a href="#" onclick="show('social',this);loadSocialAssetDates()">Social Assets</a>
-  <a href="#" onclick="show('social-content',this);loadSocialContent()">Static Social Content <span id="social-count-badge" style="display:none;background:#fcb034;color:#003768;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
-  <a href="#" onclick="show('stationery',this)">Stationery</a>
-  <a href="#" onclick="show('templates',this);loadTemplatesDates()">Templates</a>
-  <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
-  <h2 style="margin-top: 16px;">Brand Specs</h2>
-  <a href="#" onclick="show('colours',this)">Colours</a>
-  <a href="#" onclick="show('typography',this)">Typography</a>
-  <a href="#" onclick="show('voice',this)">Brand Voice</a>
+  <!-- Marketing sidebar -->
+  <div id="sidebar-marketing">
+    <h2 style="margin-top: 8px;">Assets</h2>
+    <a href="#" onclick="show('brochures',this);loadBrochureDates()">Brochures</a>
+    <a href="#" onclick="show('graphics',this)">Graphics</a>
+    <a href="#" onclick="show('logos',this);loadLogosDates()">Logo Files</a>
+    <a href="#" onclick="show('marketing',this);loadMarketingDates()">Marketing Materials</a>
+    <a href="#" onclick="show('social',this);loadSocialAssetDates()">Social Assets</a>
+    <a href="#" onclick="show('social-content',this);loadSocialContent()">Static Social Content <span id="social-count-badge" style="display:none;background:#fcb034;color:#003768;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
+    <a href="#" onclick="show('stationery',this)">Stationery</a>
+    <a href="#" onclick="show('templates',this);loadTemplatesDates()">Templates</a>
+    <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
+    <h2 style="margin-top: 16px;">Brand Specs</h2>
+    <a href="#" onclick="show('colours',this)">Colours</a>
+    <a href="#" onclick="show('typography',this)">Typography</a>
+    <a href="#" onclick="show('voice',this)">Brand Voice</a>
+  </div>
+  <!-- Compliance sidebar -->
+  <div id="sidebar-compliance" style="display:none">
+    <h2 style="margin-top: 8px;">Compliance</h2>
+    <a href="#" class="active">Overview</a>
+  </div>
+  <!-- Learning sidebar -->
+  <div id="sidebar-learning" style="display:none">
+    <h2 style="margin-top: 8px;">Learning</h2>
+    <a href="#" class="active">Overview</a>
+  </div>
+  <!-- Sales Process sidebar -->
+  <div id="sidebar-sales-process" style="display:none">
+    <h2 style="margin-top: 8px;">Sales Process</h2>
+    <a href="#" class="active">Overview</a>
+  </div>
+  <!-- Selling Zone sidebar -->
+  <div id="sidebar-selling-zone" style="display:none">
+    <h2 style="margin-top: 8px;">Selling Zone</h2>
+    <a href="#" class="active">Overview</a>
+  </div>
 </div>
 <!-- Hero triangles -->
 <svg style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:0.07;" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -112,6 +152,9 @@ html { height: 100%; }
 </svg>
 
 <div class="main" style="position:relative;z-index:1;">
+
+  <!-- ── Marketing tab ─────────────────────────────────────── -->
+  <div id="tab-marketing" class="tab-pane active">
   <div id="logos" class="section active">
     <h2 style="color: #003768; margin-bottom: 16px;">Logo Files</h2>
 
@@ -629,6 +672,44 @@ html { height: 100%; }
       <div class="card"><div class="thumb" data-pdf="/view-asset/stationery/fpg-letterhead.pdf"></div><h3>FPG Letterhead</h3><p>Branded letterhead for correspondence. Order directly from head office.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-letterhead.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/stationery/fpg-letterhead.pdf" class="btn">Download</a><a href="/view-asset/stationery/fpg-letterhead.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
       <div class="card"><div class="thumb"><img src="/view-asset/stationery/fpg-business-card-thumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>FPG Business Card</h3><p>Branded business card artwork for print production. Order via Mark Ninnim by sending artwork.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-business-card.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><button onclick="openCardModal()" style="margin-top:8px;display:inline-block;background:#003768;color:#fff;padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;">Generate My Card</button></div>
       <div class="card"><div class="thumb"><img src="/view-asset/stationery/folder-tumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>FPG Folder</h3><p>Branded presentation folder with 5mm capacity for documents. Business card slot inside.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="folder-bleed.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/stationery/folder-bleed.pdf" class="btn">Download</a><a href="/view-asset/stationery/folder-bleed.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
+    </div>
+  </div>
+
+  </div><!-- /tab-marketing -->
+
+  <!-- ── Compliance tab ────────────────────────────────────── -->
+  <div id="tab-compliance" class="tab-pane">
+    <div class="coming-soon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <h2>Compliance</h2>
+      <p>Compliance documents, checklists, and regulatory resources will appear here. This section is coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ── Learning tab ──────────────────────────────────────── -->
+  <div id="tab-learning" class="tab-pane">
+    <div class="coming-soon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      <h2>Learning</h2>
+      <p>Training materials, guides, and learning resources for the FPG team will appear here. This section is coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ── Sales Process tab ─────────────────────────────────── -->
+  <div id="tab-sales-process" class="tab-pane">
+    <div class="coming-soon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <h2>Sales Process</h2>
+      <p>Step-by-step sales process documentation, scripts, and workflow guides will appear here. This section is coming soon.</p>
+    </div>
+  </div>
+
+  <!-- ── Selling Zone tab ──────────────────────────────────── -->
+  <div id="tab-selling-zone" class="tab-pane">
+    <div class="coming-soon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <h2>Selling Zone</h2>
+      <p>Sales tools, objection handling, and performance resources will appear here. This section is coming soon.</p>
     </div>
   </div>
 
@@ -1465,10 +1546,29 @@ function generateBrokerBrand() {
   });
 }
 
+// ── Tab switching ─────────────────────────────────────────────
+var TAB_IDS = ['marketing','compliance','learning','sales-process','selling-zone'];
+function switchTab(tab) {
+  TAB_IDS.forEach(function(t) {
+    var pane    = document.getElementById('tab-' + t);
+    var sidebar = document.getElementById('sidebar-' + t);
+    var btn     = document.getElementById('tab-btn-' + t);
+    if (pane)    pane.classList.toggle('active', t === tab);
+    if (sidebar) sidebar.style.display = (t === tab) ? '' : 'none';
+    if (btn)     btn.classList.toggle('active', t === tab);
+  });
+  window.location.hash = tab;
+}
+
 // Hash routing — navigate on load (called directly, no event wrapper needed)
 (function() {
   var hash = window.location.hash.replace('#', '');
-  if (hash && document.getElementById(hash)) navigateToSection(hash);
+  if (!hash) return;
+  if (TAB_IDS.indexOf(hash) !== -1) {
+    switchTab(hash);
+  } else if (document.getElementById(hash)) {
+    navigateToSection(hash);
+  }
 })();
 </script>
 </body>
