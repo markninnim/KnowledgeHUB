@@ -672,9 +672,7 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
 
     let y = H - headerH - 24;
 
-    // ── Progress card (white) ──────────────────────────────────
-    const progressCardTop = y;
-    page.drawRectangle({ x: 20, y: y - 148, width: W - 40, height: 158, color: white, borderRadius: 6 });
+    // ── Progress section ───────────────────────────────────────
     y -= 10;
     page.drawText('CPD Progress', { x: 36, y, size: 11, font: fontBold, color: darkBlue });
     y -= 20;
@@ -710,51 +708,77 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
 
     y -= 16;
 
-    // ── Entries card (white) ───────────────────────────────────
-    const entryRowH = 18;
-    const entriesCardH = 36 + entries.length * entryRowH + 20;
-    page.drawRectangle({ x: 20, y: y - entriesCardH, width: W - 40, height: entriesCardH + 10, color: white, borderRadius: 6 });
+    // ── Entries section ────────────────────────────────────────
     y -= 10;
     page.drawText('Entries (' + entries.length + ')', { x: 36, y, size: 11, font: fontBold, color: darkBlue });
     y -= 16;
 
+    // Word-wrap helper
+    const wrapText = (text, font, size, maxW) => {
+      if (!text) return [];
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+      words.forEach(w => {
+        const test = line ? line + ' ' + w : w;
+        if (font.widthOfTextAtSize(test, size) <= maxW) { line = test; }
+        else { if (line) lines.push(line); line = w; }
+      });
+      if (line) lines.push(line);
+      return lines;
+    };
+    const truncate = (s, max) => s && s.length > max ? s.slice(0, max-1) + '…' : (s || '');
+
     // Table header row
     const cols = [{ x:36, label:'Date' }, { x:114, label:'Activity' }, { x:310, label:'Type' }, { x:398, label:'Category' }, { x:514, label:'Time' }];
-    page.drawRectangle({ x: 20, y: y - 5, width: W - 40, height: 18, color: pageBg });
-    cols.forEach(c => page.drawText(c.label, { x: c.x, y: y+1, size: 7.5, font: fontBold, color: midGrey }));
+    const learnedMaxW = W - 36 - cols[1].x; // full width for learned text
+    const learnedLineH = 10;
+
+    const drawTableHeader = (pg, yPos) => {
+      pg.drawRectangle({ x: 20, y: yPos - 5, width: W - 40, height: 18, color: pageBg });
+      cols.forEach(c => pg.drawText(c.label, { x: c.x, y: yPos + 1, size: 7.5, font: fontBold, color: midGrey }));
+    };
+
+    drawTableHeader(page, y);
     y -= 20;
 
-    const truncate = (s, max) => s && s.length > max ? s.slice(0, max-1) + '…' : (s || '');
     let currentPage = page;
     entries.forEach((e, i) => {
+      // Pre-calculate learned lines
+      const learnedLines = e.learned ? wrapText(e.learned, fontMed, 7, learnedMaxW) : [];
+      const entryH = 17 + (learnedLines.length > 0 ? 9 + learnedLines.length * learnedLineH : 0);
+
       // New page if needed
-      if (y < 60) {
+      if (y - entryH < 50) {
         const np = pdfDoc.addPage([W, H]);
         np.drawRectangle({ x: 0, y: 0, width: W, height: H, color: pageBg });
         np.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: white });
-        np.drawRectangle({ x: 0, y: H - headerH, width: W, height: 3, color: darkBlue });
         np.drawImage(logoImg, { x: logoX, y: logoY, width: logoDims.width, height: logoDims.height });
-        np.drawText(userName + ' — continued', { x: W - 28 - fontBold.widthOfTextAtSize(userName + ' — continued', 13), y: H - 42, size: 13, font: fontBold, color: darkBlue });
+        const contLabel = userName + ' — continued';
+        np.drawText(contLabel, { x: W - 28 - fontBold.widthOfTextAtSize(contLabel, 13), y: H - 42, size: 13, font: fontBold, color: darkBlue });
         currentPage = np;
         y = H - headerH - 36;
-        currentPage.drawRectangle({ x: 20, y: 40, width: W - 40, height: y - 40, color: white, borderRadius: 6 });
-        y -= 10;
-        currentPage.drawRectangle({ x: 20, y: y - 5, width: W - 40, height: 18, color: pageBg });
-        cols.forEach(c => currentPage.drawText(c.label, { x: c.x, y: y+1, size: 7.5, font: fontBold, color: midGrey }));
+        drawTableHeader(currentPage, y);
         y -= 20;
       }
-      if (i % 2 !== 0) currentPage.drawRectangle({ x: 20, y: y - 5, width: W - 40, height: 16, color: pageBg });
+
+      if (i % 2 !== 0) currentPage.drawRectangle({ x: 20, y: y - 5, width: W - 40, height: entryH - 2, color: pageBg });
       const d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
-      currentPage.drawText(d,                                  { x: cols[0].x, y, size: 8, font: fontMed,  color: grey });
-      currentPage.drawText(truncate(e.activity, 30),           { x: cols[1].x, y, size: 8, font: fontBold, color: darkBlue });
-      currentPage.drawText(truncate(e.cpdType, 12),            { x: cols[2].x, y, size: 8, font: fontMed,  color: e.cpdType === 'Mortgage' ? accentBlue : amber });
-      currentPage.drawText(truncate(e.category, 18),           { x: cols[3].x, y, size: 8, font: fontMed,  color: grey });
-      currentPage.drawText(fmtMin(e.minutes),                  { x: cols[4].x, y, size: 8, font: fontBold, color: darkBlue });
-      if (e.learned) {
+      currentPage.drawText(d,                        { x: cols[0].x, y, size: 8, font: fontMed,  color: grey });
+      currentPage.drawText(truncate(e.activity, 30), { x: cols[1].x, y, size: 8, font: fontBold, color: darkBlue });
+      currentPage.drawText(truncate(e.cpdType, 12),  { x: cols[2].x, y, size: 8, font: fontMed,  color: e.cpdType === 'Mortgage' ? accentBlue : amber });
+      currentPage.drawText(truncate(e.category, 18), { x: cols[3].x, y, size: 8, font: fontMed,  color: grey });
+      currentPage.drawText(fmtMin(e.minutes),        { x: cols[4].x, y, size: 8, font: fontBold, color: darkBlue });
+      if (learnedLines.length > 0) {
         y -= 11;
-        currentPage.drawText('  ' + truncate(e.learned, 82),  { x: cols[1].x, y, size: 7, font: fontMed,  color: midGrey });
+        learnedLines.forEach(line => {
+          currentPage.drawText(line, { x: cols[1].x, y, size: 7, font: fontMed, color: midGrey });
+          y -= learnedLineH;
+        });
+        y -= 4;
+      } else {
+        y -= 17;
       }
-      y -= 17;
     });
 
     // ── Footer ────────────────────────────────────────────────
