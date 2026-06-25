@@ -23,6 +23,7 @@
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
 body { font-family: sans-serif; margin: 0; background: #f5f7fa; overflow-y: scroll; }
@@ -1146,6 +1147,9 @@ html { height: 100%; }
         <button onclick="downloadCsvTemplate()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Template</button>
         <label style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">
           ↑ Import CSV<input type="file" accept=".csv" onchange="importCsv(this)" style="display:none;">
+        </label>
+        <label style="background:#0057a8;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;">
+          ↑ Import Excel<input type="file" accept=".xlsx" onchange="importUsersExcel(this)" style="display:none;">
         </label>
         <button onclick="openUserForm()" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
@@ -3499,6 +3503,25 @@ function downloadCsvTemplate() {
   URL.revokeObjectURL(a.href);
 }
 
+function importUsersExcel(input) {
+  var file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var data = new Uint8Array(e.target.result);
+    var wb = XLSX.read(data, { type: 'array' });
+    // Use 'Upload Ready' sheet if present, else first sheet
+    var sheetName = wb.SheetNames.indexOf('Upload Ready') >= 0 ? 'Upload Ready' : wb.SheetNames[0];
+    var ws = wb.Sheets[sheetName];
+    var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (rows.length === 0) { alert('No data rows found in Excel file.'); return; }
+    _importRows = rows;
+    showImportPreview(rows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 function importCsv(input) {
   var file = input.files[0];
   if (!file) return;
@@ -3560,47 +3583,51 @@ function cancelImport() {
 async function confirmImport() {
   var rows = _importRows;
   if (!rows.length) return;
-  var progressEl  = document.getElementById('import-progress');
-  var barEl       = document.getElementById('import-progress-bar');
-  var textEl      = document.getElementById('import-progress-text');
+  var progressEl = document.getElementById('import-progress');
+  var barEl      = document.getElementById('import-progress-bar');
+  var textEl     = document.getElementById('import-progress-text');
   progressEl.style.display = 'block';
-  var ok = 0, fail = 0;
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i];
-    barEl.style.width = Math.round((i / rows.length) * 100) + '%';
-    textEl.textContent = 'Importing ' + (i + 1) + ' of ' + rows.length + '…';
-    try {
-      var res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email:      r.email,
-          password:   r.password,
-          salutation: r.salutation || '',
-          firstName:  r.firstName  || '',
-          lastName:   r.lastName   || '',
-          jobTitle:   r.jobTitle   || '',
-          mobile:     r.mobile     || '',
-          landline:   r.landline   || '',
-          website:    r.website    || '',
-          isAdmin:          r.isAdmin === 'true'          || r.isAdmin === '1',
-          sellsInvestments: r.sellsInvestments === 'true' || r.sellsInvestments === '1',
-          sellsMortgages:   r.sellsMortgages   === 'true' || r.sellsMortgages   === '1',
-          sellsProtection:  r.sellsProtection  === 'true' || r.sellsProtection  === '1',
-          isSupervisor:     r.isSupervisor     === 'true' || r.isSupervisor     === '1',
-          supervisorEmail:  r.supervisorEmail  || ''
-        })
-      });
-      if (res.ok) ok++; else fail++;
-    } catch(e) { fail++; }
+  barEl.style.width = '30%';
+  textEl.textContent = 'Uploading ' + rows.length + ' users…';
+  try {
+    var payload = rows.map(function(r) {
+      return {
+        email:            r.email            || '',
+        password:         r.password         || '',
+        salutation:       r.salutation       || '',
+        firstName:        r.firstName        || '',
+        lastName:         r.lastName         || '',
+        jobTitle:         r.jobTitle         || '',
+        mobile:           r.mobile           || '',
+        landline:         r.landline         || '',
+        website:          r.website          || '',
+        isAdmin:          r.isAdmin === 'true'          || r.isAdmin === true,
+        sellsInvestments: r.sellsInvestments === 'true' || r.sellsInvestments === true,
+        sellsMortgages:   r.sellsMortgages   === 'true' || r.sellsMortgages   === true,
+        sellsProtection:  r.sellsProtection  === 'true' || r.sellsProtection  === true,
+        isSupervisor:     r.isSupervisor     === 'true' || r.isSupervisor     === true,
+        supervisorEmail:  r.supervisorEmail  || ''
+      };
+    });
+    barEl.style.width = '60%';
+    var res = await fetch('/api/admin/users/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var result = await res.json();
+    barEl.style.width = '100%';
+    textEl.textContent = result.created + ' imported' +
+      (result.skipped  ? ', ' + result.skipped  + ' skipped' : '') +
+      (result.errors && result.errors.length ? ', ' + result.errors.length + ' errors' : '') + '.';
+  } catch(e) {
+    textEl.textContent = 'Import failed: ' + e.message;
   }
-  barEl.style.width = '100%';
-  textEl.textContent = ok + ' imported' + (fail ? ', ' + fail + ' failed' : '') + '.';
   _importRows = [];
   setTimeout(function() {
     document.getElementById('admin-import-preview').style.display = 'none';
     loadAdminUsers();
-  }, 1500);
+  }, 2000);
 }
 </script>
 </body>
