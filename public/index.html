@@ -105,6 +105,12 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Sales Process</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')">Selling Zone</button>
   </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:#003768;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
+    </button>
+    <a href="/logout" style="color:#6b7c8f;font-size:13px;font-weight:600;text-decoration:none;padding:6px 12px;border-radius:20px;transition:background .15s;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'">Sign out</a>
+  </div>
 </div>
 <div class="sidebar">
   <!-- Marketing sidebar -->
@@ -771,6 +777,85 @@ html { height: 100%; }
     <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e8ecf0;display:flex;align-items:center;gap:10px;">
       <span style="font-size:11px;color:#6b7c8f;white-space:nowrap;">Prices provided by</span>
       <img src="/static/solopress-logo.svg" alt="Solopress" style="height:30px;opacity:.75;">
+    </div>
+  </div>
+</div>
+
+<!-- ── Admin Panel ─────────────────────────────────────────── -->
+<div id="admin-modal" onclick="if(event.target===this)closeAdminPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:760px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #e8ecf0;">
+      <div>
+        <h2 style="color:#003768;font-size:18px;margin:0 0 2px;">User Management</h2>
+        <p style="color:#6b7c8f;font-size:13px;margin:0;">Manage who can access the FPG DAM tool.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="openUserForm()" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add User</button>
+        <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
+      </div>
+    </div>
+
+    <!-- User list -->
+    <div id="admin-user-list" style="padding:0 28px 28px;">
+      <div style="color:#6b7c8f;font-size:13px;padding:20px 0;text-align:center;">Loading users…</div>
+    </div>
+
+    <!-- User form (add / edit) -->
+    <div id="admin-user-form" style="display:none;padding:0 28px 28px;">
+      <div style="border-top:1px solid #e8ecf0;padding-top:24px;margin-top:4px;">
+        <h3 id="user-form-title" style="color:#003768;font-size:15px;margin:0 0 20px;">Add New User</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div style="grid-column:1/-1;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Email Address *</label>
+            <input id="uf-email" type="email" placeholder="email@example.com" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Password <span id="uf-pw-hint" style="font-weight:400;color:#6b7c8f;">(required for new user)</span></label>
+            <input id="uf-password" type="password" placeholder="Set password" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Salutation</label>
+            <select id="uf-salutation" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
+              <option value="">—</option>
+              <option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">First Name</label>
+            <input id="uf-firstname" type="text" placeholder="First name" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Last Name</label>
+            <input id="uf-lastname" type="text" placeholder="Last name" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Job Title</label>
+            <input id="uf-jobtitle" type="text" placeholder="e.g. Financial Adviser" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Mobile</label>
+            <input id="uf-mobile" type="text" placeholder="07xxx xxxxxx" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Landline</label>
+            <input id="uf-landline" type="text" placeholder="0xxxx xxxxxx" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Website</label>
+            <input id="uf-website" type="text" placeholder="https://…" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
+            <input id="uf-admin" type="checkbox" style="width:16px;height:16px;cursor:pointer;accent-color:#003768;">
+            <label for="uf-admin" style="font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">Admin access (can manage users)</label>
+          </div>
+        </div>
+        <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button onclick="saveUser()" style="background:#003768;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save User</button>
+          <button onclick="cancelUserForm()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1570,6 +1655,162 @@ function switchTab(tab) {
     navigateToSection(hash);
   }
 })();
+
+// ── Init: load current user, show admin button if admin ──────
+(function initUser() {
+  fetch('/api/me').then(r => r.json()).then(function(user) {
+    if (user && user.isAdmin) {
+      var btn = document.getElementById('admin-btn');
+      if (btn) btn.style.display = 'inline-flex';
+    }
+  }).catch(function(){});
+})();
+
+// ── Admin Panel ───────────────────────────────────────────────
+var _adminUsers = [];
+var _editingUserId = null;
+
+function openAdminPanel() {
+  var m = document.getElementById('admin-modal');
+  m.style.display = 'flex';
+  loadAdminUsers();
+}
+
+function closeAdminPanel() {
+  document.getElementById('admin-modal').style.display = 'none';
+  cancelUserForm();
+}
+
+function loadAdminUsers() {
+  document.getElementById('admin-user-list').innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;text-align:center;">Loading…</div>';
+  fetch('/api/admin/users').then(r => r.json()).then(function(users) {
+    _adminUsers = users;
+    renderUserList(users);
+  }).catch(function(e) {
+    document.getElementById('admin-user-list').innerHTML = '<div style="color:#c00;font-size:13px;padding:20px 0;text-align:center;">Failed to load users.</div>';
+  });
+}
+
+function renderUserList(users) {
+  var el = document.getElementById('admin-user-list');
+  if (!users || users.length === 0) {
+    el.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No users yet. Click "+ Add User" to get started.</div>';
+    return;
+  }
+  var rows = users.map(function(u) {
+    var name = [u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
+    var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + '</div>' +
+        '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (u.jobTitle ? ' · ' + escHtml(u.jobTitle) : '') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Edit</button>' +
+        '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el.innerHTML = rows;
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openUserForm(userId) {
+  _editingUserId = userId || null;
+  var form = document.getElementById('admin-user-form');
+  var title = document.getElementById('user-form-title');
+  var hint  = document.getElementById('uf-pw-hint');
+  document.getElementById('admin-form-error').style.display = 'none';
+
+  if (userId) {
+    var u = _adminUsers.find(function(x){ return x.id === userId; });
+    title.textContent = 'Edit User';
+    hint.textContent = '(leave blank to keep existing)';
+    document.getElementById('uf-email').value      = u.email || '';
+    document.getElementById('uf-email').disabled   = true;
+    document.getElementById('uf-password').value   = '';
+    document.getElementById('uf-salutation').value = u.salutation || '';
+    document.getElementById('uf-firstname').value  = u.firstName || '';
+    document.getElementById('uf-lastname').value   = u.lastName || '';
+    document.getElementById('uf-jobtitle').value   = u.jobTitle || '';
+    document.getElementById('uf-mobile').value     = u.mobile || '';
+    document.getElementById('uf-landline').value   = u.landline || '';
+    document.getElementById('uf-website').value    = u.website || '';
+    document.getElementById('uf-admin').checked    = u.isAdmin || false;
+  } else {
+    title.textContent = 'Add New User';
+    hint.textContent  = '(required for new user)';
+    document.getElementById('uf-email').disabled = false;
+    ['uf-email','uf-password','uf-salutation','uf-firstname','uf-lastname','uf-jobtitle','uf-mobile','uf-landline','uf-website'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      else el.value = '';
+    });
+    document.getElementById('uf-admin').checked = false;
+  }
+  form.style.display = 'block';
+  document.getElementById('uf-email').focus();
+}
+
+function cancelUserForm() {
+  _editingUserId = null;
+  document.getElementById('admin-user-form').style.display = 'none';
+  document.getElementById('uf-email').disabled = false;
+}
+
+function saveUser() {
+  var errEl = document.getElementById('admin-form-error');
+  errEl.style.display = 'none';
+  var email    = document.getElementById('uf-email').value.trim();
+  var password = document.getElementById('uf-password').value;
+  var body = {
+    email:      email,
+    password:   password,
+    salutation: document.getElementById('uf-salutation').value,
+    firstName:  document.getElementById('uf-firstname').value.trim(),
+    lastName:   document.getElementById('uf-lastname').value.trim(),
+    jobTitle:   document.getElementById('uf-jobtitle').value.trim(),
+    mobile:     document.getElementById('uf-mobile').value.trim(),
+    landline:   document.getElementById('uf-landline').value.trim(),
+    website:    document.getElementById('uf-website').value.trim(),
+    isAdmin:    document.getElementById('uf-admin').checked
+  };
+
+  var url, method;
+  if (_editingUserId) {
+    url = '/api/admin/users/' + _editingUserId;
+    method = 'PUT';
+  } else {
+    if (!email) { showFormError('Email is required.'); return; }
+    if (!password) { showFormError('Password is required for new users.'); return; }
+    url = '/api/admin/users';
+    method = 'POST';
+  }
+
+  fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    .then(function(r) { return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+      if (!res.ok) { showFormError(res.data.error || 'Something went wrong.'); return; }
+      cancelUserForm();
+      loadAdminUsers();
+    }).catch(function() { showFormError('Network error. Please try again.'); });
+}
+
+function showFormError(msg) {
+  var el = document.getElementById('admin-form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function deleteUser(id, name) {
+  if (!confirm('Delete user "' + name + '"? This cannot be undone.')) return;
+  fetch('/api/admin/users/' + id, { method: 'DELETE' })
+    .then(function() { loadAdminUsers(); })
+    .catch(function() { alert('Failed to delete user.'); });
+}
 </script>
 </body>
 </html>

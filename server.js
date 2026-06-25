@@ -3,14 +3,57 @@ const express  = require('express');
 const session  = require('express-session');
 const path     = require('path');
 const fs       = require('fs');
+const bcrypt   = require('bcryptjs');
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBezierCurve, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const QRCode  = require('qrcode');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const PASSWORD = process.env.BRAND_HUB_PASSWORD || 'fpg2026';
-const SECRET   = process.env.SESSION_SECRET || 'dev-secret-change-me';
+const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
+
+// ── Airtable config ──────────────────────────────────────────
+const AT_KEY      = process.env.AIRTABLE_API_KEY;
+const AT_BASE     = 'appqQv0Xog8yZMwI9';
+const AT_TABLE    = 'tbltcinwWF3FXDGre';
+// Field IDs
+const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
+const F_PASSWORD  = 'fldWYSyK5TWesxobj';
+const F_SAL       = 'fldzdw3RKozmShmEr';
+const F_FIRST     = 'flde9n3BkKQsJFoYB';
+const F_LAST      = 'flduFe3YHfQB7f7LQ';
+const F_TITLE     = 'flddJxQNvOYVOAud7';
+const F_MOBILE    = 'fldtBa4TSYjbE3nDY';
+const F_LANDLINE  = 'fldpF1q0oD0Hhastr';
+const F_WEBSITE   = 'fld31BHXAjONR2GGR';
+const F_ADMIN     = 'fldX7dyR6P45kAXqU';
+
+async function atFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+function recordToUser(record) {
+  const f = record.fields;
+  return {
+    id: record.id,
+    email:     f[F_EMAIL]    || '',
+    salutation:f[F_SAL]      || '',
+    firstName: f[F_FIRST]    || '',
+    lastName:  f[F_LAST]     || '',
+    jobTitle:  f[F_TITLE]    || '',
+    mobile:    f[F_MOBILE]   || '',
+    landline:  f[F_LANDLINE] || '',
+    website:   f[F_WEBSITE]  || '',
+    isAdmin:   f[F_ADMIN]    || false
+  };
+}
 
 // ── Middleware ───────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
@@ -23,10 +66,15 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 24 * 365 * 10, secure: process.env.NODE_ENV === 'production' } // 10 years
 }));
 
-// ── Auth guard ───────────────────────────────────────────────
+// ── Auth guards ──────────────────────────────────────────────
 function requireAuth(req, res, next) {
   if (req.session.authenticated) return next();
   res.redirect('/login');
+}
+
+function requireAdmin(req, res, next) {
+  if (req.session.authenticated && req.session.user && req.session.user.isAdmin) return next();
+  res.status(403).json({ error: 'Forbidden' });
 }
 
 // ── Serve static assets (only after auth) ───────────────────
@@ -46,12 +94,21 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/login.html'));
 });
 
-app.post('/login', (req, res) => {
-  const { password } = req.body;
-  if (password === PASSWORD) {
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.redirect('/login?error=1');
+  try {
+    const formula = encodeURIComponent(`{Email}="${email.trim().toLowerCase()}"`);
+    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+    if (!data.records || data.records.length === 0) return res.redirect('/login?error=1');
+    const record = data.records[0];
+    const hash = record.fields[F_PASSWORD];
+    if (!hash || !bcrypt.compareSync(password, hash)) return res.redirect('/login?error=1');
     req.session.authenticated = true;
+    req.session.user = recordToUser(record);
     res.redirect('/');
-  } else {
+  } catch (err) {
+    console.error('Login error:', err);
     res.redirect('/login?error=1');
   }
 });
@@ -59,6 +116,90 @@ app.post('/login', (req, res) => {
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/login');
+});
+
+// ── Current user ─────────────────────────────────────────────
+app.get('/api/me', requireAuth, (req, res) => {
+  res.json(req.session.user || {});
+});
+
+// ── Admin: list users ─────────────────────────────────────────
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const data = await atFetch(`?returnFieldsByFieldId=true&pageSize=100`);
+    const users = (data.records || []).map(r => {
+      const u = recordToUser(r);
+      u.hasPassword = !!r.fields[F_PASSWORD];
+      return u;
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: create user ────────────────────────────────────────
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  const { email, password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  try {
+    const hash = bcrypt.hashSync(password, 10);
+    const fields = {
+      [F_EMAIL]: email.trim().toLowerCase(),
+      [F_PASSWORD]: hash,
+      [F_SAL]:      salutation  || '',
+      [F_FIRST]:    firstName   || '',
+      [F_LAST]:     lastName    || '',
+      [F_TITLE]:    jobTitle    || '',
+      [F_MOBILE]:   mobile      || '',
+      [F_LANDLINE]: landline    || '',
+      [F_WEBSITE]:  website     || '',
+      [F_ADMIN]:    isAdmin === true || isAdmin === 'true'
+    };
+    const data = await atFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
+    });
+    res.json(recordToUser(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: update user ────────────────────────────────────────
+app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin } = req.body;
+  try {
+    const fields = {
+      [F_SAL]:      salutation  || '',
+      [F_FIRST]:    firstName   || '',
+      [F_LAST]:     lastName    || '',
+      [F_TITLE]:    jobTitle    || '',
+      [F_MOBILE]:   mobile      || '',
+      [F_LANDLINE]: landline    || '',
+      [F_WEBSITE]:  website     || '',
+      [F_ADMIN]:    isAdmin === true || isAdmin === 'true'
+    };
+    if (password) fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
+    const data = await atFetch(`/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
+    });
+    res.json(recordToUser(data));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: delete user ────────────────────────────────────────
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    await atFetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Main app ─────────────────────────────────────────────────
