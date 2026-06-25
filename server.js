@@ -496,14 +496,17 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
     entries.forEach(e => { if (e.cpdType && byType[e.cpdType] !== undefined) byType[e.cpdType] += e.minutes || 0; });
     const targets = CPD_TARGETS;
 
-    // Load fonts
+    // Load fonts and logo
     const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
     const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
+    const logoBytes     = fs.readFileSync(path.join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png'));
 
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
     const fontBold = await pdfDoc.embedFont(fontBoldBytes);
     const fontMed  = await pdfDoc.embedFont(fontMedBytes);
+    const logoImg  = await pdfDoc.embedPng(logoBytes);
+    const logoDims = logoImg.scale(0.18); // ~160×50ish
 
     const W = 595.28, H = 841.89; // A4
     const page = pdfDoc.addPage([W, H]);
@@ -516,24 +519,31 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
     const white      = rgb(1,1,1);
 
     const fmtMin = m => { const h = Math.floor(m/60), mn = m%60; return h > 0 ? (h + 'h' + (mn > 0 ? ' ' + mn + 'm' : '')) : (mn + 'm'); };
+    const periodTarget = (annual, p) => p === 'month' ? Math.round(annual/12) : p === 'quarter' ? Math.round(annual/4) : annual;
     const periodLabel = period === 'month' ? 'This Month' : period === 'quarter' ? 'This Quarter' : 'This Year';
     const user = req.session.user;
     const userName = ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || email;
 
     // ── Header bar ─────────────────────────────────────────────
-    page.drawRectangle({ x: 0, y: H-60, width: W, height: 60, color: darkBlue });
-    page.drawText('CPD Report — ' + periodLabel, { x: 32, y: H-38, size: 16, font: fontBold, color: white });
+    const headerH = 72;
+    page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: darkBlue });
+    // Logo top-right of header
+    page.drawImage(logoImg, { x: W - logoDims.width - 24, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
+    // Adviser name large
+    page.drawText(userName, { x: 32, y: H - 34, size: 18, font: fontBold, color: white });
+    // Sub-line: report type + date
     const dateStr = now.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
-    page.drawText(userName + '  |  ' + dateStr, { x: 32, y: H-54, size: 9, font: fontMed, color: rgb(0.7,0.8,0.9) });
+    page.drawText('CPD Report — ' + periodLabel + '   |   ' + dateStr, { x: 32, y: H - 54, size: 9, font: fontMed, color: rgb(0.65,0.78,0.9) });
 
-    let y = H - 85;
+    let y = H - headerH - 22;
 
     // ── Progress bars ──────────────────────────────────────────
     page.drawText('CPD Progress', { x: 32, y, size: 12, font: fontBold, color: darkBlue });
     y -= 18;
 
     const barX = 32, barW = W - 200, barH = 10;
-    const drawBar = (label, mins, target, color) => {
+    const drawBar = (label, mins, annualTarget, color) => {
+      const target = periodTarget(annualTarget, period);
       const pct = target > 0 ? Math.min(1, mins / target) : 0;
       const done = pct >= 1;
       const barColor = done ? green : color;
@@ -553,14 +563,12 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
     drawBar('Mortgage CPD',   byType.Mortgage,   targets.Mortgage,   accentBlue);
     drawBar('Protection CPD', byType.Protection, targets.Protection, amber);
 
-    const combMins   = byType.Mortgage + byType.Protection;
-    const combTarget = targets.Mortgage + targets.Protection;
-    const combPct    = combTarget > 0 ? Math.min(1, combMins / combTarget) : 0;
-    const combDone   = combPct >= 1;
+    const combMins        = byType.Mortgage + byType.Protection;
+    const combAnnualTarget = targets.Mortgage + targets.Protection;
     y -= 4;
     page.drawLine({ start:{x:barX, y:y+16}, end:{x:W-32, y:y+16}, thickness:0.5, color: lightGrey });
     y -= 4;
-    drawBar('Combined Total', combMins, combTarget, darkBlue);
+    drawBar('Combined Total', combMins, combAnnualTarget, darkBlue);
 
     y -= 8;
 
