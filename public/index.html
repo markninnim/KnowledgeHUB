@@ -865,7 +865,13 @@ html { height: 100%; }
           <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Supervisor Zone</h2>
           <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Year-to-date team CPD</div>
         </div>
-        <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;border:1.5px solid #e8ecf0;border-radius:8px;overflow:hidden;">
+            <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:#003768;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+            <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:#003768;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
+          </div>
+          <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+        </div>
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;"></div>
@@ -875,7 +881,7 @@ html { height: 100%; }
           <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
           <div style="font-size:13px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:.5px;">Behind Target</div>
         </div>
-        <div id="sv-behind-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
+        <div id="sv-behind-list" style="display:grid;gap:12px;"></div>
       </div>
       <!-- On track section -->
       <div id="sv-ontrack-wrap" style="display:none;">
@@ -883,7 +889,7 @@ html { height: 100%; }
           <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
           <div style="font-size:13px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.5px;">On Track / Complete</div>
         </div>
-        <div id="sv-ontrack-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
+        <div id="sv-ontrack-list" style="display:grid;gap:12px;"></div>
       </div>
       <div id="sv-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading team…</div>
     </div>
@@ -2669,6 +2675,17 @@ var _svData   = null;
 var _svTransferEmail = '';
 var _svTransferName  = '';
 
+var _svView = 'card'; // 'card' | 'list'
+
+function setSvView(v) {
+  _svView = v;
+  var cardBtn = document.getElementById('sv-view-card');
+  var listBtn = document.getElementById('sv-view-list');
+  if (cardBtn) { cardBtn.style.background = v === 'card' ? '#003768' : '#f5f7fa'; cardBtn.style.color = v === 'card' ? '#fff' : '#003768'; }
+  if (listBtn) { listBtn.style.background = v === 'list' ? '#003768' : '#f5f7fa'; listBtn.style.color = v === 'list' ? '#fff' : '#003768'; }
+  if (_svLoaded && _svData) renderSvDashboard(_svData);
+}
+
 function loadSupervisorZone() {
   _svLoaded = false;
   document.getElementById('sv-loading').style.display = 'block';
@@ -2808,15 +2825,60 @@ function renderSvDashboard(data) {
     '</div>';
   }
 
+  var isCard = (_svView !== 'list');
+
+  function buildListRow(obj) {
+    var m = obj.m, cpd = obj.cpd, visible = obj.visible, worstPct = obj.worstPct;
+    var name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
+    var safeEmail = m.email.replace(/'/g, "\\'");
+    var safeName  = name.replace(/'/g, "\\'");
+    var overall = getStatus(worstPct);
+    var barsHtml = visible.map(function(t) {
+      var ytd = cpd[t.key] || 0;
+      var target = targets[t.key] || 900;
+      var pct = Math.min(100, Math.round((ytd / target) * 100));
+      var st = getStatus(pct);
+      return '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">' +
+        '<span style="font-size:11px;color:#6b7c8f;width:60px;">' + t.label + '</span>' +
+        '<div style="background:#f0f4f8;border-radius:3px;height:5px;width:60px;overflow:hidden;">' +
+          '<div style="background:' + (pct>=100?'#22c55e':t.color) + ';height:100%;width:' + pct + '%;border-radius:3px;"></div>' +
+        '</div>' +
+        '<span style="font-size:11px;color:#6b7c8f;">' + fmtMins(ytd) + '</span>' +
+        '<span style="background:' + st.bg + ';color:' + st.tc + ';font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;">' + st.label + '</span>' +
+      '</div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:12px;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + escHtml(name) + '</div>' +
+        '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' + barsHtml + '</div>' +
+      '<span style="background:' + overall.bg + ';color:' + overall.tc + ';font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;white-space:nowrap;">' + overall.label + '</span>' +
+      '<div style="display:flex;gap:6px;">' +
+        '<button onclick="svDrillDown(\'' + safeEmail + '\',\'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_') + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;cursor:pointer;font-family:inherit;">CPD ▾</button>' +
+        '<button onclick="openSvTransfer(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#6b7c8f;cursor:pointer;font-family:inherit;">Transfer</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_') + '" style="display:none;border-radius:0 0 8px 8px;border-top:1px solid #f0f2f5;background:#f9fafb;"></div>';
+  }
+
+  var renderer = isCard ? buildCard : buildListRow;
+
+  // Set grid layout
+  ['sv-behind-list','sv-ontrack-list'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.gridTemplateColumns = isCard ? 'repeat(3,1fr)' : '1fr';
+  });
+
   // Populate Behind
   if (behind.length) {
     document.getElementById('sv-behind-wrap').style.display = 'block';
-    document.getElementById('sv-behind-list').innerHTML = behind.map(buildCard).join('');
+    document.getElementById('sv-behind-list').innerHTML = behind.map(renderer).join('');
   }
   // Populate On Track
   if (onTrack.length) {
     document.getElementById('sv-ontrack-wrap').style.display = 'block';
-    document.getElementById('sv-ontrack-list').innerHTML = onTrack.map(buildCard).join('');
+    document.getElementById('sv-ontrack-list').innerHTML = onTrack.map(renderer).join('');
   }
 }
 
