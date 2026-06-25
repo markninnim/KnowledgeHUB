@@ -375,6 +375,50 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
   }
 });
 
+// ── Supervisor: export team CPD as CSV ───────────────────────
+app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
+  let supervisorEmail = req.session.user.email;
+  if (req.query.as && (req.session.user.isAdmin || req.session.user.isSupervisor)) {
+    supervisorEmail = req.query.as;
+  }
+  const from = req.query.from || `${new Date().getFullYear()}-01-01`;
+  const to   = req.query.to   || new Date().toISOString().slice(0, 10);
+  try {
+    // Get team members
+    const teamData = await atFetch(`?returnFieldsByFieldId=true`);
+    const members = (teamData.records || [])
+      .filter(r => (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase())
+      .map(r => recordToUser(r));
+    if (!members.length) {
+      res.setHeader('Content-Type', 'text/csv');
+      return res.send('No team members found');
+    }
+    // Fetch CPD entries for date range
+    const emails = members.map(m => `{User Email}="${m.email}"`).join(',');
+    const formula = encodeURIComponent(
+      `AND(OR(${emails}),IS_AFTER({Date},"${from}"),NOT(IS_AFTER({Date},"${to}")))`
+    );
+    const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=50`);
+    const entries = (cpdData.records || []).map(cpdRecordToEntry);
+    // Build member lookup
+    const memberMap = {};
+    members.forEach(m => { memberMap[m.email] = m; });
+    // CSV
+    const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
+    const rows = [['Name', 'Email', 'Date', 'CPD Type', 'Activity', 'Minutes', 'Hours', 'What I Learned'].map(esc).join(',')];
+    entries.forEach(e => {
+      const m = memberMap[e.email] || {};
+      const name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || e.email;
+      rows.push([name, e.email, e.date || '', e.cpdType || '', e.title || '', e.minutes || 0, ((e.minutes || 0) / 60).toFixed(2), e.learned || ''].map(esc).join(','));
+    });
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="team-cpd-${from}-to-${to}.csv"`);
+    res.send(rows.join('\r\n'));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Learning zone config ──────────────────────────────────────
 const LV_TABLE    = 'tblGxOMw9SDUlzw1h';
 const LV_TITLE    = 'fldTYb4MSVDqIdr85';

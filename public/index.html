@@ -872,16 +872,23 @@ html { height: 100%; }
               <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:#003768;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
             </div>
             <button id="sv-viewas-trigger" onclick="svToggleViewAsBar()" style="display:none;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">View As</button>
+            <button onclick="svExportCsv()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Export CSV</button>
             <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
           </div>
-          <!-- View As panel — right-aligned, drops below button row -->
-          <div id="sv-viewas-bar" style="display:none;align-items:center;gap:8px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:7px 12px;">
-            <span style="font-size:11px;color:#6b7c8f;font-weight:600;white-space:nowrap;">View as</span>
-            <div style="position:relative;">
-              <select id="sv-viewas-select" onchange="svViewAs(this.value)" style="appearance:none;-webkit-appearance:none;border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 28px 5px 10px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;cursor:pointer;font-weight:600;min-width:160px;"></select>
-              <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6b7c8f;font-size:11px;">▾</span>
+          <!-- View As / date filter panel — right-aligned, drops below button row -->
+          <div id="sv-viewas-bar" style="display:none;align-items:center;gap:8px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:7px 12px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:#6b7c8f;font-weight:600;white-space:nowrap;">From</span>
+            <input id="sv-date-from" type="date" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;cursor:pointer;">
+            <span style="font-size:11px;color:#6b7c8f;font-weight:600;white-space:nowrap;">To</span>
+            <input id="sv-date-to" type="date" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;cursor:pointer;">
+            <div id="sv-viewas-wrap" style="display:none;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#6b7c8f;font-weight:600;white-space:nowrap;">View as</span>
+              <div style="position:relative;">
+                <select id="sv-viewas-select" onchange="svViewAs(this.value)" style="appearance:none;-webkit-appearance:none;border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 28px 5px 10px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;cursor:pointer;font-weight:600;min-width:160px;"></select>
+                <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6b7c8f;font-size:11px;">▾</span>
+              </div>
+              <button id="sv-viewas-reset" onclick="svViewAs('')" style="display:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;border:1.5px solid #e8ecf0;background:#fff;color:#991b1b;cursor:pointer;font-family:inherit;">✕ Reset</button>
             </div>
-            <button id="sv-viewas-reset" onclick="svViewAs('')" style="display:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;border:1.5px solid #e8ecf0;background:#fff;color:#991b1b;cursor:pointer;font-family:inherit;">✕ Reset</button>
           </div>
         </div>
       </div>
@@ -2701,7 +2708,29 @@ function setSvView(v) {
 
 function svToggleViewAsBar() {
   var bar = document.getElementById('sv-viewas-bar');
-  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+  if (bar.style.display === 'none') {
+    // Set default dates if empty
+    var fromEl = document.getElementById('sv-date-from');
+    var toEl   = document.getElementById('sv-date-to');
+    if (!fromEl.value) fromEl.value = new Date().getFullYear() + '-01-01';
+    if (!toEl.value)   toEl.value   = new Date().toISOString().slice(0,10);
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function svExportCsv() {
+  var from  = (document.getElementById('sv-date-from') || {}).value || (new Date().getFullYear() + '-01-01');
+  var to    = (document.getElementById('sv-date-to')   || {}).value || new Date().toISOString().slice(0,10);
+  var as    = _svViewAsEmail ? '&as=' + encodeURIComponent(_svViewAsEmail) : '';
+  var url   = '/api/supervisor/export-csv?from=' + from + '&to=' + to + as;
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'team-cpd-' + from + '-to-' + to + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function svViewAs(email) {
@@ -2731,6 +2760,8 @@ function loadSupervisorZone() {
         }).join('');
         if (_svViewAsEmail) sel.value = _svViewAsEmail;
         document.getElementById('sv-viewas-trigger').style.display = 'inline-block';
+        var wrap = document.getElementById('sv-viewas-wrap');
+        if (wrap) wrap.style.display = 'flex';
       }
     });
   }
