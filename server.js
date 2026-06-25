@@ -243,20 +243,20 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Expected array of users' });
 
   const results = { created: 0, skipped: 0, errors: [] };
-
-  // Airtable allows max 10 records per POST — process in batches
-  const toBool = v => v === true || v === 'true';
+  const toBool = v => v === true || v === 'true' || v === 'TRUE';
   const BATCH = 10;
 
+  // Hash all passwords async (parallel within each batch)
   for (let i = 0; i < users.length; i += BATCH) {
-    const batch = users.slice(i, i + BATCH);
-    const records = [];
-    for (const u of batch) {
-      if (!u.email || !u.password) { results.skipped++; continue; }
-      try {
-        const hash = bcrypt.hashSync(u.password, 10);
-        records.push({ fields: {
-          [F_EMAIL]:            u.email.trim().toLowerCase(),
+    const batch = users.slice(i, i + BATCH).filter(u => u.email && u.password);
+    if (!batch.length) { results.skipped += BATCH; continue; }
+
+    let records;
+    try {
+      records = await Promise.all(batch.map(async u => {
+        const hash = await bcrypt.hash(String(u.password), 10);
+        return { fields: {
+          [F_EMAIL]:            String(u.email).trim().toLowerCase(),
           [F_PASSWORD]:         hash,
           [F_SAL]:              u.salutation  || '',
           [F_FIRST]:            u.firstName   || '',
@@ -271,21 +271,24 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
           [F_INVESTMENTS]:      toBool(u.sellsInvestments),
           [F_IS_SUPERVISOR]:    toBool(u.isSupervisor),
           [F_SUPERVISOR_EMAIL]: u.supervisorEmail || null
-        }});
-      } catch (e) { results.errors.push({ email: u.email, error: e.message }); }
+        }};
+      }));
+    } catch (e) {
+      results.errors.push({ batch: i, error: 'hash error: ' + e.message });
+      continue;
     }
-    if (records.length === 0) continue;
+
     try {
       const data = await atFetch('', {
         method: 'POST',
         body: JSON.stringify({ records, returnFieldsByFieldId: true })
       });
-      results.created += data.records.length;
+      results.created += (data.records || []).length;
     } catch (e) {
       results.errors.push({ batch: i, error: e.message });
     }
-    // Brief pause to avoid Airtable rate limit
-    await new Promise(r => setTimeout(r, 250));
+    // Respect Airtable rate limit (5 req/s)
+    await new Promise(r => setTimeout(r, 300));
   }
 
   res.json(results);
