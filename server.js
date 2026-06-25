@@ -191,12 +191,18 @@ app.post('/api/profile/photo', requireAuth, async (req, res) => {
 // ── Admin: list users ─────────────────────────────────────────
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
-    const data = await atFetch(`?returnFieldsByFieldId=true&pageSize=50`);
-    const users = (data.records || []).map(r => {
-      const u = recordToUser(r);
-      u.hasPassword = !!r.fields[F_PASSWORD];
-      return u;
-    });
+    const users = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        const u = recordToUser(r);
+        u.hasPassword = !!r.fields[F_PASSWORD];
+        users.push(u);
+      }
+      offset = data.offset || '';
+    } while (offset);
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -338,13 +344,22 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 // ── Supervisor: list all supervisors (for transfer dropdown) ──
 app.get('/api/supervisor/list', requireAuth, async (req, res) => {
   try {
-    const data = await atFetch(`?returnFieldsByFieldId=true&pageSize=50`);
-    const supervisors = (data.records || [])
-      .filter(r => r.fields[F_IS_SUPERVISOR])
-      .map(r => {
+    const supervisors = [];
+    const seen = new Set();
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        if (!r.fields[F_IS_SUPERVISOR]) continue;
         const u = recordToUser(r);
-        return { id: u.id, email: u.email, name: ([u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) };
-      });
+        if (seen.has(u.email)) continue;
+        seen.add(u.email);
+        supervisors.push({ id: u.id, email: u.email, name: ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) });
+      }
+      offset = data.offset || '';
+    } while (offset);
+    supervisors.sort((a, b) => a.name.localeCompare(b.name));
     res.json({ supervisors });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -395,10 +410,16 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
     supervisorEmail = req.query.as;
   }
   try {
-    // 1. Get team members — fetch all users, filter by supervisor email in Node
-    // (more reliable than Airtable formula filtering on email fields)
-    const teamData = await atFetch(`?returnFieldsByFieldId=true`);
-    const members = (teamData.records || [])
+    // 1. Get team members — paginate through all users, filter by supervisor email
+    const allRecords = [];
+    let teamOffset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${teamOffset ? '&offset=' + teamOffset : ''}`;
+      const page = await atFetch(qs);
+      allRecords.push(...(page.records || []));
+      teamOffset = page.offset || '';
+    } while (teamOffset);
+    const members = allRecords
       .filter(r => (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase())
       .map(r => {
         const u = recordToUser(r);
@@ -461,15 +482,21 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
     }
 
     // ── Whole company or supervisor team export ───────────────
-    const teamData = await atFetch(`?returnFieldsByFieldId=true`);
+    const allExportRecords = [];
+    let expOffset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${expOffset ? '&offset=' + expOffset : ''}`;
+      const page = await atFetch(qs);
+      allExportRecords.push(...(page.records || []));
+      expOffset = page.offset || '';
+    } while (expOffset);
     let members;
     if (exportAll) {
-      // All users who have logged CPD (everyone)
-      members = (teamData.records || []).map(r => recordToUser(r));
+      members = allExportRecords.map(r => recordToUser(r));
     } else {
       let supervisorEmail = req.session.user.email;
       if (req.query.as && (req.session.user.isAdmin || req.session.user.isSupervisor)) supervisorEmail = req.query.as;
-      members = (teamData.records || [])
+      members = allExportRecords
         .filter(r => (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase())
         .map(r => recordToUser(r));
     }
