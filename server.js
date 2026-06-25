@@ -336,14 +336,16 @@ app.put('/api/supervisor/transfer', requireSupervisor, async (req, res) => {
 app.get('/api/supervisor/team', requireSupervisor, async (req, res) => {
   const supervisorEmail = req.session.user.email;
   try {
-    // 1. Get team members (users whose Supervisor Email = this supervisor)
-    const formula = encodeURIComponent(`{Supervisor Email}="${supervisorEmail}"`);
-    const teamData = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100`);
-    const members = (teamData.records || []).map(r => {
-      const u = recordToUser(r);
-      u.hasPassword = !!r.fields[F_PASSWORD];
-      return u;
-    });
+    // 1. Get team members — fetch all users, filter by supervisor email in Node
+    // (more reliable than Airtable formula filtering on email fields)
+    const teamData = await atFetch(`?returnFieldsByFieldId=true&pageSize=100`);
+    const members = (teamData.records || [])
+      .filter(r => (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase())
+      .map(r => {
+        const u = recordToUser(r);
+        u.hasPassword = !!r.fields[F_PASSWORD];
+        return u;
+      });
 
     if (!members.length) return res.json({ members: [], cpdByMember: {} });
 
