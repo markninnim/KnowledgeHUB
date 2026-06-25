@@ -501,10 +501,10 @@ app.post('/generate-moving-card', requireAuth, async (req, res) => {
     // broker-branded.png is 2262×1029px; "Broker Name" sits at px x=615–1655, y=228–380 (from top)
     const brokerLogoBytes = fs.readFileSync(path.join(__dirname, 'public/assets/logos/individual broker branding/broker-branded.png'));
     const brokerLogoImg   = await pdfDoc.embedPng(brokerLogoBytes);
-    const logoW  = 300;
-    const logoH  = Math.round(logoW * 1029 / 2262);   // ≈ 137
-    const logoX  = Math.floor((420 - logoW) / 2);     // centred in left panel = 60
-    const logoY  = 412;                                // bottom edge — sits above scan text with ~30pt gap
+    const logoW  = 220;
+    const logoH  = Math.round(logoW * 1029 / 2262);   // ≈ 100
+    const logoX  = Math.round((419 - logoW) / 2);     // centred in left panel = 100
+    const logoY  = 385;                                // bottom edge — sits above scan text
     const sc     = logoW / 2262;
 
     scanPage.drawImage(brokerLogoImg, { x: logoX, y: logoY, width: logoW, height: logoH });
