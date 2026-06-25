@@ -331,7 +331,11 @@ app.put('/api/supervisor/transfer', requireAuth, async (req, res) => {
 
 // ── Supervisor: team CPD dashboard ────────────────────────────
 app.get('/api/supervisor/team', requireAuth, async (req, res) => {
-  const supervisorEmail = req.session.user.email;
+  // Allow admins/supervisors to view as another supervisor via ?as=email
+  let supervisorEmail = req.session.user.email;
+  if (req.query.as && (req.session.user.isAdmin || req.session.user.isSupervisor)) {
+    supervisorEmail = req.query.as;
+  }
   try {
     // 1. Get team members — fetch all users, filter by supervisor email in Node
     // (more reliable than Airtable formula filtering on email fields)
