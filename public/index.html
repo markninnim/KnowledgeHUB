@@ -695,22 +695,37 @@ html { height: 100%; }
   <!-- ── Learning tab ──────────────────────────────────────── -->
   <div id="tab-learning" class="tab-pane">
     <div style="padding:32px 32px 0;">
-      <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Learning Zone</h2>
-      <p style="color:#6b7c8f;font-size:14px;margin:0 0 24px;">The 8 latest videos — older ones move to the archive below.</p>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;">
+        <div style="max-width:580px;">
+          <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Learning Zone</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Each week, leading lenders and insurers share their latest updates — and every month, our Compliance Director Pete Burgess delivers his essential briefing. Every session, whether watched or listened to, counts toward your CPD.</p>
+        </div>
+        <div style="flex-shrink:0;position:relative;">
+          <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="lv-search" type="text" placeholder="Search videos…" oninput="searchLv(this.value)" style="padding:9px 14px 9px 36px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;color:#1a2a3a;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+        </div>
+      </div>
+    </div>
+
+    <!-- Search results (shown when searching) -->
+    <div id="lv-search-results" style="display:none;padding:0 32px;margin-bottom:32px;">
+      <div id="lv-search-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
     </div>
 
     <!-- Featured 8 -->
-    <div id="lv-grid" style="padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;">
-      <div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">Loading videos…</div>
-    </div>
+    <div id="lv-normal-view">
+      <div id="lv-grid" style="padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;">
+        <div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">Loading videos…</div>
+      </div>
 
-    <!-- Archive -->
-    <div id="lv-archive-wrap" style="display:none;border-top:1px solid #e8ecf0;margin:0 32px;padding:24px 0 32px;">
-      <button onclick="toggleLvArchive()" id="lv-archive-toggle" style="background:none;border:none;color:#003768;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:16px;">
-        <svg id="lv-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
-        <span id="lv-archive-label">Show Archive</span>
-      </button>
-      <div id="lv-archive-grid" style="display:none;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
+      <!-- Archive -->
+      <div id="lv-archive-wrap" style="display:none;border-top:1px solid #e8ecf0;margin:0 32px;padding:24px 0 32px;">
+        <button onclick="toggleLvArchive()" id="lv-archive-toggle" style="background:none;border:none;color:#003768;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:16px;">
+          <svg id="lv-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+          <span id="lv-archive-label">Show Archive</span>
+        </button>
+        <div id="lv-archive-grid" style="display:none;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
+      </div>
     </div>
   </div>
 
@@ -1750,21 +1765,48 @@ function switchTab(tab) {
 // ── Learning Zone ─────────────────────────────────────────────
 var _lvArchiveOpen = false;
 var _lvLoaded = false;
+var _lvAllVideos = [];
 
 function loadLearningZone() {
   if (_lvLoaded) return;
   _lvLoaded = true;
   fetch('/api/learning').then(r => r.json()).then(function(data) {
-    renderLvGrid('lv-grid', data.featured || [], true);
-    if (data.archive && data.archive.length > 0) {
-      renderLvGrid('lv-archive-grid', data.archive, false);
-      var count = data.archive.length;
+    var featured = data.featured || [];
+    var archive  = data.archive  || [];
+    _lvAllVideos = featured.concat(archive);
+    renderLvGrid('lv-grid', featured, true);
+    if (archive.length > 0) {
+      renderLvGrid('lv-archive-grid', archive, false);
+      var count = archive.length;
       document.getElementById('lv-archive-label').textContent = 'Show Archive (' + count + ' video' + (count !== 1 ? 's' : '') + ')';
       document.getElementById('lv-archive-wrap').style.display = 'block';
     }
   }).catch(function() {
     document.getElementById('lv-grid').innerHTML = '<div style="grid-column:1/-1;color:#c00;font-size:13px;padding:40px 0;text-align:center;">Could not load videos.</div>';
   });
+}
+
+function searchLv(q) {
+  var term = q.trim().toLowerCase();
+  var searchWrap  = document.getElementById('lv-search-results');
+  var normalView  = document.getElementById('lv-normal-view');
+  if (!term) {
+    searchWrap.style.display = 'none';
+    normalView.style.display = '';
+    return;
+  }
+  searchWrap.style.display = 'block';
+  normalView.style.display = 'none';
+  var matches = _lvAllVideos.filter(function(v) {
+    return (v.title + ' ' + v.description).toLowerCase().indexOf(term) !== -1;
+  });
+  var grid = document.getElementById('lv-search-grid');
+  if (matches.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">No videos match "<strong>' + escHtml(q) + '</strong>".</div>';
+  } else {
+    renderLvGrid('lv-search-grid', matches, false);
+    document.getElementById('lv-search-grid').style.display = 'grid';
+  }
 }
 
 function renderLvGrid(containerId, videos, isFeatured) {
@@ -1786,10 +1828,10 @@ function renderLvGrid(containerId, videos, isFeatured) {
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div style="padding:12px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
-          '<div style="font-size:13px;font-weight:700;color:#1a2a3a;line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>' +
-          (formatLvDate(v.added) ? '<div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">' + formatLvDate(v.added) + '</div>' : '') +
-          (v.description ? '<div style="font-size:12px;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.description) + '</div>' : '') +
+        '<div style="padding:11px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
+          (formatLvDate(v.added) ? '<div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + formatLvDate(v.added) + '</div>' : '') +
+          '<div style="font-size:13px;font-weight:700;color:#1a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>' +
+          (v.description ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.description) + '</div>' : '') +
         '</div>' +
       '</div>'
     );
