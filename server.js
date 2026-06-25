@@ -89,7 +89,7 @@ function requireAdmin(req, res, next) {
   res.status(403).json({ error: 'Forbidden' });
 }
 
-function requireSupervisor(req, res, next) {
+function requireAuth(req, res, next) {
   if (req.session.authenticated && req.session.user && req.session.user.isSupervisor) return next();
   res.status(403).json({ error: 'Forbidden' });
 }
@@ -282,14 +282,15 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 });
 
 // ── Supervisor: list all supervisors (for transfer dropdown) ──
-app.get('/api/supervisor/list', requireSupervisor, async (req, res) => {
+app.get('/api/supervisor/list', requireAuth, async (req, res) => {
   try {
-    const formula = encodeURIComponent(`{Is Supervisor}=1`);
-    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100`);
-    const supervisors = (data.records || []).map(r => {
-      const u = recordToUser(r);
-      return { id: u.id, email: u.email, name: ([u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) };
-    });
+    const data = await atFetch(`?returnFieldsByFieldId=true&pageSize=100`);
+    const supervisors = (data.records || [])
+      .filter(r => r.fields[F_IS_SUPERVISOR])
+      .map(r => {
+        const u = recordToUser(r);
+        return { id: u.id, email: u.email, name: ([u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) };
+      });
     res.json({ supervisors });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -297,7 +298,7 @@ app.get('/api/supervisor/list', requireSupervisor, async (req, res) => {
 });
 
 // ── Supervisor: CPD drill-down for one adviser ─────────────────
-app.get('/api/supervisor/adviser-cpd', requireSupervisor, async (req, res) => {
+app.get('/api/supervisor/adviser-cpd', requireAuth, async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: 'email required' });
   try {
@@ -313,7 +314,7 @@ app.get('/api/supervisor/adviser-cpd', requireSupervisor, async (req, res) => {
 });
 
 // ── Supervisor: transfer adviser to another supervisor ─────────
-app.put('/api/supervisor/transfer', requireSupervisor, async (req, res) => {
+app.put('/api/supervisor/transfer', requireAuth, async (req, res) => {
   const { adviserEmail, newSupervisorEmail } = req.body;
   if (!adviserEmail || !newSupervisorEmail) return res.status(400).json({ error: 'adviserEmail and newSupervisorEmail required' });
   try {
@@ -333,7 +334,7 @@ app.put('/api/supervisor/transfer', requireSupervisor, async (req, res) => {
 });
 
 // ── Supervisor: team CPD dashboard ───────────────────────────
-app.get('/api/supervisor/team', requireSupervisor, async (req, res) => {
+app.get('/api/supervisor/team', requireAuth, async (req, res) => {
   const supervisorEmail = req.session.user.email;
   try {
     // 1. Get team members — fetch all users, filter by supervisor email in Node
