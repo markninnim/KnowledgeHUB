@@ -106,6 +106,9 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')">Selling Zone</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <button id="supervisor-btn" onclick="openSupervisorZone()" style="display:none;background:#2e99d5;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Team CPD
+    </button>
     <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:#003768;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
     </button>
@@ -699,23 +702,11 @@ html { height: 100%; }
 
       <!-- Progress card -->
       <div id="cpd-progress-card" style="background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Year to Date</div>
-            <div style="display:flex;align-items:baseline;gap:6px;">
-              <span id="cpd-ytd-display" style="font-size:32px;font-weight:800;color:#003768;">—</span>
-              <span id="cpd-target-display" style="font-size:14px;color:#6b7c8f;font-weight:600;"></span>
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">All Time</div>
-            <div id="cpd-total-display" style="font-size:20px;font-weight:700;color:#1a2a3a;">—</div>
-          </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;">CPD Progress — Year to Date</div>
+          <div id="cpd-total-display" style="font-size:12px;font-weight:600;color:#6b7c8f;"></div>
         </div>
-        <div style="background:#f0f4f8;border-radius:6px;height:10px;overflow:hidden;">
-          <div id="cpd-progress-bar" style="background:#003768;height:100%;width:0%;border-radius:6px;transition:width .6s ease;"></div>
-        </div>
-        <div id="cpd-progress-label" style="font-size:12px;color:#6b7c8f;margin-top:7px;"></div>
+        <div id="cpd-progress-bars"><div style="font-size:13px;color:#6b7c8f;padding:8px 0;">Loading…</div></div>
       </div>
 
       <!-- Add entry form -->
@@ -742,6 +733,13 @@ html { height: 100%; }
               <option value="Compliance">Compliance</option>
               <option value="Technical Knowledge">Technical Knowledge</option>
               <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">CPD Type</label>
+            <select id="cpdf-cpdtype" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
+              <option value="Mortgage">Mortgage (15hr target)</option>
+              <option value="Protection">Protection (15hr target)</option>
             </select>
           </div>
         </div>
@@ -896,6 +894,37 @@ html { height: 100%; }
     <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;">
       <iframe id="lv-iframe" src="" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>
     </div>
+    <!-- CPD log strip -->
+    <div style="margin-top:12px;background:rgba(255,255,255,.08);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="color:rgba(255,255,255,.7);font-size:13px;font-weight:600;white-space:nowrap;">Log 1hr CPD as:</span>
+      <div style="display:flex;gap:6px;">
+        <button id="lv-cpd-mortgage" onclick="selectLvCpdType('Mortgage')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:#2e99d5;color:#fff;border:2px solid #2e99d5;transition:all .15s;">Mortgage</button>
+        <button id="lv-cpd-protection" onclick="selectLvCpdType('Protection')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);border:2px solid transparent;transition:all .15s;">Protection</button>
+      </div>
+      <button id="lv-cpd-log-btn" onclick="logLvCpd()" style="margin-left:auto;background:#fcb034;color:#003768;border:none;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Log CPD</button>
+      <span id="lv-cpd-status" style="font-size:12px;color:#22c55e;display:none;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Supervisor Zone ────────────────────────────────────── -->
+<div id="supervisor-modal" onclick="if(event.target===this)closeSupervisorZone()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:900px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <!-- Header -->
+    <div style="padding:20px 28px;border-bottom:1px solid #e8ecf0;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#003768;">Team CPD Dashboard</div>
+        <div style="font-size:12px;color:#6b7c8f;margin-top:2px;">Year-to-date progress for your team</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="loadSupervisorTeam()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+        <button onclick="closeSupervisorZone()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
+      </div>
+    </div>
+    <!-- Team dashboard -->
+    <div id="supervisor-team-content" style="padding:24px 28px;">
+      <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:40px 0;">Loading team…</div>
+    </div>
   </div>
 </div>
 
@@ -991,6 +1020,30 @@ html { height: 100%; }
           <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
             <input id="uf-admin" type="checkbox" style="width:16px;height:16px;cursor:pointer;accent-color:#003768;">
             <label for="uf-admin" style="font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">Admin access (can manage users)</label>
+          </div>
+          <div style="grid-column:1/-1;padding-top:4px;border-top:1px solid #f0f2f5;margin-top:4px;">
+            <div style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Products Sold</div>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#003768;">Investments
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#2e99d5;">Mortgages
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#fcb034;">Protection
+              </label>
+            </div>
+          </div>
+          <div style="grid-column:1/-1;padding-top:4px;border-top:1px solid #f0f2f5;margin-top:4px;">
+            <div style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Supervision</div>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-issupervisor" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#2e99d5;">Is Supervisor (can view Team CPD)
+              </label>
+            </div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Supervisor Email <span style="font-weight:400;color:#6b7c8f;">(their supervisor's email — leave blank for supervisors)</span></label>
+            <input id="uf-supervisoremail" type="email" placeholder="supervisor@financeplanning.co.uk" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
         </div>
         <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
@@ -2000,19 +2053,51 @@ function escAttr(s) {
   return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
 }
 
+var _lvCpdType = 'Mortgage';
+var _lvCurrentTitle = '';
+
 function openLvPlayer(url, title, desc) {
+  _lvCurrentTitle = title || 'Learning Zone video';
   document.getElementById('lv-iframe').src = getEmbedUrl(url);
   document.getElementById('lv-player-title').textContent = title || '';
   document.getElementById('lv-player-desc').textContent = desc || '';
   document.getElementById('lv-player-modal').style.display = 'flex';
-  // Auto-log to CPD
+  // Reset CPD log strip
+  _lvCpdType = 'Mortgage';
+  selectLvCpdType('Mortgage');
+  document.getElementById('lv-cpd-status').style.display = 'none';
+  var btn = document.getElementById('lv-cpd-log-btn');
+  btn.disabled = false;
+  btn.textContent = '+ Log CPD';
+}
+
+function selectLvCpdType(type) {
+  _lvCpdType = type;
+  var on  = 'padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:#2e99d5;color:#fff;border:2px solid #2e99d5;transition:all .15s;';
+  var off = 'padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);border:2px solid transparent;transition:all .15s;';
+  document.getElementById('lv-cpd-mortgage').style.cssText  = type === 'Mortgage'   ? on : off;
+  document.getElementById('lv-cpd-protection').style.cssText = type === 'Protection' ? on : off;
+}
+
+function logLvCpd() {
+  var btn    = document.getElementById('lv-cpd-log-btn');
+  var status = document.getElementById('lv-cpd-status');
+  btn.disabled = true;
+  btn.textContent = 'Logging…';
   fetch('/api/cpd/video', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ videoTitle: title || 'Learning Zone video' })
-  }).then(function() {
-    _cpdLoaded = false; // refresh CPD if user visits it next
-  }).catch(function(){});
+    body: JSON.stringify({ videoTitle: _lvCurrentTitle, cpdType: _lvCpdType })
+  }).then(function(r) {
+    if (r.ok) {
+      status.textContent = '✓ 1hr ' + _lvCpdType + ' CPD logged';
+      status.style.display = 'inline';
+      btn.textContent = '✓ Logged';
+      _cpdLoaded = false;
+    } else {
+      btn.textContent = '+ Log CPD'; btn.disabled = false;
+    }
+  }).catch(function() { btn.textContent = '+ Log CPD'; btn.disabled = false; });
 }
 
 function closeLvPlayer() {
@@ -2038,11 +2123,17 @@ function toggleLvArchive() {
 }
 
 // ── Init: load current user, show admin button if admin ──────
+var _currentUser = null;
 (function initUser() {
   fetch('/api/me').then(r => r.json()).then(function(user) {
+    _currentUser = user;
     if (user && user.isAdmin) {
       var btn = document.getElementById('admin-btn');
       if (btn) btn.style.display = 'inline-flex';
+    }
+    if (user && user.isSupervisor) {
+      var sbtn = document.getElementById('supervisor-btn');
+      if (sbtn) sbtn.style.display = 'inline-flex';
     }
   }).catch(function(){});
 })();
@@ -2082,10 +2173,16 @@ function renderUserList(users) {
   var rows = users.map(function(u) {
     var name = [u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
     var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
+    var supBadge = u.isSupervisor ? '<span style="background:#2e99d5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
+    var products = [];
+    if (u.sellsInvestments) products.push('<span style="background:#ede9fe;color:#6b21a8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
+    if (u.sellsMortgages)   products.push('<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
+    if (u.sellsProtection)  products.push('<span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
+    var supInfo = u.supervisorEmail ? '<span style="color:#6b7c8f;font-size:11px;"> · Supervisor: ' + escHtml(u.supervisorEmail) + '</span>' : '';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + '</div>' +
-        '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (u.jobTitle ? ' · ' + escHtml(u.jobTitle) : '') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + products.join('') + '</div>' +
+        '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (u.jobTitle ? ' · ' + escHtml(u.jobTitle) : '') + supInfo + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;">' +
         '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Edit</button>' +
@@ -2120,8 +2217,13 @@ function openUserForm(userId) {
     document.getElementById('uf-jobtitle').value   = u.jobTitle || '';
     document.getElementById('uf-mobile').value     = u.mobile || '';
     document.getElementById('uf-landline').value   = u.landline || '';
-    document.getElementById('uf-website').value    = u.website || '';
-    document.getElementById('uf-admin').checked    = u.isAdmin || false;
+    document.getElementById('uf-website').value        = u.website || '';
+    document.getElementById('uf-admin').checked        = u.isAdmin || false;
+    document.getElementById('uf-investments').checked      = u.sellsInvestments || false;
+    document.getElementById('uf-mortgages').checked        = u.sellsMortgages   || false;
+    document.getElementById('uf-protection').checked       = u.sellsProtection  || false;
+    document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
+    document.getElementById('uf-supervisoremail').value    = u.supervisorEmail  || '';
   } else {
     title.textContent = 'Add New User';
     hint.textContent  = '(required for new user)';
@@ -2131,7 +2233,12 @@ function openUserForm(userId) {
       if (el.tagName === 'SELECT') el.selectedIndex = 0;
       else el.value = '';
     });
-    document.getElementById('uf-admin').checked = false;
+    document.getElementById('uf-admin').checked           = false;
+    document.getElementById('uf-investments').checked     = false;
+    document.getElementById('uf-mortgages').checked       = false;
+    document.getElementById('uf-protection').checked      = false;
+    document.getElementById('uf-issupervisor').checked    = false;
+    document.getElementById('uf-supervisoremail').value   = '';
   }
   form.style.display = 'block';
   document.getElementById('uf-email').focus();
@@ -2155,10 +2262,15 @@ function saveUser() {
     firstName:  document.getElementById('uf-firstname').value.trim(),
     lastName:   document.getElementById('uf-lastname').value.trim(),
     jobTitle:   document.getElementById('uf-jobtitle').value.trim(),
-    mobile:     document.getElementById('uf-mobile').value.trim(),
-    landline:   document.getElementById('uf-landline').value.trim(),
-    website:    document.getElementById('uf-website').value.trim(),
-    isAdmin:    document.getElementById('uf-admin').checked
+    mobile:           document.getElementById('uf-mobile').value.trim(),
+    landline:         document.getElementById('uf-landline').value.trim(),
+    website:          document.getElementById('uf-website').value.trim(),
+    isAdmin:          document.getElementById('uf-admin').checked,
+    sellsInvestments: document.getElementById('uf-investments').checked,
+    sellsMortgages:   document.getElementById('uf-mortgages').checked,
+    sellsProtection:  document.getElementById('uf-protection').checked,
+    isSupervisor:     document.getElementById('uf-issupervisor').checked,
+    supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim()
   };
 
   var url, method;
@@ -2194,6 +2306,164 @@ function deleteUser(id, name) {
     .catch(function() { alert('Failed to delete user.'); });
 }
 
+// ── Supervisor Zone ───────────────────────────────────────────
+function openSupervisorZone() {
+  document.getElementById('supervisor-modal').style.display = 'flex';
+  loadSupervisorTeam();
+}
+
+function closeSupervisorZone() {
+  document.getElementById('supervisor-modal').style.display = 'none';
+}
+
+function loadSupervisorTeam() {
+  var el = document.getElementById('supervisor-team-content');
+  el.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:40px 0;">Loading team…</div>';
+  fetch('/api/supervisor/team').then(function(r){ return r.json(); }).then(function(data) {
+    renderSupervisorDashboard(data);
+  }).catch(function() {
+    el.innerHTML = '<div style="color:#c00;font-size:13px;text-align:center;padding:40px 0;">Could not load team data.</div>';
+  });
+}
+
+function renderSupervisorDashboard(data) {
+  var el = document.getElementById('supervisor-team-content');
+  var members = data.members || [];
+  var cpdByMember = data.cpdByMember || {};
+  var targets = data.targets || { Investment: 2100, Mortgage: 900, Protection: 900 };
+
+  if (!members.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 0;">' +
+      '<div style="font-size:15px;color:#1a2a3a;font-weight:600;margin-bottom:8px;">No team members yet</div>' +
+      '<div style="font-size:13px;color:#6b7c8f;">Set your email as the "Supervisor Email" on each adviser\'s profile in the Admin panel.</div>' +
+    '</div>';
+    return;
+  }
+
+  // Status helper
+  function getStatus(pct) {
+    if (pct >= 100) return { label: 'Complete', bg: '#dcfce7', tc: '#166534' };
+    if (pct >= 60)  return { label: 'On track',  bg: '#fef9c3', tc: '#854d0e' };
+    return { label: 'Behind',   bg: '#fee2e2', tc: '#991b1b' };
+  }
+
+  var typeConf = [
+    { key: 'Mortgage',   label: 'Mortgage',   color: '#2e99d5' },
+    { key: 'Protection', label: 'Protection', color: '#fcb034' }
+  ];
+
+  // Summary bar
+  var doneCount = 0, behindCount = 0;
+  members.forEach(function(m) {
+    var cpd = cpdByMember[m.email] || {};
+    var noFlags = !m.sellsMortgages && !m.sellsProtection;
+    var types = typeConf.filter(function(t) {
+      if (t.key === 'Mortgage')   return m.sellsMortgages   || noFlags;
+      if (t.key === 'Protection') return m.sellsProtection  || noFlags;
+    });
+    var allDone = types.length > 0 && types.every(function(t) {
+      return (cpd[t.key] || 0) >= targets[t.key];
+    });
+    if (allDone) doneCount++; else behindCount++;
+  });
+
+  var html = '<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">' +
+    '<div style="background:#f0fdf4;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;">' +
+      '<div style="font-size:24px;font-weight:800;color:#166534;">' + doneCount + '</div>' +
+      '<div style="font-size:12px;color:#166534;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">All targets met</div>' +
+    '</div>' +
+    '<div style="background:#fef2f2;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;">' +
+      '<div style="font-size:24px;font-weight:800;color:#991b1b;">' + behindCount + '</div>' +
+      '<div style="font-size:12px;color:#991b1b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">In progress</div>' +
+    '</div>' +
+    '<div style="background:#eff6ff;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;">' +
+      '<div style="font-size:24px;font-weight:800;color:#1d4ed8;">' + members.length + '</div>' +
+      '<div style="font-size:12px;color:#1d4ed8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Team members</div>' +
+    '</div>' +
+  '</div>';
+
+  // Member cards
+  html += '<div style="display:grid;gap:14px;">';
+  members.forEach(function(m) {
+    var name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
+    var cpd = cpdByMember[m.email] || { Investment: 0, Mortgage: 0, Protection: 0 };
+    var noFlags = !m.sellsMortgages && !m.sellsProtection;
+    var visibleTypes = typeConf.filter(function(t) {
+      if (t.key === 'Mortgage')   return m.sellsMortgages   || noFlags;
+      if (t.key === 'Protection') return m.sellsProtection  || noFlags;
+    });
+
+    // Overall worst status for the card border
+    var worstPct = 100;
+    visibleTypes.forEach(function(t) {
+      var pct = Math.round(((cpd[t.key] || 0) / targets[t.key]) * 100);
+      if (pct < worstPct) worstPct = pct;
+    });
+    var borderColor = worstPct >= 100 ? '#22c55e' : worstPct >= 60 ? '#f59e0b' : '#ef4444';
+
+    var combinedYtd    = visibleTypes.reduce(function(s,t){ return s + (cpd[t.key]||0); }, 0);
+    var combinedTarget = visibleTypes.reduce(function(s,t){ return s + (targets[t.key]||900); }, 0);
+    var combinedPct    = combinedTarget > 0 ? Math.min(100, Math.round((combinedYtd/combinedTarget)*100)) : 0;
+
+    var barsHtml = visibleTypes.map(function(t) {
+      var ytd    = cpd[t.key] || 0;
+      var target = targets[t.key] || 900;
+      var pct    = Math.min(100, Math.round((ytd / target) * 100));
+      var done   = pct >= 100;
+      var barColor = done ? '#22c55e' : t.color;
+      var status = getStatus(pct);
+      return '<div style="margin-bottom:10px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + t.label + ' CPD</span>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:12px;color:#6b7c8f;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</span>' +
+            '<span style="background:' + status.bg + ';color:' + status.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + status.label + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="background:#f0f4f8;border-radius:4px;height:7px;overflow:hidden;">' +
+          '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:4px;transition:width .5s ease;"></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    // Combined total row (when more than one type)
+    if (visibleTypes.length > 1) {
+      var cDone  = combinedPct >= 100;
+      var cStatus = getStatus(combinedPct);
+      barsHtml += '<div style="border-top:1px solid #f0f2f5;padding-top:8px;margin-top:2px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<span style="font-size:12px;font-weight:700;color:#003768;">Combined Total</span>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:12px;font-weight:700;color:#003768;">' + fmtMins(combinedYtd) + ' / ' + fmtMins(combinedTarget) + '</span>' +
+            '<span style="background:' + cStatus.bg + ';color:' + cStatus.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + cStatus.label + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="background:#f0f4f8;border-radius:4px;height:9px;overflow:hidden;">' +
+          '<div style="background:' + (cDone ? '#22c55e' : '#003768') + ';height:100%;width:' + combinedPct + '%;border-radius:4px;transition:width .5s ease;"></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var productTags = [];
+    if (m.sellsMortgages  || noFlags) productTags.push('<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;">Mortgage</span>');
+    if (m.sellsProtection || noFlags) productTags.push('<span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;">Protection</span>');
+
+    html += '<div style="background:#fff;border-radius:10px;border-left:4px solid ' + borderColor + ';padding:16px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06);">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:700;color:#1a2a3a;">' + escHtml(name) + '</div>' +
+          '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">' + productTags.join('') + '</div>' +
+      '</div>' +
+      barsHtml +
+    '</div>';
+  });
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
 // ── CPD Log ───────────────────────────────────────────────────
 var _cpdLoaded = false;
 
@@ -2205,7 +2475,7 @@ function showCpdSection(e) {
 function loadCpd() {
   _cpdLoaded = true;
   fetch('/api/cpd').then(r => r.json()).then(function(data) {
-    renderCpdProgress(data.ytdMins, data.totalMins, data.targetMins);
+    renderCpdProgress(data);
     renderCpdEntries(data.entries);
   }).catch(function() {
     document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log.</div>';
@@ -2217,18 +2487,68 @@ function fmtMins(m) {
   return h > 0 ? (h + 'h ' + (min > 0 ? min + 'm' : '')) : (min + 'm');
 }
 
-function renderCpdProgress(ytd, total, target) {
-  var pct = Math.min(100, Math.round((ytd / target) * 100));
-  var remaining = Math.max(0, target - ytd);
-  document.getElementById('cpd-ytd-display').textContent = fmtMins(ytd);
-  document.getElementById('cpd-target-display').textContent = '/ ' + fmtMins(target) + ' target';
-  document.getElementById('cpd-total-display').textContent = fmtMins(total) + ' total';
-  document.getElementById('cpd-progress-bar').style.width = pct + '%';
-  document.getElementById('cpd-progress-bar').style.background = pct >= 100 ? '#22c55e' : '#003768';
-  document.getElementById('cpd-progress-label').textContent = pct >= 100
-    ? '✓ Target reached this year'
-    : pct + '% of annual target — ' + fmtMins(remaining) + ' remaining';
-  document.getElementById('cpd-entry-count');
+function renderCpdProgress(data) {
+  var byType  = data.byType  || {};
+  var targets = data.targets || { Mortgage: 900, Protection: 900 };
+  var total   = data.totalMins || 0;
+  document.getElementById('cpd-total-display').textContent = fmtMins(total) + ' total all time';
+
+  // Determine which types to show — default to both Mortgage + Protection
+  var user = _currentUser || {};
+  var noFlags = !user.sellsMortgages && !user.sellsProtection;
+  var typeConf = [
+    { key: 'Mortgage',   label: 'Mortgage',   color: '#2e99d5', show: user.sellsMortgages   || noFlags },
+    { key: 'Protection', label: 'Protection', color: '#fcb034', show: user.sellsProtection  || noFlags }
+  ];
+  var visible = typeConf.filter(function(t){ return t.show; });
+  if (!visible.length) visible = typeConf; // safety fallback
+
+  var combinedYtd    = visible.reduce(function(s,t){ return s + (byType[t.key] || 0); }, 0);
+  var combinedTarget = visible.reduce(function(s,t){ return s + (targets[t.key] || 900); }, 0);
+  var combinedPct    = combinedTarget > 0 ? Math.min(100, Math.round((combinedYtd / combinedTarget) * 100)) : 0;
+
+  var container = document.getElementById('cpd-progress-bars');
+  var barsHtml = visible.map(function(t) {
+    var ytd       = byType[t.key] || 0;
+    var target    = targets[t.key] || 900;
+    var pct       = Math.min(100, Math.round((ytd / target) * 100));
+    var remaining = Math.max(0, target - ytd);
+    var done      = pct >= 100;
+    var barColor  = done ? '#22c55e' : t.color;
+    return '<div style="margin-bottom:14px;">' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
+        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + t.label + ' CPD</div>' +
+        '<div style="font-size:13px;color:#6b7c8f;font-weight:600;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</div>' +
+      '</div>' +
+      '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
+        '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
+        (done ? '✓ Target met' : pct + '% — ' + fmtMins(remaining) + ' remaining') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Combined total row (only shown if more than one type)
+  var combinedHtml = '';
+  if (visible.length > 1) {
+    var combinedDone  = combinedPct >= 100;
+    var combinedColor = combinedDone ? '#22c55e' : '#003768';
+    combinedHtml = '<div style="margin-top:4px;padding-top:14px;border-top:1px solid #e8ecf0;">' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
+        '<div style="font-size:13px;font-weight:700;color:#003768;">Combined Total</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#003768;">' + fmtMins(combinedYtd) + ' / ' + fmtMins(combinedTarget) + '</div>' +
+      '</div>' +
+      '<div style="background:#f0f4f8;border-radius:6px;height:11px;overflow:hidden;">' +
+        '<div style="background:' + combinedColor + ';height:100%;width:' + combinedPct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:' + (combinedDone ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
+        (combinedDone ? '✓ All targets met this year' : combinedPct + '% of combined target (' + fmtMins(combinedTarget) + ')') +
+      '</div>' +
+    '</div>';
+  }
+
+  container.innerHTML = barsHtml + combinedHtml;
 }
 
 function renderCpdEntries(entries) {
@@ -2240,16 +2560,22 @@ function renderCpdEntries(entries) {
   }
   var catColors = { 'Lender Update':'#dbeafe', 'Insurer Update':'#fef9c3', 'Compliance':'#dcfce7', 'Technical Knowledge':'#ede9fe', 'Other':'#f1f5f9' };
   var catText   = { 'Lender Update':'#1d4ed8', 'Insurer Update':'#854d0e', 'Compliance':'#166534', 'Technical Knowledge':'#6b21a8', 'Other':'#475569' };
+  var typeColors = { 'Investment':'#ede9fe', 'Mortgage':'#dbeafe', 'Protection':'#fef9c3' };
+  var typeText   = { 'Investment':'#6b21a8', 'Mortgage':'#1d4ed8', 'Protection':'#854d0e' };
   var rows = entries.map(function(e) {
     var d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
     var bg = catColors[e.category] || '#f1f5f9';
     var tc = catText[e.category]   || '#475569';
+    var tbg = typeColors[e.cpdType] || '#f1f5f9';
+    var ttc = typeText[e.cpdType]   || '#475569';
+    var typeTag = e.cpdType ? '<span style="background:' + tbg + ';color:' + ttc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.cpdType) + '</span>' : '—';
     var srcIcon = e.source === 'Learning Zone'
       ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
       : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     return '<tr style="border-bottom:1px solid #f0f2f5;">' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity) + '</td>' +
+      '<td style="padding:11px 16px;">' + typeTag + '</td>' +
       '<td style="padding:11px 16px;"><span style="background:' + bg + ';color:' + tc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:#003768;text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
@@ -2260,6 +2586,7 @@ function renderCpdEntries(entries) {
     '<thead><tr style="background:#f9fafc;">' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Date</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Activity</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Type</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Category</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Source</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Time</th>' +
@@ -2272,6 +2599,10 @@ function openCpdForm() {
   document.getElementById('cpdf-minutes').value = '60';
   document.getElementById('cpdf-activity').value = '';
   document.getElementById('cpd-form-error').style.display = 'none';
+  // Pre-select CPD type: default Mortgage unless user only sells Protection
+  var user = _currentUser || {};
+  var defaultType = (!user.sellsProtection || user.sellsMortgages || (!user.sellsMortgages && !user.sellsProtection)) ? 'Mortgage' : 'Protection';
+  document.getElementById('cpdf-cpdtype').value = defaultType;
   document.getElementById('cpd-form').style.display = 'block';
   document.getElementById('cpdf-activity').focus();
 }
@@ -2287,13 +2618,14 @@ function saveCpdEntry() {
   var date     = document.getElementById('cpdf-date').value;
   var minutes  = document.getElementById('cpdf-minutes').value;
   var category = document.getElementById('cpdf-category').value;
+  var cpdType  = document.getElementById('cpdf-cpdtype').value;
   if (!activity) { errEl.textContent = 'Activity is required.'; errEl.style.display = 'block'; return; }
   if (!date)     { errEl.textContent = 'Date is required.';     errEl.style.display = 'block'; return; }
   if (!minutes || minutes < 1) { errEl.textContent = 'Duration must be at least 1 minute.'; errEl.style.display = 'block'; return; }
   fetch('/api/cpd', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category })
+    body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category, cpdType })
   }).then(function(r) { return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
     .then(function(res) {
       if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
@@ -2403,11 +2735,11 @@ function deleteLvVideo(id, title) {
 // ── CSV Import ────────────────────────────────────────────────
 var _importRows = [];
 
-var CSV_COLUMNS = ['email','password','salutation','firstName','lastName','jobTitle','mobile','landline','website','isAdmin'];
+var CSV_COLUMNS = ['email','password','salutation','firstName','lastName','jobTitle','mobile','landline','website','isAdmin','sellsInvestments','sellsMortgages','sellsProtection','isSupervisor','supervisorEmail'];
 
 function downloadCsvTemplate() {
-  var header = 'email,password,salutation,firstName,lastName,jobTitle,mobile,landline,website,isAdmin';
-  var example = 'jane.doe@example.com,Password123,Mrs,Jane,Doe,Financial Adviser,07700 900000,01234 567890,https://fpg.co.uk,false';
+  var header = 'email,password,salutation,firstName,lastName,jobTitle,mobile,landline,website,isAdmin,sellsInvestments,sellsMortgages,sellsProtection,isSupervisor,supervisorEmail';
+  var example = 'jane.doe@example.com,Password123,Mrs,Jane,Doe,Financial Adviser,07700 900000,01234 567890,https://fpg.co.uk,false,true,false,false,false,supervisor@financeplanning.co.uk';
   var blob = new Blob([header + '\n' + example], { type: 'text/csv' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2454,8 +2786,8 @@ function parseCsvLine(line) {
 
 function showImportPreview(rows) {
   document.getElementById('import-count').textContent = rows.length + ' user' + (rows.length !== 1 ? 's' : '') + ' ready to import';
-  var cols = ['email','firstName','lastName','jobTitle','mobile','isAdmin'];
-  var labels = ['Email','First Name','Last Name','Job Title','Mobile','Admin'];
+  var cols = ['email','firstName','lastName','jobTitle','isAdmin','sellsInvestments','sellsMortgages','sellsProtection','isSupervisor','supervisorEmail'];
+  var labels = ['Email','First Name','Last Name','Job Title','Admin','Investments','Mortgages','Protection','Supervisor','Supervisor Email'];
   var th = cols.map(function(c,i){ return '<th style="padding:6px 10px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">' + labels[i] + '</th>'; }).join('');
   var trs = rows.map(function(r, idx) {
     var bg = idx % 2 === 0 ? '#fff' : '#f9fafc';
@@ -2500,7 +2832,12 @@ async function confirmImport() {
           mobile:     r.mobile     || '',
           landline:   r.landline   || '',
           website:    r.website    || '',
-          isAdmin:    r.isAdmin === 'true' || r.isAdmin === '1'
+          isAdmin:          r.isAdmin === 'true'          || r.isAdmin === '1',
+          sellsInvestments: r.sellsInvestments === 'true' || r.sellsInvestments === '1',
+          sellsMortgages:   r.sellsMortgages   === 'true' || r.sellsMortgages   === '1',
+          sellsProtection:  r.sellsProtection  === 'true' || r.sellsProtection  === '1',
+          isSupervisor:     r.isSupervisor     === 'true' || r.isSupervisor     === '1',
+          supervisorEmail:  r.supervisorEmail  || ''
         })
       });
       if (res.ok) ok++; else fail++;
