@@ -133,7 +133,7 @@ html { height: 100%; }
   <!-- Compliance sidebar -->
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
-    <a href="#" class="active">Overview</a>
+    <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">CPD Log</a>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -685,10 +685,84 @@ html { height: 100%; }
 
   <!-- ── Compliance tab ────────────────────────────────────── -->
   <div id="tab-compliance" class="tab-pane">
-    <div class="coming-soon">
-      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      <h2>Compliance</h2>
-      <p>Compliance documents, checklists, and regulatory resources will appear here. This section is coming soon.</p>
+    <!-- CPD Log -->
+    <div id="section-cpd" style="padding:32px;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:20px;">
+        <div>
+          <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">CPD Log</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;">Track your continuing professional development. Learning Zone videos are logged automatically.</p>
+        </div>
+        <button onclick="openCpdForm()" style="flex-shrink:0;background:#003768;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Entry</button>
+      </div>
+
+      <!-- Progress card -->
+      <div id="cpd-progress-card" style="background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Year to Date</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span id="cpd-ytd-display" style="font-size:32px;font-weight:800;color:#003768;">—</span>
+              <span id="cpd-target-display" style="font-size:14px;color:#6b7c8f;font-weight:600;"></span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">All Time</div>
+            <div id="cpd-total-display" style="font-size:20px;font-weight:700;color:#1a2a3a;">—</div>
+          </div>
+        </div>
+        <div style="background:#f0f4f8;border-radius:6px;height:10px;overflow:hidden;">
+          <div id="cpd-progress-bar" style="background:#003768;height:100%;width:0%;border-radius:6px;transition:width .6s ease;"></div>
+        </div>
+        <div id="cpd-progress-label" style="font-size:12px;color:#6b7c8f;margin-top:7px;"></div>
+      </div>
+
+      <!-- Add entry form -->
+      <div id="cpd-form" style="display:none;background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+        <h3 style="color:#003768;font-size:15px;margin:0 0 18px;">Add CPD Entry</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div style="grid-column:1/-1;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Activity *</label>
+            <input id="cpdf-activity" type="text" placeholder="e.g. Mortgage Market Update — Halifax" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Date *</label>
+            <input id="cpdf-date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Duration (minutes) *</label>
+            <input id="cpdf-minutes" type="number" min="1" placeholder="60" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Category</label>
+            <select id="cpdf-category" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
+              <option value="Lender Update">Lender Update</option>
+              <option value="Insurer Update">Insurer Update</option>
+              <option value="Compliance">Compliance</option>
+              <option value="Technical Knowledge">Technical Knowledge</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div id="cpd-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:12px;"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="saveCpdEntry()" style="background:#003768;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save Entry</button>
+          <button onclick="closeCpdForm()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Entries table -->
+      <div style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="padding:16px 24px;border-bottom:1px solid #e8ecf0;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:14px;font-weight:700;color:#003768;">All Entries</span>
+          <span id="cpd-entry-count" style="font-size:12px;color:#6b7c8f;"></span>
+        </div>
+        <div id="cpd-entries" style="min-height:80px;">
+          <div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">Loading…</div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1748,7 +1822,8 @@ function switchTab(tab) {
     if (btn)     btn.classList.toggle('active', t === tab);
   });
   window.location.hash = tab;
-  if (tab === 'learning') loadLearningZone();
+  if (tab === 'learning')   loadLearningZone();
+  if (tab === 'compliance') { if (!_cpdLoaded) loadCpd(); }
 }
 
 // Hash routing — navigate on load (called directly, no event wrapper needed)
@@ -1929,8 +2004,15 @@ function openLvPlayer(url, title, desc) {
   document.getElementById('lv-iframe').src = getEmbedUrl(url);
   document.getElementById('lv-player-title').textContent = title || '';
   document.getElementById('lv-player-desc').textContent = desc || '';
-  var m = document.getElementById('lv-player-modal');
-  m.style.display = 'flex';
+  document.getElementById('lv-player-modal').style.display = 'flex';
+  // Auto-log to CPD
+  fetch('/api/cpd/video', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ videoTitle: title || 'Learning Zone video' })
+  }).then(function() {
+    _cpdLoaded = false; // refresh CPD if user visits it next
+  }).catch(function(){});
 }
 
 function closeLvPlayer() {
@@ -2110,6 +2192,122 @@ function deleteUser(id, name) {
   fetch('/api/admin/users/' + id, { method: 'DELETE' })
     .then(function() { loadAdminUsers(); })
     .catch(function() { alert('Failed to delete user.'); });
+}
+
+// ── CPD Log ───────────────────────────────────────────────────
+var _cpdLoaded = false;
+
+function showCpdSection(e) {
+  if (e) e.preventDefault();
+  if (!_cpdLoaded) loadCpd();
+}
+
+function loadCpd() {
+  _cpdLoaded = true;
+  fetch('/api/cpd').then(r => r.json()).then(function(data) {
+    renderCpdProgress(data.ytdMins, data.totalMins, data.targetMins);
+    renderCpdEntries(data.entries);
+  }).catch(function() {
+    document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log.</div>';
+  });
+}
+
+function fmtMins(m) {
+  var h = Math.floor(m / 60), min = m % 60;
+  return h > 0 ? (h + 'h ' + (min > 0 ? min + 'm' : '')) : (min + 'm');
+}
+
+function renderCpdProgress(ytd, total, target) {
+  var pct = Math.min(100, Math.round((ytd / target) * 100));
+  var remaining = Math.max(0, target - ytd);
+  document.getElementById('cpd-ytd-display').textContent = fmtMins(ytd);
+  document.getElementById('cpd-target-display').textContent = '/ ' + fmtMins(target) + ' target';
+  document.getElementById('cpd-total-display').textContent = fmtMins(total) + ' total';
+  document.getElementById('cpd-progress-bar').style.width = pct + '%';
+  document.getElementById('cpd-progress-bar').style.background = pct >= 100 ? '#22c55e' : '#003768';
+  document.getElementById('cpd-progress-label').textContent = pct >= 100
+    ? '✓ Target reached this year'
+    : pct + '% of annual target — ' + fmtMins(remaining) + ' remaining';
+  document.getElementById('cpd-entry-count');
+}
+
+function renderCpdEntries(entries) {
+  var el = document.getElementById('cpd-entries');
+  document.getElementById('cpd-entry-count').textContent = entries.length + ' entr' + (entries.length === 1 ? 'y' : 'ies');
+  if (!entries.length) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">No entries yet. Watch a Learning Zone video or add one manually.</div>';
+    return;
+  }
+  var catColors = { 'Lender Update':'#dbeafe', 'Insurer Update':'#fef9c3', 'Compliance':'#dcfce7', 'Technical Knowledge':'#ede9fe', 'Other':'#f1f5f9' };
+  var catText   = { 'Lender Update':'#1d4ed8', 'Insurer Update':'#854d0e', 'Compliance':'#166534', 'Technical Knowledge':'#6b21a8', 'Other':'#475569' };
+  var rows = entries.map(function(e) {
+    var d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
+    var bg = catColors[e.category] || '#f1f5f9';
+    var tc = catText[e.category]   || '#475569';
+    var srcIcon = e.source === 'Learning Zone'
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    return '<tr style="border-bottom:1px solid #f0f2f5;">' +
+      '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity) + '</td>' +
+      '<td style="padding:11px 16px;"><span style="background:' + bg + ';color:' + tc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:#003768;text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
+      '<td style="padding:11px 16px;text-align:right;"><button onclick="deleteCpdEntry(\'' + e.id + '\')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color=\'#c00\'" onmouseout="this.style.color=\'#d1d5db\'">&#x2715;</button></td>' +
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr style="background:#f9fafc;">' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Date</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Activity</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Category</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Source</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Time</th>' +
+    '<th></th>' +
+    '</thead><tbody>' + rows + '</tbody></table>';
+}
+
+function openCpdForm() {
+  document.getElementById('cpdf-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cpdf-minutes').value = '60';
+  document.getElementById('cpdf-activity').value = '';
+  document.getElementById('cpd-form-error').style.display = 'none';
+  document.getElementById('cpd-form').style.display = 'block';
+  document.getElementById('cpdf-activity').focus();
+}
+
+function closeCpdForm() {
+  document.getElementById('cpd-form').style.display = 'none';
+}
+
+function saveCpdEntry() {
+  var errEl = document.getElementById('cpd-form-error');
+  errEl.style.display = 'none';
+  var activity = document.getElementById('cpdf-activity').value.trim();
+  var date     = document.getElementById('cpdf-date').value;
+  var minutes  = document.getElementById('cpdf-minutes').value;
+  var category = document.getElementById('cpdf-category').value;
+  if (!activity) { errEl.textContent = 'Activity is required.'; errEl.style.display = 'block'; return; }
+  if (!date)     { errEl.textContent = 'Date is required.';     errEl.style.display = 'block'; return; }
+  if (!minutes || minutes < 1) { errEl.textContent = 'Duration must be at least 1 minute.'; errEl.style.display = 'block'; return; }
+  fetch('/api/cpd', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category })
+  }).then(function(r) { return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+    .then(function(res) {
+      if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
+      closeCpdForm();
+      _cpdLoaded = false;
+      loadCpd();
+    }).catch(function() { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
+}
+
+function deleteCpdEntry(id) {
+  if (!confirm('Remove this CPD entry?')) return;
+  fetch('/api/cpd/' + id, { method: 'DELETE' })
+    .then(function() { _cpdLoaded = false; loadCpd(); })
+    .catch(function() { alert('Failed to delete entry.'); });
 }
 
 // ── Admin: Learning Videos ────────────────────────────────────

@@ -282,6 +282,119 @@ app.delete('/api/admin/learning/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── CPD Log config ────────────────────────────────────────────
+const CPD_TABLE    = 'tblajx6AAKFtI6K1N';
+const CPD_ACTIVITY = 'fldE8v8i9jHThIkv3';
+const CPD_EMAIL    = 'fldBN8Hh2D7W2JXeV';
+const CPD_DATE     = 'fldVe6jUFFO1ZCtk3';
+const CPD_MINUTES  = 'fldr6SXrwR1TYnqf8';
+const CPD_CATEGORY = 'fldX8oYvUMtCdsXSD';
+const CPD_SOURCE   = 'fldSjdFlkizyQVNzP';
+const CPD_VTITLE   = 'fldXmHRWv246Wb5FF';
+const CPD_TARGET_MINS = (process.env.CPD_TARGET_HOURS || 35) * 60; // default 35 hrs
+
+async function cpdFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${CPD_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+function cpdRecordToEntry(record) {
+  const f = record.fields;
+  return {
+    id:         record.id,
+    activity:   f[CPD_ACTIVITY]  || '',
+    date:       f[CPD_DATE]      || '',
+    minutes:    f[CPD_MINUTES]   || 0,
+    category:   f[CPD_CATEGORY]  || '',
+    source:     f[CPD_SOURCE]    || '',
+    videoTitle: f[CPD_VTITLE]    || ''
+  };
+}
+
+// GET /api/cpd — current user's entries + totals
+app.get('/api/cpd', requireAuth, async (req, res) => {
+  const email = req.session.user.email;
+  try {
+    const formula = encodeURIComponent(`{User Email}="${email}"`);
+    const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100`);
+    const entries = (data.records || []).map(cpdRecordToEntry);
+    const totalMins = entries.reduce((sum, e) => sum + (e.minutes || 0), 0);
+    // Year-to-date total
+    const thisYear = new Date().getFullYear();
+    const ytdMins = entries
+      .filter(e => e.date && new Date(e.date).getFullYear() === thisYear)
+      .reduce((sum, e) => sum + (e.minutes || 0), 0);
+    res.json({ entries, totalMins, ytdMins, targetMins: CPD_TARGET_MINS });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cpd — manual entry
+app.post('/api/cpd', requireAuth, async (req, res) => {
+  const { activity, date, minutes, category } = req.body;
+  if (!activity || !date || !minutes) return res.status(400).json({ error: 'Activity, date and minutes required' });
+  try {
+    const data = await cpdFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: {
+        [CPD_ACTIVITY]: activity,
+        [CPD_EMAIL]:    req.session.user.email,
+        [CPD_DATE]:     date,
+        [CPD_MINUTES]:  parseInt(minutes, 10),
+        [CPD_CATEGORY]: category || 'Other',
+        [CPD_SOURCE]:   'Manual'
+      }}], returnFieldsByFieldId: true })
+    });
+    res.json(cpdRecordToEntry(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cpd/video — auto-log a Learning Zone video
+app.post('/api/cpd/video', requireAuth, async (req, res) => {
+  const { videoTitle } = req.body;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const data = await cpdFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: {
+        [CPD_ACTIVITY]: videoTitle || 'Learning Zone video',
+        [CPD_EMAIL]:    req.session.user.email,
+        [CPD_DATE]:     today,
+        [CPD_MINUTES]:  60,
+        [CPD_CATEGORY]: 'Technical Knowledge',
+        [CPD_SOURCE]:   'Learning Zone',
+        [CPD_VTITLE]:   videoTitle || ''
+      }}], returnFieldsByFieldId: true })
+    });
+    res.json(cpdRecordToEntry(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/cpd/:id — own entries only
+app.delete('/api/cpd/:id', requireAuth, async (req, res) => {
+  const email = req.session.user.email;
+  try {
+    // Verify ownership first
+    const record = await cpdFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    if (record.fields[CPD_EMAIL] !== email) return res.status(403).json({ error: 'Forbidden' });
+    await cpdFetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Main app ─────────────────────────────────────────────────
 app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
