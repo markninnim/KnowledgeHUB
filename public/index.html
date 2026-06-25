@@ -2931,9 +2931,6 @@ function renderSvDashboard(data) {
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
           '<div style="display:flex;gap:6px;align-items:center;">' +
-            '<button onclick="svDrillDown(\'' + safeEmail + '\',\'' + drillId + '\')" style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;cursor:pointer;font-family:inherit;">View ▾</button>' +
-            '<button onclick="svExportAdviserCsv(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;cursor:pointer;font-family:inherit;">↓ CSV</button>' +
-            '<button onclick="openSvTransfer(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:7px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#6b7c8f;cursor:pointer;font-family:inherit;">Transfer →</button>' +
           '</div>' +
         '</div>' +
         barsHtml +
