@@ -2852,12 +2852,12 @@ function renderSvDashboard(data) {
     if (_svViewAsEmail === ‘all’) {
       subtitleEl.textContent = ‘CPD register — all advisers’;
     } else if (_svViewAsEmail) {
-      var sel = document.getElementById(‘sv-viewas-select’);
-      var svName = sel ? (sel.options[sel.selectedIndex] || {}).text || _svViewAsEmail : _svViewAsEmail;
-      subtitleEl.textContent = ‘CPD register for ‘ + svName + ‘’s team’;
+      var sel2 = document.getElementById(‘sv-viewas-select’);
+      var svName2 = sel2 ? (sel2.options[sel2.selectedIndex] || {}).text || _svViewAsEmail : _svViewAsEmail;
+      subtitleEl.textContent = 'CPD register for ' + svName2 + '\u2019s team';
     } else if (_currentUser) {
-      var svName = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(‘ ‘) || _currentUser.email;
-      subtitleEl.textContent = ‘CPD register for ‘ + svName + ‘’s team’;
+      var svName3 = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(‘ ‘) || _currentUser.email;
+      subtitleEl.textContent = 'CPD register for ' + svName3 + '\u2019s team';
     }
   }
 
