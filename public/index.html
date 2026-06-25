@@ -694,10 +694,23 @@ html { height: 100%; }
 
   <!-- ── Learning tab ──────────────────────────────────────── -->
   <div id="tab-learning" class="tab-pane">
-    <div class="coming-soon">
-      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
-      <h2>Learning</h2>
-      <p>Training materials, guides, and learning resources for the FPG team will appear here. This section is coming soon.</p>
+    <div style="padding:32px 32px 0;">
+      <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Learning Zone</h2>
+      <p style="color:#6b7c8f;font-size:14px;margin:0 0 24px;">The 8 latest videos — older ones move to the archive below.</p>
+    </div>
+
+    <!-- Featured 8 -->
+    <div id="lv-grid" style="padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;">
+      <div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">Loading videos…</div>
+    </div>
+
+    <!-- Archive -->
+    <div id="lv-archive-wrap" style="display:none;border-top:1px solid #e8ecf0;margin:0 32px;padding:24px 0 32px;">
+      <button onclick="toggleLvArchive()" id="lv-archive-toggle" style="background:none;border:none;color:#003768;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:16px;">
+        <svg id="lv-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+        <span id="lv-archive-label">Show Archive</span>
+      </button>
+      <div id="lv-archive-grid" style="display:none;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
     </div>
   </div>
 
@@ -781,6 +794,22 @@ html { height: 100%; }
   </div>
 </div>
 
+<!-- ── Video Player Modal ─────────────────────────────────── -->
+<div id="lv-player-modal" onclick="if(event.target===this)closeLvPlayer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1500;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:900px;padding:0 20px;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div id="lv-player-title" style="color:#fff;font-size:18px;font-weight:700;"></div>
+        <div id="lv-player-desc" style="color:rgba(255,255,255,.65);font-size:13px;margin-top:2px;"></div>
+      </div>
+      <button onclick="closeLvPlayer()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:16px;">&#x2715;</button>
+    </div>
+    <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000;">
+      <iframe id="lv-iframe" src="" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>
+    </div>
+  </div>
+</div>
+
 <!-- ── Admin Panel ─────────────────────────────────────────── -->
 <div id="admin-modal" onclick="if(event.target===this)closeAdminPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:12px;width:100%;max-width:760px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
@@ -791,8 +820,33 @@ html { height: 100%; }
         <p style="color:#6b7c8f;font-size:13px;margin:0;">Manage who can access the FPG DAM tool.</p>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="downloadCsvTemplate()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Template</button>
+        <label style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">
+          ↑ Import CSV<input type="file" accept=".csv" onchange="importCsv(this)" style="display:none;">
+        </label>
         <button onclick="openUserForm()" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
+      </div>
+    </div>
+
+    <!-- Import preview -->
+    <div id="admin-import-preview" style="display:none;padding:20px 28px;border-bottom:1px solid #e8ecf0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <span style="font-size:14px;font-weight:600;color:#003768;">Import Preview</span>
+          <span id="import-count" style="font-size:13px;color:#6b7c8f;margin-left:8px;"></span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="confirmImport()" style="background:#003768;color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Import All</button>
+          <button onclick="cancelImport()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:7px 12px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        </div>
+      </div>
+      <div id="import-preview-table" style="overflow-x:auto;font-size:12px;"></div>
+      <div id="import-progress" style="display:none;margin-top:12px;">
+        <div style="background:#e8ecf0;border-radius:4px;height:6px;overflow:hidden;">
+          <div id="import-progress-bar" style="background:#003768;height:100%;width:0%;transition:width .3s;"></div>
+        </div>
+        <div id="import-progress-text" style="color:#6b7c8f;font-size:12px;margin-top:6px;text-align:center;"></div>
       </div>
     </div>
 
@@ -854,6 +908,42 @@ html { height: 100%; }
         <div style="display:flex;gap:10px;margin-top:20px;">
           <button onclick="saveUser()" style="background:#003768;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save User</button>
           <button onclick="cancelUserForm()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Videos section -->
+    <div style="border-top:2px solid #e8ecf0;margin:0 28px;padding:24px 0 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h3 style="color:#003768;font-size:15px;margin:0 0 2px;">Learning Zone Videos</h3>
+          <p style="color:#6b7c8f;font-size:12px;margin:0;">Newest 8 are featured — older ones go to archive automatically.</p>
+        </div>
+        <button onclick="openLvForm()" style="background:#003768;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Video</button>
+      </div>
+      <div id="admin-lv-list" style="margin-bottom:4px;">
+        <div style="color:#6b7c8f;font-size:13px;padding:12px 0;text-align:center;">Loading…</div>
+      </div>
+      <div id="admin-lv-form" style="display:none;padding:16px;background:#f9fafc;border-radius:8px;margin-bottom:20px;">
+        <h4 id="lv-form-title" style="color:#003768;font-size:14px;margin:0 0 14px;">Add Video</h4>
+        <div style="display:grid;gap:12px;">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Title *</label>
+            <input id="lvf-title" type="text" placeholder="e.g. Introduction to Protection" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Description</label>
+            <input id="lvf-desc" type="text" placeholder="Short description (optional)" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">YouTube or Vimeo URL *</label>
+            <input id="lvf-url" type="url" placeholder="https://www.youtube.com/watch?v=…" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
+        </div>
+        <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="saveLvVideo()" style="background:#003768;color:#fff;border:none;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Video</button>
+          <button onclick="cancelLvForm()" style="background:#e8ecf0;color:#6b7c8f;border:none;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
     </div>
@@ -1643,6 +1733,7 @@ function switchTab(tab) {
     if (btn)     btn.classList.toggle('active', t === tab);
   });
   window.location.hash = tab;
+  if (tab === 'learning') loadLearningZone();
 }
 
 // Hash routing — navigate on load (called directly, no event wrapper needed)
@@ -1655,6 +1746,103 @@ function switchTab(tab) {
     navigateToSection(hash);
   }
 })();
+
+// ── Learning Zone ─────────────────────────────────────────────
+var _lvArchiveOpen = false;
+var _lvLoaded = false;
+
+function loadLearningZone() {
+  if (_lvLoaded) return;
+  _lvLoaded = true;
+  fetch('/api/learning').then(r => r.json()).then(function(data) {
+    renderLvGrid('lv-grid', data.featured || [], true);
+    if (data.archive && data.archive.length > 0) {
+      renderLvGrid('lv-archive-grid', data.archive, false);
+      var count = data.archive.length;
+      document.getElementById('lv-archive-label').textContent = 'Show Archive (' + count + ' video' + (count !== 1 ? 's' : '') + ')';
+      document.getElementById('lv-archive-wrap').style.display = 'block';
+    }
+  }).catch(function() {
+    document.getElementById('lv-grid').innerHTML = '<div style="grid-column:1/-1;color:#c00;font-size:13px;padding:40px 0;text-align:center;">Could not load videos.</div>';
+  });
+}
+
+function renderLvGrid(containerId, videos, isFeatured) {
+  var el = document.getElementById(containerId);
+  if (!videos || videos.length === 0) {
+    el.innerHTML = '<div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:' + (isFeatured ? '40px' : '0') + ' 0;text-align:center;">No videos yet.</div>';
+    if (!isFeatured) el.style.display = 'grid';
+    return;
+  }
+  el.innerHTML = videos.map(function(v) {
+    var thumb = getVideoThumb(v.url);
+    var label = isFeatured ? '' : '';
+    return '<div onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div style="position:relative;padding-bottom:56.25%;background:#e8ecf0;">' +
+        (thumb ? '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'">' : '') +
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,55,104,.3);">' +
+          '<div style="width:44px;height:44px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="#003768"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:12px 14px;background:#fff;">' +
+        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;line-height:1.3;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>' +
+        (v.description ? '<div style="font-size:12px;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.description) + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function getVideoThumb(url) {
+  if (!url) return '';
+  var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (ytMatch) return 'https://img.youtube.com/vi/' + ytMatch[1] + '/hqdefault.jpg';
+  return '';
+}
+
+function getEmbedUrl(url) {
+  if (!url) return '';
+  var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1';
+  var vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) return 'https://player.vimeo.com/video/' + vmMatch[1] + '?autoplay=1';
+  return url;
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+
+function openLvPlayer(url, title, desc) {
+  document.getElementById('lv-iframe').src = getEmbedUrl(url);
+  document.getElementById('lv-player-title').textContent = title || '';
+  document.getElementById('lv-player-desc').textContent = desc || '';
+  var m = document.getElementById('lv-player-modal');
+  m.style.display = 'flex';
+}
+
+function closeLvPlayer() {
+  document.getElementById('lv-player-modal').style.display = 'none';
+  document.getElementById('lv-iframe').src = '';
+}
+
+function toggleLvArchive() {
+  _lvArchiveOpen = !_lvArchiveOpen;
+  var grid = document.getElementById('lv-archive-grid');
+  var chevron = document.getElementById('lv-archive-chevron');
+  var label = document.getElementById('lv-archive-label');
+  var count = document.querySelectorAll('#lv-archive-grid > div').length;
+  if (_lvArchiveOpen) {
+    grid.style.display = 'grid';
+    chevron.style.transform = 'rotate(180deg)';
+    label.textContent = label.textContent.replace('Show', 'Hide');
+  } else {
+    grid.style.display = 'none';
+    chevron.style.transform = '';
+    label.textContent = label.textContent.replace('Hide', 'Show');
+  }
+}
 
 // ── Init: load current user, show admin button if admin ──────
 (function initUser() {
@@ -1674,6 +1862,7 @@ function openAdminPanel() {
   var m = document.getElementById('admin-modal');
   m.style.display = 'flex';
   loadAdminUsers();
+  loadAdminLvList();
 }
 
 function closeAdminPanel() {
@@ -1810,6 +1999,211 @@ function deleteUser(id, name) {
   fetch('/api/admin/users/' + id, { method: 'DELETE' })
     .then(function() { loadAdminUsers(); })
     .catch(function() { alert('Failed to delete user.'); });
+}
+
+// ── Admin: Learning Videos ────────────────────────────────────
+var _lvAdminVideos = [];
+var _lvEditingId = null;
+
+function loadAdminLvList() {
+  document.getElementById('admin-lv-list').innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:12px 0;text-align:center;">Loading…</div>';
+  fetch('/api/learning').then(r => r.json()).then(function(data) {
+    var all = (data.featured || []).concat(data.archive || []);
+    _lvAdminVideos = all;
+    renderAdminLvList(all, data.featured.length);
+  }).catch(function() {
+    document.getElementById('admin-lv-list').innerHTML = '<div style="color:#c00;font-size:13px;padding:12px 0;text-align:center;">Failed to load.</div>';
+  });
+}
+
+function renderAdminLvList(videos, featuredCount) {
+  var el = document.getElementById('admin-lv-list');
+  if (!videos || videos.length === 0) {
+    el.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:12px 0;text-align:center;">No videos yet.</div>';
+    return;
+  }
+  el.innerHTML = videos.map(function(v, idx) {
+    var tag = idx < featuredCount
+      ? '<span style="background:#e8f4fd;color:#2e99d5;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Featured</span>'
+      : '<span style="background:#f5f7fa;color:#6b7c8f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Archive</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f2f5;">' +
+      '<div style="overflow:hidden;">' +
+        '<div style="font-size:13px;font-weight:600;color:#1a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + tag + '</div>' +
+        '<div style="font-size:11px;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.url) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:10px;">' +
+        '<button onclick="openLvForm(\'' + v.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Edit</button>' +
+        '<button onclick="deleteLvVideo(\'' + v.id + '\',\'' + escAttr(v.title) + '\')" style="background:#fff0f0;color:#c00;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openLvForm(id) {
+  _lvEditingId = id || null;
+  var errEl = document.getElementById('lv-form-error');
+  errEl.style.display = 'none';
+  if (id) {
+    var v = _lvAdminVideos.find(function(x){ return x.id === id; });
+    document.getElementById('lv-form-title').textContent = 'Edit Video';
+    document.getElementById('lvf-title').value = v.title || '';
+    document.getElementById('lvf-desc').value  = v.description || '';
+    document.getElementById('lvf-url').value   = v.url || '';
+  } else {
+    document.getElementById('lv-form-title').textContent = 'Add Video';
+    document.getElementById('lvf-title').value = '';
+    document.getElementById('lvf-desc').value  = '';
+    document.getElementById('lvf-url').value   = '';
+  }
+  document.getElementById('admin-lv-form').style.display = 'block';
+  document.getElementById('lvf-title').focus();
+}
+
+function cancelLvForm() {
+  _lvEditingId = null;
+  document.getElementById('admin-lv-form').style.display = 'none';
+}
+
+function saveLvVideo() {
+  var errEl = document.getElementById('lv-form-error');
+  errEl.style.display = 'none';
+  var title = document.getElementById('lvf-title').value.trim();
+  var desc  = document.getElementById('lvf-desc').value.trim();
+  var url   = document.getElementById('lvf-url').value.trim();
+  if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
+  if (!url)   { errEl.textContent = 'URL is required.';   errEl.style.display = 'block'; return; }
+  var endpoint = _lvEditingId ? '/api/admin/learning/' + _lvEditingId : '/api/admin/learning';
+  var method   = _lvEditingId ? 'PUT' : 'POST';
+  fetch(endpoint, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, description: desc, url }) })
+    .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+      if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
+      cancelLvForm();
+      loadAdminLvList();
+      _lvLoaded = false; // force refresh of learning tab next time it's opened
+    }).catch(function() { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
+}
+
+function deleteLvVideo(id, title) {
+  if (!confirm('Delete "' + title + '"?')) return;
+  fetch('/api/admin/learning/' + id, { method: 'DELETE' })
+    .then(function() { loadAdminLvList(); _lvLoaded = false; })
+    .catch(function() { alert('Failed to delete.'); });
+}
+
+// ── CSV Import ────────────────────────────────────────────────
+var _importRows = [];
+
+var CSV_COLUMNS = ['email','password','salutation','firstName','lastName','jobTitle','mobile','landline','website','isAdmin'];
+
+function downloadCsvTemplate() {
+  var header = 'email,password,salutation,firstName,lastName,jobTitle,mobile,landline,website,isAdmin';
+  var example = 'jane.doe@example.com,Password123,Mrs,Jane,Doe,Financial Adviser,07700 900000,01234 567890,https://fpg.co.uk,false';
+  var blob = new Blob([header + '\n' + example], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fpg-users-template.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function importCsv(input) {
+  var file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var lines = e.target.result.split(/\r?\n/).filter(function(l){ return l.trim(); });
+    if (lines.length < 2) { alert('CSV appears empty or has no data rows.'); return; }
+    var headers = lines[0].split(',').map(function(h){ return h.trim().replace(/^"|"$/g,''); });
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var vals = parseCsvLine(lines[i]);
+      var row = {};
+      headers.forEach(function(h, idx){ row[h] = (vals[idx] || '').trim(); });
+      if (!row.email) continue;
+      rows.push(row);
+    }
+    if (rows.length === 0) { alert('No valid rows found.'); return; }
+    _importRows = rows;
+    showImportPreview(rows);
+  };
+  reader.readAsText(file);
+}
+
+function parseCsvLine(line) {
+  var result = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function showImportPreview(rows) {
+  document.getElementById('import-count').textContent = rows.length + ' user' + (rows.length !== 1 ? 's' : '') + ' ready to import';
+  var cols = ['email','firstName','lastName','jobTitle','mobile','isAdmin'];
+  var labels = ['Email','First Name','Last Name','Job Title','Mobile','Admin'];
+  var th = cols.map(function(c,i){ return '<th style="padding:6px 10px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">' + labels[i] + '</th>'; }).join('');
+  var trs = rows.map(function(r, idx) {
+    var bg = idx % 2 === 0 ? '#fff' : '#f9fafc';
+    var td = cols.map(function(c){ return '<td style="padding:5px 10px;color:#1a2a3a;">' + escHtml(r[c] || '') + '</td>'; }).join('');
+    return '<tr style="background:' + bg + ';">' + td + '</tr>';
+  }).join('');
+  document.getElementById('import-preview-table').innerHTML =
+    '<table style="width:100%;border-collapse:collapse;"><thead><tr>' + th + '</tr></thead><tbody>' + trs + '</tbody></table>';
+  document.getElementById('import-progress').style.display = 'none';
+  document.getElementById('admin-import-preview').style.display = 'block';
+  cancelUserForm();
+}
+
+function cancelImport() {
+  _importRows = [];
+  document.getElementById('admin-import-preview').style.display = 'none';
+}
+
+async function confirmImport() {
+  var rows = _importRows;
+  if (!rows.length) return;
+  var progressEl  = document.getElementById('import-progress');
+  var barEl       = document.getElementById('import-progress-bar');
+  var textEl      = document.getElementById('import-progress-text');
+  progressEl.style.display = 'block';
+  var ok = 0, fail = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    barEl.style.width = Math.round((i / rows.length) * 100) + '%';
+    textEl.textContent = 'Importing ' + (i + 1) + ' of ' + rows.length + '…';
+    try {
+      var res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email:      r.email,
+          password:   r.password,
+          salutation: r.salutation || '',
+          firstName:  r.firstName  || '',
+          lastName:   r.lastName   || '',
+          jobTitle:   r.jobTitle   || '',
+          mobile:     r.mobile     || '',
+          landline:   r.landline   || '',
+          website:    r.website    || '',
+          isAdmin:    r.isAdmin === 'true' || r.isAdmin === '1'
+        })
+      });
+      if (res.ok) ok++; else fail++;
+    } catch(e) { fail++; }
+  }
+  barEl.style.width = '100%';
+  textEl.textContent = ok + ' imported' + (fail ? ', ' + fail + ' failed' : '') + '.';
+  _importRows = [];
+  setTimeout(function() {
+    document.getElementById('admin-import-preview').style.display = 'none';
+    loadAdminUsers();
+  }, 1500);
 }
 </script>
 </body>

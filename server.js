@@ -202,6 +202,86 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Learning zone config ──────────────────────────────────────
+const LV_TABLE   = 'tblGxOMw9SDUlzw1h';
+const LV_TITLE   = 'fldTYb4MSVDqIdr85';
+const LV_DESC    = 'fldAdn5cQl5CDKJF4';
+const LV_URL     = 'fldebTNSnIADrx4jv';
+const LV_ADDED   = 'fldBykZ17cGbybYAp';
+const FEATURED_COUNT = 8;
+
+async function lvFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${LV_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+function lvRecordToVideo(record) {
+  const f = record.fields;
+  return {
+    id:          record.id,
+    title:       f[LV_TITLE]  || '',
+    description: f[LV_DESC]   || '',
+    url:         f[LV_URL]    || '',
+    added:       f[LV_ADDED]  || record.createdTime || ''
+  };
+}
+
+// GET /api/learning — featured 8 + archive (auth required)
+app.get('/api/learning', requireAuth, async (req, res) => {
+  try {
+    const data = await lvFetch(`?sort[0][field]=${LV_ADDED}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100`);
+    const all = (data.records || []).map(lvRecordToVideo);
+    res.json({ featured: all.slice(0, FEATURED_COUNT), archive: all.slice(FEATURED_COUNT) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/learning — add video
+app.post('/api/admin/learning', requireAdmin, async (req, res) => {
+  const { title, description, url } = req.body;
+  if (!title || !url) return res.status(400).json({ error: 'Title and URL required' });
+  try {
+    const data = await lvFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString() } }], returnFieldsByFieldId: true })
+    });
+    res.json(lvRecordToVideo(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/learning/:id — edit video
+app.put('/api/admin/learning/:id', requireAdmin, async (req, res) => {
+  const { title, description, url } = req.body;
+  try {
+    const data = await lvFetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url }, returnFieldsByFieldId: true })
+    });
+    res.json(lvRecordToVideo(data));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/learning/:id
+app.delete('/api/admin/learning/:id', requireAdmin, async (req, res) => {
+  try {
+    await lvFetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Main app ─────────────────────────────────────────────────
 app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
