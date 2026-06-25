@@ -497,6 +497,38 @@ app.post('/generate-moving-card', requireAuth, async (req, res) => {
     scanPage.drawRectangle({ x: 55, y: 130, width: 210, height: 175, color: rgb(1,1,1) });
     scanPage.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
 
+    // ── Broker logo above scan text ───────────────────────────────
+    // broker-branded.png is 2262×1029px; "Broker Name" sits at px x=615–1655, y=228–380 (from top)
+    const brokerLogoBytes = fs.readFileSync(path.join(__dirname, 'public/assets/logos/individual broker branding/broker-branded.png'));
+    const brokerLogoImg   = await pdfDoc.embedPng(brokerLogoBytes);
+    const logoW  = 300;
+    const logoH  = Math.round(logoW * 1029 / 2262);   // ≈ 137
+    const logoX  = Math.floor((420 - logoW) / 2);     // centred in left panel = 60
+    const logoY  = 412;                                // bottom edge — sits above scan text with ~30pt gap
+    const sc     = logoW / 2262;
+
+    scanPage.drawImage(brokerLogoImg, { x: logoX, y: logoY, width: logoW, height: logoH });
+
+    // White out "Broker Name" region (image coords → PDF coords, y-axis flipped)
+    const wnX = logoX + Math.round(610 * sc);
+    const wnY = logoY + Math.round((1029 - 382) * sc);
+    const wnW = Math.round(1052 * sc);
+    const wnH = Math.round(156 * sc) + 1;
+    scanPage.drawRectangle({ x: wnX, y: wnY, width: wnW, height: wnH, color: rgb(1, 1, 1) });
+
+    // Draw personalised name — auto-scale if the name is long
+    let nameFontSize = 20;
+    const maxNameW = Math.round(981 * sc);
+    const measuredW = fontBold.widthOfTextAtSize(fullName, nameFontSize);
+    if (measuredW > maxNameW) nameFontSize = Math.floor(nameFontSize * maxNameW / measuredW);
+    scanPage.drawText(fullName, {
+      x: logoX + Math.round(627 * sc),
+      y: wnY + 4,
+      size: nameFontSize,
+      font: fontBold,
+      color: darkBlue
+    });
+
     const modifiedBytes = await pdfDoc.save();
     const safeName = fullName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
     res.setHeader('Content-Type', 'application/pdf');
