@@ -329,7 +329,7 @@ app.put('/api/supervisor/transfer', requireAuth, async (req, res) => {
   }
 });
 
-// ── Supervisor: team CPD dashboard ───────────────────────────
+// ── Supervisor: team CPD dashboard ────────────────────────────
 app.get('/api/supervisor/team', requireAuth, async (req, res) => {
   const supervisorEmail = req.session.user.email;
   try {
