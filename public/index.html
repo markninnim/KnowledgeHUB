@@ -860,25 +860,30 @@ html { height: 100%; }
   <div id="tab-supervisor-zone" class="tab-pane">
     <div style="max-width:1200px;margin:0 auto;padding:0 8px;">
       <!-- Header row -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
         <div>
           <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Supervisor Zone</h2>
           <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Year-to-date team CPD</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <div style="display:flex;border:1.5px solid #e8ecf0;border-radius:8px;overflow:hidden;">
-            <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:#003768;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
-            <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:#003768;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="display:flex;border:1.5px solid #e8ecf0;border-radius:8px;overflow:hidden;">
+              <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:#003768;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+              <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:#003768;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
+            </div>
+            <button id="sv-viewas-trigger" onclick="svToggleViewAsBar()" style="display:none;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">View As</button>
+            <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
           </div>
-          <button id="sv-viewas-trigger" onclick="svToggleViewAsBar()" style="display:none;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">👁 View As</button>
-          <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+          <!-- View As panel — right-aligned, drops below button row -->
+          <div id="sv-viewas-bar" style="display:none;align-items:center;gap:8px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:7px 12px;">
+            <span style="font-size:11px;color:#6b7c8f;font-weight:600;white-space:nowrap;">View as</span>
+            <div style="position:relative;">
+              <select id="sv-viewas-select" onchange="svViewAs(this.value)" style="appearance:none;-webkit-appearance:none;border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 28px 5px 10px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;cursor:pointer;font-weight:600;min-width:160px;"></select>
+              <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#6b7c8f;font-size:11px;">▾</span>
+            </div>
+            <button id="sv-viewas-reset" onclick="svViewAs('')" style="display:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;border:1.5px solid #e8ecf0;background:#fff;color:#991b1b;cursor:pointer;font-family:inherit;">✕ Reset</button>
+          </div>
         </div>
-      </div>
-      <!-- View As bar (shown when multiple supervisors exist) -->
-      <div id="sv-viewas-bar" style="display:none;align-items:center;gap:10px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:8px;padding:8px 14px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:12px;color:#92400e;font-weight:600;">👁 View as supervisor:</span>
-        <select id="sv-viewas-select" onchange="svViewAs(this.value)" style="border:1.5px solid #fcd34d;border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;background:#fff;color:#1a2a3a;outline:none;"></select>
-        <button id="sv-viewas-reset" onclick="svViewAs('')" style="display:none;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-family:inherit;">✕ Back to my view</button>
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;"></div>
