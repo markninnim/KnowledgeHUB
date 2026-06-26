@@ -159,9 +159,8 @@ html { height: 100%; }
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:800;color:#e8650a;letter-spacing:.08em;">KNOWLEDGE TESTS</span></div>
-    <a href="#" id="lv-nav-mas-test" onclick="return showLvSection('knowledge-tests',this);ktLoadTest('mas')">MAS Knowledge Test</a>
-    <a href="#" id="lv-nav-pas-test" onclick="return showLvSection('knowledge-tests',this);ktLoadTest('pas')">PAS Knowledge Test</a>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;opacity:.65;">KNOWLEDGE TESTS</span></div>
+    <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
   </div>
   <!-- Sales Process sidebar -->
   <div id="sidebar-sales-process" style="display:none">
@@ -869,23 +868,11 @@ html { height: 100%; }
       <!-- Test selection landing -->
       <div id="kt-landing">
         <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Tests</h2>
-        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Test your knowledge of FPG advice standards. 20 questions, 75% passmark. Passing logs 30 minutes CPD.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:700px;">
-          <div onclick="ktLoadTest('mas')" style="background:#fff;border:1.5px solid #e8ecf0;border-radius:12px;padding:24px;cursor:pointer;transition:box-shadow .15s,border-color .15s;" onmouseover="this.style.borderColor='#003768';this.style.boxShadow='0 4px 16px rgba(0,55,104,.1)'" onmouseout="this.style.borderColor='#e8ecf0';this.style.boxShadow='none'">
-            <div style="font-size:28px;margin-bottom:12px;">🏠</div>
-            <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:4px;">Mortgage Advice Standards</div>
-            <div style="font-size:12px;color:#6b7c8f;margin-bottom:16px;">20 questions covering MAS and Lifetime Mortgages appendix</div>
-            <div id="kt-mas-badge" style="font-size:11px;color:#6b7c8f;"></div>
-            <button style="margin-top:12px;background:#003768;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Start Test →</button>
-          </div>
-          <div onclick="ktLoadTest('pas')" style="background:#fff;border:1.5px solid #e8ecf0;border-radius:12px;padding:24px;cursor:pointer;transition:box-shadow .15s,border-color .15s;" onmouseover="this.style.borderColor='#003768';this.style.boxShadow='0 4px 16px rgba(0,55,104,.1)'" onmouseout="this.style.borderColor='#e8ecf0';this.style.boxShadow='none'">
-            <div style="font-size:28px;margin-bottom:12px;">🛡️</div>
-            <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:4px;">Protection Advice Standards</div>
-            <div style="font-size:12px;color:#6b7c8f;margin-bottom:16px;">20 questions covering PAS and all 8 appendices</div>
-            <div id="kt-pas-badge" style="font-size:11px;color:#6b7c8f;"></div>
-            <button style="margin-top:12px;background:#003768;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Start Test →</button>
-          </div>
-        </div>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">20 questions per test · 75% passmark · Pass logs 30 minutes CPD</p>
+        <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-mortgage"></div>
+        <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Protection</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;" id="kt-grid-protection"></div>
       </div>
 
       <!-- Active test UI (replaces landing) -->
@@ -5779,121 +5766,284 @@ async function confirmImport() {
 
 // ── Knowledge Tests ───────────────────────────────────────────
 
-var KT_TESTS = {
-  mas: {
-    title: 'Mortgage Advice Standards',
-    cpdType: 'Mortgage',
-    passmark: 15,
-    questions: [
-      { q: 'FPG is authorised by the FCA for which of the following activities?',
-        o: ['Regulated residential mortgages only','Regulated residential mortgages, consumer buy to let, non-investment insurance and certain consumer credit','All mortgage types including commercial only','Investment mortgages and residential mortgages'], a: 1 },
-      { q: 'What is the occupancy requirement within the definition of a regulated mortgage contract?',
-        o: ['100% of the land must be used as a dwelling','At least 51% must be used as a dwelling','At least 40% must be used as a dwelling','The borrower must personally occupy the property'], a: 2 },
-      { q: 'Which of the following is classed as a Consumer Buy to Let (CBTL) mortgage?',
-        o: ['A buy to let where the borrower has never lived in the property and it is a business letting','A buy to let where a related person has lived in or intends to live in the property','All buy to let mortgages over £500,000','All buy to let mortgages regardless of occupancy'], a: 1 },
-      { q: 'What is FPG\'s policy on execution only mortgage business?',
-        o: ['Permitted for experienced clients on request','Permitted for remortgages only','Permitted for professional clients only','Not permitted under any circumstances'], a: 3 },
-      { q: 'An adviser who wishes to arrange a residential mortgage for themselves on a sole basis may:',
-        o: ['Advise themselves and complete a self-declaration','Go direct to the lender on an execution only basis as a client','Use an approved packager to arrange it','Obtain a waiver from the Compliance Director'], a: 1 },
-      { q: 'What must be attached to the customer POS record when a DIP/AIP is provided for a customer with no specific property in mind?',
-        o: ['Nothing — a DIP is not part of the formal advice process','A full Key Facts Illustration','A copy of the DIP/AIP','A completed suitability report'], a: 2 },
-      { q: 'Which of the following would NOT be classified as a non-regulated Business Buy to Let (BBTL) mortgage?',
-        o: ['A buy to let where the borrower has never occupied the property','A property let on the basis of a rental agreement only','A let to buy where the borrower previously occupied the property','A purely commercial rental property with no residential element'], a: 2 },
-      { q: 'Regarding lender codes, which statement is correct?',
-        o: ['Codes can be shared with trusted administrative staff','Administrators may submit under a separate code if the lender system allows','Codes may be shared to improve processing efficiency','Senior advisers can use codes on behalf of junior colleagues'], a: 1 },
-      { q: 'When a client insists on staying with their existing lender, what must the MRWL confirm?',
-        o: ['That the whole of market was sourced and the existing lender was cheapest','That whole of market was not sourced because of the client\'s overriding preference','That three alternative products were also considered','Nothing additional is required where the client insists'], a: 1 },
-      { q: 'What is the minimum reflection period on a binding mortgage offer under the MCD?',
-        o: ['3 days','5 days','7 days','14 days'], a: 2 },
-      { q: 'A foreign currency loan is defined as one denominated in:',
-        o: ['Any currency other than sterling','A currency other than the customer\'s income currency or the currency of assets used to repay the credit','Euros or US dollars only','Any non-EEA currency'], a: 1 },
-      { q: 'When a deposit is gifted by a third party from overseas, what is required?',
-        o: ['A signed letter confirming relationship, that the gift is unencumbered, plus a recent bank/investment statement from the third party','Just a bank statement from the third party','A statutory declaration from a solicitor','No specific evidence if the gift is under £50,000'], a: 0 },
-      { q: 'FPG does NOT permit mortgage funds to be placed into which of the following?',
-        o: ['Home improvements','Investments (other than buy to let purchases)','Debt consolidation','Purchase of a vehicle'], a: 1 },
-      { q: 'DIPs and AIPs are considered:',
-        o: ['Informal pre-application tools with no regulatory significance','Part of the formal advice process requiring a POS record','Outside the scope of FCA regulation','Only required for first-time buyers'], a: 1 },
-      { q: 'When can an off-panel lender be recommended?',
-        o: ['Never — only panel lenders may be recommended','Only with prior FCA approval','Where justified in terms of price, value and suitability','Only for remortgages over £500,000'], a: 2 },
-      { q: 'What is the minimum income evidence required for a Consumer Buy to Let mortgage?',
-        o: ['Six months bank statements only','One month\'s payslip and corresponding bank statement, or one year\'s accounts as a minimum','No income evidence required for buy to let','Latest P60 only'], a: 1 },
-      { q: 'Under MAS Appendix 1, Lifetime Mortgages are defined as:',
-        o: ['Any mortgage for borrowers aged over 55','MCD-exempt mortgages where the lender does not require capital repayment until a specified life event','Interest-only mortgages with an indefinite term','Equity release schemes available only to those over 70'], a: 1 },
-      { q: 'In a shared equity scheme, the MRWL must confirm:',
-        o: ['Only the monthly payment and interest rate','How the customer will repay the second charge','The builder\'s financial rating','Local authority approval of the scheme'], a: 1 },
-      { q: 'All DIPs, AIPs and applications must be:',
-        o: ['Submitted by an administrator under the adviser\'s code','Completed and submitted by the adviser under their own individual codes','Submitted by the AR firm principal only','Counter-signed by a supervisor before submission'], a: 1 },
-      { q: 'Where a client wishes to consolidate debt onto a BBTL loan, the credit agreement will be regulated under:',
-        o: ['MCOB','ICOB','CONC','MCD'], a: 2 }
-    ]
-  },
-  pas: {
-    title: 'Protection Advice Standards',
-    cpdType: 'Protection',
-    passmark: 15,
-    questions: [
-      { q: 'Self-sales of protection policies are not permitted without:',
-        o: ['FCA approval','Authorisation from your Sales Manager prior to any application','Compliance Director sign-off after the application','Supervisor approval after the policy is in force'], a: 1 },
-      { q: 'What must be provided on first contact when anticipating a personal recommendation on a protection policy?',
-        o: ['Policy illustrations only','A budget planner','Disclosure Documentation','A Protection Suitability Report'], a: 2 },
-      { q: 'Where a customer does not know their sick pay entitlement under their employment contract, you should recommend:',
-        o: ['No income protection until entitlement is confirmed','Income protection with a long deferred period','Income protection with a short deferred period','ASU cover only'], a: 2 },
-      { q: 'A full budget section is NOT required where:',
-        o: ['Life cover only is being discussed','Critical illness cover is the main recommendation','Buildings and/or contents insurance is the only protection being discussed','Income protection is not required'], a: 2 },
-      { q: 'Why must the FPG Disclosure Document be used rather than just the Acre IDD?',
-        o: ['The Acre IDD is no longer FCA-compliant','The Acre IDD does not cover keeping in contact with clients in the future','The FPG version includes GDPR wording the Acre version lacks','FPG require dual disclosure in all cases'], a: 1 },
-      { q: 'What type of life assurance product is preferred for family protection under the Protection Advice Standards?',
-        o: ['Level term assurance','Whole of Life','Family Income Benefit','Decreasing term assurance'], a: 2 },
-      { q: 'In the first instance, what is the preferred recommendation to protect a client\'s income against inability to work?',
-        o: ['Accident, Sickness and Unemployment (ASU) policy','Short-term Income Protection (1–2 year)','Met Life Mortgage Safe','Standard Income Protection product'], a: 3 },
-      { q: 'Under Appendix 3, what is the maximum cover multiple for a Relevant Life Plan for someone aged 17–49?',
-        o: ['10x remuneration','15x remuneration','20x remuneration','25x remuneration'], a: 3 },
-      { q: 'A Relevant Life Plan is designed to be written in which type of trust?',
-        o: ['Bare trust','Interest in possession trust','Discretionary trust','No trust is required'], a: 2 },
-      { q: 'Which of the following is explicitly prohibited as a need area for recommending Whole of Life cover?',
-        o: ['Funeral costs','Inheritance Tax Planning','Leaving a legacy to a grandchild','Covering a financially dependent adult with disabilities'], a: 1 },
-      { q: 'Under Appendix 6, the only permitted Over 50s Guaranteed Life Plan product at FPG is:',
-        o: ['Aviva Over 50s Plan','Legal & General Over 50s','One Family "Over 50s Life cover"','Vitality Over 50s Plan'], a: 2 },
-      { q: 'The PMI insurers on the FPG panel are:',
-        o: ['Aviva, AXA, Bupa and Legal & General','AXA, Bupa, Vitality and Zurich','Aviva, AXA, Bupa and Vitality','Aviva, Bupa, Legal & General and Vitality'], a: 2 },
-      { q: 'Under Appendix 1, Vitality Serious Illness Cover guarantees 100% payout for how many core conditions?',
-        o: ['50','65','77','90'], a: 2 },
-      { q: 'For Business Protection Key Person Insurance where profit attribution is NOT identifiable, the life cover amount should be:',
-        o: ['5x annual salary','6x annual salary','8x annual salary','10x annual salary'], a: 3 },
-      { q: 'Under Appendix 5, which type of Whole of Life premiums must always be recommended?',
-        o: ['Reviewable premiums as they start lower','Guaranteed premiums','Indexed premiums only','The choice is at the adviser\'s discretion'], a: 1 },
-      { q: 'Under Appendix 8, a Self Sale protection policy must be transacted on what basis?',
-        o: ['Fully advised basis','Simplified advice basis','Execution Only basis','Partial advice basis'], a: 2 },
-      { q: 'For a Self Sale, the Sales Manager Note to The Key must confirm:',
-        o: ['Only that the Own Life Sale has been agreed','That the sale is agreed and the position regarding commission (indemnity or non-indemnity)','The premium amount only','That the FCA has been notified'], a: 1 },
-      { q: 'Under Appendix 4, Business Protection Partnership/Shareholder Protection must be:',
-        o: ['Written without trust to maintain flexibility','Written on a joint life basis','Placed in trust','Subject to annual review by the compliance team'], a: 2 },
-      { q: 'Which adviser type can sell One Family Over 50s Guaranteed Life Plans?',
-        o: ['Sole Tie Advisers only','All FPG advisers','Multi Tie Advisers with a specific One Family agency','Only advisers with a separate Whole of Life licence'], a: 2 },
-      { q: 'Under Appendix 3, which of the following correctly describes eligibility for a Relevant Life Plan?',
-        o: ['Available to all self-employed individuals including sole traders','Not available to sole traders, equity partners or equity members of an LLP','Available to all limited company directors regardless of structure','Available to any employee including equity partners in an LLP'], a: 1 }
-    ]
-  }
-};
+// ── Knowledge Tests ───────────────────────────────────────────
+
+var KT_TESTS = [
+  { id:'mas', group:'Mortgage', title:'Mortgage Advice Standards', cpdType:'Mortgage', passmark:15, questions:[
+    {q:"FPG is authorised by the FCA for which of the following activities?",o:["Regulated residential mortgages only","Regulated residential mortgages, consumer buy to let, non-investment insurance and certain consumer credit","All mortgage types including commercial only","Investment mortgages and residential mortgages only"],a:1},
+    {q:"What is the occupancy requirement within the definition of a regulated mortgage contract?",o:["100% of the land must be used as a dwelling","At least 51% must be used as a dwelling","At least 40% must be used as a dwelling","The borrower must personally occupy the property"],a:2},
+    {q:"Which of the following is classed as a Consumer Buy to Let (CBTL) mortgage?",o:["A buy to let where the borrower has never lived in the property and it is a business letting","A buy to let where a related person has lived in or intends to live in the property","All buy to let mortgages over £500,000","All buy to let mortgages regardless of occupancy"],a:1},
+    {q:"What is FPG's policy on execution only mortgage business?",o:["Permitted for experienced clients on request","Permitted for remortgages only","Permitted for professional clients only","Not permitted under any circumstances"],a:3},
+    {q:"An adviser who wishes to arrange a residential mortgage for themselves on a sole basis may:",o:["Advise themselves and complete a self-declaration","Go direct to the lender on an execution only basis as a client","Use an approved packager to arrange it","Obtain a waiver from the Compliance Director"],a:1},
+    {q:"What must be attached to the customer POS record when a DIP/AIP is provided for a customer with no specific property in mind?",o:["Nothing — a DIP is not part of the formal advice process","A full Key Facts Illustration","A copy of the DIP/AIP","A completed suitability report"],a:2},
+    {q:"Which of the following would NOT be classified as a non-regulated Business Buy to Let (BBTL) mortgage?",o:["A buy to let where the borrower has never occupied the property","A property let on the basis of a rental agreement only","A let to buy where the borrower previously occupied the property","A purely commercial rental property with no residential element"],a:2},
+    {q:"Regarding lender codes, which statement is correct?",o:["Codes can be shared with trusted administrative staff","Administrators may submit under a separate code if the lender system allows","Codes may be shared to improve processing efficiency","Senior advisers can use codes on behalf of junior colleagues"],a:1},
+    {q:"When a client insists on staying with their existing lender, what must the MRWL confirm?",o:["That whole of market was sourced and the existing lender was cheapest","That whole of market was not sourced because of the client's overriding preference","That three alternative products were also considered","Nothing additional is required where the client insists"],a:1},
+    {q:"What is the minimum reflection period on a binding mortgage offer under the MCD?",o:["3 days","5 days","7 days","14 days"],a:2},
+    {q:"A foreign currency loan is defined as one denominated in:",o:["Any currency other than sterling","A currency other than the customer's income currency or the currency of assets used to repay the credit","Euros or US dollars only","Any non-EEA currency"],a:1},
+    {q:"When a deposit is gifted by a third party from overseas, what is required?",o:["A signed letter confirming relationship and that the gift is unencumbered, plus a recent bank/investment statement","Just a bank statement from the third party","A statutory declaration from a solicitor","No specific evidence if the gift is under £50,000"],a:0},
+    {q:"FPG does NOT permit mortgage funds to be placed into which of the following?",o:["Home improvements","Investments (other than buy to let purchases)","Debt consolidation","Purchase of a vehicle"],a:1},
+    {q:"DIPs and AIPs are considered:",o:["Informal pre-application tools with no regulatory significance","Part of the formal advice process requiring a POS record","Outside the scope of FCA regulation","Only required for first-time buyers"],a:1},
+    {q:"When can an off-panel lender be recommended?",o:["Never — only panel lenders may be recommended","Only with prior FCA approval","Where justified in terms of price, value and suitability","Only for remortgages over £500,000"],a:2},
+    {q:"What is the minimum income evidence required for a Consumer Buy to Let mortgage?",o:["Six months bank statements only","One month's payslip and corresponding bank statement, or one year's accounts as a minimum","No income evidence required for buy to let","Latest P60 only"],a:1},
+    {q:"Lifetime Mortgages are exempt from which regulation, meaning KFIs apply rather than ESIS?",o:["MCOB","CONC","MCD","ICOB"],a:2},
+    {q:"In a shared equity scheme, the MRWL must confirm:",o:["Only the monthly payment and interest rate","How the customer will repay the second charge","The builder's financial rating","Local authority approval of the scheme"],a:1},
+    {q:"All DIPs, AIPs and applications must be:",o:["Submitted by an administrator under the adviser's code","Completed and submitted by the adviser under their own individual codes","Submitted by the AR firm principal only","Counter-signed by a supervisor before submission"],a:1},
+    {q:"Where a client consolidates debt onto a BBTL loan, the credit agreement is regulated under:",o:["MCOB","ICOB","CONC","MCD"],a:2}
+  ]},
+  { id:'mas-app1', group:'Mortgage', title:'App 1 – Lifetime Mortgages', cpdType:'Mortgage', passmark:15, questions:[
+    {q:"Which qualification is required before advising on Lifetime Mortgages?",o:["CeMAP only","ER1, plus a licence granted by the Compliance Director","CeFA","CeMAP and CeFA combined"],a:1},
+    {q:"Which sourcing system can be used to evidence Lifetime Mortgage sourcing?",o:["Mortgage Brain","Trigold","The Exchange","Sourcing is not required for lifetime mortgages"],a:2},
+    {q:"Why does the KFI apply to Lifetime Mortgages rather than the ESIS?",o:["They are regulated under MCOB","Customers are always over 70","They are exempt from MCD regulation","The ESIS is not required for equity release"],a:2},
+    {q:"What specific disclosure document must be provided for a Lifetime Mortgage?",o:["The standard MCOB mortgage disclosure","A Lifetime Mortgage-specific disclosure confirming advice is limited to lifetime mortgages, not home reversion plans","No specific disclosure — the standard one applies","A joint disclosure covering all equity release options"],a:1},
+    {q:"What health factor must be specifically considered when completing the Equity Release Mortgage Questionnaire?",o:["Health has no bearing on lifetime mortgages","Poor health reduces borrowing capacity","Ill health can have a positive impact on borrowing potential","Health is only relevant for interest-only lifetime mortgages"],a:2},
+    {q:"Before recommending a lifetime mortgage, the adviser must:",o:["Proceed if the client requests it","Explore all other avenues to raise capital","Only consider savings and investments as alternatives","Contact the FCA for approval"],a:1},
+    {q:"For which of the following purposes does FPG NOT permit equity release?",o:["Home improvements","Debt consolidation","Investment purposes","Rainy day funds up to £10,000"],a:2},
+    {q:"What is the maximum 'rainy day/emergency fund' amount permitted via equity release without requiring explanation?",o:["£5,000","£10,000","£25,000","£50,000"],a:1},
+    {q:"If a client's retirement is less than one year away, what must the adviser do?",o:["Decline to advise","Recommend they seek advice on retirement provision options","Complete the case without further action","Refer to the Compliance Director"],a:1},
+    {q:"Which software must be used to assess the impact of equity release on Means Tested Benefits?",o:["Mortgage Brain","Acre (POS system)","Turn 2 Us","Trigold"],a:2},
+    {q:"Which of the following is a specified life event that triggers Lifetime Mortgage repayment?",o:["The client's 75th birthday","The client's income falling below a threshold","The client selling the mortgaged land","The client refinancing the property"],a:2},
+    {q:"FPG advisers are NOT permitted to advise on which equity release product?",o:["Interest-only lifetime mortgages","Roll-up lifetime mortgages","Home Reversion Plans","Drawdown lifetime mortgages"],a:2},
+    {q:"When a drawdown facility is included, the MRWL must make clear that:",o:["The drawdown is always part of the recommendation","The drawdown does not form part of the recommendation unless a clear future need is identified","The drawdown facility is automatically included in all lifetime mortgages","Drawdown facilities must be approved by the compliance department"],a:1},
+    {q:"Where a client wants to protect equity in their property, the adviser must:",o:["Advise the client to sell the property instead","Decline to advise as FPG doesn't offer equity protection","Recommend a product with an equity guarantee, if available","Include a note in the MRWL only"],a:2},
+    {q:"Which Means Tested Benefits may be impacted by equity release?",o:["Child Benefit and Working Tax Credit only","Pension Credit, Council Tax Reduction, Universal Tax Credits and Health Benefits","State Pension only","Council Tax Reduction only"],a:1},
+    {q:"When dealing with a client's attorney under Power of Attorney, what must be obtained?",o:["Only the attorney's identification","A copy of the Power of Attorney, plus identification for both client and attorney","Only the client's identification","A signed confirmation from the client's family"],a:1},
+    {q:"Where equity is to be gifted to family, what must the client be advised?",o:["No further action is needed","They must seek legal and/or financial advice","The gift must be approved by FPG","The gift must not exceed £10,000"],a:1},
+    {q:"When must a non-ERC member lender be specifically addressed in the MRWL?",o:["Never — FPG only permits ERC member lenders","Only with FCA approval","Where a non-ERC member lender is recommended, with an explanation of the ERC and the consequences","Whenever the client requests a non-ERC lender"],a:2},
+    {q:"What Will-related recommendation is required for Lifetime Mortgage clients?",o:["No Will-related advice is required","The client must have an existing Will before proceeding","The client must be recommended to review their Will arrangements","Will arrangements are only discussed where the estate exceeds £500,000"],a:2},
+    {q:"Where remortgaging to a more favourable rate, what must the affordability assessment include?",o:["Only the new rate and term","Additional setup costs and any early redemption penalties","A projection of future interest rates","No additional considerations beyond the standard assessment"],a:1}
+  ]},
+  { id:'pas', group:'Protection', title:'Protection Advice Standards', cpdType:'Protection', passmark:15, questions:[
+    {q:"Self-sales of protection policies are not permitted without:",o:["FCA approval","Authorisation from your Sales Manager prior to any application","Compliance Director sign-off","Supervisor approval after the application"],a:1},
+    {q:"What must be provided on first contact when anticipating a personal recommendation on a protection policy?",o:["Policy illustrations only","A budget planner","Disclosure Documentation","A Protection Suitability Report"],a:2},
+    {q:"Where a customer does not know their sick pay entitlement, you should recommend:",o:["No income protection until entitlement is confirmed","Income protection with a long deferred period","Income protection with a short deferred period","ASU cover only"],a:2},
+    {q:"A full budget section is NOT required where:",o:["Life cover only is being discussed","Critical illness cover is the main recommendation","Buildings and/or contents insurance is the only protection being discussed","Income protection is not required"],a:2},
+    {q:"Why must the FPG Disclosure Document be used rather than just the Acre IDD?",o:["The Acre IDD is no longer FCA-compliant","The Acre IDD does not cover keeping in contact with clients in the future","The FPG version includes additional GDPR wording","FPG require dual disclosure in all cases"],a:1},
+    {q:"What type of life assurance product is preferred for family protection under the PAS?",o:["Level term assurance","Whole of Life","Family Income Benefit","Decreasing term assurance"],a:2},
+    {q:"In the first instance, what is the preferred recommendation to protect a client's income against inability to work?",o:["Accident, Sickness and Unemployment (ASU) policy","Short-term Income Protection (1–2 year)","Met Life Mortgage Safe","Standard Income Protection product"],a:3},
+    {q:"What is the maximum cover multiple for a Relevant Life Plan for someone aged 17–49?",o:["10x remuneration","15x remuneration","20x remuneration","25x remuneration"],a:3},
+    {q:"A Relevant Life Plan is designed to be written in which type of trust?",o:["Bare trust","Interest in possession trust","Discretionary trust","No trust is required"],a:2},
+    {q:"Which of the following is explicitly prohibited as a need area for Whole of Life cover?",o:["Funeral costs","Inheritance Tax Planning","Leaving a legacy to a grandchild","Covering a financially dependent adult"],a:1},
+    {q:"The only permitted Over 50s Guaranteed Life Plan product at FPG is:",o:["Aviva Over 50s Plan","Legal & General Over 50s","One Family 'Over 50s Life cover'","Vitality Over 50s Plan"],a:2},
+    {q:"The PMI insurers on the FPG panel are:",o:["Aviva, AXA, Bupa and Legal & General","AXA, Bupa, Vitality and Zurich","Aviva, AXA, Bupa and Vitality","Aviva, Bupa, Legal & General and Vitality"],a:2},
+    {q:"Vitality Serious Illness Cover guarantees 100% payout for how many core conditions?",o:["50","65","77","90"],a:2},
+    {q:"For Business Protection Key Person Insurance where profit attribution is NOT identifiable, life cover should be:",o:["5x annual salary","6x annual salary","8x annual salary","10x annual salary"],a:3},
+    {q:"Which type of Whole of Life premiums must always be recommended?",o:["Reviewable premiums as they start lower","Guaranteed premiums","Indexed premiums only","The choice is at the adviser's discretion"],a:1},
+    {q:"A Self Sale protection policy must be transacted on what basis?",o:["Fully advised basis","Simplified advice basis","Execution Only basis","Partial advice basis"],a:2},
+    {q:"For a Self Sale, the Sales Manager Note to The Key must confirm:",o:["Only that the Own Life Sale has been agreed","That the sale is agreed and the position regarding commission (indemnity or non-indemnity)","The premium amount only","That the FCA has been notified"],a:1},
+    {q:"Business Protection Partnership/Shareholder Protection must be:",o:["Written without trust to maintain flexibility","Written on a joint life basis","Placed in trust","Subject to annual review by the compliance team"],a:2},
+    {q:"Which adviser type can sell One Family Over 50s Guaranteed Life Plans?",o:["Sole Tie Advisers only","All FPG advisers","Multi Tie Advisers with a specific One Family agency","Only advisers with a separate Whole of Life licence"],a:2},
+    {q:"Which of the following correctly describes eligibility for a Relevant Life Plan?",o:["Available to all self-employed individuals including sole traders","Not available to sole traders, equity partners or equity members of an LLP","Available to all limited company directors regardless of structure","Available to any employee including equity partners in an LLP"],a:1}
+  ]},
+  { id:'pas-app1', group:'Protection', title:'App 1 – Serious Illness Cover', cpdType:'Protection', passmark:15, questions:[
+    {q:"When should an adviser recommend Serious Illness Cover rather than standard Critical Illness Cover?",o:["Always — SIC provides superior cover in all cases","When a client wishes to cover more medical conditions than a standard CIC policy provides","Only for clients aged over 50","Only where CIC has been declined by the insurer"],a:1},
+    {q:"When recommending SIC, which specific product must be used?",o:["The Vitality Health Plus plan","The Vitality Mortgage Plan","Any Vitality product on the FPG panel","The Vitality Personal Protection plan"],a:1},
+    {q:"Under the Vitality Mortgage Plan, how many core conditions are guaranteed to pay 100% of the sum assured?",o:["50","65","77","100"],a:2},
+    {q:"What happens to cover after a partial SIC pay-out?",o:["The policy ends immediately","Cover reduces by the full sum assured","Cover remains for the difference between the amount paid and the original cover","Cover remains completely unchanged"],a:2},
+    {q:"The Vitality Serious Illness Cover Booster is:",o:["An optional add-on available on request","Available at extra cost to all policyholders","Not available with the Mortgage Plan","Included within the product and cannot be excluded"],a:3},
+    {q:"What is the Vitality Optimiser option?",o:["An up-front discount on premiums in return for engagement with Vitality's Healthy Rewards Programme","An upgrade that includes more conditions","A premium waiver option","A lump sum payment on diagnosis"],a:0},
+    {q:"If a client selects the Vitality Optimiser but fails to fully engage with the Healthy Rewards Programme, what happens?",o:["The policy is cancelled","No change — engagement is optional","Premiums will increase over time","The client loses critical illness cover only"],a:2},
+    {q:"If a client does NOT want access to Vitality's special offers, what option should be selected when quoting?",o:["Standard","Plus","Essentials","Core"],a:2},
+    {q:"Under a standard CIC contract, if claims criteria are met:",o:["A partial payment is made depending on severity","The policy pays out in full and the policy ends","The policy pays out and cover continues at a reduced level","The insurer decides the payout level"],a:1},
+    {q:"If the client does NOT want additional condition coverage beyond standard CIC, the adviser should:",o:["Always recommend Vitality SIC anyway","Go to SolutionBuilder and recommend the preferred CIC provider and product","Refer to the Compliance Department","Recommend a combination of CIC and SIC"],a:1},
+    {q:"A client who wants additional condition coverage AND access to Vitality partner offers should be recommended:",o:["Standard CIC plus a separate Vitality health plan","The Vitality Mortgage Plan with the Essentials option","The Vitality Mortgage Plan with the Vitality Optimiser selected under Quote Type","A dual policy approach"],a:2},
+    {q:"SIC differs from CIC primarily because:",o:["SIC only covers life-threatening conditions","Under SIC, some conditions may pay less than 100% of the sum assured depending on severity","SIC always pays more than CIC","SIC does not require medical underwriting"],a:1},
+    {q:"Where should the Vitality Mortgage Plan quote be sourced?",o:["SolutionBuilder or Assureweb only","The Vitality portal, selecting 'Mortgage Plan Quote'","Mortgage Brain","L&G Adviser Centre"],a:1},
+    {q:"If a client has a partial SIC payout and later their condition's severity increases, they may:",o:["Make no further claims on that condition","Make a further claim up to the maximum permissible for that condition","Only claim up to the original partial amount","Claim the full sum assured regardless of previous payouts"],a:1},
+    {q:"A client who does NOT want Vitality business partner special offers should have:",o:["The Vitality Optimiser unticked under Quote Type","The Vitality Optimiser selected under Quote Type","Standard CIC recommended instead","The case referred to a specialist"],a:0},
+    {q:"Where CIC (not SIC) is being recommended, which section of the PAS applies?",o:["Appendix 1","Appendix 2","Section 3","Section 4"],a:3},
+    {q:"The Vitality Mortgage Plan includes the Serious Illness Cover Booster:",o:["As an optional extra with level premium contracts","As a mandatory element that cannot be excluded","Only where the Optimiser option is selected","Only for Essentials policyholders"],a:1},
+    {q:"When a client makes a successful full CIC claim:",o:["Cover continues at a reduced level","The policy pays out in full and the policy ends","The client can make additional claims up to the sum assured","The insurer reassesses the premium"],a:1},
+    {q:"The Vitality Mortgage Plan should be recommended when:",o:["Any client wants life insurance","A client wants cover for a range of medical conditions not available under standard CIC","A client is declined for standard CIC","The client is aged over 55 only"],a:1},
+    {q:"Which sourcing systems can be used to obtain SIC illustrations?",o:["Mortgage Brain or Trigold","SolutionBuilder/Assureweb or the Vitality portal","Only the Vitality portal","Only SolutionBuilder"],a:1}
+  ]},
+  { id:'pas-app2', group:'Protection', title:'App 2 – Income Protection', cpdType:'Protection', passmark:15, questions:[
+    {q:"What does Appendix 2 provide guidance on, in addition to the general IP rules in Section 4?",o:["All income protection cases","IP for specific employment types or individuals with specific preferences on benefits","IP only for self-employed clients","IP for clients with pre-existing conditions"],a:1},
+    {q:"Which factor relating to occupation type may affect the income protection recommendation?",o:["Only the client's salary level","The individual's occupation type may affect the recommended cover and insurer","Occupation type has no bearing on the recommendation","Only whether the client is employed or self-employed"],a:1},
+    {q:"What does BTDO stand for in the context of income protection?",o:["Back to Day One","Before Total Disability Onset","Benefit Term Day One","Back to Default Option"],a:0},
+    {q:"In what circumstance could BTDO cover on an ASU policy be appropriate?",o:["Never — BTDO is not available on ASU","Where it provides a more suitable outcome than standard cover","Only for self-employed clients","Where the standard deferred period is over 13 weeks"],a:1},
+    {q:"Standard IP is described as more suitable than which alternatives?",o:["ASU cover under all circumstances","Low-cost short-term alternatives such as 1, 2 or 5 year cover","Critical illness cover","Any other type of insurance product"],a:1},
+    {q:"Which of the following is listed as a key consideration when recommending income protection?",o:["Whether the client can fund a period of sickness themselves","The insurer's marketing materials","Whether the client has existing health insurance","The client's age only"],a:0},
+    {q:"Which additional benefit is specifically mentioned as worth including in an income protection solution?",o:["Critical illness booster","Terminal illness benefit","Fracture Cover where available","Waiver of premium only"],a:2},
+    {q:"What determines whether a stepped benefit structure is appropriate?",o:["Whether stepped benefits are available with the insurer","Whether they can provide the best outcome alongside the most suitable deferred period","Whether stepped benefits are cheaper than level benefits","Whether the client qualifies for stepped benefits"],a:1},
+    {q:"Regarding the cost of income protection, which statement is correct?",o:["Cost is the primary measure of suitability","The cheapest suitable product must always be recommended","Cost is not necessarily the measure of what product best meets the customer's needs","Cost should always be the deciding factor between similar products"],a:2},
+    {q:"For specific income protection advice queries, advisers should contact:",o:["The relevant insurer directly","L&G technical helpline","The Compliance Department","The Financial Ombudsman Service"],a:2},
+    {q:"What should be considered when a client can fund a period of sickness from their own resources?",o:["This has no bearing on the deferred period selection","The appropriate deferred period could be extended, potentially reducing the premium","IP should not be recommended if the client has savings","A shorter deferred period should always be selected"],a:1},
+    {q:"The occupation type of an individual may affect:",o:["Only the premium, not the insurer or product","The recommended cover and the insurer","Only which insurer is used, not the product type","Nothing — all occupations are treated identically"],a:1},
+    {q:"Stepped benefits in income protection refer to:",o:["Premiums that increase annually","Benefits that change at a set point during the claim period","A benefit that steps up automatically with inflation","Cover that steps down to zero after a fixed period"],a:1},
+    {q:"The appendix states that standard IP will be a more suitable recommendation than:",o:["ASU policies under all circumstances","Low-cost short-term alternatives such as 1, 2 or 5 year cover","Critical illness cover","Any other type of insurance"],a:1},
+    {q:"Which supplementary benefit is specifically mentioned in Appendix 2 as worth including?",o:["Critical illness booster","Life cover top-up","Waiver of premium","Fracture Cover where available"],a:3},
+    {q:"What general guidance does Appendix 2 give regarding the main IP advice rules?",o:["Advisers should create their own framework","Refer to Section 4 of the main Protection Advice Standards","Refer to the insurer's own guidance","Contact the Compliance Department before every case"],a:1},
+    {q:"BTDO on an ASU policy means cover that:",o:["Starts from day two of incapacity","Pays from the first day of incapacity with no deferred period","Resets annually","Pays a lump sum on day one only"],a:1},
+    {q:"When assessing what combination of products best meets the customer's income protection needs:",o:["Cost is always the primary measure","Only a single product should ever be recommended","Cost is not necessarily the measure — the best combination for the need takes priority","The insurer's preference should guide the selection"],a:2},
+    {q:"What is the key consideration when selecting the deferred period for income protection?",o:["Only the insurer's minimum requirements","Whether the client can self-fund illness and what deferred period is most suitable","Only the cost of the policy","The client's employer's sick pay duration only"],a:1},
+    {q:"Which of the following is NOT listed as a key consideration in Appendix 2?",o:["The individual's occupation type","What deferred period is most suitable","The client's credit score","Whether the client can fund a period of sickness themselves"],a:2}
+  ]},
+  { id:'pas-app3', group:'Protection', title:'App 3 – Relevant Life Plan', cpdType:'Protection', passmark:15, questions:[
+    {q:"A Relevant Life Plan is a term assurance plan that:",o:["Can be used for business protection including key person cover","Provides individual death in service benefit for an employee's family and financial dependants","Is available to sole traders and equity partners","Must be written on a joint life basis"],a:1},
+    {q:"Which legislation does a Relevant Life Plan aim to comply with?",o:["Income Tax Act 1988","Companies Act 2006","Section 393B(4) of the Income Tax (Earnings and Pensions) Act 2003","Finance Act 2004"],a:2},
+    {q:"Which rider benefit must NOT be included in a Relevant Life Plan?",o:["Terminal illness benefit","Critical illness cover","Indexation","Continuation option"],a:1},
+    {q:"Before advising on Relevant Life Plans, an adviser must:",o:["Complete the CeMAP qualification","Obtain a Licence from the Compliance Director","Notify the FCA","Obtain approval from the network principal"],a:1},
+    {q:"RLP advice is subject to:",o:["50% checking by the compliance department","75% checking","100% checking — the compliance department must be notified for every case","No additional checking beyond normal standards"],a:2},
+    {q:"What is the maximum cover multiple under an RLP for someone aged 50–59?",o:["10x remuneration","15x remuneration","20x remuneration","25x remuneration"],a:2},
+    {q:"What is the maximum cover multiple under an RLP for someone aged 60–73?",o:["10x remuneration","15x remuneration","20x remuneration","25x remuneration"],a:1},
+    {q:"Remuneration for RLP cover purposes includes:",o:["Salary only","Salary, bonuses, benefits in kind and regular dividends","Salary and pension contributions only","Net take-home pay only"],a:1},
+    {q:"Where the employer is effecting RLP cover for an employee, the adviser should recommend:",o:["A specific sum based on the employee's wishes","The minimum required by HMRC","The maximum amount HMRC rules allow","An amount equivalent to 10x salary"],a:2},
+    {q:"Where a director in their own company has a family protection need but no specific lump sum need, the preferred recommendation is:",o:["RLP with maximum cover","Family Income Benefit (FIB)","Whole of Life","Group life assurance"],a:1},
+    {q:"A Relevant Life Plan is NOT available to:",o:["Limited company directors","Employed individuals with a salary","Sole traders, equity partners or equity members of an LLP","Employees with existing pension benefits"],a:2},
+    {q:"What is the correct trust arrangement for a Relevant Life Plan?",o:["Bare trust","Interest in possession trust","Discretionary trust, with the employee's family as beneficiaries","No trust is required"],a:2},
+    {q:"Can a fee be charged to a client for RLP advice?",o:["Yes, up to 1% of the sum assured","Yes, a standard flat fee may be charged","No — a client fee cannot be charged","Yes, but only for business clients"],a:2},
+    {q:"The POS record where the employer effects RLP cover for an employee should contain:",o:["Full employee details and a completed fact find","Minimal employee information but significant Notes explaining it is a RLP sale and who decided to effect the cover","Only the employer's details","The standard mortgage fact find"],a:1},
+    {q:"Where a RLP is recommended alongside other personal protection, how many PRWLs are required?",o:["One combined PRWL","Two PRWLs — one for RLP and one for other protection","No PRWL is required for RLP","Three PRWLs — one per product"],a:1},
+    {q:"Do RLP premiums count toward a client's pension annual or lifetime allowances?",o:["Yes — toward the annual allowance","Yes — toward the lifetime allowance","No — RLP does not count toward annual or lifetime allowances","Only employer contributions count"],a:2},
+    {q:"Which group is specifically noted as a target market for Relevant Life Plans?",o:["Firms with over 100 employees wanting bespoke arrangements","IT contractors or builders who have set up as a limited company","All self-employed individuals regardless of structure","Sole traders with no employees"],a:1},
+    {q:"An employer wishing to treat RLP premiums as an allowable business expense should:",o:["Contact FPG Compliance for approval","Speak to their accountant, who may liaise with the local inspector of taxes","Submit a written request to HMRC directly","No special action is required"],a:1},
+    {q:"If a RLP is not placed in trust, the client should:",o:["Proceed as normal — trust is optional","Seek expert legal and tax advice on the consequences","Request a specific exemption from HMRC","Place the policy in a bare trust instead"],a:1},
+    {q:"What Will-related recommendation must always be made alongside an RLP recommendation?",o:["No Will-related advice is required for RLP","The client must already have an existing Will to proceed","The client must be recommended to review their Will arrangements","Will arrangements are only discussed for large sum assured cases"],a:2}
+  ]},
+  { id:'pas-app4', group:'Protection', title:'App 4 – Business Protection', cpdType:'Protection', passmark:15, questions:[
+    {q:"Business Protection covers which three financial areas?",o:["Key person, shareholder and staff benefits","Partners'/Directors' Share Protection, Key Person Insurance and Business Loan Insurance","Group life, group income protection and group critical illness","Director loans, company investments and key person"],a:1},
+    {q:"Key Person Insurance is designed to protect a business against:",o:["Loss of physical assets","The financial impact of the serious illness or death of a vital employee","Employer liability claims","Business interruption from natural disasters"],a:1},
+    {q:"Business Loan Insurance can cover which of the following?",o:["Trade credit and invoice finance only","Overdrafts, commercial loans, commercial mortgages and directors' loans","Personal loans of directors only","Only the business's primary bank loan"],a:1},
+    {q:"Which common misconception must be corrected regarding RLP and Business Protection?",o:["RLP and Business Protection are exactly the same product","A Relevant Life Plan can be used as a key person assurance policy — it cannot","Business Protection is always cheaper than RLP","Business Protection must always be written in trust"],a:1},
+    {q:"Before advising on Business Protection, an adviser must:",o:["Notify the FCA","Obtain a Licence from the Compliance Director","Complete a specialist business protection qualification","Obtain board approval from the client company"],a:1},
+    {q:"For Key Person cover where profit attribution is NOT identifiable, Critical Illness cover should be:",o:["10x annual salary","5x annual salary","8x annual salary","6x annual salary"],a:3},
+    {q:"For a business with a decreasing liability (e.g. a repayment loan), which product is appropriate?",o:["Level term assurance","Whole of Life","Decreasing term assurance","Family Income Benefit"],a:2},
+    {q:"For Partnership/Shareholder Protection, the cover amount should be:",o:["An arbitrary fixed sum","10x the partner's annual salary","The full value of each individual's holding in the business","The company's annual turnover"],a:2},
+    {q:"Before recommending Partnership Protection for a limited company, what document must be checked?",o:["The company's management accounts","The Articles of Association","The company's insurance policy schedule","The company's payroll records"],a:1},
+    {q:"Which legal document should shareholders be recommended to set up alongside shareholder protection?",o:["A Deed of Grant","A Power of Attorney","A Share Purchase Agreement (most commonly a Cross Option Agreement)","A Director's Service Agreement"],a:2},
+    {q:"Business Protection advice is subject to:",o:["50% compliance checking","Spot checking only","100% checking — compliance must be notified for every case","No additional checking beyond normal suitability standards"],a:2},
+    {q:"What is Premium Equalisation used for in Business Protection?",o:["Ensuring all directors pay the same premium","Offsetting higher premiums where one partner or director is significantly older","Reducing premiums for all policyholders","Calculating the maximum sum assured"],a:1},
+    {q:"If a company pays premiums on behalf of individuals, HMRC treats this as:",o:["An allowable business expense with no tax implications","A pension contribution","A taxable benefit in kind","A director's loan"],a:2},
+    {q:"Where can Business Valuation and Premium Equalisation calculators be found?",o:["The FPG Knowledge Hub only","L&G Adviser Centre and other insurer portals","The FCA website","The Companies House portal"],a:1},
+    {q:"The Business Protection fact find:",o:["Can use the standard protection fact find","Must use a mandatory paper fact find produced for business protection","Is not required for sole directors","Can be replaced by a client email confirming details"],a:1},
+    {q:"The POS record for a Business Protection case should be created in:",o:["The company's name only","One or two business principal names as clients","The name of the key person only","The adviser's name"],a:1},
+    {q:"Which of the following must be attached to a Business Protection case record?",o:["Business Fact Find and protection illustrations only","Business Fact Find, supporting information, letterhead, calculator printouts, illustrations, trust forms, BP RWL and Cross Options Agreements","Only the suitability report","Only the trust forms and illustrations"],a:1},
+    {q:"For LLP partnership protection, what document should be reviewed?",o:["The Articles of Association","The LLP partnership agreement","The company's financial statements","The shareholder register"],a:1},
+    {q:"For Key Person Insurance where profit IS attributable, the cover can be calculated as:",o:["5x annual salary","2x gross annual profit or 5x net annual profit, divided by the portion of profits attributable to the individual","10x annual salary","The company's full annual profit"],a:1},
+    {q:"Can an adviser charge a fee to a client for Business Protection advice?",o:["Yes — a standard fee may be charged","Yes — up to 1% of the sum assured","No — a client fee cannot be charged","Only for cases with a sum assured over £500,000"],a:2}
+  ]},
+  { id:'pas-app5', group:'Protection', title:'App 5 – Whole of Life', cpdType:'Protection', passmark:15, questions:[
+    {q:"What distinguishes Whole of Life cover from Term Assurance?",o:["Whole of Life pays out more","Whole of Life has no end date","Whole of Life is always cheaper","Whole of Life always includes critical illness"],a:1},
+    {q:"The preferred product for mortgage-related protection under the PAS is:",o:["Whole of Life","Family Income Benefit","Term Assurance","Level term with critical illness"],a:2},
+    {q:"Whole of Life may be appropriate for covering which of the following needs?",o:["Short-term income replacement","Mortgage capital repayment for a standard repayment mortgage","Funeral costs","Business protection only"],a:2},
+    {q:"Which type of Whole of Life premiums must NEVER be recommended?",o:["Guaranteed premiums","Index-linked premiums","Reviewable premiums","Fixed premiums"],a:2},
+    {q:"Why are reviewable premiums problematic for Whole of Life policies?",o:["They are more expensive from the outset","Reviews occur every year with guaranteed increases","The first review (after 10 years) inevitably leads to substantially increased premiums","The FCA has banned them since 2020"],a:2},
+    {q:"For which type of mortgage might a Whole of Life policy be appropriate for mortgage protection?",o:["Standard repayment residential mortgage","Buy to let mortgage","Interest-only mortgage with no repayment vehicle approaching retirement","Any mortgage over £500,000"],a:2},
+    {q:"Whole of Life advice is subject to:",o:["Spot checking only","50% compliance checking","100% checking — compliance must be notified","Annual compliance review only"],a:2},
+    {q:"Where joint life Whole of Life is recommended, it must be:",o:["Joint life last survivor","Written on separate single life policies","Joint life first death","Written in trust only if both parties agree"],a:2},
+    {q:"A client who wants to leave a specific capital sum to a grandchild represents which Whole of Life need area?",o:["Funeral costs","Partner/spousal support","Mortgage protection","Legacy"],a:3},
+    {q:"A client with an adult dependant with disabilities represents which Whole of Life need area?",o:["Revolving credit","Adult dependants","Legacy","Funeral costs"],a:1},
+    {q:"The PRWL for a Whole of Life recommendation must include:",o:["The introduction only","A mandatory paragraph sent to compliance for checking before issue","No additional content beyond standard","The appendix only"],a:1},
+    {q:"Under the PRWL template, the sum assured is based on:",o:["A fixed formula from the compliance team","Discussions with the client and what they feel is appropriate, or the monthly premium they wish to pay","A multiple of the client's annual salary","The client's net estate value"],a:1},
+    {q:"Single life Whole of Life policies must be:",o:["Written in a bare trust only","Written in trust, in the same way as Term Assurance","Not placed in trust","Placed in a discretionary trust with the insurer as trustee"],a:1},
+    {q:"Which purpose is explicitly prohibited under Whole of Life restrictions?",o:["Funeral cost planning","Adult dependant cover","Inheritance Tax Planning","Legacy for a grandchild"],a:2},
+    {q:"A client with revolving credit they don't plan to pay off in retirement represents which need area?",o:["Legacy","Revolving credit","Funeral costs","Mortgage protection"],a:1},
+    {q:"A client wanting their financially dependent spouse supported on their death represents which need area?",o:["Adult dependants","Legacy","Partner/spousal support","Funeral costs"],a:2},
+    {q:"Can a fee be charged to a client for Whole of Life advice?",o:["Yes — up to £500","Yes — a standard fee may be charged","No — a client fee cannot be charged","Only for sums assured over £100,000"],a:2},
+    {q:"For Whole of Life advice queries, who should advisers contact in the first instance?",o:["Pete Burgess","Richard Hamley","The FCA helpline","L&G technical team"],a:1},
+    {q:"What Will-related recommendation must always accompany a Whole of Life recommendation?",o:["No Will advice is required for Whole of Life","The client must update their Will within 30 days","The client must be recommended to review their Will arrangements","Will arrangements are only discussed for high net worth clients"],a:2},
+    {q:"The standard disclosure documentation for a Whole of Life recommendation should be:",o:["Mortgage & Insurance or Insurance Only disclosure documentation","A bespoke Whole of Life disclosure form","No disclosure is required for life cover","The same as for business protection"],a:0}
+  ]},
+  { id:'pas-app6', group:'Protection', title:'App 6 – Over 50s Plan', cpdType:'Protection', passmark:15, questions:[
+    {q:"The Over 50s Guaranteed Life Plan differs from conventional Whole of Life because it is:",o:["More expensive than standard cover","Not medically underwritten","Only available from government-approved providers","Only payable on death after age 80"],a:1},
+    {q:"Which is the only permitted Over 50s Guaranteed Life Plan product at FPG?",o:["Aviva Over 50s","Legal & General Over 50s","One Family 'Over 50s Life cover'","Vitality Over 50s"],a:2},
+    {q:"The Over 50s Plan can be sold to individuals aged:",o:["50 to 70","55 to 80","50 to 80","60 to 85"],a:2},
+    {q:"When would the Over 50s Plan be appropriate over fully underwritten cover?",o:["Always — it is simpler to arrange","Where a client does not wish to undergo medical underwriting, or has been heavily rated or declined","Only for funeral cover under £5,000","Only for policies under £5,000 sum assured"],a:1},
+    {q:"Which is the most common reason for recommending the Over 50s Plan?",o:["Legacy planning for large estates","Income replacement","Funeral costs","Business protection"],a:2},
+    {q:"Over 50s Plan advice is subject to:",o:["No additional checking","Spot checking","100% checking — compliance must be notified","Annual review only"],a:2},
+    {q:"Which Sole Tie adviser restriction applies to Over 50s Plans?",o:["Sole Tie advisers can sell the plan with supervisor approval","Sole Tie advisers cannot sell Over 50s Plans and must refer to a Multi Tie colleague","Sole Tie advisers can sell directly from the One Family portal","There are no restrictions for Sole Tie advisers"],a:1},
+    {q:"Policies for Over 50s Plans can be written on:",o:["Single or joint life basis","Joint life only","Single life basis only","Group basis for families"],a:2},
+    {q:"The level of cover for an Over 50s Plan is based on:",o:["A fixed formula from the insurer","The required need, or the maximum sum assured from the premium the client wishes to pay","The client's annual salary","The net estate value only"],a:1},
+    {q:"Quoting for an Over 50s Plan is described as easiest via:",o:["SolutionBuilder only","Assureweb only","The One Family adviser portal directly","Telephone quote from One Family"],a:2},
+    {q:"The fact find for an Over 50s Plan must be limited to:",o:["A full fact find covering all protection needs","Personal details, net income and a full budget planner","Personal details only","Budget planner only"],a:1},
+    {q:"What is mandatory to record in the Notes section of the fact find for an Over 50s Plan?",o:["Nothing additional — standard fact find notes apply","The client's full medical history","How the client expressed interest, their specific need, and how the sum assured was arrived at","The number of quotes obtained"],a:2},
+    {q:"The disclosure documentation for an Over 50s Plan should be:",o:["Mortgage & Insurance documentation","Insurance Only disclosure documentation","Bespoke Over 50s Plan documentation","No disclosure is required"],a:1},
+    {q:"All Over 50s Plans must be written in trust. How is this arranged?",o:["Only via a solicitor","On the One Family Over 50s adviser portal at point of sale","After the plan is in force via a separate trust form","It is optional — trust is not required"],a:1},
+    {q:"Which prohibition applies to Over 50s Plan recommendations?",o:["Cover cannot exceed £25,000","Inheritance Tax Planning advice must not be given","The plan cannot be written in trust","Joint life policies are not permitted"],a:1},
+    {q:"The One Family product includes a feature specifically for funeral claims described as:",o:["A guaranteed probate bypass","A quick pay-out feature at claims stage","A direct payment to the funeral director","A family support payment"],a:1},
+    {q:"Why should fully underwritten Term Assurance or Whole of Life be preferred over the Over 50s Plan?",o:["Over 50s Plans are only available online","Fully underwritten cover will generally be cheaper","The FCA requires underwritten cover to be recommended first","Over 50s Plans have a two-year exclusion period"],a:1},
+    {q:"Can an adviser charge a fee to a client for Over 50s Plan advice?",o:["Yes — up to 1% of the sum assured","Yes — a standard flat fee","No — a client fee cannot be charged","Only for plans over £10,000"],a:2},
+    {q:"Which need area is described as suitable for the Over 50s Plan?",o:["Replacing employment income","Protecting a large business loan","Leaving a specific small legacy to a nominated individual","Covering a repayment mortgage"],a:2},
+    {q:"What Will-related recommendation must always be made alongside an Over 50s Plan recommendation?",o:["No Will advice is required","The client must already have a Will to proceed","The client must be recommended to review their Will arrangements","Will advice is only required for sums assured over £50,000"],a:2}
+  ]},
+  { id:'pas-app7', group:'Protection', title:'App 7 – Private Medical Insurance', cpdType:'Protection', passmark:15, questions:[
+    {q:"Private Medical Insurance is designed to cover:",o:["All medical costs including NHS treatment","The cost of private medical treatment for acute conditions starting after the policy begins","Pre-existing chronic conditions from inception","Critical illness and medical expenses combined"],a:1},
+    {q:"Before advising on PMI, an adviser must:",o:["Complete a CII qualification","Notify the FCA","Obtain a Licence from the Compliance Director","Obtain approval from the insurer"],a:2},
+    {q:"Which insurers are on the FPG PMI panel?",o:["Aviva, AXA, Bupa and Legal & General","Aviva, AXA, Bupa and Vitality","AXA, Bupa, Vitality and Zurich","Aviva, Bupa, Vitality and Cigna"],a:1},
+    {q:"PMI advice is subject to:",o:["Spot checking","50% compliance checking","100% checking — compliance must be notified","No additional checking"],a:2},
+    {q:"Where should PMI quotes be sourced?",o:["SolutionBuilder or Assureweb","The individual PMI insurer websites","Trigold","Any comparison website"],a:1},
+    {q:"Can a fee be charged to a client for PMI advice?",o:["Yes — a standard fee","Yes — up to 1% of the annual premium","No — a client fee cannot be charged","Only for group PMI cases"],a:2},
+    {q:"PMI policies can be written on which basis?",o:["Individual basis only","Group basis only","Individual or group basis, for an individual, couple or family","Family basis only"],a:2},
+    {q:"What is the moratorium underwriting option for PMI?",o:["Full medical disclosure required upfront","Immediate acceptance but exclusion for an initial period for ongoing or recently treated conditions","The insurer decides cover after the first claim","A deferred start date for all conditions"],a:1},
+    {q:"Which PMI underwriting basis requires full medical disclosure from the outset?",o:["Moratorium","Simplified","Fully underwritten","Guaranteed acceptance"],a:2},
+    {q:"Regarding discounting insurers not considered, which statement is correct?",o:["All insurers must be compared and discounted in writing","Only the recommended insurer and product needs to be justified","At least three insurers must be discounted in the suitability report","All panel insurers must be presented to the client"],a:1},
+    {q:"Which type of adviser can sell PMI products?",o:["All FPG advisers","Sole Tie advisers with any PMI licence","Multi Tie advisers who have been granted a specific licence","All advisers with CeMAP"],a:2},
+    {q:"Sole Tie advisers who identify a PMI need should:",o:["Decline to assist the client","Refer to a Multi Tie colleague","Apply directly to the insurer","Issue a generic PMI leaflet and refer the client directly"],a:1},
+    {q:"What is the primary trigger for recommending PMI?",o:["Any client over 40 years old","Clients in high-risk occupations only","A client suggesting or agreeing to review this area of need","All mortgage clients automatically"],a:2},
+    {q:"The level of PMI cover should be based on:",o:["A fixed formula from the compliance team","The required need, or the maximum monthly premium the client is prepared to pay","The national average PMI premium","The client's employer's group scheme"],a:1},
+    {q:"The PMI Protection RWL requirement means:",o:["The PMI recommendation can be included in the standard Protection RWL","Only the PMI-specific letter can be used — it cannot be combined with other protection recommendations","Any RWL template can be adapted for PMI","A RWL is not required for PMI"],a:1},
+    {q:"The disclosure documentation for PMI should be:",o:["Mortgage & Insurance disclosure","A bespoke PMI disclosure form","Insurance Only disclosure documentation","No disclosure is required"],a:2},
+    {q:"What Will-related recommendation must be made alongside a PMI recommendation?",o:["No Will advice is required for PMI","The client must review their Will arrangements","Will arrangements are only discussed if the client is over 60","A Will is required before PMI can be recommended"],a:1},
+    {q:"PMI typically gives access to which benefits?",o:["Reduced NHS waiting times, a wider range of specialist treatments and a private room","Lower prescription costs and dental treatment","Free annual health screening only","Critical illness cover and private hospital care"],a:0},
+    {q:"What is mandatory in the Notes section of the fact find for a PMI case?",o:["Standard fact find notes are sufficient","How the client expressed interest, their specific need, and how the product and level of cover was arrived at","The client's full medical history","A list of all private hospitals in the client's area"],a:1},
+    {q:"Regarding the moratorium option, which statement is correct?",o:["It is always cheaper than fully underwritten","The insurer carries out full medical underwriting before acceptance","There is immediate acceptance but the client is excluded for an initial period for ongoing or recently treated conditions","All conditions are covered from day one"],a:2}
+  ]},
+  { id:'pas-app8', group:'Protection', title:'App 8 – Self Sale Policy', cpdType:'Protection', passmark:15, questions:[
+    {q:"The Self Sale policy applies when:",o:["Any client purchases a policy for themselves","An adviser purchases a protection policy for themselves or their partner","A supervisor purchases a policy for a team member","A client purchases a business protection policy"],a:1},
+    {q:"A Self Sale protection policy must be transacted on what basis?",o:["Fully advised","Partial advice","Execution Only","Simplified advice"],a:2},
+    {q:"Can an adviser arrange a mortgage for themselves under the Self Sale Policy?",o:["Yes, on an execution only basis","Yes, with supervisor approval","No — mortgages must be transacted by another licensed adviser","Yes, for joint applications only"],a:2},
+    {q:"Before making a Self Sale application, the adviser must confirm to:",o:["The FCA","Pete Burgess and/or their Supervisor","The Compliance Director only","The network principal"],a:1},
+    {q:"The adviser's Self Sale confirmation must include that:",o:["They have received advice from a colleague","The application is on an execution only basis and no advice has been or will be given","The insurer is aware of the self-sale","The FCA has been notified"],a:1},
+    {q:"The adviser must also confirm that neither they nor their partner will:",o:["Review the policy in the future","Involve a supervisor in the application","Be able to make a complaint to FPG about taking out the policy","Seek alternative cover within 12 months"],a:2},
+    {q:"How must the adviser's Self Sale confirmation be documented?",o:["A verbal confirmation to the supervisor is sufficient","An email to the Compliance Department","A signed letter (and signed by the partner, if applicable), attached to the case in The Key","A note added to the POS record by the supervisor"],a:2},
+    {q:"What must the Sales Manager add to The Key for a Self Sale?",o:["A copy of the adviser's signed letter","A Note confirming the Own Life Sale is agreed and the position regarding commission","A note approving the sum assured","Nothing — the adviser's signed letter is sufficient"],a:1},
+    {q:"Regarding commission on a Self Sale, the Sales Manager must confirm:",o:["That commission is not payable","That full indemnity commission applies","Whether indemnity or non-indemnity commission applies","That the insurer has agreed the commission level"],a:2},
+    {q:"Can the insurer insist on non-indemnity commission for a Self Sale?",o:["No — the adviser can always choose indemnity commission","Yes — the insurer may well insist on non-indemnity commission","Only if the sum assured exceeds £500,000","Only for Whole of Life policies"],a:1},
+    {q:"If a Self Sale involves the adviser's partner, what additional step is required?",o:["No additional step — the adviser's declaration covers the partner","A separate letter from the partner only","The partner must countersign the adviser's letter","The partner must receive advice from a separate FPG adviser"],a:2},
+    {q:"The Self Sale policy applies specifically to:",o:["Any insurance product","Protection only — not mortgages","Mortgages and protection","Investments only"],a:1},
+    {q:"The no-complaint declaration covers the adviser from making a complaint:",o:["Only within the first year of the policy","Only if the policy lapses","At no time in the future in regards to taking out the policy","Only if the adviser leaves FPG"],a:2},
+    {q:"Where is the signed Self Sale declaration letter stored?",o:["Filed with the FCA","Attached to the case in The Key","Held by the Supervisor","Sent to the insurer"],a:1},
+    {q:"Who is responsible for noting the agreed commission position on a Self Sale?",o:["The adviser themselves","The insurer","The Sales Manager","The Compliance Director"],a:2},
+    {q:"The term 'Execution Only' in the context of a Self Sale means:",o:["The adviser gives themselves advice and documents it","The transaction is carried out without advice being given or received","The policy is executed faster than standard cases","The adviser executes the policy on behalf of the client"],a:1},
+    {q:"Can the adviser make a complaint about FPG in relation to the Self Sale protection policy in the future?",o:["Yes — standard FCA complaint rights still apply","No — by signing the declaration, they acknowledge they cannot complain about FPG in this regard","Only within 8 weeks of the policy start date","Only if the insurer goes into administration"],a:1},
+    {q:"The adviser must confirm to their supervisor that they understand:",o:["The policy terms and conditions in full","The application is on an execution only basis and no advice was given to them","The commission structure of the insurer","That the FCA approves self-sales"],a:1},
+    {q:"A Self Sale protection policy is covered under which appendix of the Protection Advice Standards?",o:["Appendix 6","Appendix 7","Appendix 8","Appendix 5"],a:2},
+    {q:"The signed Self Sale declaration must be signed by:",o:["The adviser only, in all cases","The adviser and their partner if the partner is also covered by the policy","The adviser, their partner and a witness","The adviser and the Sales Manager"],a:1}
+  ]}
+];
 
 var _kt = { id: null, cur: 0, answers: {}, phase: 'landing' };
 
 function ktShowLanding() {
   _kt = { id: null, cur: 0, answers: {}, phase: 'landing' };
-  var l = document.getElementById('kt-landing');
-  var tw = document.getElementById('kt-test-wrap');
-  var rw = document.getElementById('kt-review-wrap');
-  var res = document.getElementById('kt-results-wrap');
-  if (l) l.style.display = '';
-  if (tw) tw.style.display = 'none';
-  if (rw) rw.style.display = 'none';
-  if (res) res.style.display = 'none';
+  ['kt-landing','kt-test-wrap','kt-review-wrap','kt-results-wrap'].forEach(function(id,i){
+    var el = document.getElementById(id);
+    if(el) el.style.display = i===0 ? '' : 'none';
+  });
+  // Build grids
+  ['Mortgage','Protection'].forEach(function(group){
+    var grid = document.getElementById('kt-grid-'+group.toLowerCase());
+    if(!grid) return;
+    grid.innerHTML = '';
+    KT_TESTS.filter(function(t){return t.group===group;}).forEach(function(test){
+      var card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border:1.5px solid #e8ecf0;border-radius:10px;padding:18px 20px;cursor:pointer;transition:box-shadow .15s,border-color .15s;';
+      card.onmouseover = function(){card.style.borderColor='#003768';card.style.boxShadow='0 4px 14px rgba(0,55,104,.1)';};
+      card.onmouseout  = function(){card.style.borderColor='#e8ecf0';card.style.boxShadow='none';};
+      card.onclick = function(){ktLoadTest(test.id);};
+      card.innerHTML = '<div style="font-size:14px;font-weight:700;color:#003768;margin-bottom:6px;">'+test.title+'</div>'+
+        '<div style="font-size:12px;color:#6b7c8f;margin-bottom:14px;">20 questions · 75% passmark</div>'+
+        '<button style="background:#003768;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Start Test →</button>';
+      grid.appendChild(card);
+    });
+  });
 }
 
 function ktLoadTest(id) {
+  var test = KT_TESTS.find(function(t){return t.id===id;});
+  if(!test) return;
   _kt = { id: id, cur: 0, answers: {}, phase: 'test' };
-  var test = KT_TESTS[id];
-  if (!test) return;
   document.getElementById('kt-landing').style.display = 'none';
   document.getElementById('kt-review-wrap').style.display = 'none';
   document.getElementById('kt-results-wrap').style.display = 'none';
@@ -5903,127 +6053,95 @@ function ktLoadTest(id) {
 }
 
 function ktRenderQ() {
-  var test = KT_TESTS[_kt.id];
-  var qi = _kt.cur;
-  var q = test.questions[qi];
-  var total = test.questions.length;
-  document.getElementById('kt-q-num').textContent = 'QUESTION ' + (qi + 1) + ' OF ' + total;
+  var test = KT_TESTS.find(function(t){return t.id===_kt.id;});
+  var qi = _kt.cur, q = test.questions[qi], total = test.questions.length;
+  document.getElementById('kt-q-num').textContent = 'QUESTION '+(qi+1)+' OF '+total;
   document.getElementById('kt-q-text').textContent = q.q;
-  document.getElementById('kt-progress-label').textContent = (qi + 1) + ' / ' + total;
-  document.getElementById('kt-progress-bar').style.width = (((qi + 1) / total) * 100) + '%';
+  document.getElementById('kt-progress-label').textContent = (qi+1)+' / '+total;
+  document.getElementById('kt-progress-bar').style.width = (((qi+1)/total)*100)+'%';
   document.getElementById('kt-prev-btn').style.visibility = qi > 0 ? 'visible' : 'hidden';
-  var isLast = qi === total - 1;
+  var isLast = qi === total-1;
   var nb = document.getElementById('kt-next-btn');
   nb.textContent = isLast ? 'Review & Submit →' : 'Next →';
-  nb.onclick = isLast ? ktShowReview : function(){ ktNav(1); };
-  // Options
+  nb.onclick = isLast ? ktShowReview : function(){ktNav(1);};
   var labels = ['A','B','C','D'];
   var opts = document.getElementById('kt-options');
   opts.innerHTML = '';
   q.o.forEach(function(opt, ai) {
-    var selected = _kt.answers[qi] === ai;
+    var sel = _kt.answers[qi] === ai;
     var div = document.createElement('div');
-    div.onclick = function() { ktSelect(qi, ai); };
-    div.style.cssText = 'display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:8px;cursor:pointer;border:1.5px solid ' + (selected ? '#003768' : '#e8ecf0') + ';background:' + (selected ? '#eef3f8' : '#fff') + ';transition:all .1s;';
-    div.innerHTML = '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:' + (selected ? '#003768' : '#e8ecf0') + ';color:' + (selected ? '#fff' : '#6b7c8f') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">' + labels[ai] + '</div><div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;padding-top:2px;">' + opt + '</div>';
+    div.onclick = function(){ktSelect(qi,ai);};
+    div.style.cssText = 'display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:8px;cursor:pointer;border:1.5px solid '+(sel?'#003768':'#e8ecf0')+';background:'+(sel?'#eef3f8':'#fff')+';transition:all .1s;';
+    div.innerHTML = '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:'+(sel?'#003768':'#e8ecf0')+';color:'+(sel?'#fff':'#6b7c8f')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">'+labels[ai]+'</div><div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;padding-top:2px;">'+opt+'</div>';
     opts.appendChild(div);
   });
-  // Answered count
   var answered = Object.keys(_kt.answers).length;
-  document.getElementById('kt-answered-count').textContent = answered + ' of ' + total + ' answered';
+  document.getElementById('kt-answered-count').textContent = answered+' of '+total+' answered';
 }
 
-function ktSelect(qi, ai) {
-  _kt.answers[qi] = ai;
-  ktRenderQ();
-}
-
-function ktNav(dir) {
-  _kt.cur = Math.max(0, Math.min(KT_TESTS[_kt.id].questions.length - 1, _kt.cur + dir));
-  ktRenderQ();
-}
-
-function ktBackToLanding() { ktShowLanding(); }
-
-function ktBackToTest() {
-  document.getElementById('kt-review-wrap').style.display = 'none';
-  document.getElementById('kt-test-wrap').style.display = '';
-}
+function ktSelect(qi,ai){_kt.answers[qi]=ai;ktRenderQ();}
+function ktNav(dir){_kt.cur=Math.max(0,Math.min(KT_TESTS.find(function(t){return t.id===_kt.id;}).questions.length-1,_kt.cur+dir));ktRenderQ();}
+function ktBackToLanding(){ktShowLanding();}
+function ktBackToTest(){document.getElementById('kt-review-wrap').style.display='none';document.getElementById('kt-test-wrap').style.display='';}
 
 function ktShowReview() {
   document.getElementById('kt-test-wrap').style.display = 'none';
   document.getElementById('kt-review-wrap').style.display = '';
-  var test = KT_TESTS[_kt.id];
+  var test = KT_TESTS.find(function(t){return t.id===_kt.id;});
   var grid = document.getElementById('kt-review-grid');
   grid.innerHTML = '';
-  test.questions.forEach(function(q, qi) {
+  test.questions.forEach(function(q,qi){
     var answered = _kt.answers[qi] !== undefined;
     var btn = document.createElement('button');
-    btn.textContent = qi + 1;
-    btn.onclick = function() {
-      _kt.cur = qi;
-      document.getElementById('kt-review-wrap').style.display = 'none';
-      document.getElementById('kt-test-wrap').style.display = '';
-      ktRenderQ();
-    };
-    btn.style.cssText = 'padding:8px;border-radius:6px;border:1.5px solid ' + (answered ? '#003768' : '#e8650a') + ';background:' + (answered ? '#eef3f8' : '#fff9f5') + ';color:' + (answered ? '#003768' : '#e8650a') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;';
+    btn.textContent = qi+1;
+    btn.onclick = function(){_kt.cur=qi;document.getElementById('kt-review-wrap').style.display='none';document.getElementById('kt-test-wrap').style.display='';ktRenderQ();};
+    btn.style.cssText = 'padding:8px;border-radius:6px;border:1.5px solid '+(answered?'#003768':'#e8650a')+';background:'+(answered?'#eef3f8':'#fff9f5')+';color:'+(answered?'#003768':'#e8650a')+';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;';
     grid.appendChild(btn);
   });
   var unanswered = test.questions.length - Object.keys(_kt.answers).length;
   var sb = document.getElementById('kt-submit-btn');
-  if (unanswered > 0) {
-    sb.textContent = unanswered + ' question' + (unanswered > 1 ? 's' : '') + ' unanswered — click orange to go back';
-    sb.style.background = '#6b7c8f';
-    sb.onclick = null;
+  if(unanswered > 0){
+    sb.textContent = unanswered+' question'+(unanswered>1?'s':'')+' unanswered — click orange numbers to go back';
+    sb.style.background = '#6b7c8f'; sb.onclick = null;
   } else {
-    sb.textContent = 'Submit Test';
-    sb.style.background = '#003768';
-    sb.onclick = ktSubmit;
+    sb.textContent = 'Submit Test'; sb.style.background = '#003768'; sb.onclick = ktSubmit;
   }
 }
 
 function ktSubmit() {
-  var test = KT_TESTS[_kt.id];
+  var test = KT_TESTS.find(function(t){return t.id===_kt.id;});
   var score = 0;
-  test.questions.forEach(function(q, qi) { if (_kt.answers[qi] === q.a) score++; });
-  var total = test.questions.length;
-  var passed = score >= test.passmark;
+  test.questions.forEach(function(q,qi){if(_kt.answers[qi]===q.a) score++;});
+  var total = test.questions.length, passed = score >= test.passmark;
   document.getElementById('kt-review-wrap').style.display = 'none';
   document.getElementById('kt-results-wrap').style.display = '';
-  var pct = Math.round(score / total * 100);
+  var pct = Math.round(score/total*100);
   var colour = passed ? '#16a34a' : '#dc2626';
   var wrongItems = '';
-  test.questions.forEach(function(q, qi) {
-    if (_kt.answers[qi] !== q.a) {
-      wrongItems += '<div style="margin-bottom:10px;padding:10px 14px;background:#fff;border:1.5px solid #fee2e2;border-radius:8px;">' +
-        '<div style="font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Q' + (qi+1) + ': ' + q.q + '</div>' +
-        '<div style="font-size:12px;color:#dc2626;">✗ Your answer: ' + (_kt.answers[qi] !== undefined ? q.o[_kt.answers[qi]] : '(not answered)') + '</div>' +
-        '<div style="font-size:12px;color:#16a34a;">✓ Correct: ' + q.o[q.a] + '</div></div>';
+  test.questions.forEach(function(q,qi){
+    if(_kt.answers[qi] !== q.a){
+      wrongItems += '<div style="margin-bottom:10px;padding:10px 14px;background:#fff;border:1.5px solid #fee2e2;border-radius:8px;">'+
+        '<div style="font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Q'+(qi+1)+': '+q.q+'</div>'+
+        '<div style="font-size:12px;color:#dc2626;">✗ Your answer: '+(_kt.answers[qi]!==undefined?q.o[_kt.answers[qi]]:'(not answered)')+'</div>'+
+        '<div style="font-size:12px;color:#16a34a;">✓ Correct: '+q.o[q.a]+'</div></div>';
     }
   });
   document.getElementById('kt-results-inner').innerHTML =
-    '<div style="text-align:center;padding:24px 0 32px;">' +
-      '<div style="font-size:52px;font-weight:900;color:' + colour + ';">' + pct + '%</div>' +
-      '<div style="font-size:16px;font-weight:700;color:' + colour + ';margin:4px 0 8px;">' + (passed ? '✓ PASSED' : '✗ FAILED') + '</div>' +
-      '<div style="font-size:13px;color:#6b7c8f;">You scored ' + score + ' out of ' + total + ' (passmark: ' + test.passmark + '/20)</div>' +
-      (passed ? '<div style="margin-top:12px;font-size:13px;color:#16a34a;font-weight:600;">30 minutes CPD logged ✓</div>' : '<div style="margin-top:8px;font-size:13px;color:#6b7c8f;">No CPD logged for a failed attempt. Review and try again.</div>') +
-    '</div>' +
-    (wrongItems ? '<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#1a2a3a;margin-bottom:10px;">Questions to review (' + (total - score) + '):</div>' + wrongItems + '</div>' : '<div style="text-align:center;padding:12px;font-size:14px;color:#16a34a;font-weight:600;">Perfect score! 🎉</div>') +
-    '<div style="display:flex;gap:12px;margin-top:16px;">' +
-      '<button onclick="ktLoadTest(\'' + _kt.id + '\')" style="flex:1;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Retake Test</button>' +
-      '<button onclick="ktShowLanding()" style="flex:1;background:#003768;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Back to Tests</button>' +
+    '<div style="text-align:center;padding:24px 0 32px;">'+
+      '<div style="font-size:52px;font-weight:900;color:'+colour+';">'+pct+'%</div>'+
+      '<div style="font-size:16px;font-weight:700;color:'+colour+';margin:4px 0 8px;">'+(passed?'✓ PASSED':'✗ FAILED')+'</div>'+
+      '<div style="font-size:13px;color:#6b7c8f;">You scored '+score+' out of '+total+' (passmark: '+test.passmark+'/20)</div>'+
+      (passed?'<div style="margin-top:12px;font-size:13px;color:#16a34a;font-weight:600;">30 minutes CPD logged ✓</div>':'<div style="margin-top:8px;font-size:13px;color:#6b7c8f;">No CPD logged for a failed attempt. Review the incorrect answers below and try again.</div>')+
+    '</div>'+
+    (wrongItems?'<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#1a2a3a;margin-bottom:10px;">Questions to review ('+(total-score)+'):</div>'+wrongItems+'</div>':'<div style="text-align:center;padding:12px;font-size:14px;color:#16a34a;font-weight:600;">Perfect score! All 20 correct.</div>')+
+    '<div style="display:flex;gap:12px;margin-top:16px;">'+
+      '<button onclick="ktLoadTest(\''+_kt.id+'\')" style="flex:1;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Retake Test</button>'+
+      '<button onclick="ktShowLanding()" style="flex:1;background:#003768;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">All Tests</button>'+
     '</div>';
-  // Log CPD
-  fetch('/api/test/result', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ testName: test.title, score: score, total: total, passed: passed, cpdType: test.cpdType })
-  }).then(function(r){ return r.json(); }).then(function(d) {
-    if (d.ok && passed) {
-      var t = document.getElementById('toast');
-      if (t) { t.textContent = '✓ 30 min ' + test.cpdType + ' CPD logged'; t.style.opacity = 1; setTimeout(function(){ t.style.opacity = 0; }, 4000); }
-    }
+  fetch('/api/test/result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testName:test.title,score:score,total:total,passed:passed,cpdType:test.cpdType})}).then(function(r){return r.json();}).then(function(d){
+    if(d.ok && passed){var t=document.getElementById('toast');if(t){t.textContent='✓ 30 min '+test.cpdType+' CPD logged';t.style.opacity=1;setTimeout(function(){t.style.opacity=0;},4000);}}
   });
+}
 }
 </script>
 </body>
