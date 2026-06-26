@@ -159,8 +159,19 @@ html { height: 100%; }
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;opacity:.65;">KNOWLEDGE TESTS</span></div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE QUIZ</span></div>
     <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
+    <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
+    <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
+    <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
+    <a href="#" id="lv-nav-pas-app1" onclick="return ktNavLoad('pas-app1',this)">App 1 – Serious Illness Cover</a>
+    <a href="#" id="lv-nav-pas-app2" onclick="return ktNavLoad('pas-app2',this)">App 2 – Income Protection</a>
+    <a href="#" id="lv-nav-pas-app3" onclick="return ktNavLoad('pas-app3',this)">App 3 – Relevant Life Plan</a>
+    <a href="#" id="lv-nav-pas-app4" onclick="return ktNavLoad('pas-app4',this)">App 4 – Business Protection</a>
+    <a href="#" id="lv-nav-pas-app5" onclick="return ktNavLoad('pas-app5',this)">App 5 – Whole of Life</a>
+    <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
+    <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – Private Medical Insurance</a>
+    <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
   </div>
   <!-- Sales Process sidebar -->
   <div id="sidebar-sales-process" style="display:none">
@@ -867,8 +878,8 @@ html { height: 100%; }
     <div id="knowledge-tests" style="display:none;padding:32px;">
       <!-- Test selection landing -->
       <div id="kt-landing">
-        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Tests</h2>
-        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">20 questions per test · 75% passmark · Pass logs 30 minutes CPD</p>
+        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Quiz</h2>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">20 questions per quiz · 75% passmark · Pass logs 30 minutes CPD</p>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-mortgage"></div>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Protection</div>
@@ -6014,6 +6025,18 @@ var KT_TESTS = [
 ];
 
 var _kt = { id: null, cur: 0, answers: {}, phase: 'landing' };
+
+function ktNavLoad(id, el) {
+  // Mark active in sidebar
+  document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
+  if(el) el.classList.add('active');
+  // Ensure the knowledge-tests section is visible
+  ['weekly-recordings','induction-recordings','revalidation-recordings','knowledge-tests'].forEach(function(s){
+    var d=document.getElementById(s);if(d) d.style.display=s==='knowledge-tests'?'':'none';
+  });
+  ktLoadTest(id);
+  return false;
+}
 
 function ktShowLanding() {
   _kt = { id: null, cur: 0, answers: {}, phase: 'landing' };
