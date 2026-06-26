@@ -426,10 +426,26 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
       allRecords.push(...(page.records || []));
       teamOffset = page.offset || '';
     } while (teamOffset);
+    let lookupEmail = supervisorEmail;
+    if (!viewAll) {
+      // If this supervisor has no direct team, check if their supervisorEmail points
+      // to another supervisor (shared/delegate team)
+      const directCount = allRecords.filter(r =>
+        (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase()
+      ).length;
+      if (directCount === 0) {
+        const svRecord = allRecords.find(r =>
+          (r.fields[F_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase()
+        );
+        const sharedWith = svRecord?.fields[F_SUPERVISOR_EMAIL];
+        if (sharedWith) lookupEmail = sharedWith.toLowerCase();
+      }
+    }
+
     const members = allRecords
       .filter(r => {
         if (viewAll) return !r.fields[F_ADMIN]; // everyone except admins
-        return (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === supervisorEmail.toLowerCase();
+        return (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === lookupEmail.toLowerCase();
       })
       .map(r => {
         const u = recordToUser(r);
