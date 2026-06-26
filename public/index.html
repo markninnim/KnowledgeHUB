@@ -144,7 +144,9 @@ html { height: 100%; }
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
     <h2 style="margin-top: 8px;">Learning</h2>
-    <a href="#" class="active">Overview</a>
+    <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
+    <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
+    <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
   </div>
   <!-- Sales Process sidebar -->
   <div id="sidebar-sales-process" style="display:none">
@@ -792,39 +794,59 @@ html { height: 100%; }
 
   <!-- ── Learning tab ──────────────────────────────────────── -->
   <div id="tab-learning" class="tab-pane">
-    <div style="padding:32px 32px 0;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;">
-        <div style="max-width:580px;">
-          <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Learning Zone</h2>
-          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Each week, leading lenders and insurers share their latest updates — and every month, our Compliance Director Pete Burgess delivers his essential briefing. Every session, whether watched or listened to, counts toward your CPD.</p>
+
+    <!-- Weekly Recordings -->
+    <div id="weekly-recordings">
+      <div style="padding:32px 32px 0;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;">
+          <div style="max-width:580px;">
+            <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Weekly Recordings</h2>
+            <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Each week, leading lenders and insurers share their latest updates — and every month, our Compliance Director Pete Burgess delivers his essential briefing. Every session, whether watched or listened to, counts toward your CPD.</p>
+          </div>
+          <div style="flex-shrink:0;position:relative;">
+            <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="lv-search" type="text" placeholder="Search videos…" oninput="searchLv(this.value)" style="padding:9px 14px 9px 36px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;color:#1a2a3a;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          </div>
         </div>
-        <div style="flex-shrink:0;position:relative;">
-          <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="lv-search" type="text" placeholder="Search videos…" oninput="searchLv(this.value)" style="padding:9px 14px 9px 36px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;color:#1a2a3a;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+      </div>
+      <!-- Search results -->
+      <div id="lv-search-results" style="display:none;padding:0 32px;margin-bottom:32px;">
+        <div id="lv-search-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
+      </div>
+      <!-- Featured grid -->
+      <div id="lv-normal-view">
+        <div id="lv-grid" style="padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;">
+          <div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">Loading videos…</div>
+        </div>
+        <!-- Archive -->
+        <div id="lv-archive-wrap" style="display:none;border-top:1px solid #e8ecf0;margin:0 32px;padding:24px 0 32px;">
+          <button onclick="toggleLvArchive()" id="lv-archive-toggle" style="background:none;border:none;color:#003768;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:16px;">
+            <svg id="lv-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+            <span id="lv-archive-label">Show Archive</span>
+          </button>
+          <div id="lv-archive-grid" style="display:none;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
         </div>
       </div>
     </div>
 
-    <!-- Search results (shown when searching) -->
-    <div id="lv-search-results" style="display:none;padding:0 32px;margin-bottom:32px;">
-      <div id="lv-search-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
-    </div>
-
-    <!-- Featured 8 -->
-    <div id="lv-normal-view">
-      <div id="lv-grid" style="padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;">
-        <div style="grid-column:1/-1;color:#6b7c8f;font-size:13px;padding:40px 0;text-align:center;">Loading videos…</div>
-      </div>
-
-      <!-- Archive -->
-      <div id="lv-archive-wrap" style="display:none;border-top:1px solid #e8ecf0;margin:0 32px;padding:24px 0 32px;">
-        <button onclick="toggleLvArchive()" id="lv-archive-toggle" style="background:none;border:none;color:#003768;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;padding:0;margin-bottom:16px;">
-          <svg id="lv-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
-          <span id="lv-archive-label">Show Archive</span>
-        </button>
-        <div id="lv-archive-grid" style="display:none;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
+    <!-- Induction Recordings -->
+    <div id="induction-recordings" style="display:none;">
+      <div style="padding:32px 32px 0;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Induction Recordings</h2>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">Essential onboarding recordings for new team members.</p>
+        <div style="color:#aab4be;font-size:14px;padding:60px 0;text-align:center;">No recordings added yet.</div>
       </div>
     </div>
+
+    <!-- Revalidation Recordings -->
+    <div id="revalidation-recordings" style="display:none;">
+      <div style="padding:32px 32px 0;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Revalidation Recordings</h2>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">Recordings to support adviser revalidation and competency sign-off.</p>
+        <div style="color:#aab4be;font-size:14px;padding:60px 0;text-align:center;">No recordings added yet.</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── Sales Process tab ─────────────────────────────────── -->
@@ -2117,7 +2139,7 @@ function switchTab(tab) {
     if (btn)     btn.classList.toggle('active', t === tab);
   });
   window.location.hash = tab;
-  if (tab === 'learning')         loadLearningZone();
+  if (tab === 'learning')         { showLvSection('weekly-recordings', document.getElementById('lv-nav-weekly')); loadLearningZone(); }
   if (tab === 'compliance')       { if (!_cpdLoaded) loadCpd(); }
   if (tab === 'supervisor-zone')  { svInitDates(); loadSupervisorZone(); }
 }
@@ -2137,6 +2159,16 @@ function switchTab(tab) {
 var _lvArchiveOpen = false;
 var _lvLoaded = false;
 var _lvAllVideos = [];
+
+function showLvSection(id, el) {
+  ['weekly-recordings','induction-recordings','revalidation-recordings'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.style.display = s === id ? '' : 'none';
+  });
+  document.querySelectorAll('#sidebar-learning a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  return false;
+}
 
 function loadLearningZone() {
   if (_lvLoaded) return;
