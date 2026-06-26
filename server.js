@@ -342,6 +342,37 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── PZ: broker → supervisor name map ──────────────────────────
+app.get('/api/pz/supervisor-map', requireAuth, async (req, res) => {
+  try {
+    const allUsers = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) allUsers.push(recordToUser(r));
+      offset = data.offset || '';
+    } while (offset);
+    // Build email → fullName lookup
+    const emailToName = {};
+    for (const u of allUsers) {
+      const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
+      if (u.email) emailToName[u.email.toLowerCase()] = n || u.email;
+    }
+    // Build brokerName → supervisorName
+    const map = {};
+    for (const u of allUsers) {
+      const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
+      if (!n) continue;
+      const supEmail = (u.supervisorEmail || '').toLowerCase();
+      map[n] = supEmail ? (emailToName[supEmail] || 'Other') : 'Management';
+    }
+    res.json(map);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Supervisor: list all supervisors (for transfer dropdown) ──
 app.get('/api/supervisor/list', requireAuth, async (req, res) => {
   try {
