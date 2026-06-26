@@ -6377,9 +6377,11 @@ function pzShowBroker(name, el) {
       '<div style="display:flex;align-items:flex-end;gap:6px;height:84px;">' + bars + '</div></div>' : '');
 
   console.log('[PZ] Setting innerHTML, length:', html.length);
-  main.innerHTML = html;
-  console.log('[PZ] innerHTML set. main.children:', main.children.length, 'offsetHeight:', main.offsetHeight);
-  slideIn(main);
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  main.innerHTML = '';
+  main.appendChild(wrapper);
+  slideIn(wrapper);
 }
 
 function pzCard(label, val, color) {
