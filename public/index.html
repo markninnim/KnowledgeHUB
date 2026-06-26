@@ -2885,7 +2885,11 @@ function renderSvDashboard(data) {
     }
   }
 
-  // Stats bar
+  // Stats bar — include supervisors in counts
+  var svBehind  = supervisorCards.filter(function(s){ return s.visible.length > 0 && s.worstPct < 100; }).length;
+  var svOnTrack = supervisorCards.filter(function(s){ return s.visible.length === 0 || s.worstPct >= 100; }).length;
+  var totalBehind  = behind.length  + svBehind;
+  var totalOnTrack = onTrack.length + svOnTrack;
   var totalMins = members.reduce(function(s,m){ var c = cpdByMember[m.email]||{}; return s+(c.total||0); }, 0);
   document.getElementById('sv-stats').innerHTML =
     '<div style="background:#fff;border-radius:12px;border:1.5px solid #e8ecf0;padding:16px 0;display:flex;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05);width:100%;">' +
@@ -2895,12 +2899,12 @@ function renderSvDashboard(data) {
       '</div>' +
       '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
       '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + behind.length + '</div>' +
+        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + totalBehind + '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Behind Target</div>' +
       '</div>' +
       '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
       '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + onTrack.length + '</div>' +
+        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">On Track</div>' +
       '</div>' +
       '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
