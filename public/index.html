@@ -833,9 +833,9 @@ html { height: 100%; }
     <div id="induction-recordings" style="display:none;">
       <div style="padding:32px 32px 0;">
         <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Induction Recordings</h2>
-        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">Essential onboarding recordings for new team members.</p>
-        <div style="color:#aab4be;font-size:14px;padding:60px 0;text-align:center;">No recordings added yet.</div>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 20px;line-height:1.6;">Complete all 10 modules as part of your induction process.</p>
       </div>
+      <div id="ind-grid" style="padding:0 32px 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
     </div>
 
     <!-- Revalidation Recordings -->
@@ -2161,6 +2161,7 @@ var _lvLoaded = false;
 var _lvAllVideos = [];
 var _lvTimerInterval = null;
 
+var _indLoaded = false;
 var _rvLoaded = false;
 var _rvVideos = [
   { title: 'Introduction',         url: 'https://vimeo.com/1147789293' },
@@ -2175,12 +2176,10 @@ var _rvVideos = [
   { title: 'Support Systems',      url: 'https://vimeo.com/1145694129' }
 ];
 
-function loadRevalidationVideos() {
-  if (_rvLoaded) return;
-  _rvLoaded = true;
-  var grid = document.getElementById('rv-grid');
+function buildModuleCards(videos, gridId, label) {
+  var grid = document.getElementById(gridId);
   if (!grid) return;
-  var cards = _rvVideos.map(function(v, i) {
+  var cards = videos.map(function(v, i) {
     var thumb = makeLvThumb(v.title);
     var vmMatch = v.url.match(/vimeo\.com\/(\d+)/);
     var embedUrl = vmMatch ? 'https://player.vimeo.com/video/' + vmMatch[1] + '?autoplay=1' : v.url;
@@ -2199,11 +2198,23 @@ function loadRevalidationVideos() {
         '</div>' +
         '<div style="padding:11px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
           '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + escHtml(v.title) + '</div>' +
-          '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">Revalidation module</div>' +
+          '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(label) + '</div>' +
         '</div>' +
       '</div>';
   });
   grid.innerHTML = cards.join('');
+}
+
+function loadInductionVideos() {
+  if (_indLoaded) return;
+  _indLoaded = true;
+  buildModuleCards(_rvVideos, 'ind-grid', 'Induction module');
+}
+
+function loadRevalidationVideos() {
+  if (_rvLoaded) return;
+  _rvLoaded = true;
+  buildModuleCards(_rvVideos, 'rv-grid', 'Revalidation module');
 }
 
 function showLvSection(id, el) {
@@ -2213,6 +2224,7 @@ function showLvSection(id, el) {
   });
   document.querySelectorAll('#sidebar-learning a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
+  if (id === 'induction-recordings')   loadInductionVideos();
   if (id === 'revalidation-recordings') loadRevalidationVideos();
   return false;
 }
