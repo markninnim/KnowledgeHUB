@@ -6338,7 +6338,7 @@ function pzInit() {
   var html = '';
   for (var i = 0; i < names.length; i++) {
     var n = escHtml(names[i]);
-    html += '<a href="#" data-broker="' + n + '" onclick="return pzClick(this)">' + n + '</a>';
+    html += '<a href="javascript:void(0)" data-broker="' + n + '" onclick="pzClick(this);return false;">' + n + '</a>';
   }
   list.innerHTML = html;
 }
