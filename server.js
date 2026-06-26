@@ -439,7 +439,7 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
 
     const members = allRecords
       .filter(r => {
-        if (viewAll) return !r.fields[F_ADMIN]; // everyone except admins
+        if (viewAll) return true; // everyone including admins
         return (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === lookupEmail.toLowerCase();
       })
       .map(r => {
