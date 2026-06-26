@@ -45,7 +45,9 @@ html { height: 100%; }
 .ov-card-btn { display:inline-block; background:#003768; color:#fff; border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
-#pz-broker-panel a:hover, #pz-broker-panel a.active { background:#dde8f2; color:#003768; font-weight:600; }
+#pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
+#pz-broker-panel a:hover { background:#f5f7fa; color:#003768; }
+#pz-broker-panel a.active { background:#eef3f8; color:#003768; font-weight:700; border-left-color:#003768; }
 .main { margin-left: 220px; margin-top: 60px; padding: 40px; min-height: calc(100vh - 60px); }
 .hero { background: #003768; color: #fff; padding: 40px; border-radius: 10px; margin-bottom: 32px; }
 .hero h1 { font-size: 28px; margin: 8px 0; }
@@ -6404,19 +6406,19 @@ function pzShowBrokerPanel(sup) {
   if (!panel) {
     panel = document.createElement('div');
     panel.id = 'pz-broker-panel';
-    panel.style.cssText = 'position:fixed;top:60px;left:220px;width:200px;bottom:0;background:#f0f5f9;overflow-y:auto;z-index:9;border-right:1px solid #cdd8e3;';
+    panel.style.cssText = 'position:fixed;top:60px;left:220px;width:220px;bottom:0;background:#fff;overflow-y:auto;z-index:9;border-right:1px solid #e8ecf0;';
     document.body.appendChild(panel);
   }
   panel.style.display = 'block';
   var ov = document.getElementById('pz-overlay');
-  if (ov && ov.style.display !== 'none') ov.style.left = '420px';
+  if (ov && ov.style.display !== 'none') ov.style.left = '440px';
 
   var bks = PZ_GROUPS[sup] || [];
-  var html = '<div style="padding:16px 16px 6px;font-size:10px;font-weight:700;color:#003768;letter-spacing:.08em;text-transform:uppercase;">' + escHtml(sup) + '</div>';
-  html += '<div style="padding:0 10px 8px;"><input type="text" placeholder="Search…" oninput="pzFilterPanel(this.value)" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1.5px solid #cdd8e3;border-radius:7px;background:#fff;color:#1a2a3a;font-size:12px;outline:none;font-family:inherit;"></div>';
+  var html = '<div style="padding:16px 18px 8px;font-size:11px;font-weight:700;color:#003768;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #e8ecf0;margin-bottom:4px;">' + escHtml(sup) + '</div>';
+  html += '<div style="padding:8px 12px;"><input type="text" placeholder="Search…" oninput="pzFilterPanel(this.value)" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1.5px solid #e8ecf0;border-radius:7px;background:#f5f7fa;color:#1a2a3a;font-size:12px;outline:none;font-family:inherit;"></div>';
   for (var i = 0; i < bks.length; i++) {
     var n = escHtml(bks[i]);
-    html += '<a href="javascript:void(0)" data-broker="' + n + '" onclick="pzClick(this);return false;" style="display:block;color:#1a2a3a;text-decoration:none;padding:8px 14px;font-size:13px;">' + n + '</a>';
+    html += '<a href="javascript:void(0)" data-broker="' + n + '" onclick="pzClick(this);return false;">' + n + '</a>';
   }
   panel.innerHTML = html;
 }
@@ -6464,7 +6466,7 @@ function pzShowBroker(name) {
     ov.id = 'pz-overlay';
     document.body.appendChild(ov);
   }
-  ov.style.cssText = 'position:fixed;top:60px;left:420px;right:0;bottom:0;background:#f7f8fa;overflow-y:auto;z-index:10;padding:40px;';
+  ov.style.cssText = 'position:fixed;top:60px;left:440px;right:0;bottom:0;background:#f7f8fa;overflow-y:auto;z-index:10;padding:40px;';
   ov.style.display = 'block';
   ov.innerHTML =
     '<div style="margin-bottom:20px;"><button onclick="pzHideOverlay()" style="background:none;border:none;color:#6b7c8f;font-size:13px;font-weight:600;cursor:pointer;padding:0;font-family:inherit;">← All Brokers</button></div>' +
