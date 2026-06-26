@@ -2794,12 +2794,11 @@ html { height: 100%; }
   <!-- ── Performance Zone tab ──────────────────────────────── -->
   <div id="tab-performance-zone" class="tab-pane">
     <div id="pz-main" style="max-width:900px;margin:0 auto;padding:32px 40px;">
-      <div id="pz-welcome" style="text-align:center;padding:80px 0;color:#6b7c8f;">
+      <div style="text-align:center;padding:80px 0;color:#6b7c8f;">
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <h2 style="color:#003768;margin:16px 0 8px;">Performance Zone</h2>
         <p style="font-size:14px;">Select a broker from the sidebar to view their 2026 YTD performance.</p>
       </div>
-      <div id="pz-broker-page" style="display:none;"></div>
     </div>
   </div>
 
@@ -6349,11 +6348,13 @@ function pzShowBroker(name, el) {
   document.querySelectorAll('#pz-broker-list a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   var d = PZ_DATA[name];
-  if (!d) return;
-  document.getElementById('pz-welcome').style.display = 'none';
-  var page = document.getElementById('pz-broker-page');
-  page.style.display = '';
-  slideIn(page);
+  var main = document.getElementById('pz-main');
+  if (!main) return;
+
+  if (!d) {
+    main.innerHTML = '<div style="padding:80px 0;text-align:center;color:#6b7c8f;">No data found for ' + name + '</div>';
+    return;
+  }
 
   var maxMo = Math.max.apply(null, d.mo.filter(function(v){return v>0;})) || 1;
 
@@ -6367,12 +6368,10 @@ function pzShowBroker(name, el) {
       '<span style="font-size:10px;color:#6b7c8f;">' + m + '</span></div>';
   }).join('');
 
-  page.innerHTML =
-    '<div style="margin-bottom:28px;">' +
+  var content = '<div style="margin-bottom:28px;">' +
       '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 4px;">' + name + '</h2>' +
       '<p style="color:#6b7c8f;font-size:13px;margin:0;">2026 YTD · Data from MI Report</p>' +
     '</div>' +
-
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;">' +
       pzCard('Mortgage Subs', d.ms, '#003768') +
       pzCard('Protection Subs', d.ps, '#fcb034') +
@@ -6381,12 +6380,14 @@ function pzShowBroker(name, el) {
       pzCard('Net Proc Fee', '£' + pzFmt(d.mp), '#16a34a') +
       pzCard('Prot. Completions', d.pc, '#fcb034') +
     '</div>' +
-
     (d.ms > 0 ?
     '<div style="background:#fff;border:1.5px solid #e8ecf0;border-radius:10px;padding:20px 24px;">' +
       '<div style="font-size:12px;font-weight:700;color:#003768;margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;">Mortgage Submissions by Month</div>' +
       '<div style="display:flex;align-items:flex-end;gap:6px;height:84px;">' + bars + '</div>' +
     '</div>' : '');
+
+  main.innerHTML = content;
+  slideIn(main);
 }
 
 function pzCard(label, val, color) {
