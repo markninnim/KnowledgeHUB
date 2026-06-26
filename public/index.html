@@ -6350,11 +6350,12 @@ function pzFilter(q) {
 }
 
 function pzShowBroker(name, el) {
+  alert('pzShowBroker: ' + name);
   document.querySelectorAll('#pz-broker-list a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   var d = PZ_DATA[name];
   var main = document.getElementById('pz-main');
-  if (!main || !d) return;
+  if (!main || !d) { alert('FAIL: main=' + !!main + ' d=' + !!d); return; }
   main.style.opacity = '1';
   main.innerHTML =
     '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 8px;">' + escHtml(name) + '</h2>' +
