@@ -884,12 +884,10 @@ html { height: 100%; }
         </div>
       </div>
       <!-- CPD progress strip -->
-      <div id="mas-cpd-strip" style="display:none;padding:8px 28px;background:#eef6f0;border-bottom:1px solid #c3e6cb;font-size:13px;color:#1a5c30;display:flex;align-items:center;gap:12px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="mas-cpd-label">Reading time counting… 0:00 / 10:00</span>
-        <div style="flex:1;height:4px;background:#c3e6cb;border-radius:2px;max-width:160px;">
-          <div id="mas-cpd-bar" style="height:4px;background:#28a745;border-radius:2px;width:0%;transition:width .5s;"></div>
-        </div>
+      <div id="mas-cpd-strip" style="display:none;padding:7px 28px;background:#eef6f0;border-bottom:1px solid #c3e6cb;font-size:12px;color:#1a5c30;align-items:center;gap:8px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="mas-cpd-label">Reading time: 0:00</span>
+        <span style="color:#5a9a6a;">— CPD will be logged when you leave this section</span>
       </div>
       <div id="mas-search-banner" style="display:none;padding:8px 28px;background:#fff9e6;border-bottom:1px solid #ffe69c;font-size:13px;color:#6b4f00;">
         <span id="mas-search-count"></span> &nbsp;<a href="#" onclick="masClearSearch();return false;" style="color:#003768;font-weight:600;">Clear search</a>
@@ -2957,7 +2955,8 @@ function showSpSection(id, el) {
   if (el) el.classList.add('active');
   if (id === 'mortgage-advice-standards') {
     masClearSearch();
-    if (!_masCpdLogged) startMasTimer();
+    _masSeconds = 0;
+    startMasTimer();
   } else {
     stopMasTimer();
   }
@@ -3036,42 +3035,34 @@ function masClearSearch() {
   if (firstNav) firstNav.classList.add('active');
 }
 
-// ── MAS CPD Timer (10 min reading = 10 min Mortgage CPD) ────────
-var _masTimer       = null;
-var _masSeconds     = 0;
-var _masCpdLogged   = false;
-var MAS_CPD_TARGET  = 600; // 10 minutes in seconds
+// ── MAS CPD Timer — logs actual reading time on exit ────────────
+var _masTimer     = null;
+var _masSeconds   = 0;
 
 function startMasTimer() {
-  if (_masTimer) return; // already running
-  _masCpdLogged = false;
-  _masSeconds   = 0;
+  if (_masTimer) return;
   var strip = document.getElementById('mas-cpd-strip');
   if (strip) strip.style.display = 'flex';
   _masTimer = setInterval(function() {
     _masSeconds++;
-    var pct = Math.min(100, (_masSeconds / MAS_CPD_TARGET) * 100);
     var mins = Math.floor(_masSeconds / 60);
     var secs = _masSeconds % 60;
     var label = document.getElementById('mas-cpd-label');
-    var bar   = document.getElementById('mas-cpd-bar');
-    if (label) label.textContent = 'Reading time: ' + mins + ':' + (secs < 10 ? '0' : '') + secs + ' / 10:00';
-    if (bar)   bar.style.width = pct + '%';
-    if (_masSeconds >= MAS_CPD_TARGET && !_masCpdLogged) {
-      _masCpdLogged = true;
-      logMasCpd();
-    }
+    if (label) label.textContent = 'Reading time: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
   }, 1000);
 }
 
 function stopMasTimer() {
   clearInterval(_masTimer);
   _masTimer = null;
+  var mins = Math.floor(_masSeconds / 60);
+  _masSeconds = 0;
   var strip = document.getElementById('mas-cpd-strip');
   if (strip) strip.style.display = 'none';
+  if (mins >= 1) logMasCpd(mins);
 }
 
-function logMasCpd() {
+function logMasCpd(mins) {
   var today = new Date().toISOString().split('T')[0];
   fetch('/api/cpd', {
     method: 'POST',
@@ -3079,25 +3070,14 @@ function logMasCpd() {
     body: JSON.stringify({
       activity: 'Mortgage Advice Standards – Reading',
       date:      today,
-      minutes:   10,
+      minutes:   mins,
       category:  'Technical Knowledge',
       cpdType:   'Mortgage',
       learned:   'Read and reviewed FPG Mortgage Advice Standards V3'
     })
   }).then(function() {
-    stopMasTimer();
-    var strip = document.getElementById('mas-cpd-strip');
-    if (strip) {
-      strip.style.background = '#d4edda';
-      strip.style.borderColor = '#28a745';
-      strip.style.display = 'flex';
-      var label = document.getElementById('mas-cpd-label');
-      var bar   = document.getElementById('mas-cpd-bar');
-      if (label) label.textContent = '✓ 10 minutes Mortgage CPD logged';
-      if (bar)   bar.style.width = '100%';
-    }
     var t = document.getElementById('toast');
-    if (t) { t.textContent = '✓ 10 min Mortgage CPD logged'; t.style.opacity = 1; setTimeout(function(){ t.style.opacity = 0; }, 4000); }
+    if (t) { t.textContent = '✓ ' + mins + ' min Mortgage CPD logged'; t.style.opacity = 1; setTimeout(function(){ t.style.opacity = 0; }, 4000); }
   }).catch(function() {
     var t = document.getElementById('toast');
     if (t) { t.textContent = 'CPD log failed – try again'; t.style.opacity = 1; setTimeout(function(){ t.style.opacity = 0; }, 3000); }
