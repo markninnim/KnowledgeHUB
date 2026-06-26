@@ -98,6 +98,24 @@ app.use('/static', express.static(path.join(__dirname, 'public/static')));
 // ── Newsletters (auth-gated PDF + cover serving) ────────────
 app.use('/newsletters', requireAuth, express.static(path.join(__dirname, 'public/newsletters')));
 
+// ── Newsletter list API ───────────────────────────────────────
+app.get('/api/newsletters', requireAuth, (req, res) => {
+  const dir = path.join(__dirname, 'public/newsletters');
+  const MONTHS = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+  const MONTH_NAMES = { jan:'January',feb:'February',mar:'March',apr:'April',may:'May',jun:'June',
+                        jul:'July',aug:'August',sep:'September',oct:'October',nov:'November',dec:'December' };
+  try {
+    const files = require('fs').readdirSync(dir)
+      .filter(f => f.endsWith('.pdf') && /^[a-z]{3}-\d{4}\.pdf$/.test(f))
+      .map(f => {
+        const [mon, yr] = f.replace('.pdf','').split('-');
+        return { file: f, mon, year: parseInt(yr), monthNum: MONTHS[mon] || 0, label: MONTH_NAMES[mon] + ' ' + yr };
+      })
+      .sort((a, b) => b.year - a.year || b.monthNum - a.monthNum);
+    res.json(files);
+  } catch(e) { res.json([]); }
+});
+
 // ── Public logo (for display only) ──────────────────────────
 app.get('/public-logo', (req, res) => {
   const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');
