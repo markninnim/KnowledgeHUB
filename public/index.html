@@ -313,22 +313,10 @@ html { height: 100%; }
       <div class="card">
         <div class="thumb" data-pdf="/view-asset/brochures/protection/fpg-protection-brochure-2026.pdf"></div>
         <h3>2026 Protection Brochure -Personalised</h3>
-        <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">It's a fact, deep personalisation is very powerful. We all love seeing our names. Make your client meeting more <strong>memorable</strong> and personalise this brochure with your client's name strategically printed throughout. Simply enter their name and yours, then hit download for that personal touch.</p>
+        <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Deep personalisation is very powerful. Personalise this brochure with your client's name strategically printed throughout — your name and photo are added automatically. Simply enter their name and hit download.</p>
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
-          <input id="pb-customer" type="text" placeholder="Customer name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:6px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
-          <input id="pb-broker" type="text" placeholder="Broker name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-            <div id="pb-img-preview" onclick="document.getElementById('pb-broker-img').click()" style="width:52px;height:52px;border-radius:50%;background:#f0f2f5;border:2px dashed #c0cad4;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aab4be" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <div>
-              <div style="font-size:12px;color:#1a2a3a;font-weight:600;margin-bottom:2px;">Broker photo <span style="font-weight:400;color:#aab4be;">(optional)</span></div>
-              <a href="#" onclick="document.getElementById('pb-broker-img').click();return false;" style="font-size:11px;color:#003768;">Upload image</a>
-              <span id="pb-img-clear" style="display:none;font-size:11px;color:#cc0000;margin-left:8px;cursor:pointer;" onclick="clearBrokerImage()">Remove</span>
-            </div>
-          </div>
-          <input id="pb-broker-img" type="file" accept="image/png,image/jpeg,image/jpg" style="display:none;" onchange="previewBrokerImage(this)">
+          <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
           <button id="pb-download-btn" onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;border:none;cursor:pointer;text-align:center;">&#8659; Download</button>
         </div>
       </div>
@@ -1495,14 +1483,15 @@ function clearBrokerImage() {
 }
 function downloadPersonalisedBrochure() {
   var customer = document.getElementById('pb-customer').value.trim();
-  var broker   = document.getElementById('pb-broker').value.trim();
+  var broker   = _currentUser ? [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') : '';
+  var brokerImage = (_currentUser && _currentUser.avatarUrl) ? _currentUser.avatarUrl : null;
   var btn = document.getElementById('pb-download-btn');
   btn.textContent = 'Generating…';
   btn.disabled = true;
   fetch('/personalise-brochure', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ customer: customer, broker: broker, brokerImage: window._brokerImageData || null })
+    body: JSON.stringify({ customer: customer, broker: broker, brokerImage: brokerImage })
   })
   .then(function(r) {
     if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
