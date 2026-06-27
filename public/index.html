@@ -186,7 +186,9 @@ html { height: 100%; }
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">READING</span></div>
     <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters</a>
+    <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Mortgage Strategy</a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE QUIZ</span></div>
     <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
     <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
@@ -920,6 +922,42 @@ html { height: 100%; }
       <div id="rv-grid" style="padding:0 32px 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></div>
     </div>
 
+    <!-- Mortgage Strategy Reading -->
+    <div id="reading-mortgage-strategy" style="display:none;">
+      <div style="padding:32px;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Mortgage Strategy</h2>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Read the latest news and analysis from Mortgage Strategy. Use the timer below to track your reading time — it will be logged as CPD when you finish.</p>
+
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;padding:28px 32px;max-width:520px;">
+          <!-- State: not started -->
+          <div id="ms-state-idle">
+            <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:8px;">Ready to start reading?</div>
+            <p style="font-size:13px;color:#6b7c8f;line-height:1.6;margin:0 0 20px;">Click below to open Mortgage Strategy in a new tab and start your CPD timer. When you're done reading, come back here and click <strong>Stop &amp; Log CPD</strong>.</p>
+            <button onclick="msTtartReading()" style="background:#003768;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Start Reading</button>
+          </div>
+
+          <!-- State: reading in progress -->
+          <div id="ms-state-reading" style="display:none;">
+            <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Time Reading</div>
+            <div id="ms-timer-display" style="font-size:56px;font-weight:900;color:#003768;line-height:1;margin-bottom:4px;">00:00</div>
+            <div style="font-size:12px;color:#6b7c8f;margin-bottom:20px;">Mortgage Strategy is open in another tab</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="msStopAndLog()" style="background:#003768;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Stop &amp; Log CPD</button>
+              <button onclick="msCancel()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+            </div>
+          </div>
+
+          <!-- State: logged -->
+          <div id="ms-state-done" style="display:none;text-align:center;padding:8px 0;">
+            <div style="font-size:32px;margin-bottom:8px;">✓</div>
+            <div style="font-size:16px;font-weight:700;color:#003768;margin-bottom:6px;">CPD Logged</div>
+            <div id="ms-done-summary" style="font-size:13px;color:#6b7c8f;margin-bottom:20px;"></div>
+            <button onclick="msReset()" style="background:#f5f7fa;color:#003768;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Read Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Monthly Newsletters -->
     <div id="monthly-newsletters" style="display:none;">
       <div style="padding:32px 32px 0;">
@@ -1079,7 +1117,7 @@ html { height: 100%; }
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:8px;">Monthly Competition</div>
               <div style="font-size:19px;font-weight:700;line-height:1.2;margin-bottom:8px;">Win a <span style="color:#F5A623;">Virgin Experience Days</span> voucher</div>
-              <p style="font-size:11px;line-height:1.55;opacity:.85;margin:0;">Every referral earns <strong style="color:#F5A623;">1 ticket</strong> and every completed sale earns <strong style="color:#F5A623;">2 tickets</strong>. The broker with the most tickets at the end of the month wins the prize.</p>
+              <p style="font-size:11px;line-height:1.55;opacity:.85;margin:0;">Every referral earns <strong style="color:#F5A623;">1 ticket</strong> and every completed sale earns <strong style="color:#F5A623;">2 tickets</strong>. The broker with the most tickets at the end of <strong>August</strong> wins the prize.</p>
             </div>
             <div>
               <div style="font-size:9px;opacity:.6;margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Your tickets this month</div>
@@ -1100,7 +1138,8 @@ html { height: 100%; }
         <!-- Card 2: Social media draw -->
         <div style="background:linear-gradient(135deg,#021346 0%,#0a2a6e 100%);border-radius:12px;padding:20px 20px 20px;color:#fff;display:flex;flex-direction:column;height:191px;box-sizing:border-box;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:8px;">Bonus Tickets</div>
-          <div style="font-size:19px;font-weight:700;margin-bottom:16px;">Earn <span style="color:#F5A623;">5 tickets</span> per platform you follow</div>
+          <div style="font-size:19px;font-weight:700;margin-bottom:8px;">Earn <span style="color:#F5A623;">5 tickets</span> per platform you follow</div>
+          <p style="font-size:11px;opacity:.8;margin:0 0 12px;line-height:1.5;">Follow our social pages to earn <strong style="color:#F5A623;">5 extra tickets</strong> per platform — every ticket counts towards your chances of winning.</p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:auto;">
             <a href="https://www.instagram.com/fpsurveying/" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;text-decoration:none;padding:14px 8px;border-radius:8px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.15);text-align:center;">
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -4671,6 +4710,60 @@ function loadSurveying() {
 // ── Newsletters ───────────────────────────────────────────────
 var _nlLoaded = false;
 
+// ── Mortgage Strategy timed reading ──────────────────────────
+var _msInterval = null;
+var _msSeconds  = 0;
+
+function msTtartReading() {
+  _msSeconds = 0;
+  document.getElementById('ms-state-idle').style.display    = 'none';
+  document.getElementById('ms-state-reading').style.display = '';
+  document.getElementById('ms-state-done').style.display    = 'none';
+  window.open('https://www.mortgagestrategy.co.uk/', '_blank', 'noopener');
+  _msInterval = setInterval(function() {
+    _msSeconds++;
+    var m = Math.floor(_msSeconds / 60), s = _msSeconds % 60;
+    document.getElementById('ms-timer-display').textContent =
+      (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+}
+
+function msStopAndLog() {
+  clearInterval(_msInterval);
+  var mins = Math.round(_msSeconds / 60);
+  if (mins < 1) mins = 1;
+  // Log as CPD: category "Mortgage", activity "Mortgage Strategy reading"
+  fetch('/api/cpd', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ minutes: mins, category: 'Mortgage', activity: 'Mortgage Strategy reading (' + mins + ' min)' })
+  }).then(function() {
+    document.getElementById('ms-state-reading').style.display = 'none';
+    document.getElementById('ms-state-done').style.display    = '';
+    document.getElementById('ms-done-summary').textContent    =
+      mins + ' minute' + (mins === 1 ? '' : 's') + ' logged as Mortgage CPD';
+  }).catch(function() {
+    // Still show done even if log fails
+    document.getElementById('ms-state-reading').style.display = 'none';
+    document.getElementById('ms-state-done').style.display    = '';
+    document.getElementById('ms-done-summary').textContent    =
+      mins + ' min read — CPD log failed, please add manually.';
+  });
+}
+
+function msCancel() {
+  clearInterval(_msInterval);
+  msReset();
+}
+
+function msReset() {
+  _msSeconds = 0;
+  document.getElementById('ms-timer-display').textContent    = '00:00';
+  document.getElementById('ms-state-idle').style.display    = '';
+  document.getElementById('ms-state-reading').style.display = 'none';
+  document.getElementById('ms-state-done').style.display    = 'none';
+}
+
 function loadNewsletters() {
   if (_nlLoaded) return;
   _nlLoaded = true;
@@ -4796,7 +4889,7 @@ function openNewsletter(url, title, monthLabel) {
 }
 
 function showLvSection(id, el) {
-  ['weekly-recordings','induction-recordings','revalidation-recordings','monthly-newsletters','knowledge-tests'].forEach(function(s) {
+  ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests'].forEach(function(s) {
     var div = document.getElementById(s);
     if (div) div.style.display = s === id ? '' : 'none';
   });
