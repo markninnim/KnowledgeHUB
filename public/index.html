@@ -1033,7 +1033,10 @@ html { height: 100%; }
   <!-- ── Surveying tab ─────────────────────────────────────── -->
   <div id="tab-surveying" class="tab-pane">
     <div style="padding:32px 32px 0;">
-      <h2 style="color:#003768;margin:0 0 4px;">Surveying</h2>
+      <h2 style="color:#003768;margin:0 0 12px;">Surveying</h2>
+
+      <!-- Intro text — plain, no box -->
+      <p style="color:#2D3748;font-size:13px;line-height:1.8;margin:0 0 20px;max-width:860px;">Thank you for referring your clients to Acre Surveying. Every referral you make — whether through your personal link, a direct introduction, or via a client who has booked through the Acre customer portal — makes a real difference. Acre's dedicated team handles everything from initial booking through to survey completion, so your clients are in safe hands from the moment you refer them. Below you can see a full breakdown of the sales you have generated and every referral made on your behalf. Keep referring to grow your fee income, build your referral score and increase your chances in this month's draw.</p>
 
       <!-- Stats row -->
       <div id="sv-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;">
@@ -1058,55 +1061,40 @@ html { height: 100%; }
           <div class="sv-stat-lbl">Value per Referral</div>
         </div>
       </div>
-    </div>
 
-    <!-- Intro & Benefits -->
-    <div style="padding:0 32px 24px;">
-      <div style="background:#f0f7ff;border-left:4px solid #003768;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:20px;">
-        <p style="margin:0;color:#2D3748;font-size:13px;line-height:1.7;">Thank you for referring to Acre Surveying. Below you can see the sales you have generated and the referrals made on your behalf — including referrals generated directly by your clients through the Acre customer portal.</p>
-      </div>
-
-      <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px 24px;">
-        <h3 style="color:#003768;font-size:14px;font-weight:700;margin:0 0 12px;">Why recommend a Level 2 Home Survey?</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;">
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Identifies structural issues, damp and defects before your client commits to the purchase</span>
+      <!-- Monthly Competition -->
+      <div style="background:linear-gradient(135deg,#003768 0%,#005fa3 100%);border-radius:12px;padding:24px 28px;margin-bottom:24px;color:#fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:260px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:6px;">Monthly Competition</div>
+            <div style="font-size:22px;font-weight:700;margin-bottom:8px;">You have <span id="sv-comp-tickets" style="color:#F5A623;">—</span> tickets in this month's draw</div>
+            <p style="font-size:13px;line-height:1.7;opacity:.9;margin:0 0 8px;">So far <strong id="sv-comp-total">—</strong> tickets have been put in the hat across all referrals. Keep referring whenever you can to boost your chances of winning — every referral earns you a ticket.</p>
+            <p style="font-size:12px;opacity:.75;margin:0;font-style:italic;">Bonus this month: every completed sale counts as <strong style="color:#F5A623;">2 tickets</strong>.</p>
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Provides powerful evidence to renegotiate the purchase price if defects are found</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Protects clients from costly, unexpected repair bills after moving in</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Includes a professional market valuation of the property</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Gives a clear condition rating for every element of the property</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Highlights urgent repairs and legal issues that need attention before exchange</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>Adds real value to your service — helping clients feel confident and well-advised</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;">
-            <span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span>
-            <span>RICS-qualified surveyors with local expertise and fast turnaround</span>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="font-size:48px;font-weight:800;color:#F5A623;line-height:1;" id="sv-comp-tickets-big">—</div>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">your tickets</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Sales section -->
+    <!-- Benefits & Tables -->
     <div style="padding:0 32px;">
+      <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+        <h3 style="color:#003768;font-size:14px;font-weight:700;margin:0 0 12px;">Why recommend a Level 2 Home Survey?</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;">
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Identifies structural issues, damp and defects before your client commits to the purchase</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Provides powerful evidence to renegotiate the purchase price if defects are found</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Protects clients from costly, unexpected repair bills after moving in</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Includes a professional market valuation of the property</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Gives a clear condition rating for every element of the property</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Highlights urgent repairs and legal issues that need attention before exchange</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>Adds real value to your service — helping clients feel confident and well-advised</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#2D3748;padding:4px 0;"><span style="color:#00A99D;font-weight:700;flex-shrink:0;">✓</span><span>RICS-qualified surveyors with local expertise and fast turnaround</span></div>
+        </div>
+      </div>
+
       <h3 style="color:#003768;font-size:15px;font-weight:700;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #003768;">Sales</h3>
       <div style="overflow-x:auto;">
         <table id="sv-sales-table" style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -1121,12 +1109,11 @@ html { height: 100%; }
             </tr>
           </thead>
           <tbody id="sv-sales-body">
-            <tr><td colspan="5" style="padding:24px;text-align:center;color:#6b7c8f;">Loading...</td></tr>
+            <tr><td colspan="6" style="padding:24px;text-align:center;color:#6b7c8f;">Loading...</td></tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Leads section -->
       <h3 style="color:#003768;font-size:15px;font-weight:700;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid #003768;">Referrals</h3>
       <div style="overflow-x:auto;">
         <table id="sv-leads-table" style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -4563,6 +4550,17 @@ function loadSurveying() {
     var svBtn = document.getElementById('tab-btn-surveying');
     if (svBtn && totalFee > 0) svBtn.textContent = 'Surveying £' + totalFee.toLocaleString();
 
+    // Monthly competition tickets
+    var now = new Date();
+    var m = now.getMonth(); var y = now.getFullYear();
+    var refThisMonth   = leads.filter(function(l){ var d=new Date(l.date); return d.getMonth()===m&&d.getFullYear()===y; }).length;
+    var salesThisMonth = paidDirect.filter(function(s){ var d=new Date(s.date); return d.getMonth()===m&&d.getFullYear()===y; }).length;
+    var myTickets      = refThisMonth + (salesThisMonth * 2);
+    var totalTickets   = leads.length + (paidDirect.length * 2);
+    document.getElementById('sv-comp-tickets').textContent     = myTickets;
+    document.getElementById('sv-comp-tickets-big').textContent = myTickets;
+    document.getElementById('sv-comp-total').textContent       = totalTickets;
+
     // Render sales
     var sTbody = document.getElementById('sv-sales-body');
     if (!paidDirect.length) {
@@ -5005,7 +5003,7 @@ var _currentUser = null;
       banner.id = 'impersonate-banner';
       banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#2e99d5;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:16px;';
       var name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
-      banner.innerHTML = '🛡️ Guardian Mode — viewing as <strong>' + name + '</strong> &nbsp;'
+      banner.innerHTML = 'Guardian Mode — viewing as <strong>' + name + '</strong> &nbsp;'
         + '<button onclick="stopImpersonation()" style="background:#fff;color:#2e99d5;border:none;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">↩ Exit Guardian Mode</button>';
       document.body.appendChild(banner);
       document.body.style.paddingBottom = '48px';
