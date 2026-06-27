@@ -136,8 +136,8 @@ app.get('/api/surveying/leads', requireAuth, async (req, res) => {
   try {
     const user = req.session.user;
     const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
-    const formula = encodeURIComponent(`FIND("${user.firstName}", ARRAYJOIN({Seller}, ","))`);
-    const fieldQs = ['Customer Name','Postcode','Date','Seller','Time to call','Status','Quotation']
+    const formula = encodeURIComponent(`FIND("${name}", {Introducer})`);
+    const fieldQs = ['Customer Name','Postcode','Date','Introducer','Time to call','Status','Quotation','Seller']
       .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
     const allRecords = [];
     let offset = '';
@@ -153,6 +153,7 @@ app.get('/api/surveying/leads', requireAuth, async (req, res) => {
       postcode:   r.fields['Postcode'] || '',
       date:       r.fields['Date'] || '',
       seller:     Array.isArray(r.fields['Seller']) ? r.fields['Seller'].map(s => s.name || s).join(', ') : (r.fields['Seller'] || ''),
+      introducer: r.fields['Introducer'] || '',
       timeToCall: r.fields['Time to call'] || '',
       status:     r.fields['Status'] ? (r.fields['Status'].name || r.fields['Status']) : '',
       quotation:  r.fields['Quotation'] || 0
