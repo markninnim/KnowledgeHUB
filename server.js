@@ -1781,34 +1781,37 @@ app.get('/api/dip-certificate', requireAuth, async (req, res) => {
     const fontMed  = await pdfDoc.embedFont(fontMedBytes);
     const logoImg  = await pdfDoc.embedPng(logoBytes);
 
-    const W = 595.28, H = 841.89; // A4
+    const W = 595.276, H = 841.89; // A4 exact
     const page = pdfDoc.addPage([W, H]);
 
-    const navy      = rgb(0/255,   55/255,  104/255);
-    const gold      = rgb(252/255, 176/255,  52/255);
-    const borderBlue = rgb(46/255, 153/255, 213/255);
-    const greyCol   = rgb(107/255, 124/255, 143/255);
-    const lightGrey = rgb(220/255, 228/255, 236/255);
-    const white     = rgb(1, 1, 1);
-    const dark      = rgb(26/255,  42/255,  58/255);
+    // ── Colors (matched exactly from template via CMYK extraction) ─
+    const navy     = rgb(0,        55/255,  104/255); // #003768 FPG navy
+    const gold     = rgb(252/255, 176/255,  52/255);  // #FCB034 FPG gold
+    const greyCol  = rgb(107/255, 124/255, 143/255);  // disclaimer text
+    const dark     = rgb(26/255,   42/255,  58/255);  // body text
+    const white    = rgb(1, 1, 1);
+    // Template box row colors converted from CMYK values in PDF
+    const rowDark  = rgb(207/255, 240/255, 247/255);  // CMYK(0.19,0.06,0.03,0) — rows 1 & 3
+    const rowLight = rgb(232/255, 250/255, 255/255);  // CMYK(0.09,0.02,0.00,0) — row 2
 
-    const ML = 50, MR = 50;
-    const CW = W - ML - MR; // 495.28
+    // ── Layout: exact measurements from template analysis ─────────
+    // Template uses x=70.866 for left edge of content/box
+    const ML  = 70.866;
+    const MR  = 70.866;
+    const CW  = W - ML - MR; // 453.543 (matches template box width exactly)
+    // Box right edge = 70.866 + 453.543 = 524.409 (matches template)
 
     // Dates
     const today = new Date();
-    const validUntil = new Date(today);
-    validUntil.setDate(validUntil.getDate() + 90);
     const fmtDate = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    const todayStr   = fmtDate(today);
-    const validStr   = fmtDate(validUntil);
+    const todayStr = fmtDate(today);
 
     // Format loan amount
-    const amtClean = amount.toString().replace(/[^0-9.]/g, '');
-    const amtNum   = parseFloat(amtClean);
+    const amtClean     = amount.toString().replace(/[^0-9.]/g, '');
+    const amtNum       = parseFloat(amtClean);
     const amtFormatted = isNaN(amtNum) ? amount : '£' + amtNum.toLocaleString('en-GB', { minimumFractionDigits: 0 });
 
-    // ── Helpers ───────────────────────────────────────────────────
+    // ── Text helpers ──────────────────────────────────────────────
     function wrapText(text, font, size, maxWidth) {
       const words = text.split(' ');
       const lines = [];
@@ -1825,43 +1828,55 @@ app.get('/api/dip-certificate', requireAuth, async (req, res) => {
       if (current) lines.push(current);
       return lines;
     }
-
-    // Draws wrapped text, returns y after last line
+    // Returns y position after last line drawn
     function drawWrapped(text, font, size, color, x, y, maxWidth, leading) {
-      const lines = wrapText(text, font, size, maxWidth);
-      for (const line of lines) {
+      for (const line of wrapText(text, font, size, maxWidth)) {
         page.drawText(line, { x, y, size, font, color });
         y -= leading;
       }
       return y;
     }
 
-    // ── White background ──────────────────────────────────────────
+    // ── 1. White background ───────────────────────────────────────
     page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: white });
 
-    // ── Logo (centred, large) ─────────────────────────────────────
-    const logoDims = logoImg.scale(0.22);
-    const logoX = (W - logoDims.width) / 2;
-    page.drawImage(logoImg, { x: logoX, y: H - 75, width: logoDims.width, height: logoDims.height });
+    // ── 2. Navy top bar (exact from template: y=826.299, h=15.591) ─
+    page.drawRectangle({ x: 0, y: 826.299, width: W, height: 15.591, color: navy });
 
-    // ── Gold rule ─────────────────────────────────────────────────
-    page.drawRectangle({ x: ML, y: H - 88, width: CW, height: 2.5, color: gold });
+    // ── 3. FPG Logo centred ────────────────────────────────────────
+    // Template: logo text area tops at ~65.8pt from page top → PDF y = H-65.8 ≈ 776
+    //           logo spans ~53pt tall → bottom at PDF y ≈ 723
+    const logoH = 53;
+    const logoAspect = logoImg.width / logoImg.height;
+    const logoW = logoH * logoAspect;
+    page.drawImage(logoImg, {
+      x: (W - logoW) / 2,
+      y: H - 65.8 - logoH,  // top of logo 65.8pt from page top
+      width: logoW,
+      height: logoH
+    });
 
-    // ── Title ─────────────────────────────────────────────────────
-    const titleTxt = 'Decision in Principle';
-    const titleSz  = 21;
-    const titleW   = fontBold.widthOfTextAtSize(titleTxt, titleSz);
-    page.drawText(titleTxt, { x: (W - titleW) / 2, y: H - 114, size: titleSz, font: fontBold, color: navy });
+    // ── 4. Title "Decision In Principle" ──────────────────────────
+    // Template: title baseline at ~635 in PDF coords (26pt text, top=183.9 from page top)
+    const titleTxt  = 'Decision In Principle';
+    const titleSize = 26;
+    const titleW2   = fontBold.widthOfTextAtSize(titleTxt, titleSize);
+    page.drawText(titleTxt, {
+      x: (W - titleW2) / 2,
+      y: H - 183.9 - titleSize + 3,  // ≈ 635
+      size: titleSize, font: fontBold, color: dark
+    });
 
-    // ── Navy rule under title ─────────────────────────────────────
-    page.drawRectangle({ x: ML, y: H - 120, width: CW, height: 0.75, color: lightGrey });
+    // ── 5. Intro paragraph ────────────────────────────────────────
+    // Template: intro starts at top=225.3 from page top → PDF y ≈ 608
+    const introText = 'We are pleased to confirm that your application has been approved in principle. This is subject to:';
+    let y = H - 225.3 - 10 + 2; // ≈ 608
+    y = drawWrapped(introText, fontMed, 10, dark, ML, y, CW, 12);
 
-    // ── Intro paragraph ───────────────────────────────────────────
-    let y = H - 140;
-    const intro = 'We are pleased to confirm that your application has been approved in principle. This is subject to:';
-    y = drawWrapped(intro, fontMed, 9.5, dark, ML, y, CW, 14) - 4;
-
-    // ── 4 subject-to bullets ──────────────────────────────────────
+    // ── 6. Subject-to bullets ─────────────────────────────────────
+    // Template: bullet 1 at top=249.3 → PDF y ≈ 584
+    // Override with our calculated y (after intro) — keeps consistent spacing
+    y -= 2;
     const subjectBullets = [
       'A satisfactory valuation of the property to be mortgaged.',
       'The information you have supplied to us being true and accurate.',
@@ -1869,133 +1884,109 @@ app.get('/api/dip-certificate', requireAuth, async (req, res) => {
       'A full appraisal of the information contained in a completed application form including an assessment that you are able to repay the mortgage.',
     ];
     for (const b of subjectBullets) {
-      page.drawText('•', { x: ML + 6, y, size: 9.5, font: fontBold, color: navy });
-      y = drawWrapped(b, fontMed, 9.5, dark, ML + 18, y, CW - 18, 13) - 3;
+      page.drawText('•', { x: ML, y, size: 10, font: fontMed, color: dark });
+      y = drawWrapped(b, fontMed, 10, dark, ML + 18, y, CW - 18, 12);
     }
-    y -= 12;
 
-    // ── Info box ───────────────────────────────────────────────────
-    const labelColW = CW * 0.58;
-    const valueColW = CW - labelColW;
-    const rowH = 34;
-    const infoRows = [
-      { label: 'This is based on a maximum loan amount of', value: amtFormatted,  bold: true,  valueSize: 13 },
-      { label: 'Decision date',                            value: todayStr,       bold: false, valueSize: 9.5 },
-      { label: 'Applicant name(s)',                        value: names,          bold: false, valueSize: 9.5 },
-      { label: 'This decision, which is not an offer of mortgage, is valid until', value: validStr, bold: false, valueSize: 9.5 },
+    // ── 7. Info box (EXACT positions from template PDF analysis) ──
+    // All y values are in pdf-lib coords (from bottom of page)
+    // Row heights = 36.85pt each, measured from template rects
+    const boxRows = [
+      { yBot: 470.551, yTop: 507.401, color: rowDark,  label: 'Maximum loan amount', value: amtFormatted },
+      { yBot: 433.701, yTop: 470.551, color: rowLight, label: 'Applicant name(s)',   value: names        },
+      { yBot: 396.851, yTop: 433.701, color: rowDark,  label: 'Date issued',         value: todayStr     },
     ];
+    const rowH    = 36.85;
+    const boxYBot = 396.851;
+    const boxYTop = 507.401;
 
-    const boxH  = infoRows.length * rowH;
-    const boxTop = y;
-    const boxBot = boxTop - boxH;
+    for (const row of boxRows) {
+      // Shaded background
+      page.drawRectangle({ x: ML, y: row.yBot, width: CW, height: rowH, color: row.color });
 
-    // Box outline
-    page.drawRectangle({ x: ML, y: boxBot, width: CW, height: boxH, borderColor: borderBlue, borderWidth: 1.5, color: white });
+      // Label (bold, left-aligned, vertically centred)
+      const labelY = row.yBot + rowH / 2 - 4; // centre of row minus half font cap height
+      page.drawText(row.label, { x: ML + 12, y: labelY, size: 10, font: fontBold, color: dark });
 
-    // Vertical divider between label/value columns
-    page.drawLine({ start: { x: ML + labelColW, y: boxBot }, end: { x: ML + labelColW, y: boxTop }, thickness: 0.75, color: lightGrey });
-
-    // Rows
-    let rowTop = boxTop;
-    for (let i = 0; i < infoRows.length; i++) {
-      const r = infoRows[i];
-      const rowBot = rowTop - rowH;
-
-      // Horizontal divider (not before first row)
-      if (i > 0) {
-        page.drawLine({ start: { x: ML, y: rowTop }, end: { x: ML + CW, y: rowTop }, thickness: 0.5, color: lightGrey });
+      // Value — right portion, same vertical centre
+      const valueX   = ML + 230; // label takes ~0-220pt, value from 230pt
+      const valueMaxW = CW - 230 - 8;
+      const valueLines = wrapText(row.value, fontMed, 10, valueMaxW);
+      const valBlockH  = valueLines.length * 12;
+      let vY = row.yBot + rowH / 2 + valBlockH / 2 - 10;
+      for (const vl of valueLines) {
+        page.drawText(vl, { x: valueX, y: vY, size: 10, font: fontMed, color: dark });
+        vY -= 12;
       }
-
-      // Label — vertically centred in row
-      const lblLines = wrapText(r.label, fontMed, 8.5, labelColW - 14);
-      const lblBlockH = lblLines.length * 12;
-      let lblY = rowBot + (rowH + lblBlockH) / 2 - 11;
-      for (const line of lblLines) {
-        page.drawText(line, { x: ML + 8, y: lblY, size: 8.5, font: fontMed, color: dark });
-        lblY -= 12;
-      }
-
-      // Value — vertically centred
-      const vFont  = r.bold ? fontBold : fontMed;
-      const vColor = r.bold ? navy : dark;
-      const vSize  = r.valueSize;
-      const valLines = wrapText(r.value, vFont, vSize, valueColW - 14);
-      const valBlockH = valLines.length * (vSize + 2);
-      let valY = rowBot + (rowH + valBlockH) / 2 - vSize;
-      for (const line of valLines) {
-        page.drawText(line, { x: ML + labelColW + 8, y: valY, size: vSize, font: vFont, color: vColor });
-        valY -= (vSize + 2);
-      }
-
-      rowTop = rowBot;
     }
-    y = boxBot - 16;
 
-    // ── Please note ────────────────────────────────────────────────
-    page.drawText('Please note:', { x: ML, y, size: 9.5, font: fontBold, color: navy });
-    y -= 15;
+    // Thin border around entire box
+    page.drawRectangle({
+      x: ML, y: boxYBot, width: CW, height: boxYTop - boxYBot,
+      borderColor: rgb(180/255, 205/255, 225/255), borderWidth: 0.5, color: undefined
+    });
+    // Row dividers
+    page.drawLine({ start: { x: ML, y: 470.551 }, end: { x: ML + CW, y: 470.551 }, thickness: 0.5, color: rgb(180/255, 205/255, 225/255) });
+    page.drawLine({ start: { x: ML, y: 433.701 }, end: { x: ML + CW, y: 433.701 }, thickness: 0.5, color: rgb(180/255, 205/255, 225/255) });
+
+    // ── 8. Please note section ────────────────────────────────────
+    // Template: first please-note bullet at top=480.4 → PDF y ≈ 353
+    // Header "Please note:" sits ~20pt above first bullet
+    page.drawText('Please note:', { x: ML, y: 376, size: 10, font: fontBold, color: dark });
+    y = 353; // first bullet baseline (matches template exactly)
 
     const pleaseNotes = [
       'You should not enter into a binding legal commitment to buy a property until you have received, and are happy with, the full mortgage offer.',
-      'You must tell us if any of the information you have given us changes. You must also tell us if something happens, or is likely to happen which might affect our decision to make you a mortgage offer. Your mortgage advisor can provide you with further information.',
+      'You must tell us if any of the information you have given us changes. You must also tell us if something happens, or is likely to happen which might affect our decision to make you a mortgage offer. Your mortgage adviser can provide you with further information.',
       'We will set out full details of the terms on which we will make the loan in the mortgage offer.',
-      'This document does not contain all of the details you need to choose a mortgage. Please make sure you obtain a personalised illustration before you make a decision.',
-      'We will request references when applicable.',
+      'This document does not contain all of the details you need to choose a mortgage. Please make sure you obtain an illustration before you make a decision.',
+      'We may request references when applicable.',
     ];
     for (const note of pleaseNotes) {
-      page.drawText('•', { x: ML + 6, y, size: 9, font: fontBold, color: navy });
-      y = drawWrapped(note, fontMed, 9, dark, ML + 18, y, CW - 18, 13) - 4;
+      page.drawText('•', { x: ML, y, size: 10, font: fontMed, color: dark });
+      y = drawWrapped(note, fontMed, 10, dark, ML + 18, y, CW - 18, 12);
     }
 
-    // ── Disclaimer (very bottom, full width) ──────────────────────
-    const disclaimer = 'Finance Planning Mortgage & Protection Solutions is a trading name of The Finance Planning Group Limited, which is authorised and regulated by the Financial Conduct Authority. The Finance Planning Group Limited, registered in England and Wales, 3894404. Registered office: Hurstwood Grange, Hurstwood Lane, Haywards Heath, West Sussex RH17 7QX';
-    const discLines = wrapText(disclaimer, fontMed, 6.5, CW);
-    let discY = 14 + (discLines.length - 1) * 8.5;
-    for (const line of discLines) {
-      page.drawText(line, { x: ML, y: discY, size: 6.5, font: fontMed, color: greyCol });
-      discY -= 8.5;
+    // ── 9. Disclaimer (3 lines at bottom, matching template positions) ─
+    // Template: line 1 at top=771.3 → PDF y ≈ 65, line 2 at top=785.7 → y ≈ 51, line 3 at top=792.9 → y ≈ 44
+    const discParts = [
+      { text: 'Finance Planning Mortgage & Protection Solutions is a trading name of The Finance Planning Group Limited, which is authorised and regulated by the Financial Conduct Authority.', y: 65 },
+      { text: 'The Finance Planning Group Limited, registered in England and Wales, 3894404.', y: 51 },
+      { text: 'Registered office: Hurstwood Grange, Hurstwood Lane, Haywards Heath, West Sussex RH17 7QX', y: 44 },
+    ];
+    for (const dp of discParts) {
+      page.drawText(dp.text, { x: 36, y: dp.y, size: 6.5, font: fontMed, color: greyCol });
     }
 
-    // ── Divider above disclaimer ──────────────────────────────────
-    const discBlockTop = 14 + discLines.length * 8.5;
-    page.drawRectangle({ x: ML, y: discBlockTop + 4, width: CW, height: 0.5, color: lightGrey });
-
-    // ── Broker business card (bottom left, above disclaimer) ──────
-    const cardW = 200, cardH = 88;
+    // ── 10. Broker business card (bottom-left, above disclaimer) ──
+    const cardW = 195, cardH = 90;
     const cardX = ML;
-    const cardY = discBlockTop + 12;
+    const cardY = 75; // sits above disclaimer block
 
     page.drawRectangle({ x: cardX, y: cardY, width: cardW, height: cardH, color: navy });
-    // Gold top strip
     page.drawRectangle({ x: cardX, y: cardY + cardH - 5, width: cardW, height: 5, color: gold });
 
-    // Broker name
+    let cY = cardY + cardH - 20;
     const cardNameLines = wrapText(brokerName, fontBold, 9.5, cardW - 16);
-    let cardY2 = cardY + cardH - 20;
     for (const l of cardNameLines) {
-      page.drawText(l, { x: cardX + 8, y: cardY2, size: 9.5, font: fontBold, color: white });
-      cardY2 -= 12;
+      page.drawText(l, { x: cardX + 8, y: cY, size: 9.5, font: fontBold, color: white });
+      cY -= 12;
     }
-    // Job title (gold)
     if (user.jobTitle) {
-      page.drawText(user.jobTitle, { x: cardX + 8, y: cardY2, size: 7.5, font: fontMed, color: gold });
-      cardY2 -= 12;
+      page.drawText(user.jobTitle, { x: cardX + 8, y: cY, size: 7.5, font: fontMed, color: gold });
+      cY -= 11;
     }
-    // Mobile
     if (user.mobile) {
-      page.drawText('M: ' + user.mobile, { x: cardX + 8, y: cardY2, size: 7.5, font: fontMed, color: white });
-      cardY2 -= 11;
+      page.drawText('M: ' + user.mobile, { x: cardX + 8, y: cY, size: 7.5, font: fontMed, color: white });
+      cY -= 10;
     }
-    // Email
     if (user.email) {
-      const emailLines = wrapText(user.email, fontMed, 7.5, cardW - 16);
-      for (const l of emailLines) {
-        page.drawText(l, { x: cardX + 8, y: cardY2, size: 7.5, font: fontMed, color: white });
-        cardY2 -= 10;
+      for (const l of wrapText(user.email, fontMed, 7.5, cardW - 16)) {
+        page.drawText(l, { x: cardX + 8, y: cY, size: 7.5, font: fontMed, color: white });
+        cY -= 10;
       }
     }
-    // FPG footer text
-    page.drawText('Finance Planning Group', { x: cardX + 8, y: cardY + 6, size: 6.5, font: fontMed, color: rgb(0.55, 0.70, 0.85) });
+    page.drawText('Finance Planning Group', { x: cardX + 8, y: cardY + 7, size: 6.5, font: fontMed, color: rgb(0.55, 0.70, 0.85) });
 
     // Send PDF
     const pdfBytes = await pdfDoc.save();
