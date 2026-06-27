@@ -166,7 +166,7 @@ app.get('/api/surveying/sales', requireAuth, async (req, res) => {
     const user = req.session.user;
     const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
     const formula = encodeURIComponent(`FIND("${name}", {Referred by name})`);
-    const fieldQs = ['Address','Date','Broker Status','Paid','Broker fee','Completed','Referred by name','Referred by firm']
+    const fieldQs = ['Address','Date','Broker Status','Broker fee','Completed','Referred by name','Referred by firm','Acre reference']
       .map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
     const allRecords = [];
     let offset = '';
@@ -184,6 +184,7 @@ app.get('/api/surveying/sales', requireAuth, async (req, res) => {
       paid:      r.fields['Paid'] || '',
       fee:       r.fields['Broker fee'] || 0,
       firm:      r.fields['Referred by firm'] || '',
+      acreRef:   r.fields['Acre reference'] || '',
       completed: r.fields['Completed'] || ''
     })));
   } catch (err) { res.status(500).json({ error: err.message }); }

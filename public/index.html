@@ -1054,7 +1054,7 @@ html { height: 100%; }
         </div>
         <div class="sv-stat-card">
           <div class="sv-stat-val" id="sv-stat-ratio-val">—</div>
-          <div class="sv-stat-lbl">Lead to Sale Ratio</div>
+          <div class="sv-stat-lbl">Referral to Sale Ratio</div>
         </div>
         <div class="sv-stat-card">
           <div class="sv-stat-val" id="sv-stat-refval-val">—</div>
@@ -1101,8 +1101,8 @@ html { height: 100%; }
           <thead>
             <tr style="background:#f5f7fa;">
               <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Address</th>
+              <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Acre Ref</th>
               <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Date</th>
-              <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Paid Date</th>
               <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Source</th>
               <th style="padding:10px 12px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Status</th>
               <th style="padding:10px 12px;text-align:right;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">Fee</th>
@@ -4573,8 +4573,8 @@ function loadSurveying() {
           : (s.firm || '—');
         return '<tr class="sv-sales-row">'
           + '<td>' + (s.address || '—') + '</td>'
+          + '<td style="color:#6b7c8f;font-size:12px;">' + (s.acreRef || '—') + '</td>'
           + '<td>' + fmtDate(s.date) + '</td>'
-          + '<td>' + fmtDate(s.paid) + '</td>'
           + '<td>' + sourceCell + '</td>'
           + '<td>' + statusBadge(s.status) + '</td>'
           + '<td style="text-align:right;font-weight:600;color:#003768;">£' + (s.fee || 100).toLocaleString() + '</td>'
