@@ -1038,28 +1038,24 @@ html { height: 100%; }
       <!-- Intro text — plain, no box -->
       <p style="color:#2D3748;font-size:13px;line-height:1.8;margin:0 0 20px;max-width:860px;">Thank you for referring your clients to Acre Surveying. Every referral you make — whether through your personal link, a direct introduction, or via a client who has booked through the Acre customer portal — makes a real difference. Acre's dedicated team handles everything from initial booking through to survey completion, so your clients are in safe hands from the moment you refer them. Below you can see a full breakdown of the sales you have generated and every referral made on your behalf. Keep referring to grow your fee income, build your referral score and increase your chances in this month's draw.</p>
 
-      <!-- Stats row -->
-      <div id="sv-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;">
-        <div class="sv-stat-card">
-          <div class="sv-stat-val" id="sv-stat-sales-val">—</div>
-          <div class="sv-stat-lbl">Sales</div>
-        </div>
-        <div class="sv-stat-card">
-          <div class="sv-stat-val" id="sv-stat-earned-val">—</div>
-          <div class="sv-stat-lbl">Fees Earned</div>
-        </div>
-        <div class="sv-stat-card">
-          <div class="sv-stat-val" id="sv-stat-leads-val">—</div>
-          <div class="sv-stat-lbl">Referrals</div>
-        </div>
-        <div class="sv-stat-card">
-          <div class="sv-stat-val" id="sv-stat-ratio-val">—</div>
-          <div class="sv-stat-lbl">Referral to Sale Ratio</div>
-        </div>
-        <div class="sv-stat-card">
-          <div class="sv-stat-val" id="sv-stat-refval-val">—</div>
-          <div class="sv-stat-lbl">Value per Referral</div>
-        </div>
+      <!-- Stats: Month to Date -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7c8f;margin-bottom:8px;">Month to Date</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px;">
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-mtd-sales">—</div><div class="sv-stat-lbl">Sales</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-mtd-earned">—</div><div class="sv-stat-lbl">Fees Earned</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-mtd-refs">—</div><div class="sv-stat-lbl">Referrals</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-mtd-ratio">—</div><div class="sv-stat-lbl">Referral to Sale</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-mtd-val">—</div><div class="sv-stat-lbl">Value per Referral</div></div>
+      </div>
+
+      <!-- Stats: Year to Date -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7c8f;margin-bottom:8px;">Year to Date</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-ytd-sales">—</div><div class="sv-stat-lbl">Sales</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-ytd-earned">—</div><div class="sv-stat-lbl">Fees Earned</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-ytd-refs">—</div><div class="sv-stat-lbl">Referrals</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-ytd-ratio">—</div><div class="sv-stat-lbl">Referral to Sale</div></div>
+        <div class="sv-stat-card"><div class="sv-stat-val" id="sv-ytd-val">—</div><div class="sv-stat-lbl">Value per Referral</div></div>
       </div>
 
       <!-- Monthly Competition -->
@@ -4541,22 +4537,44 @@ function loadSurveying() {
     var ratio      = leads.length ? ((paidDirect.length / leads.length) * 100).toFixed(1) + '%' : '—';
     var refValue   = leads.length ? '£' + (totalFee / leads.length).toFixed(0) : '—';
 
-    document.getElementById('sv-stat-sales-val').textContent  = paidDirect.length;
-    document.getElementById('sv-stat-earned-val').textContent = '£' + totalFee.toLocaleString();
-    document.getElementById('sv-stat-leads-val').textContent  = leads.length;
-    document.getElementById('sv-stat-ratio-val').textContent  = ratio;
-    document.getElementById('sv-stat-refval-val').textContent = refValue;
+    var now = new Date();
+    var m = now.getMonth(); var y = now.getFullYear();
+
+    function inMonth(dateStr){ var d=new Date(dateStr); return d.getMonth()===m&&d.getFullYear()===y; }
+    function inYear(dateStr){ var d=new Date(dateStr); return d.getFullYear()===y; }
+    function calcStats(filteredSales, filteredLeads) {
+      var fee = filteredSales.reduce(function(s,x){ return s+(x.fee||0); }, 0);
+      var ratio = filteredLeads.length ? (filteredSales.length/filteredLeads.length*100).toFixed(1)+'%' : '—';
+      var val   = filteredLeads.length ? '£'+(fee/filteredLeads.length).toFixed(0) : '—';
+      return { sales: filteredSales.length, fee: fee, refs: filteredLeads.length, ratio: ratio, val: val };
+    }
+
+    var mtdSales  = paidDirect.filter(function(s){ return inMonth(s.date); });
+    var mtdLeads  = leads.filter(function(l){ return inMonth(l.date); });
+    var ytdSales  = paidDirect.filter(function(s){ return inYear(s.date); });
+    var ytdLeads  = leads.filter(function(l){ return inYear(l.date); });
+
+    var mtd = calcStats(mtdSales, mtdLeads);
+    var ytd = calcStats(ytdSales, ytdLeads);
+
+    document.getElementById('sv-mtd-sales').textContent  = mtd.sales;
+    document.getElementById('sv-mtd-earned').textContent = '£' + mtd.fee.toLocaleString();
+    document.getElementById('sv-mtd-refs').textContent   = mtd.refs;
+    document.getElementById('sv-mtd-ratio').textContent  = mtd.ratio;
+    document.getElementById('sv-mtd-val').textContent    = mtd.val;
+
+    document.getElementById('sv-ytd-sales').textContent  = ytd.sales;
+    document.getElementById('sv-ytd-earned').textContent = '£' + ytd.fee.toLocaleString();
+    document.getElementById('sv-ytd-refs').textContent   = ytd.refs;
+    document.getElementById('sv-ytd-ratio').textContent  = ytd.ratio;
+    document.getElementById('sv-ytd-val').textContent    = ytd.val;
 
     var svBtn = document.getElementById('tab-btn-surveying');
     if (svBtn && totalFee > 0) svBtn.textContent = 'Surveying £' + totalFee.toLocaleString();
 
     // Monthly competition tickets
-    var now = new Date();
-    var m = now.getMonth(); var y = now.getFullYear();
-    var refThisMonth   = leads.filter(function(l){ var d=new Date(l.date); return d.getMonth()===m&&d.getFullYear()===y; }).length;
-    var salesThisMonth = paidDirect.filter(function(s){ var d=new Date(s.date); return d.getMonth()===m&&d.getFullYear()===y; }).length;
-    var myTickets      = refThisMonth + (salesThisMonth * 2);
-    var totalTickets   = leads.length + (paidDirect.length * 2);
+    var myTickets    = mtdLeads.length + (mtdSales.length * 2);
+    var totalTickets = leads.length + (paidDirect.length * 2);
     document.getElementById('sv-comp-tickets').textContent     = myTickets;
     document.getElementById('sv-comp-tickets-big').textContent = myTickets;
     document.getElementById('sv-comp-total').textContent       = totalTickets;
