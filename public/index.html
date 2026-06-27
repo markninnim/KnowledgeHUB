@@ -4549,11 +4549,11 @@ function initShareButtons() {
 // ── Add pas-nav styling (same as mas-nav) ────────────────────────
 
 // ── Surveying ─────────────────────────────────────────────────
-var _svLoaded = false;
+var _surveyingLoaded = false;
 
 function loadSurveying() {
-  if (_svLoaded) return;
-  _svLoaded = true;
+  if (_surveyingLoaded) return;
+  _surveyingLoaded = true;
 
   var fmtDate = function(d) {
     if (!d) return '—';
@@ -4576,8 +4576,8 @@ function loadSurveying() {
     fetch('/api/surveying/sales').then(function(r){ return r.json(); }),
     fetch('/api/surveying/leads').then(function(r){ return r.json(); })
   ]).then(function(results) {
-    var sales  = results[0];
-    var leads  = results[1];
+    var sales  = Array.isArray(results[0]) ? results[0] : [];
+    var leads  = Array.isArray(results[1]) ? results[1] : [];
     var paidDirect = sales.filter(function(s){ return s.status === 'Paid Direct'; });
     var totalFee   = paidDirect.reduce(function(sum, s){ return sum + (s.fee || 0); }, 0);
     var ratio      = leads.length ? ((paidDirect.length / leads.length) * 100).toFixed(1) + '%' : '—';
@@ -5298,6 +5298,7 @@ function renderUserList(users) {
 
 function impersonateUser(id, name) {
   if (!confirm('Log in as ' + name + '?\n\nYou will see the platform exactly as they do. A banner will appear so you can switch back.')) return;
+  _surveyingLoaded = false;
   fetch('/api/admin/impersonate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) })
     .then(function(r){ return r.json(); })
     .then(function(d){
