@@ -4788,6 +4788,7 @@ function msStopAndLog() {
       if (r.ok) {
         document.getElementById('ms-done-summary').textContent =
           mins + ' minute' + (mins === 1 ? '' : 's') + ' logged as CPD';
+        _cpdLoaded = false; loadCpd();
       } else {
         document.getElementById('ms-done-summary').textContent =
           'Log failed: ' + (data.error || r.status);
