@@ -865,7 +865,7 @@ app.get('/api/cpd', requireAuth, async (req, res) => {
 
 // POST /api/cpd — manual entry
 app.post('/api/cpd', requireAuth, async (req, res) => {
-  const { activity, date, minutes, category, cpdType, learned } = req.body;
+  const { activity, date, minutes, category, cpdType, learned, source } = req.body;
   if (!activity || !date || !minutes) return res.status(400).json({ error: 'Activity, date and minutes required' });
   try {
     const data = await cpdFetch('', {
@@ -876,7 +876,7 @@ app.post('/api/cpd', requireAuth, async (req, res) => {
         [CPD_DATE]:     date,
         [CPD_MINUTES]:  parseInt(minutes, 10),
         [CPD_CATEGORY]: category || 'Other',
-        [CPD_SOURCE]:   'Manual',
+        [CPD_SOURCE]:   source || 'Manual',
         [CPD_TYPE]:     cpdType || 'Mortgage',
         ...(learned ? { [CPD_LEARNED]: learned } : {})
       }}], returnFieldsByFieldId: true })

@@ -4737,7 +4737,7 @@ function msStopAndLog() {
   fetch('/api/cpd', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ minutes: mins, date: today, category: 'Mortgage', activity: 'Mortgage Strategy reading (' + mins + ' min)' })
+    body: JSON.stringify({ minutes: mins, date: today, category: 'Financial news', source: 'Learning Zone', activity: 'Mortgage Strategy reading (' + mins + ' min)' })
   }).then(function() {
     document.getElementById('ms-state-reading').style.display = 'none';
     document.getElementById('ms-state-done').style.display    = '';
