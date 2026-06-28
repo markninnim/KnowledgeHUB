@@ -1,13 +1,8 @@
 {
   "marketing": true,
   "compliance": true,
-  "adviceStandards": true,
   "learning": true,
   "surveying": true,
   "sellingZone": true,
-  "performanceZone": true,
-  "templates": true,
-  "cpd": true,
-  "industryReading": true,
-  "dipCertificate": true
+  "performanceZone": true
 }

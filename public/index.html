@@ -147,11 +147,11 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-    <button id="supervisor-btn" onclick="openAdminPanel()" style="display:none;background:#2e99d5;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Supervisor
+    <button id="supervisor-btn" onclick="openAdminPanel()" style="display:none;background:#2e99d5;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Supervisor
     </button>
-    <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:#003768;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
+    <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:#003768;color:#fff;border:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
     </button>
     <button id="account-btn" onclick="openAccountModal()" style="display:flex;align-items:center;gap:7px;background:none;border:1.5px solid #e8ecf0;padding:5px 13px 5px 8px;border-radius:20px;cursor:pointer;font-family:inherit;color:#1a2a3a;transition:background .15s;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'">
       <span id="nav-user-avatar" style="width:26px;height:26px;border-radius:50%;background:#003768;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"></span>
@@ -5534,15 +5534,10 @@ var _features = {};
 var FEATURE_LABELS = {
   marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing' },
   compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance' },
-  adviceStandards: { label: 'Advice Standards',  tab: null },
   learning:        { label: 'Learning',          tab: 'tab-btn-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying' },
   sellingZone:     { label: 'Selling Zone',      tab: 'tab-btn-selling-zone' },
-  performanceZone: { label: 'Performance Zone',  tab: 'tab-btn-performance-zone' },
-  templates:       { label: 'Templates',         tab: null },
-  cpd:             { label: 'CPD',               tab: null },
-  industryReading: { label: 'Industry Reading',  tab: null },
-  dipCertificate:  { label: 'DIP Certificate',   tab: null }
+  performanceZone: { label: 'Performance Zone',  tab: 'tab-btn-performance-zone' }
 };
 
 function applyFeatureFlags() {
