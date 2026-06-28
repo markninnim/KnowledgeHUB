@@ -5528,25 +5528,34 @@ var _editingUserId = null;
 // ── Feature flags ────────────────────────────────────────────
 var _features = {};
 var FEATURE_LABELS = {
-  marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing' },
-  compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance' },
-  adviceStandards: { label: 'Advice Standards',  tab: 'tab-btn-sales-process' },
-  learning:        { label: 'Learning',          tab: 'tab-btn-learning' },
-  surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying' },
-  sellingZone:     { label: 'Selling Zone',      tab: 'tab-btn-selling-zone' },
-  performanceZone: { label: 'Performance Zone',  tab: 'tab-btn-performance-zone' },
-  supervisorZone:  { label: 'Supervisor Zone',   tab: 'tab-btn-supervisor-zone' }
+  marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing',         pane: 'tab-marketing' },
+  compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance',        pane: 'tab-compliance' },
+  adviceStandards: { label: 'Advice Standards',  tab: 'tab-btn-sales-process',     pane: 'tab-sales-process' },
+  learning:        { label: 'Learning',          tab: 'tab-btn-learning',          pane: 'tab-learning' },
+  surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
+  sellingZone:     { label: 'Selling Zone',      tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
+  performanceZone: { label: 'Performance Zone',  tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
+  supervisorZone:  { label: 'Supervisor Zone',   tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' }
 };
 
 function applyFeatureFlags() {
   fetch('/api/admin/features').then(function(r){ return r.json(); }).then(function(f){
     _features = f;
+    var activePane = document.querySelector('.tab-pane.active');
+    var activePaneId = activePane ? activePane.id : null;
+    var activeDisabled = false;
     Object.keys(FEATURE_LABELS).forEach(function(key){
-      var tabId = FEATURE_LABELS[key].tab;
-      if (!tabId) return;
-      var btn = document.getElementById(tabId);
-      if (btn) btn.style.display = f[key] ? '' : 'none';
+      var cfg = FEATURE_LABELS[key];
+      var enabled = f[key] !== false;
+      var btn = document.getElementById(cfg.tab);
+      if (btn) btn.style.display = enabled ? '' : 'none';
+      if (!enabled && cfg.pane === activePaneId) activeDisabled = true;
     });
+    // If the currently-visible tab was disabled, jump to the first enabled one
+    if (activeDisabled) {
+      var firstKey = Object.keys(FEATURE_LABELS).find(function(k){ return f[k] !== false; });
+      if (firstKey) switchTab(FEATURE_LABELS[firstKey].pane.replace(/^tab-/, ''));
+    }
   }).catch(function(){});
 }
 
