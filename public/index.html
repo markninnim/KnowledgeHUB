@@ -343,11 +343,16 @@ html { height: 100%; }
           </div>
         </div>
         <!-- Stat tiles -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
           <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:9px;padding:14px 16px;">
             <div id="home-cd-full-count" style="font-size:28px;font-weight:800;color:#16a34a;line-height:1;margin-bottom:4px;"></div>
             <div style="font-size:12px;font-weight:600;color:#16a34a;">Full Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
+          </div>
+          <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:9px;padding:14px 16px;">
+            <div id="home-cd-restored-count" style="font-size:28px;font-weight:800;color:#2563eb;line-height:1;margin-bottom:4px;">0</div>
+            <div style="font-size:12px;font-weight:600;color:#2563eb;">Understanding Restored</div>
+            <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
           </div>
           <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:9px;padding:14px 16px;">
             <div id="home-cd-partial-count" style="font-size:28px;font-weight:800;color:#ea580c;line-height:1;margin-bottom:4px;"></div>
@@ -5932,8 +5937,6 @@ function loadHomeData() {
     var card    = document.getElementById('home-cd-card');
     var listEl  = document.getElementById('home-cd-list');
     var subEl   = document.getElementById('home-cd-subtitle');
-    var fullEl  = document.getElementById('home-cd-full-count');
-    var partEl  = document.getElementById('home-cd-partial-count');
     if (!card) return;
 
     if (!cd.total) {
@@ -5941,10 +5944,10 @@ function loadHomeData() {
       return;
     }
 
+    window._cdServerData = cd;
     card.style.display = '';
-    if (fullEl)  fullEl.textContent  = cd.fullCount    || 0;
-    if (partEl)  partEl.textContent  = cd.partialCount || 0;
-    if (subEl)   subEl.textContent   = cd.total + ' total response' + (cd.total !== 1 ? 's' : '');
+    if (subEl) subEl.textContent = cd.total + ' total response' + (cd.total !== 1 ? 's' : '');
+    updateCdSummaryTiles();
 
     var recent = cd.recent || [];
     window._cdRecords = recent;
@@ -8476,6 +8479,28 @@ var CD_QUESTIONS = [
 
 var _cdCurrentRecord = null;
 
+function updateCdSummaryTiles() {
+  var cd      = window._cdServerData;
+  var records = window._cdRecords || [];
+  if (!cd) return;
+  // Count how many recent partial records have been fully resolved locally
+  var restoredCount = 0;
+  records.forEach(function(r) {
+    if (r.perfect) return;
+    var ans         = r.answers || {};
+    var flaggedKeys = CD_QUESTIONS.filter(function(q) { return q.flagged(ans[q.key] || ''); }).map(function(q) { return q.key; });
+    if (!flaggedKeys.length) return;
+    var ticked      = _cdGetTicked(r.id);
+    if (flaggedKeys.every(function(k) { return ticked.indexOf(k) !== -1; })) restoredCount++;
+  });
+  var fullEl     = document.getElementById('home-cd-full-count');
+  var restoredEl = document.getElementById('home-cd-restored-count');
+  var partEl     = document.getElementById('home-cd-partial-count');
+  if (fullEl)     fullEl.textContent     = cd.fullCount || 0;
+  if (restoredEl) restoredEl.textContent = restoredCount;
+  if (partEl)     partEl.textContent     = Math.max(0, (cd.partialCount || 0) - restoredCount);
+}
+
 function _cdStorageKey(id) { return 'cd_resolved_' + id; }
 
 function _cdGetTicked(id) {
@@ -8515,11 +8540,12 @@ function _cdToggle(key, checkbox) {
   // style the row
   var row = document.getElementById('cd-q-row-' + key);
   if (row) {
-    row.style.opacity = checkbox.checked ? '0.55' : '1';
+    row.style.opacity    = checkbox.checked ? '0.55' : '1';
     row.style.background = checkbox.checked ? '#f0fdf4' : '#fff7ed';
-    row.style.borderColor = checkbox.checked ? '#bbf7d0' : '#fed7aa';
+    row.style.borderColor= checkbox.checked ? '#bbf7d0' : '#fed7aa';
   }
   _cdUpdateBadge();
+  updateCdSummaryTiles();
 }
 
 function openCdDetail(r) {
