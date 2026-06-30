@@ -5844,7 +5844,9 @@ function loadHomeData() {
 
     card.style.display = types.length ? '' : 'none';
 
-    // Recommend videos for any type behind pace
+    // Recommend videos for any type behind pace — exclude already-logged titles
+    var loggedTitles = new Set((cpd.entries || []).map(function(e) { return (e.title || '').toLowerCase().trim(); }));
+
     var behindTypes = types.filter(function(t) {
       var done     = byType[t.key] || 0;
       var target   = targets[t.key] || 900;
@@ -5856,8 +5858,8 @@ function loadHomeData() {
       var recsWrap = document.createElement('div');
       recsWrap.id  = 'home-cpd-recs';
       recsWrap.style.cssText = 'margin-top:18px;padding-top:16px;border-top:1px solid #f0f4f8;';
-      recsWrap.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Suggested videos to catch up</div>'
-        + '<div id="home-cpd-recs-list" style="display:flex;flex-direction:column;gap:8px;"><span style="font-size:12px;color:#aaa;">Loading…</span></div>';
+      recsWrap.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">Suggested videos to catch up</div>'
+        + '<div id="home-cpd-recs-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"><span style="font-size:12px;color:#aaa;grid-column:1/-1;">Loading…</span></div>';
       card.appendChild(recsWrap);
 
       Promise.all(behindTypes.map(function(t) {
@@ -5869,19 +5871,25 @@ function loadHomeData() {
         if (!listEl) return;
         var html = '';
         results.forEach(function(res) {
-          res.videos.forEach(function(v) {
-            html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;">'
-              + '<div style="width:30px;height:30px;background:#003768;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-              + '<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'
-              + '<div style="min-width:0;flex:1;">'
-              + '<div style="font-size:12px;font-weight:600;color:#003768;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>'
-              + '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(res.type.key) + ' CPD</div>'
-              + '</div>'
-              + '<a href="#" onclick="homeCatchUpVideo(' + JSON.stringify(v.url) + ');return false;" style="font-size:11px;font-weight:600;color:#003768;white-space:nowrap;text-decoration:none;">Watch →</a>'
-              + '</div>';
-          });
+          res.videos
+            .filter(function(v) { return !loggedTitles.has((v.title || '').toLowerCase().trim()); })
+            .forEach(function(v) {
+              var url   = escAttr(v.url   || '');
+              var title = escAttr(v.title || '');
+              var desc  = escAttr(v.description || '');
+              var type  = escAttr(res.type.key);
+              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\')" '
+                + 'style="background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:9px;padding:12px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s;" '
+                + 'onmouseover="this.style.borderColor=\'#003768\';this.style.boxShadow=\'0 2px 8px rgba(0,55,104,.1)\'" '
+                + 'onmouseout="this.style.borderColor=\'#e8ecf0\';this.style.boxShadow=\'\'">'
+                + '<div style="width:32px;height:32px;background:#003768;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">'
+                + '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'
+                + '<div style="font-size:12px;font-weight:600;color:#003768;line-height:1.4;margin-bottom:4px;">' + escHtml(v.title) + '</div>'
+                + '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(res.type.key) + ' CPD</div>'
+                + '</button>';
+            });
         });
-        listEl.innerHTML = html || '<span style="font-size:12px;color:#aaa;">No videos found.</span>';
+        listEl.innerHTML = html || '<span style="font-size:12px;color:#aaa;grid-column:1/-1;">No new videos to recommend.</span>';
       }).catch(function() {});
     }
   }).catch(function() {});
