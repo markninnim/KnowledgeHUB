@@ -3947,10 +3947,12 @@ function filterSocial(type, btn) {
 }
 function buildBrokerFooter() {
   var u = _currentUser || {};
-  var name  = [u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
+  var name  = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
   var mobile = u.mobile || '';
   var email  = u.email  || '';
   var lines = [];
+  lines.push('Contact me for a friendly discussion.');
+  lines.push('');
   if (name)   lines.push(name);
   if (mobile) lines.push(mobile);
   if (email)  lines.push(email);
