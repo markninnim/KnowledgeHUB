@@ -2162,10 +2162,10 @@ app.get('/api/home-data', requireAuth, async (req, res) => {
       if (rated.length) {
         feefo.avg = (rated.reduce((s, r) => s + r.fields[FF_SVC_RATING], 0) / rated.length).toFixed(1);
       }
-      // 3 most recent with a review text
+      // All reviews with text (sorted best-rated first)
       feefo.reviews = allRecords
         .filter(r => r.fields[FF_REVIEW])
-        .slice(0, 3)
+        .sort((a, b) => (b.fields[FF_SVC_RATING] || 0) - (a.fields[FF_SVC_RATING] || 0))
         .map(r => ({
           customer: r.fields[FF_CUSTOMER] || 'Customer',
           review:   r.fields[FF_REVIEW],

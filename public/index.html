@@ -331,8 +331,13 @@ html { height: 100%; }
             </div>
           </div>
           <div id="home-feefo-stars" style="margin-bottom:16px;"></div>
-          <div id="home-feefo-reviews" style="display:flex;flex-direction:column;gap:12px;">
+          <div id="home-feefo-reviews" style="display:flex;flex-direction:column;gap:0;">
             <div style="color:#aaa;font-size:13px;">Loading reviews…</div>
+          </div>
+          <div id="home-feefo-pagination" style="display:none;display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
+            <button id="home-feefo-prev" onclick="feefoPage(-1)" style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Prev</button>
+            <span id="home-feefo-page-label" style="font-size:12px;color:#6b7c8f;"></span>
+            <button id="home-feefo-next" onclick="feefoPage(1)"  style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">Next →</button>
           </div>
         </div>
 
@@ -5700,7 +5705,54 @@ function toggleLvArchive() {
 }
 
 // ── Home page ──────────────────────────────────────────────────
-var _homeLoaded = false;
+var _homeLoaded  = false;
+var _feefoAll    = [];   // all reviews cached for pagination
+var _feefoPage   = 0;
+var FEEFO_PER_PG = 5;
+
+function feefoPage(dir) {
+  var total = _feefoAll.length;
+  var pages = Math.ceil(total / FEEFO_PER_PG);
+  _feefoPage = Math.max(0, Math.min(pages - 1, _feefoPage + dir));
+  renderFeefoPage();
+}
+
+function renderFeefoPage() {
+  var reviewsEl = document.getElementById('home-feefo-reviews');
+  var pagEl     = document.getElementById('home-feefo-pagination');
+  var labelEl   = document.getElementById('home-feefo-page-label');
+  var prevBtn   = document.getElementById('home-feefo-prev');
+  var nextBtn   = document.getElementById('home-feefo-next');
+  if (!reviewsEl) return;
+
+  var total = _feefoAll.length;
+  var pages = Math.ceil(total / FEEFO_PER_PG);
+  var start = _feefoPage * FEEFO_PER_PG;
+  var slice = _feefoAll.slice(start, start + FEEFO_PER_PG);
+
+  reviewsEl.innerHTML = slice.map(function(r, i) {
+    var stars = '';
+    for (var s = 1; s <= 5; s++) stars += '<span style="color:' + (s <= (r.rating||0) ? '#fcb034' : '#e0e0e0') + ';font-size:13px;">★</span>';
+    return '<div style="padding:14px 0;' + (i > 0 ? 'border-top:1px solid #f0f4f8;' : '') + '">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      + '<span style="font-size:13px;font-weight:600;color:#003768;">' + escHtml(r.customer) + '</span>'
+      + '<span>' + stars + '</span></div>'
+      + '<p style="font-size:13px;color:#4a5a6a;margin:0;line-height:1.65;">' + escHtml(r.review) + '</p>'
+      + '</div>';
+  }).join('');
+
+  if (total > FEEFO_PER_PG) {
+    pagEl.style.display = 'flex';
+    if (labelEl) labelEl.textContent = 'Page ' + (_feefoPage + 1) + ' of ' + pages;
+    if (prevBtn) prevBtn.disabled = _feefoPage === 0;
+    if (nextBtn) nextBtn.disabled = _feefoPage >= pages - 1;
+    if (prevBtn) prevBtn.style.opacity = _feefoPage === 0 ? '.4' : '1';
+    if (nextBtn) nextBtn.style.opacity = _feefoPage >= pages - 1 ? '.4' : '1';
+  } else {
+    pagEl.style.display = 'none';
+  }
+}
+
 function loadHomeData() {
   // Greeting
   var greetEl = document.getElementById('home-greeting');
@@ -5726,7 +5778,7 @@ function loadHomeData() {
 
       // Star bar
       if (starsEl) {
-        var pct  = Math.round((avg / 5) * 100);
+        var pct = Math.round((avg / 5) * 100);
         starsEl.innerHTML =
           '<div style="display:flex;align-items:center;gap:8px;">'
           + '<div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;">'
@@ -5735,25 +5787,17 @@ function loadHomeData() {
           + '<span style="font-size:12px;color:#aaa;">/ 5</span></div>';
       }
 
-      // Reviews
-      if (reviewsEl && data.feefo.reviews && data.feefo.reviews.length) {
-        reviewsEl.innerHTML = data.feefo.reviews.map(function(r) {
-          var stars = '';
-          for (var i = 1; i <= 5; i++) stars += '<span style="color:' + (i <= (r.rating||0) ? '#fcb034' : '#e0e0e0') + ';font-size:12px;">★</span>';
-          var snippet = r.review.length > 140 ? r.review.substring(0, 140) + '…' : r.review;
-          return '<div style="border-top:1px solid #f0f4f8;padding-top:10px;">'
-            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-            + '<span style="font-size:12px;font-weight:600;color:#003768;">' + (r.customer || 'Customer') + '</span>'
-            + '<span>' + stars + '</span></div>'
-            + '<p style="font-size:12px;color:#6b7c8f;margin:0;line-height:1.6;">' + snippet + '</p>'
-            + '</div>';
-        }).join('');
+      // Paginated reviews
+      _feefoAll  = data.feefo.reviews || [];
+      _feefoPage = 0;
+      if (_feefoAll.length) {
+        renderFeefoPage();
       } else if (reviewsEl) {
-        reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;">No reviews yet.</p>';
+        reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">No written reviews yet.</p>';
       }
     } else {
       if (summaryEl) summaryEl.textContent = 'No reviews found';
-      if (reviewsEl) reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;">Reviews will appear here once your Feefo data is loaded.</p>';
+      if (reviewsEl) reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">Reviews will appear here once your Feefo data is loaded.</p>';
     }
 
     // ── Latest video ────────────────────────────────────────
