@@ -397,39 +397,12 @@ html { height: 100%; }
     <div id="featured-social-wrap" style="display:none;margin-bottom:32px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:1px;">Featured Posts</div>
-        <button id="featured-add-btn" onclick="openMarketingUpload()" style="display:flex;align-items:center;gap:7px;background:#e8740c;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <button id="featured-add-btn" onclick="openMarketingUpload()" style="display:flex;align-items:center;gap:7px;background:#003768;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New
         </button>
       </div>
       <div id="featured-social-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
     </div>
-    <!-- Marketing upload modal -->
-    <div id="marketing-upload-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:14px;padding:28px;width:420px;max-width:95vw;box-shadow:0 12px 40px rgba(0,0,0,.18);position:relative;max-height:90vh;overflow-y:auto;">
-        <button onclick="closeMarketingUpload()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#6b7c8f;line-height:1;">✕</button>
-        <h3 style="color:#003768;font-size:16px;font-weight:700;margin:0 0 20px;" id="mku-title-heading">Add Featured Post</h3>
-        <input type="hidden" id="mku-edit-id" value="">
-        <div style="margin-bottom:12px;">
-          <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">TITLE</label>
-          <input id="mku-title" type="text" placeholder="e.g. Summer Campaign" style="width:100%;padding:9px 11px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">IMAGE</label>
-          <input id="mku-image" type="file" accept="image/*" style="width:100%;font-size:12px;font-family:inherit;">
-          <div id="mku-image-preview" style="margin-top:8px;display:none;"><img id="mku-image-img" style="max-width:100%;max-height:140px;border-radius:6px;object-fit:cover;" src=""></div>
-        </div>
-        <div style="margin-bottom:16px;">
-          <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">POST WORDING</label>
-          <textarea id="mku-wording" rows="5" placeholder="Enter the approved post wording here..." style="width:100%;padding:9px 11px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
-        </div>
-        <div id="mku-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="saveFeaturedPost()" style="flex:1;background:#e8740c;color:#fff;border:none;padding:10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Post</button>
-          <button onclick="closeMarketingUpload()" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:10px 16px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
-        </div>
-      </div>
-    </div>
-
     <div id="sc-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
       <button class="sc-filter active" onclick="filterSocial('all',this)">All</button>
       <button class="sc-filter" onclick="filterSocial('LinkedIn',this)">LinkedIn</button>
@@ -5906,12 +5879,10 @@ function renderUserList(users) {
     if (u.sellsMortgages)   products.push('<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
     if (u.sellsProtection)  products.push('<span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
     var supInfo = u.supervisorEmail ? '<div style="color:#6b7c8f;font-size:11px;margin-top:2px;">Supervisor: ' + escHtml(u.supervisorEmail) + '</div>' : '';
-    var mktToggle = !isSupervisorOnly ? '<button onclick="toggleMarketingRole(\'' + escHtml(u.email) + '\',' + (u.isMarketing ? 'true' : 'false') + ')" style="background:' + (u.isMarketing ? '#fff5ee' : '#f5f7fa') + ';color:' + (u.isMarketing ? '#e8740c' : '#6b7c8f') + ';border:1.5px solid ' + (u.isMarketing ? '#f5c0a0' : '#e8ecf0') + ';padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:80px;text-align:center;">' + (u.isMarketing ? 'Mkt ✓' : 'Mkt') + '</button>' : '';
     var actionBtns = isSupervisorOnly ? '' :
       '<button onclick="impersonateUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#e8f4f8;color:#005f8a;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:110px;text-align:center;">Guardian Mode</button>' +
       '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:52px;text-align:center;">Edit</button>' +
-      '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:62px;text-align:center;">Delete</button>' +
-      mktToggle;
+      '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:62px;text-align:center;">Delete</button>';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
         '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + mktBadge + products.join('') + '</div>' +
@@ -7712,6 +7683,33 @@ function pzFmt(n) {
 }
 
 </script>
+
+<!-- Marketing upload modal — at body level to avoid stacking context issues -->
+<div id="marketing-upload-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px;width:440px;max-width:95vw;box-shadow:0 12px 40px rgba(0,0,0,.22);position:relative;max-height:90vh;overflow-y:auto;">
+    <button onclick="closeMarketingUpload()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#6b7c8f;line-height:1;">✕</button>
+    <h3 id="mku-title-heading" style="color:#003768;font-size:16px;font-weight:700;margin:0 0 20px;">Add Featured Post</h3>
+    <input type="hidden" id="mku-edit-id" value="">
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">TITLE</label>
+      <input id="mku-title" type="text" placeholder="e.g. Summer Campaign" style="width:100%;padding:9px 11px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">IMAGE</label>
+      <input id="mku-image" type="file" accept="image/*" style="width:100%;font-size:12px;font-family:inherit;">
+      <div id="mku-image-preview" style="margin-top:8px;display:none;"><img id="mku-image-img" style="max-width:100%;max-height:140px;border-radius:6px;object-fit:cover;" src=""></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">POST WORDING</label>
+      <textarea id="mku-wording" rows="5" placeholder="Enter the approved post wording here..." style="width:100%;padding:9px 11px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:sans-serif;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+    </div>
+    <div id="mku-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveFeaturedPost()" style="flex:1;background:#003768;color:#fff;border:none;padding:10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Post</button>
+      <button onclick="closeMarketingUpload()" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:10px 16px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
