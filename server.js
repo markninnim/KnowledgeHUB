@@ -2265,7 +2265,7 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
 
     let allRecords = [], offset = '';
     do {
-      const qs  = `?filterByFormula=${formula}&sort[0][field]=${CD_DATE}&sort[0][direction]=desc&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const qs  = `?filterByFormula=${formula}&sort[0][field]=${CD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
       const url = `https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}${qs}`;
       const r   = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
       const body = await r.json();
