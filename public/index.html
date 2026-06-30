@@ -4682,6 +4682,12 @@ function switchTab(tab) {
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
 }
 
+// Home page globals — must be declared before hash routing IIFE runs
+var _homeLoaded  = false;
+var _feefoAll    = [];
+var _feefoPage   = 0;
+var FEEFO_PER_PG = 5;
+
 // Hash routing — navigate on load (called directly, no event wrapper needed)
 (function() {
   var hash = window.location.hash.replace('#', '');
@@ -5755,10 +5761,6 @@ function toggleLvArchive() {
 }
 
 // ── Home page ──────────────────────────────────────────────────
-var _homeLoaded  = false;
-var _feefoAll    = [];   // all reviews cached for pagination
-var _feefoPage   = 0;
-var FEEFO_PER_PG = 5;
 
 function feefoPage(dir) {
   var total = _feefoAll.length;
