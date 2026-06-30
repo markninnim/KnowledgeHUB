@@ -116,6 +116,16 @@ function requireAdmin(req, res, next) {
   res.status(403).json({ error: 'Forbidden' });
 }
 
+// Admins + supervisors (and their Guardian Mode sessions) can manage users
+function requireAdminOrSupervisor(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const u = req.session.user;
+  const orig = req.session.originalUser;
+  const effective = orig || u; // in Guardian Mode, check original identity
+  if (effective && (effective.isAdmin || effective.isSupervisor)) return next();
+  res.status(403).json({ error: 'Forbidden' });
+}
+
 function requireMarketingOrAdmin(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
   const u = req.session.user;
@@ -338,7 +348,7 @@ app.post('/api/profile/photo', requireAuth, async (req, res) => {
 });
 
 // ── Admin: list users ─────────────────────────────────────────
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
+app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
   try {
     const users = [];
     let offset = '';
@@ -359,9 +369,14 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
 });
 
 // ── Admin: create user ────────────────────────────────────────
-app.post('/api/admin/users', requireAdmin, async (req, res) => {
+app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
   const { email, password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  // Supervisors cannot create admin users
+  const actingUser = req.session.originalUser || req.session.user;
+  if (!actingUser.isAdmin && (isAdmin === true || isAdmin === 'true')) {
+    return res.status(403).json({ error: 'Only admins can grant admin access' });
+  }
   try {
     const hash = bcrypt.hashSync(password, 10);
     const normEmail = email.trim().toLowerCase();
@@ -456,9 +471,22 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
 });
 
 // ── Admin: update user ────────────────────────────────────────
-app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
+app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
   const { id } = req.params;
   const { password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail, email } = req.body;
+  // Supervisors cannot edit admin users or grant admin access
+  const actingUser = req.session.originalUser || req.session.user;
+  if (!actingUser.isAdmin) {
+    // Fetch target to check if they are admin
+    try {
+      const targetRecord = await atFetch(`/${id}?returnFieldsByFieldId=true`);
+      const target = recordToUser(targetRecord);
+      if (target.isAdmin) return res.status(403).json({ error: 'Supervisors cannot edit admin users' });
+    } catch(e) { return res.status(500).json({ error: e.message }); }
+    if (isAdmin === true || isAdmin === 'true') {
+      return res.status(403).json({ error: 'Only admins can grant admin access' });
+    }
+  }
   try {
     const fields = {
       [F_SAL]:              salutation  || '',
@@ -495,8 +523,14 @@ app.put('/api/admin/users/:id', requireAdmin, async (req, res) => {
 });
 
 // ── Admin: delete user ────────────────────────────────────────
-app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
   try {
+    const actingUser = req.session.originalUser || req.session.user;
+    if (!actingUser.isAdmin) {
+      const targetRecord = await atFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+      const target = recordToUser(targetRecord);
+      if (target.isAdmin) return res.status(403).json({ error: 'Supervisors cannot delete admin users' });
+    }
     await atFetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ ok: true });
   } catch (err) {
@@ -505,7 +539,7 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 });
 
 // ── Admin: impersonate a user ─────────────────────────────────
-app.post('/api/admin/impersonate', requireAdmin, async (req, res) => {
+app.post('/api/admin/impersonate', requireAdminOrSupervisor, async (req, res) => {
   try {
     const { id } = req.body;
     if (!id) return res.status(400).json({ error: 'Missing user id' });
