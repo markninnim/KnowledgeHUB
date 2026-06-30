@@ -2221,6 +2221,88 @@ app.get('/api/home-data', requireAuth, async (req, res) => {
   }
 });
 
+// ── Consumer Duty ─────────────────────────────────────────────
+const CD_BASE    = 'appJEb2mGCdrEKbpY';
+const CD_TABLE   = 'tbl7G4xOwDvtuqUC1';
+const CD_BROKER  = 'fldGogTq21yQv6cvo';   // Broker Name
+const CD_NAME    = 'flde6kwikjYEnob0j';   // Consumer Name
+const CD_DATE    = 'fldilcNWKz6PHuNmX';   // Submitted At
+const CD_Q1      = 'fld3auyj1YzfuMZgN';   // Q1 Adviser Knowledge
+const CD_Q2      = 'fldgWcvsg4WjrWKIf';   // Q2 Report Accuracy
+const CD_Q3      = 'fldK4CFDTNapm37Wv';   // Q3 Report Walkthrough
+const CD_Q4      = 'fldt8ZfFPggBqoimR';   // Q4 Rate Type
+const CD_Q5      = 'fldrwFb1egdu0z0go';   // Q5 Future Review
+const CD_Q6      = 'fldGa0Rh5RfUotGUV';   // Q6 Home At Risk Warning
+const CD_Q7      = 'fldCEWMMswuYxQmCf';   // Q7 Protection Importance
+const CD_Q8      = 'fldwr5p7c802gejHi';   // Q8 Protection Status
+const CD_Q9      = 'fldGxipBKk94ffhax';   // Q9 Literature Clarity
+const CD_Q10     = 'fldAENiQSS9W5Dt8V';   // Q10 Support Required
+const CD_NPS     = 'fldvT8olEjrbOAG52';   // NPS Rating
+const CD_COMMENT = 'fldfsuOr3P3COsXUp';   // Comment
+
+function cdIsPerfect(f) {
+  // Returns array of question labels that are unclear/need attention
+  const issues = [];
+  const a = k => (f[k] || '').trim();
+  if (!a(CD_Q1).toLowerCase().startsWith('yes'))                                    issues.push('Q1 Adviser Knowledge');
+  if (a(CD_Q4).toLowerCase() === 'unsure')                                          issues.push('Q4 Rate Type');
+  if (a(CD_Q5).toLowerCase() === 'no')                                              issues.push('Q5 Future Review');
+  if (a(CD_Q6).toLowerCase() === 'no')                                              issues.push('Q6 Home At Risk Warning');
+  if (a(CD_Q7).toLowerCase() === 'no')                                              issues.push('Q7 Protection Importance');
+  if (a(CD_Q9).toLowerCase() === 'unclear')                                         issues.push('Q9 Literature Clarity');
+  if (a(CD_Q10).toLowerCase().includes('did not receive adequate'))                 issues.push('Q10 Support Required');
+  if (a(CD_Q3).toLowerCase().includes("i'd like") || a(CD_Q3).toLowerCase().includes('call me')) issues.push('Q3 Walkthrough Requested');
+  if (a(CD_Q8).toLowerCase().includes('would like to discuss'))                     issues.push('Q8 Protection Discussion');
+  return issues;
+}
+
+app.get('/api/consumer-duty', requireAuth, async (req, res) => {
+  try {
+    const user     = req.session.user;
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+    const safeName = fullName.toLowerCase().trim().replace(/"/g, '\\"');
+    const formula  = encodeURIComponent(`LOWER(TRIM({${CD_BROKER}})) = "${safeName}"`);
+
+    let allRecords = [], offset = '';
+    do {
+      const qs  = `?filterByFormula=${formula}&sort[0][field]=${CD_DATE}&sort[0][direction]=desc&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const url = `https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}${qs}`;
+      const r   = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const body = await r.json();
+      if (!r.ok) { console.error('CD error:', body); break; }
+      allRecords = allRecords.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset);
+
+    let fullCount = 0, partialCount = 0;
+    const recent = allRecords.slice(0, 10).map(rec => {
+      const f      = rec.cellValuesByFieldId || rec.fields || {};
+      const issues = cdIsPerfect(f);
+      const perfect = issues.length === 0;
+      if (perfect) fullCount++; else partialCount++;
+      // count for all records beyond the slice
+      return {
+        consumer: f[CD_NAME]    || 'Unknown',
+        date:     f[CD_DATE]    || rec.createdTime,
+        nps:      f[CD_NPS]     || null,
+        comment:  f[CD_COMMENT] || '',
+        perfect,
+        issues
+      };
+    });
+    // Count remaining records
+    allRecords.slice(10).forEach(rec => {
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      if (cdIsPerfect(f).length === 0) fullCount++; else partialCount++;
+    });
+
+    res.json({ total: allRecords.length, fullCount, partialCount, recent });
+  } catch (err) {
+    console.error('consumer-duty error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // GET /api/share/advisers — all advisers (supervisors only)
 app.get('/api/share/advisers', requireAuth, async (req, res) => {
