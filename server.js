@@ -321,7 +321,7 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   const id = req.session.user.id;
   try {
     const fields = {
-      [F_SAL]:      salutation || '',
+      [F_SAL]:      salutation || null,
       [F_FIRST]:    firstName  || '',
       [F_LAST]:     lastName   || '',
       [F_TITLE]:    jobTitle   || '',
@@ -403,7 +403,7 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     const fields = {
       [F_EMAIL]:       normEmail,
       [F_PASSWORD]:    hash,
-      [F_SAL]:         salutation  || '',
+      [F_SAL]:         salutation  || null,
       [F_FIRST]:       firstName   || '',
       [F_LAST]:        lastName    || '',
       [F_TITLE]:       jobTitle    || '',
@@ -515,7 +515,7 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
   }
   try {
     const fields = {
-      [F_SAL]:              salutation  || '',
+      [F_SAL]:              salutation  || null,
       [F_FIRST]:            firstName   || '',
       [F_LAST]:             lastName    || '',
       [F_TITLE]:            jobTitle    || '',
