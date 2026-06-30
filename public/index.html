@@ -4016,11 +4016,14 @@ function loadSocialContent() {
 
       // Approved Post Wording section
       var storageKey = 'post-wording-' + post.name;
+      var baseKey    = 'post-wording-base-' + post.name;
       var approvedCopy = copyDb[post.name] || '';
       var defaultVal   = buildDefaultCopy(post.name, approvedCopy);
       var savedVal     = localStorage.getItem(storageKey);
-      // Use saved value if user has edited it; otherwise use the approved copy + footer
-      var taValue = savedVal !== null ? savedVal : defaultVal;
+      var savedBase    = localStorage.getItem(baseKey);
+      // Only use saved value if the user actually edited it (i.e. saved base matches current default)
+      // If the default has changed (new approved copy added), discard stale saved value
+      var taValue = (savedVal !== null && savedBase === defaultVal) ? savedVal : defaultVal;
 
       var wrapDiv = document.createElement('div');
       wrapDiv.style.cssText = 'margin:12px 0 32px;width:100%;box-sizing:border-box;';
@@ -4040,15 +4043,16 @@ function loadSocialContent() {
       var ta = document.createElement('textarea');
       ta.value = taValue;
       ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:sans-serif;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
-      ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); });
+      ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); localStorage.setItem(baseKey, defaultVal); });
       ta.addEventListener('focus', function(){ ta.style.borderColor = '#003768'; });
       ta.addEventListener('blur',  function(){ ta.style.borderColor = '#e8ecf0'; });
-      (function(key, def, textarea) {
+      (function(key, bkey, def, textarea) {
         resetBtn.onclick = function() {
           textarea.value = def;
           localStorage.removeItem(key);
+          localStorage.removeItem(bkey);
         };
-      })(storageKey, defaultVal, ta);
+      })(storageKey, baseKey, defaultVal, ta);
 
       var copyBtn = document.createElement('button');
       copyBtn.textContent = '📋 Copy';
