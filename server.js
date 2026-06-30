@@ -3,6 +3,7 @@ const express  = require('express');
 const session  = require('express-session');
 const path     = require('path');
 const fs       = require('fs');
+const crypto   = require('crypto');
 const bcrypt   = require('bcryptjs');
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBezierCurve, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
@@ -58,6 +59,64 @@ let _extraProducts = {}; // { "email": { equityRelease: true, commercialMortgage
 try { _extraProducts = JSON.parse(fs.readFileSync(EXTRA_PRODUCTS_PATH, 'utf8')); } catch(_) {}
 function saveExtraProducts() { fs.writeFileSync(EXTRA_PRODUCTS_PATH, JSON.stringify(_extraProducts, null, 2)); }
 function getExtraProducts(email) { return _extraProducts[(email||'').toLowerCase()] || {}; }
+
+// ── Login attempt tracking (in-memory, resets on restart) ────────
+// { "email@x.com": { count: 3, lockedUntil: <ms timestamp> } }
+const _loginAttempts = {};
+const LOGIN_MAX      = 3;
+const LOGIN_LOCK_MS  = 15 * 60 * 1000; // 15 minutes
+
+function recordFailedLogin(email) {
+  const e = email.toLowerCase();
+  if (!_loginAttempts[e]) _loginAttempts[e] = { count: 0, lockedUntil: 0 };
+  _loginAttempts[e].count++;
+  if (_loginAttempts[e].count >= LOGIN_MAX) {
+    _loginAttempts[e].lockedUntil = Date.now() + LOGIN_LOCK_MS;
+  }
+}
+function clearLoginAttempts(email) {
+  delete _loginAttempts[email.toLowerCase()];
+}
+function getLoginLockStatus(email) {
+  const rec = _loginAttempts[email.toLowerCase()];
+  if (!rec) return { locked: false, attemptsLeft: LOGIN_MAX };
+  if (rec.lockedUntil > Date.now()) {
+    const minsLeft = Math.ceil((rec.lockedUntil - Date.now()) / 60000);
+    return { locked: true, minsLeft };
+  }
+  // Lock expired
+  if (rec.lockedUntil && rec.lockedUntil <= Date.now()) delete _loginAttempts[email.toLowerCase()];
+  const attemptsLeft = Math.max(0, LOGIN_MAX - (rec.count || 0));
+  return { locked: false, attemptsLeft };
+}
+
+// ── Password reset tokens (in-memory, 1-hour TTL) ────────────────
+// { "token": { email, expires } }
+const _resetTokens = {};
+function createResetToken(email) {
+  const token = crypto.randomBytes(32).toString('hex');
+  _resetTokens[token] = { email: email.toLowerCase(), expires: Date.now() + 3600000 };
+  return token;
+}
+function consumeResetToken(token) {
+  const rec = _resetTokens[token];
+  if (!rec) return null;
+  if (rec.expires < Date.now()) { delete _resetTokens[token]; return null; }
+  delete _resetTokens[token];
+  return rec.email;
+}
+
+// ── Asset dates manifest (persists upload dates across deploys) ──
+const ASSET_DATES_PATH = path.join(__dirname, 'asset-dates.json');
+let _assetDates = {};
+try { _assetDates = JSON.parse(fs.readFileSync(ASSET_DATES_PATH, 'utf8')); } catch(_) {}
+function getAssetDate(key) {
+  if (!_assetDates[key]) {
+    _assetDates[key] = new Date().toISOString();
+    try { fs.writeFileSync(ASSET_DATES_PATH, JSON.stringify(_assetDates, null, 2)); } catch(_) {}
+  }
+  return _assetDates[key];
+}
 
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
@@ -289,19 +348,111 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.redirect('/login?error=1');
+  const emailLower = email.trim().toLowerCase();
+
+  // Check lockout
+  const lockStatus = getLoginLockStatus(emailLower);
+  if (lockStatus.locked) return res.redirect('/login?locked=1&mins=' + lockStatus.minsLeft);
+
   try {
-    const formula = encodeURIComponent(`{Email}="${email.trim().toLowerCase()}"`);
+    const formula = encodeURIComponent(`{Email}="${emailLower}"`);
     const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
-    if (!data.records || data.records.length === 0) return res.redirect('/login?error=1');
+    if (!data.records || data.records.length === 0) {
+      recordFailedLogin(emailLower);
+      const ls = getLoginLockStatus(emailLower);
+      return ls.locked
+        ? res.redirect('/login?locked=1&mins=' + ls.minsLeft)
+        : res.redirect('/login?error=1&left=' + ls.attemptsLeft);
+    }
     const record = data.records[0];
     const hash = record.fields[F_PASSWORD];
-    if (!hash || !bcrypt.compareSync(password, hash)) return res.redirect('/login?error=1');
+    if (!hash || !bcrypt.compareSync(password, hash)) {
+      recordFailedLogin(emailLower);
+      const ls = getLoginLockStatus(emailLower);
+      return ls.locked
+        ? res.redirect('/login?locked=1&mins=' + ls.minsLeft)
+        : res.redirect('/login?error=1&left=' + ls.attemptsLeft);
+    }
+    clearLoginAttempts(emailLower);
     req.session.authenticated = true;
     req.session.user = recordToUser(record);
     res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/login?error=1');
+  }
+});
+
+// ── Forgot password ───────────────────────────────────────────────
+app.get('/forgot-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/forgot-password.html'));
+});
+
+app.post('/api/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const emailLower = email.trim().toLowerCase();
+  try {
+    const formula = encodeURIComponent(`{Email}="${emailLower}"`);
+    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+    if (!data.records || data.records.length === 0) {
+      // Don't reveal whether email exists
+      return res.json({ ok: true });
+    }
+    const record = data.records[0];
+    const user   = recordToUser(record);
+    const token  = createResetToken(emailLower);
+    const name   = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+    const resetUrl = (process.env.APP_URL || 'https://dam.simflex.ai') + '/reset-password?token=' + token;
+    const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
+    await _mailer.sendMail({
+      from: `"Finance Planning Group" <${fromEmail}>`,
+      to: emailLower,
+      subject: 'Reset your FPG Knowledge Hub password',
+      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+        <img src="https://dam.simflex.ai/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
+        <h2 style="color:#003768;margin:0 0 12px;">Password reset request</h2>
+        <p style="color:#4a5a6a;line-height:1.6;">Hi ${name},<br><br>We received a request to reset your password. Click the button below — this link is valid for <strong>1 hour</strong>.</p>
+        <a href="${resetUrl}" style="display:inline-block;margin:20px 0;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Reset Password</a>
+        <p style="color:#6b7c8f;font-size:13px;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
+        <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
+        <p style="color:#6b7c8f;font-size:12px;">Finance Planning Group · FPG Knowledge Hub</p>
+      </div>`
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Could not send reset email' });
+  }
+});
+
+// ── Reset password page ───────────────────────────────────────────
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/reset-password.html'));
+});
+
+app.post('/api/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password || password.length < 6) {
+    return res.status(400).json({ error: 'Token and password (min 6 chars) required' });
+  }
+  const email = consumeResetToken(token);
+  if (!email) return res.status(400).json({ error: 'Reset link has expired or is invalid' });
+  try {
+    const formula = encodeURIComponent(`{Email}="${email}"`);
+    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+    if (!data.records || data.records.length === 0) return res.status(404).json({ error: 'Account not found' });
+    const record = data.records[0];
+    const hash = bcrypt.hashSync(password, 10);
+    await atFetch(`/${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_PASSWORD]: hash }, returnFieldsByFieldId: true })
+    });
+    clearLoginAttempts(email);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Could not reset password' });
   }
 });
 
@@ -1491,8 +1642,7 @@ app.get('/api/social-content', requireAuth, (req, res) => {
       files: fs.readdirSync(path.join(baseDir, name))
         .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
         .map(f => {
-          const stat = fs.statSync(path.join(baseDir, name, f));
-          return { name: f, created: stat.birthtime || stat.mtime };
+          return { name: f, created: getAssetDate('social/' + name + '/' + f) };
         })
     }));
   res.json(posts);
@@ -1556,10 +1706,7 @@ app.get('/api/assets', requireAuth, (req, res) => {
     if (fs.existsSync(catPath)) {
       manifest[cat] = fs.readdirSync(catPath)
         .filter(f => !f.startsWith('.') && fs.statSync(path.join(catPath, f)).isFile())
-        .map(f => {
-          const stat = fs.statSync(path.join(catPath, f));
-          return { name: f, created: stat.birthtime || stat.mtime };
-        });
+        .map(f => ({ name: f, created: getAssetDate(cat + '/' + f) }));
     } else {
       manifest[cat] = [];
     }
@@ -1573,10 +1720,7 @@ app.get('/api/assets', requireAuth, (req, res) => {
     if (fs.existsSync(subPath)) {
       manifest.brochures[sub] = fs.readdirSync(subPath)
         .filter(f => !f.startsWith('.') && fs.statSync(path.join(subPath, f)).isFile())
-        .map(f => {
-          const stat = fs.statSync(path.join(subPath, f));
-          return { name: f, created: stat.birthtime || stat.mtime };
-        });
+        .map(f => ({ name: f, created: getAssetDate('brochures/' + sub + '/' + f) }));
     } else {
       manifest.brochures[sub] = [];
     }
