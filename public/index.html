@@ -6058,12 +6058,43 @@ function saveUser() {
     method = 'POST';
   }
 
+  var isNew = !_editingUserId;
+
   fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
     .then(function(r) { return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (!res.ok) { showFormError(res.data.error || 'Something went wrong.'); return; }
       cancelUserForm();
       loadAdminUsers();
+      // Auto-generate and download business card for new users
+      if (isNew) {
+        var cardBody = {
+          salutation: body.salutation || '',
+          firstName:  body.firstName  || '',
+          lastName:   body.lastName   || '',
+          title:      body.jobTitle   || '',
+          email:      body.email      || '',
+          phone:      body.mobile     || body.landline || '',
+          url:        body.website    || ''
+        };
+        fetch('/generate-business-card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cardBody)
+        }).then(function(r) {
+          if (!r.ok) return;
+          return r.blob();
+        }).then(function(blob) {
+          if (!blob) return;
+          var safeName = ((body.firstName || '') + '-' + (body.lastName || '')).replace(/[^a-z0-9]/gi,'-').toLowerCase();
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'FPG-Business-Card-' + safeName + '.pdf';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 1000);
+        }).catch(function(){});
+      }
     }).catch(function() { showFormError('Network error. Please try again.'); });
 }
 
