@@ -2120,6 +2120,86 @@ sys.stdout.buffer.write(buf.getvalue())
 });
 
 
+// ── Home page data ────────────────────────────────────────────
+const FEEFO_TABLE     = 'tblU58wJ0rNFPMiKp';
+const FF_ADVISER      = 'Adviser';
+const FF_REVIEW       = 'Review';
+const FF_SVC_RATING   = 'Service Rating';
+const FF_CUSTOMER     = 'Customer Name';
+
+function monthSortKey(filename) {
+  const months = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+  const m = filename.match(/^([a-z]+)-(\d{4})\.pdf$/i);
+  if (!m) return '0';
+  return `${m[2]}-${String(months[m[1].toLowerCase()] || 0).padStart(2,'0')}`;
+}
+
+app.get('/api/home-data', requireAuth, async (req, res) => {
+  try {
+    const user     = req.session.user;
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+
+    // ── Feefo stats ──────────────────────────────────────────
+    let feefo = { avg: null, count: 0, reviews: [] };
+    if (fullName) {
+      // Case-insensitive, whitespace-tolerant match on Adviser field
+      const safeName = fullName.toLowerCase().trim().replace(/"/g, '\\"');
+      const formula  = encodeURIComponent(`LOWER(TRIM({${FF_ADVISER}})) = "${safeName}"`);
+      let allRecords = [];
+      let offset = '';
+      do {
+        const qs = `?filterByFormula=${formula}&pageSize=100${offset ? '&offset=' + offset : ''}`;
+        const url = `https://api.airtable.com/v0/${AT_BASE}/${FEEFO_TABLE}${qs}`;
+        const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const body = await r.json();
+        if (!r.ok) { console.error('Feefo Airtable error:', body); break; }
+        allRecords = allRecords.concat(body.records || []);
+        offset = body.offset || '';
+      } while (offset);
+
+      const rated = allRecords.filter(r => r.fields[FF_SVC_RATING]);
+      feefo.count = allRecords.length;
+      if (rated.length) {
+        feefo.avg = (rated.reduce((s, r) => s + r.fields[FF_SVC_RATING], 0) / rated.length).toFixed(1);
+      }
+      // 3 most recent with a review text
+      feefo.reviews = allRecords
+        .filter(r => r.fields[FF_REVIEW])
+        .slice(0, 3)
+        .map(r => ({
+          customer: r.fields[FF_CUSTOMER] || 'Customer',
+          review:   r.fields[FF_REVIEW],
+          rating:   r.fields[FF_SVC_RATING] || null
+        }));
+    }
+
+    // ── Latest video ─────────────────────────────────────────
+    let latestVideo = null;
+    try {
+      const vData = await lvFetch(`?sort[0][field]=${LV_ADDED}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=1`);
+      if (vData.records && vData.records.length) {
+        latestVideo = lvRecordToVideo(vData.records[0]);
+      }
+    } catch(_) {}
+
+    // ── Latest newsletter ─────────────────────────────────────
+    let latestNewsletter = null;
+    try {
+      const nlDir = path.join(__dirname, 'public/newsletters');
+      const files = fs.readdirSync(nlDir)
+        .filter(f => f.endsWith('.pdf') && f !== 'cover.jpg')
+        .sort((a, b) => monthSortKey(b).localeCompare(monthSortKey(a)));
+      if (files.length) latestNewsletter = files[0];
+    } catch(_) {}
+
+    res.json({ feefo, latestVideo, latestNewsletter });
+  } catch (err) {
+    console.error('home-data error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // GET /api/share/advisers — all advisers (supervisors only)
 app.get('/api/share/advisers', requireAuth, async (req, res) => {
   if (!req.session.user.isSupervisor && !req.session.user.isAdmin) {

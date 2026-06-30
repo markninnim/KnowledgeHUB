@@ -5778,6 +5778,10 @@ function loadHomeData() {
     }
   }).catch(function(e) {
     console.error('home-data error', e);
+    var summaryEl = document.getElementById('home-feefo-summary');
+    var reviewsEl = document.getElementById('home-feefo-reviews');
+    if (summaryEl) summaryEl.textContent = 'Could not load reviews';
+    if (reviewsEl) reviewsEl.innerHTML = '';
   });
 }
 
