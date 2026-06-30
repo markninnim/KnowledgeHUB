@@ -1900,20 +1900,6 @@ app.post('/generate-moving-card', requireAuth, async (req, res) => {
   }
 });
 
-// ── Share Standards section ───────────────────────────────────
-const nodemailer = require('nodemailer');
-
-function makeMailTransport() {
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST || 'smtp.gmail.com',
-    port:   parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
 
 // GET /api/share/advisers — all advisers (supervisors only)
 app.get('/api/share/advisers', requireAuth, async (req, res) => {
