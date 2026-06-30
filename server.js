@@ -2281,6 +2281,7 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
       const perfect = issues.length === 0;
       if (perfect) fullCount++; else partialCount++;
       return {
+        id:       rec.id,
         consumer: f[CD_NAME]    || 'Unknown',
         date:     f[CD_DATE]    || rec.createdTime,
         nps:      f[CD_NPS]     || null,
