@@ -3265,6 +3265,12 @@ html { height: 100%; }
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
                 <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#fcb034;">Protection
               </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-equity-release" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#16a34a;">Equity Release
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
+                <input id="uf-commercial-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#7c3aed;">Commercial Mortgages
+              </label>
             </div>
           </div>
           <div style="grid-column:1/-1;padding-top:4px;border-top:1px solid #f0f2f5;margin-top:4px;">
@@ -5896,9 +5902,11 @@ function renderUserList(users) {
     var supBadge = u.isSupervisor ? '<span style="background:#2e99d5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var mktBadge = u.isMarketing ? '<span style="background:#e8740c;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
     var products = [];
-    if (u.sellsInvestments) products.push('<span style="background:#ede9fe;color:#6b21a8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
-    if (u.sellsMortgages)   products.push('<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
-    if (u.sellsProtection)  products.push('<span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
+    if (u.sellsInvestments)   products.push('<span style="background:#ede9fe;color:#6b21a8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
+    if (u.sellsMortgages)     products.push('<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
+    if (u.sellsProtection)    products.push('<span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
+    if (u.equityRelease)      products.push('<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
+    if (u.commercialMortgages)products.push('<span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Commercial Mortgages</span>');
     var supInfo = u.supervisorEmail ? '<div style="color:#6b7c8f;font-size:11px;margin-top:2px;">Supervisor: ' + escHtml(u.supervisorEmail) + '</div>' : '';
     var actionBtns = '';
     if (canManageUsers) {
@@ -5977,9 +5985,11 @@ function openUserForm(userId) {
     document.getElementById('uf-website').value        = u.website || '';
     document.getElementById('uf-admin').checked        = u.isAdmin || false;
     document.getElementById('uf-marketing').checked    = u.isMarketing || false;
-    document.getElementById('uf-investments').checked      = u.sellsInvestments || false;
-    document.getElementById('uf-mortgages').checked        = u.sellsMortgages   || false;
-    document.getElementById('uf-protection').checked       = u.sellsProtection  || false;
+    document.getElementById('uf-investments').checked          = u.sellsInvestments   || false;
+    document.getElementById('uf-mortgages').checked            = u.sellsMortgages     || false;
+    document.getElementById('uf-protection').checked           = u.sellsProtection    || false;
+    document.getElementById('uf-equity-release').checked       = u.equityRelease      || false;
+    document.getElementById('uf-commercial-mortgages').checked = u.commercialMortgages|| false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
     document.getElementById('uf-supervisoremail').value    = u.supervisorEmail  || '';
   } else {
@@ -5993,9 +6003,11 @@ function openUserForm(userId) {
     });
     document.getElementById('uf-admin').checked           = false;
     document.getElementById('uf-marketing').checked       = false;
-    document.getElementById('uf-investments').checked     = false;
-    document.getElementById('uf-mortgages').checked       = false;
-    document.getElementById('uf-protection').checked      = false;
+    document.getElementById('uf-investments').checked          = false;
+    document.getElementById('uf-mortgages').checked            = false;
+    document.getElementById('uf-protection').checked           = false;
+    document.getElementById('uf-equity-release').checked       = false;
+    document.getElementById('uf-commercial-mortgages').checked = false;
     document.getElementById('uf-issupervisor').checked    = false;
     document.getElementById('uf-supervisoremail').value   = '';
   }
@@ -6026,9 +6038,11 @@ function saveUser() {
     website:          document.getElementById('uf-website').value.trim(),
     isAdmin:          document.getElementById('uf-admin').checked,
     isMarketing:      document.getElementById('uf-marketing').checked,
-    sellsInvestments: document.getElementById('uf-investments').checked,
-    sellsMortgages:   document.getElementById('uf-mortgages').checked,
-    sellsProtection:  document.getElementById('uf-protection').checked,
+    sellsInvestments:    document.getElementById('uf-investments').checked,
+    sellsMortgages:      document.getElementById('uf-mortgages').checked,
+    sellsProtection:     document.getElementById('uf-protection').checked,
+    equityRelease:       document.getElementById('uf-equity-release').checked,
+    commercialMortgages: document.getElementById('uf-commercial-mortgages').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
     supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim()
   };

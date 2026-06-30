@@ -40,6 +40,13 @@ const MARKETING_USERS_PATH = path.join(__dirname, 'marketing-users.json');
 let _marketingUsers = new Set();
 try { _marketingUsers = new Set(JSON.parse(fs.readFileSync(MARKETING_USERS_PATH, 'utf8'))); } catch(_) {}
 
+// ── Extra products (local) — Equity Release, Commercial Mortgages ──
+const EXTRA_PRODUCTS_PATH = path.join(__dirname, 'extra-products.json');
+let _extraProducts = {}; // { "email": { equityRelease: true, commercialMortgages: false } }
+try { _extraProducts = JSON.parse(fs.readFileSync(EXTRA_PRODUCTS_PATH, 'utf8')); } catch(_) {}
+function saveExtraProducts() { fs.writeFileSync(EXTRA_PRODUCTS_PATH, JSON.stringify(_extraProducts, null, 2)); }
+function getExtraProducts(email) { return _extraProducts[(email||'').toLowerCase()] || {}; }
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];
@@ -85,7 +92,8 @@ function recordToUser(record) {
     isSupervisor:     f[F_IS_SUPERVISOR]    || false,
     supervisorEmail:  f[F_SUPERVISOR_EMAIL] || '',
     avatarUrl:        f[F_AVATAR]           || '',
-    isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase())
+    isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
+    ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
 
@@ -406,6 +414,12 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     if (mktFlag) _marketingUsers.add(normEmail);
     else _marketingUsers.delete(normEmail);
     fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
+    // Handle extra products
+    _extraProducts[normEmail] = {
+      equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
+      commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true'
+    };
+    saveExtraProducts();
     res.json(recordToUser(data.records[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -508,13 +522,18 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true })
     });
-    // Handle marketing role (keyed by email)
+    // Handle marketing role + extra products (keyed by email)
     if (email !== undefined) {
       const normEmail = email.trim().toLowerCase();
       const mktFlag = isMarketing === true || isMarketing === 'true';
       if (mktFlag) _marketingUsers.add(normEmail);
       else _marketingUsers.delete(normEmail);
       fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
+      _extraProducts[normEmail] = {
+        equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
+        commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true'
+      };
+      saveExtraProducts();
     }
     res.json(recordToUser(data));
   } catch (err) {
