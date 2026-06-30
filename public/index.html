@@ -5804,7 +5804,22 @@ function loadHomeData() {
 
     var totalMins = cpd.ytdMins || 0;
     var hrs = (totalMins / 60).toFixed(1);
-    if (subEl) subEl.textContent = new Date().getFullYear() + ' · ' + hrs + 'h logged so far';
+
+    // Work out pace vs target for the relevant types
+    var now        = new Date();
+    var startOfYear = new Date(now.getFullYear(), 0, 1);
+    var endOfYear   = new Date(now.getFullYear(), 11, 31);
+    var yearPct     = (now - startOfYear) / (endOfYear - startOfYear);
+    var combinedTarget = types.reduce(function(s, t) { return s + (targets[t.key] || 0); }, 0);
+    var combinedDone   = types.reduce(function(s, t) { return s + (byType[t.key] || 0); }, 0);
+    var expectedMins   = combinedTarget * yearPct;
+    var diffMins       = combinedDone - expectedMins;
+    var diffH          = Math.abs(diffMins / 60).toFixed(1);
+    var paceText       = diffMins >= 0
+      ? '· <span style="color:#22c55e;font-weight:600;">↑ ' + diffH + 'h ahead of target</span>'
+      : '· <span style="color:#ef4444;font-weight:600;">↓ ' + diffH + 'h behind target</span>';
+
+    if (subEl) subEl.innerHTML = now.getFullYear() + ' · ' + hrs + 'h logged ' + paceText;
 
     barsEl.innerHTML = types.map(function(t) {
       var done    = byType[t.key] || 0;
