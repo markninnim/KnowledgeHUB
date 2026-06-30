@@ -3945,12 +3945,44 @@ function filterSocial(type, btn) {
     grid.style.display = anyVisible ? '' : 'none';
   });
 }
+function buildBrokerFooter() {
+  var u = _currentUser || {};
+  var name  = [u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
+  var mobile = u.mobile || '';
+  var email  = u.email  || '';
+  var lines = [];
+  if (name)   lines.push(name);
+  if (mobile) lines.push(mobile);
+  if (email)  lines.push(email);
+  lines.push('');
+  lines.push('Your home may be repossessed if you do not keep up repayments on your mortgage.');
+  lines.push('Finance Planning Group Ltd is an Appointed Representative of Finance Planning Group, which is authorised and regulated by the Financial Conduct Authority.');
+  return lines.join('\n');
+}
+
+function buildDefaultCopy(postName, approvedCopy) {
+  var footer = buildBrokerFooter();
+  if (approvedCopy) {
+    return approvedCopy + '\n\n' + footer;
+  }
+  return footer;
+}
+
+var _socialCopyDb = {};
+
 function loadSocialContent() {
-  fetch('/api/social-content').then(function(r) { return r.json(); }).then(function(posts) {
+  Promise.all([
+    fetch('/api/social-content').then(function(r){ return r.json(); }),
+    fetch('/social-copy.json').then(function(r){ return r.json(); }).catch(function(){ return {}; })
+  ]).then(function(results) {
+    var posts   = results[0];
+    var copyDb  = results[1];
+    _socialCopyDb = copyDb;
+
     var container = document.getElementById('social-content-body');
     container.innerHTML = '';
     if (!posts.length) {
-      container.innerHTML = '<p style="color:#6b7c8f;">No posts yet -drop folders into public/assets/social-content/</p>';
+      container.innerHTML = '<p style="color:#6b7c8f;">No posts yet — drop folders into public/assets/social-content/</p>';
       return;
     }
     var badge = document.getElementById('social-count-badge');
@@ -3964,6 +3996,7 @@ function loadSocialContent() {
       msg.style.display = 'block';
     }
     var sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
     posts.forEach(function(post) {
       var title = post.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
       var h3 = document.createElement('h3');
@@ -3981,25 +4014,60 @@ function loadSocialContent() {
       post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file)); });
       container.appendChild(grid);
 
+      // Approved Post Wording section
       var storageKey = 'post-wording-' + post.name;
+      var approvedCopy = copyDb[post.name] || '';
+      var defaultVal   = buildDefaultCopy(post.name, approvedCopy);
+      var savedVal     = localStorage.getItem(storageKey);
+      // Use saved value if user has edited it; otherwise use the approved copy + footer
+      var taValue = savedVal !== null ? savedVal : defaultVal;
+
       var wrapDiv = document.createElement('div');
       wrapDiv.style.cssText = 'margin:12px 0 32px;width:100%;box-sizing:border-box;';
+
+      // Header row: label + Reset button
+      var headerRow = document.createElement('div');
+      headerRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;';
       var label = document.createElement('div');
       label.textContent = 'Approved Post Wording';
-      label.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;';
+      label.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;';
+      var resetBtn = document.createElement('button');
+      resetBtn.textContent = 'Reset to approved';
+      resetBtn.style.cssText = 'background:none;border:none;font-size:11px;color:#2e99d5;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;';
+      headerRow.appendChild(label);
+      headerRow.appendChild(resetBtn);
+
       var ta = document.createElement('textarea');
-      ta.placeholder = 'Add post copy, captions or notes here…';
-      ta.value = localStorage.getItem(storageKey) || '';
-      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:80px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:sans-serif;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
+      ta.value = taValue;
+      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:sans-serif;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
       ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); });
       ta.addEventListener('focus', function(){ ta.style.borderColor = '#003768'; });
       ta.addEventListener('blur',  function(){ ta.style.borderColor = '#e8ecf0'; });
+      (function(key, def, textarea) {
+        resetBtn.onclick = function() {
+          textarea.value = def;
+          localStorage.removeItem(key);
+        };
+      })(storageKey, defaultVal, ta);
+
+      var copyBtn = document.createElement('button');
+      copyBtn.textContent = '📋 Copy';
+      copyBtn.style.cssText = 'margin-top:10px;margin-right:8px;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;';
+      (function(t, btn){ copyBtn.onclick = function(){
+        navigator.clipboard.writeText(t.value).then(function(){
+          btn.textContent = '✓ Copied!'; btn.style.color = '#2e7d32';
+          setTimeout(function(){ btn.textContent = '📋 Copy'; btn.style.color = '#003768'; }, 2000);
+        });
+      }; })(ta, copyBtn);
+
       var createBtn = document.createElement('button');
       createBtn.textContent = 'Create Post »';
-      createBtn.style.cssText = 'margin-top:10px;background:#003768;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;';
+      createBtn.style.cssText = 'margin-top:10px;background:#003768;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
       (function(pn, t){ createBtn.onclick = function(){ openCp(pn, t.value); }; })(post.name, ta);
-      wrapDiv.appendChild(label);
+
+      wrapDiv.appendChild(headerRow);
       wrapDiv.appendChild(ta);
+      wrapDiv.appendChild(copyBtn);
       wrapDiv.appendChild(createBtn);
       container.appendChild(wrapDiv);
     });
