@@ -4070,9 +4070,11 @@ function loadSocialContent() {
       ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); localStorage.setItem(baseKey, defaultVal); });
       ta.addEventListener('focus', function(){ ta.style.borderColor = '#003768'; });
       ta.addEventListener('blur',  function(){ ta.style.borderColor = '#e8ecf0'; });
+      var _btnStyle = 'margin-top:10px;margin-right:8px;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-width:90px;';
+
       var copyBtn = document.createElement('button');
       copyBtn.textContent = 'Copy';
-      copyBtn.style.cssText = 'margin-top:10px;margin-right:8px;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;';
+      copyBtn.style.cssText = _btnStyle;
       (function(t, btn){ copyBtn.onclick = function(){
         navigator.clipboard.writeText(t.value).then(function(){
           btn.textContent = '✓ Copied!'; btn.style.color = '#2e7d32';
@@ -4081,13 +4083,13 @@ function loadSocialContent() {
       }; })(ta, copyBtn);
 
       var createBtn = document.createElement('button');
-      createBtn.textContent = 'Create Post »';
-      createBtn.style.cssText = 'margin-top:10px;background:#003768;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
+      createBtn.textContent = 'Create Post';
+      createBtn.style.cssText = _btnStyle;
       (function(pn, t){ createBtn.onclick = function(){ openCp(pn, t.value); }; })(post.name, ta);
 
       var shareBtn = document.createElement('button');
-      shareBtn.textContent = '✉ Share';
-      shareBtn.style.cssText = 'margin-top:10px;margin-left:8px;background:#f0f7ff;color:#003768;border:1.5px solid #c3daf5;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;';
+      shareBtn.textContent = 'Share';
+      shareBtn.style.cssText = _btnStyle;
       (function(pn, t, g){ shareBtn.onclick = function(){ openShareModal(pn, t.value, g); }; })(post.name, ta, grid);
 
       wrapDiv.appendChild(headerRow);
