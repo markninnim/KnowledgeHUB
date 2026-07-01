@@ -2317,6 +2317,7 @@ const ACRE_LEADS_DATE  = 'fldrzUfjSTvxd1cLT';   // Date (dateTime)
 const ACRE_SALES_TBL   = 'tbl52e6VsmaJny9f3';
 const ACRE_SALES_DATE  = 'fldHbxQKe9DMItj7a';   // Date (date)
 const ACRE_SALES_TOT   = 'fld9KJ7Wz9dVl9kqi';   // Total (formula)
+const ACRE_BROKER_FEE  = 'fldideRhwhLvMyrlX';   // Broker fee (currency)
 
 async function acreFetchAll(table, formula, fields) {
   let records = [], offset = '';
@@ -2362,12 +2363,12 @@ app.get('/api/acre-stats', requireAuth, async (req, res) => {
     const [leadsMonth, leadsYear, sales] = await Promise.all([
       acreFetchAll(ACRE_LEADS_TBL, fLeadMonth, [ACRE_LEADS_DATE]),
       acreFetchAll(ACRE_LEADS_TBL, fLeadYear,  [ACRE_LEADS_DATE]),
-      acreFetchAll(ACRE_SALES_TBL, fSaleYear,  [ACRE_SALES_DATE, ACRE_SALES_TOT])
+      acreFetchAll(ACRE_SALES_TBL, fSaleYear,  [ACRE_SALES_DATE, ACRE_BROKER_FEE])
     ]);
 
     const salesValue = sales.reduce((sum, rec) => {
-      const f = rec.fields || {};
-      return sum + (parseFloat(f[ACRE_SALES_TOT] || f.Total || 0) || 0);
+      const f = rec.fields || rec.cellValuesByFieldId || {};
+      return sum + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
     }, 0);
 
     res.json({
