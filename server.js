@@ -2469,8 +2469,7 @@ const NEWS_ATTACH     = 'fld8CRM6Fv3syLSX2'; // Attachments
 
 app.get('/api/news-bulletins', requireAuth, async (req, res) => {
   try {
-    const formula = encodeURIComponent(`{Status}="Published"`);
-    const url = `https://api.airtable.com/v0/${AT_BASE}/${NEWS_TBL}?filterByFormula=${formula}&fields[]=Name&fields[]=Notes&fields[]=Attachments&pageSize=20`;
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${NEWS_TBL}?fields[]=Name&fields[]=Notes&fields[]=Attachments&pageSize=20`;
     const r   = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
     const body = await r.json();
     if (!r.ok) throw new Error(JSON.stringify(body));
