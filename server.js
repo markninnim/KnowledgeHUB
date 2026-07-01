@@ -2360,8 +2360,8 @@ app.get('/api/acre-stats', requireAuth, async (req, res) => {
       : `FIND(LOWER("${safeName}"),LOWER(TRIM({Referred by name})))>0`;
     const fSaleYear = encodeURIComponent(`AND(YEAR({Date})=${year},${saleMatch})`);
 
-    // All sales this year (for rank calculation)
-    const fAllSales = encodeURIComponent(`YEAR({Date})=${year}`);
+    // All FPG sales this year (for rank — FPG brokers only)
+    const fAllSales = encodeURIComponent(`AND(YEAR({Date})=${year},FIND("@financeplanning.co.uk",LOWER({Broker Email}))>0)`);
 
     const [leadsMonth, leadsYear, sales, allSales] = await Promise.all([
       acreFetchAll(ACRE_LEADS_TBL, fLeadMonth, [ACRE_LEADS_DATE]),
