@@ -2360,10 +2360,14 @@ app.get('/api/acre-stats', requireAuth, async (req, res) => {
       : `FIND(LOWER("${safeName}"),LOWER(TRIM({Referred by name})))>0`;
     const fSaleYear = encodeURIComponent(`AND(YEAR({Date})=${year},${saleMatch})`);
 
-    const [leadsMonth, leadsYear, sales] = await Promise.all([
+    // All sales this year (for rank calculation)
+    const fAllSales = encodeURIComponent(`YEAR({Date})=${year}`);
+
+    const [leadsMonth, leadsYear, sales, allSales] = await Promise.all([
       acreFetchAll(ACRE_LEADS_TBL, fLeadMonth, [ACRE_LEADS_DATE]),
       acreFetchAll(ACRE_LEADS_TBL, fLeadYear,  [ACRE_LEADS_DATE]),
-      acreFetchAll(ACRE_SALES_TBL, fSaleYear,  [ACRE_SALES_DATE, ACRE_BROKER_FEE])
+      acreFetchAll(ACRE_SALES_TBL, fSaleYear,  [ACRE_SALES_DATE, ACRE_BROKER_FEE]),
+      acreFetchAll(ACRE_SALES_TBL, fAllSales,  [ACRE_SALES_DATE, ACRE_BROKER_FEE, ACRE_SALES_NAME])
     ]);
 
     const salesValue = sales.reduce((sum, rec) => {
@@ -2371,11 +2375,27 @@ app.get('/api/acre-stats', requireAuth, async (req, res) => {
       return sum + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
     }, 0);
 
+    // Rank: group all sales by broker name, sum fees, sort descending
+    const brokerFees = {};
+    allSales.forEach(rec => {
+      const f    = rec.cellValuesByFieldId || rec.fields || {};
+      const name = (f[ACRE_SALES_NAME] || '').trim().toLowerCase();
+      if (!name) return;
+      brokerFees[name] = (brokerFees[name] || 0) + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
+    });
+    const sorted       = Object.values(brokerFees).sort((a, b) => b - a);
+    const userFeeKey   = safeName;
+    const userFeeTotal = brokerFees[userFeeKey] || 0;
+    const rank         = sorted.findIndex(v => v <= userFeeTotal) + 1;
+    const totalBrokers = Object.keys(brokerFees).length;
+
     res.json({
       leadsThisMonth: leadsMonth.length,
       leadsThisYear:  leadsYear.length,
       salesThisYear:  sales.length,
-      salesValue:     salesValue
+      salesValue:     salesValue,
+      rank:           rank || null,
+      totalBrokers:   totalBrokers
     });
   } catch (err) {
     console.error('acre-stats error:', err);
