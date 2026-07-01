@@ -2398,28 +2398,33 @@ app.get('/api/acre-stats', requireAuth, async (req, res) => {
       return sum + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
     }, 0);
 
-    // Rank: group all sales by broker name, only include known advisers
-    const brokerFees = {};
-    // Seed every adviser with 0 so those with no sales still count in pool
-    adviserNames.forEach(n => { brokerFees[n] = 0; });
+    // Rank: group all YTD sales by broker name, only include known advisers
+    const brokerFees  = {};
+    const brokerCount = {};
+    adviserNames.forEach(n => { brokerFees[n] = 0; brokerCount[n] = 0; });
     allSales.forEach(rec => {
       const f    = rec.cellValuesByFieldId || rec.fields || {};
       const name = (f[ACRE_SALES_NAME] || '').trim().toLowerCase();
       if (!adviserNames.has(name)) return;
-      brokerFees[name] = (brokerFees[name] || 0) + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
+      brokerFees[name]  = (brokerFees[name]  || 0) + (parseFloat(f[ACRE_BROKER_FEE] || 0) || 0);
+      brokerCount[name] = (brokerCount[name] || 0) + 1;
     });
-    const sorted       = Object.values(brokerFees).sort((a, b) => b - a);
-    const userFeeTotal = brokerFees[safeName] || 0;
-    const rank         = sorted.findIndex(v => v <= userFeeTotal) + 1;
-    const totalBrokers = adviserNames.size;
+
+    const sortedFees   = Object.values(brokerFees).sort((a, b) => b - a);
+    const sortedCounts = Object.values(brokerCount).sort((a, b) => b - a);
+    const userFee      = brokerFees[safeName]  || 0;
+    const userCount    = brokerCount[safeName] || 0;
+    const commRank     = sortedFees.findIndex(v => v <= userFee)     + 1;
+    const salesRank    = sortedCounts.findIndex(v => v <= userCount) + 1;
 
     res.json({
       leadsThisMonth: leadsMonth.length,
       leadsThisYear:  leadsYear.length,
-      salesThisYear:  salesAllTime.length,
+      salesAllTime:   salesAllTime.length,
       salesValue:     salesValue,
-      rank:           rank || null,
-      totalBrokers:   totalBrokers
+      commRank:       commRank  || null,
+      salesRank:      salesRank || null,
+      totalBrokers:   adviserNames.size
     });
   } catch (err) {
     console.error('acre-stats error:', err);
