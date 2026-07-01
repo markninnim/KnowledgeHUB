@@ -2469,7 +2469,7 @@ const NEWS_ATTACH     = 'fld8CRM6Fv3syLSX2'; // Attachments
 
 app.get('/api/news-bulletins', requireAuth, async (req, res) => {
   try {
-    const url = `https://api.airtable.com/v0/${AT_BASE}/${NEWS_TBL}?fields[]=Name&fields[]=Notes&fields[]=Attachments&pageSize=20`;
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${NEWS_TBL}?fields[]=Name&fields[]=Notes&fields[]=Status&pageSize=20`;
     const r   = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
     const body = await r.json();
     if (!r.ok) throw new Error(JSON.stringify(body));
@@ -2477,12 +2477,10 @@ app.get('/api/news-bulletins', requireAuth, async (req, res) => {
       .filter(rec => rec.fields && rec.fields['Name'])
       .map(rec => {
         const f = rec.fields || {};
-        const attach = (f['Attachments'] || [])[0];
         return {
           id:        rec.id,
           title:     f['Name']  || '',
           body:      f['Notes'] || '',
-          imageUrl:  attach ? (attach.thumbnails && attach.thumbnails.large ? attach.thumbnails.large.url : attach.url) : null,
           createdAt: rec.createdTime
         };
       });
