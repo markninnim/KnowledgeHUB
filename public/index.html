@@ -316,7 +316,7 @@ html { height: 100%; }
       </div>
 
       <!-- Home grid (3 columns) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:stretch;">
 
         <!-- Cols 1-2: News Bulletins + Video/Newsletter stacked -->
         <div style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;">
@@ -372,7 +372,7 @@ html { height: 100%; }
         </div><!-- /cols 1-2 stack -->
 
         <!-- Col 3: Surveying + CPD stacked -->
-        <div style="display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;flex-direction:column;gap:20px;height:100%;">
 
           <div id="home-acre-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -414,7 +414,7 @@ html { height: 100%; }
           </div>
 
           <!-- CPD Summary — directly below Surveying -->
-          <div id="home-cpd-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;display:none;">
+          <div id="home-cpd-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;display:none;flex:1;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;background:#003768;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -5966,7 +5966,7 @@ function loadHomeData() {
       ? '· <span style="color:#22c55e;font-weight:600;">↑ ' + fmtCpdTime(Math.abs(diffMins)) + ' ahead of target</span>'
       : '· <span style="color:#ef4444;font-weight:600;">↓ ' + fmtCpdTime(Math.abs(diffMins)) + ' behind target</span>';
 
-    if (subEl) subEl.innerHTML = now.getFullYear() + ' · ' + fmtCpdTime(totalMins) + ' logged ' + paceText;
+    if (subEl) subEl.innerHTML = now.getFullYear() + ' · ' + fmtCpdTime(totalMins) + ' logged';
 
     barsEl.innerHTML = types.map(function(t) {
       var done    = byType[t.key] || 0;
@@ -5983,7 +5983,8 @@ function loadHomeData() {
         + '<div style="height:8px;background:#f0f4f8;border-radius:4px;overflow:hidden;">'
         + '<div style="width:' + pct + '%;height:100%;background:' + t.color + ';border-radius:4px;transition:width .4s;"></div>'
         + '</div></div>';
-    }).join('');
+    }).join('')
+    + '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f4f8;font-size:12px;">' + paceText + '</div>';
 
     card.style.display = types.length ? '' : 'none';
 
