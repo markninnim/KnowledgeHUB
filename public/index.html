@@ -6101,7 +6101,7 @@ function loadHomeData() {
     if (card) card.style.display = 'none';
   });
 
-  function loadFeefoFiltered() {
+  window.loadFeefoFiltered = function loadFeefoFiltered() {
     var from = (document.getElementById('feefo-date-from') || {}).value || '';
     var to   = (document.getElementById('feefo-date-to')   || {}).value || '';
     var qs   = (from ? '?dateFrom=' + from : '') + (to ? (from ? '&' : '?') + 'dateTo=' + to : '');
@@ -6157,11 +6157,11 @@ function loadHomeData() {
     }).catch(function() { if (summaryEl) summaryEl.textContent = 'Could not load reviews'; });
   }
 
-  function feefoDateClear() {
+  window.feefoDateClear = function feefoDateClear() {
     var f = document.getElementById('feefo-date-from'), t = document.getElementById('feefo-date-to');
     if (f) f.value = ''; if (t) t.value = '';
-    loadFeefoFiltered();
-  }
+    window.loadFeefoFiltered();
+  };
 
   fetch('/api/home-data').then(r => r.json()).then(function(data) {
     // ── Feefo via new filtered endpoint (default 2026) ──────
@@ -6169,7 +6169,7 @@ function loadHomeData() {
     var dt = document.getElementById('feefo-date-to');
     if (df && !df.value) df.value = '2026-01-01';
     if (dt && !dt.value) dt.value = '2026-12-31';
-    loadFeefoFiltered();
+    window.loadFeefoFiltered();
 
     // ── Latest video ────────────────────────────────────────
     var videoCard = document.getElementById('home-video-card');
