@@ -2184,10 +2184,13 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       const adv = (r.fields['Adviser'] || '').trim();
       if (adv) counts[adv] = (counts[adv] || 0) + 1;
     });
-    const leaderboard = Object.entries(counts)
+    const allRanked = Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
       .map(([name, count], i) => ({ rank: i + 1, name, count }));
+    const leaderboard = allRanked.slice(0, 30);
+    // Always include current user even if outside top 30
+    const myLbEntry = allRanked.find(e => e.name.toLowerCase().trim() === safeName);
+    if (myLbEntry && myLbEntry.rank > 30) leaderboard.push(myLbEntry);
 
     // Leaderboard: average score per adviser
     const totals = {}, ratedCounts = {};
