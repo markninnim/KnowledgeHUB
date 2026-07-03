@@ -5,7 +5,6 @@ const path     = require('path');
 const fs       = require('fs');
 const crypto   = require('crypto');
 const bcrypt   = require('bcryptjs');
-let XLSX; try { XLSX = require('xlsx'); } catch(_) { XLSX = null; }
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBezierCurve, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const QRCode  = require('qrcode');
@@ -3055,115 +3054,63 @@ app.post('/api/admin/features', requireAdmin, (req, res) => {
   }
 });
 
-// ── Pay: parse a single xlsx file ─────────────────────────────
-function parsePayXlsx(filePath) {
-  if (!XLSX) return { error: 'xlsx parser not available' };
-  let wb;
-  try {
-    wb = XLSX.readFile(filePath, { cellDates: true, cellNF: false });
-  } catch (e) {
-    return { error: e.message };
-  }
-  const ws   = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-
-  // Row 0 = [brokerName, statementDate]
-  // Row 1 = headers
-  // Rows 2+ = data
-  const brokerCell   = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
-  const stmtDateRaw  = rows[0] && rows[0][1] ? rows[0][1] : null;
-  const statementDate = stmtDateRaw instanceof Date ? stmtDateRaw.toISOString().slice(0, 10)
-                      : stmtDateRaw ? String(stmtDateRaw).slice(0, 10) : null;
-  const headers = (rows[1] || []).map(h => String(h || '').trim());
-
-  const entries = [];
-  let total = 0;
-  for (let i = 2; i < rows.length; i++) {
-    const r   = rows[i];
-    if (!r || r.every(c => c == null)) continue;
-    const row = {};
-    headers.forEach((h, j) => { row[h] = r[j] != null ? r[j] : null; });
-    // Extract key columns
-    const amt = typeof row['Commission-Amt'] === 'number' ? row['Commission-Amt'] : parseFloat(row['Commission-Amt']) || 0;
-    if (isNaN(amt) || !row['Policy No']) continue;
-    const sdate = row['SDate'] instanceof Date ? row['SDate'].toISOString().slice(0,10)
-                : row['SDate'] ? String(row['SDate']).slice(0,10) : null;
-    const txdate = row['Transaction Date'] instanceof Date ? row['Transaction Date'].toISOString().slice(0,10)
-                 : row['Transaction Date'] ? String(row['Transaction Date']).slice(0,10) : null;
-    const subdate = row['Submission Date'] instanceof Date ? row['Submission Date'].toISOString().slice(0,10)
-                  : row['Submission Date'] ? String(row['Submission Date']).slice(0,10) : null;
-    entries.push({
-      sdate,
-      superCrNo:       String(row['Super CR No'] || '').trim(),
-      agentNo:         String(row['Agent No']    || '').trim(),
-      policyNo:        String(row['Policy No']   || '').trim(),
-      submissionDate:  subdate,
-      transactionDate: txdate,
-      productCode:     String(row['Product Code']    || '').trim(),
-      clientInit:      String(row['Client Init']     || '').trim(),
-      clientSurname:   String(row['Client Last Name']|| '').trim(),
-      amount:          parseFloat(amt.toFixed(4)),
-      reason:          String(row['Create-Reason']   || '').trim()
-    });
-    total += amt;
-  }
-
-  // Summary by product
-  const byProduct = {};
-  entries.forEach(e => {
-    if (!byProduct[e.productCode]) byProduct[e.productCode] = 0;
-    byProduct[e.productCode] += e.amount;
-  });
-  Object.keys(byProduct).forEach(k => { byProduct[k] = parseFloat(byProduct[k].toFixed(4)); });
-
-  return { brokerCell, statementDate, entries, total: parseFloat(total.toFixed(4)), byProduct };
-}
-
-// ── Pay: get statements for logged-in user ─────────────────────
-app.get('/api/pay', requireAuth, (req, res) => {
+// ── Pay: list matching statement files for logged-in user ──────
+// Returns filenames only — the client fetches and parses each file
+// using the XLSX.js library already loaded on the page.
+app.get('/api/pay/list', requireAuth, (req, res) => {
   const user     = req.session.user;
   const lastName = (user.lastName || '').toUpperCase().trim();
-  if (!lastName) return res.json({ statements: [] });
+  if (!lastName) return res.json({ files: [] });
 
   const payDir = path.join(__dirname, 'public', 'pay');
-  let files;
-  try { files = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
-  catch(_) { return res.json({ statements: [] }); }
+  let all;
+  try { all = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
+  catch(_) { return res.json({ files: [] }); }
 
-  // Match files containing the broker's last name
-  const matched = files.filter(f => f.toUpperCase().includes(lastName));
-  const statements = matched.map(fname => {
-    const fpath = path.join(payDir, fname);
-    const parsed = parsePayXlsx(fpath);
-    return { filename: fname, ...parsed };
-  });
-
-  // Sort by statementDate desc (most recent first)
-  statements.sort((a, b) => (b.statementDate || '').localeCompare(a.statementDate || ''));
-  res.json({ lastName, statements });
+  const matched = all.filter(f => f.toUpperCase().includes(lastName));
+  // Sort newest first by filename (files named "M NINNIM - MAY 26.xlsx" etc.)
+  matched.sort((a, b) => b.localeCompare(a));
+  res.json({ lastName, files: matched });
 });
 
-// ── Pay: supervisor can request any broker's pay ───────────────
-app.get('/api/pay/broker', requireAuth, (req, res) => {
+// ── Pay: supervisor list — any broker by lastName query ─────────
+app.get('/api/pay/broker/list', requireAuth, (req, res) => {
   const caller = req.session.user;
   if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
   const brokerLastName = (req.query.lastName || '').toUpperCase().trim();
-  if (!brokerLastName) return res.json({ statements: [] });
+  if (!brokerLastName) return res.json({ files: [] });
 
   const payDir = path.join(__dirname, 'public', 'pay');
-  let files;
-  try { files = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
-  catch(_) { return res.json({ statements: [] }); }
+  let all;
+  try { all = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
+  catch(_) { return res.json({ files: [] }); }
 
-  const matched = files.filter(f => f.toUpperCase().includes(brokerLastName));
-  const statements = matched.map(fname => {
-    const fpath = path.join(payDir, fname);
-    const parsed = parsePayXlsx(fpath);
-    return { filename: fname, ...parsed };
-  });
-  statements.sort((a, b) => (b.statementDate || '').localeCompare(a.statementDate || ''));
-  res.json({ lastName: brokerLastName, statements });
+  const matched = all.filter(f => f.toUpperCase().includes(brokerLastName));
+  matched.sort((a, b) => b.localeCompare(a));
+  res.json({ lastName: brokerLastName, files: matched });
+});
+
+// ── Pay: auth-gated file download ──────────────────────────────
+// Serves the raw xlsx to the authenticated browser for client-side parsing
+app.get('/api/pay/file/:filename', requireAuth, (req, res) => {
+  const caller   = req.session.user;
+  const filename = req.params.filename;
+
+  // Security: only allow .xlsx, no path traversal
+  if (!/^[^/\\]+\.xlsx$/i.test(filename)) return res.status(400).json({ error: 'Invalid filename' });
+
+  const filePath = path.join(__dirname, 'public', 'pay', filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+
+  // Advisers can only download files matching their own last name
+  const lastName = (caller.lastName || '').toUpperCase().trim();
+  const allowed  = caller.isSupervisor || caller.isAdmin || (lastName && filename.toUpperCase().includes(lastName));
+  if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  fs.createReadStream(filePath).pipe(res);
 });
 
 // ── Start ─────────────────────────────────────────────────────

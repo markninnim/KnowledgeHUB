@@ -17,8 +17,7 @@
     "pdf-lib": "^1.17.1",
     "bcryptjs": "^2.4.3",
     "qrcode": "^1.5.4",
-    "nodemailer": "^6.9.14",
-    "xlsx": "^0.18.5"
+    "nodemailer": "^6.9.14"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

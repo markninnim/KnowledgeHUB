@@ -7160,30 +7160,49 @@ function openBrokerProfile(email, name) {
         bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">Loading…</div>';
         var bpLastName = (u.lastName || '').toUpperCase().trim() || (name || '').split(' ').pop().toUpperCase().trim();
         if (bpLastName) {
-          fetch('/api/pay/broker?lastName=' + encodeURIComponent(bpLastName))
+          fetch('/api/pay/broker/list?lastName=' + encodeURIComponent(bpLastName))
             .then(function(r){ return r.json(); })
             .then(function(pd) {
-              var stmts = pd.statements || [];
-              var validStmts = stmts.filter(function(s){ return !s.error; });
-              if (validStmts.length === 0) {
+              var files = pd.files || [];
+              if (files.length === 0) {
                 bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No commission files found</div>';
                 return;
               }
+              return Promise.all(files.map(function(fname) {
+                return fetch('/api/pay/file/' + encodeURIComponent(fname))
+                  .then(function(r){ return r.arrayBuffer(); })
+                  .then(function(buf) {
+                    try {
+                      var p = payParseXlsxBuffer(new Uint8Array(buf));
+                      p.filename = fname;
+                      return p;
+                    } catch(e) { return { filename: fname, error: e.message }; }
+                  })
+                  .catch(function(e){ return { filename: fname, error: e.message }; });
+              }));
+            })
+            .then(function(stmts) {
+              if (!stmts) return;
+              var valid = stmts.filter(function(s){ return !s.error; });
+              if (valid.length === 0) {
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No readable commission files</div>';
+                return;
+              }
               var html = '';
-              validStmts.forEach(function(s) {
-                var dateLabel = s.statementDate ? new Date(s.statementDate + 'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : s.filename;
+              valid.forEach(function(s) {
+                var dateLabel = s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : s.filename;
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">';
-                html += '<span style="font-size:12px;color:#3a4f63;">' + escHtml(dateLabel) + '</span>';
-                html += '<span style="font-size:13px;font-weight:700;color:#003768;">£' + (s.total||0).toFixed(2) + '</span>';
+                html += '<span style="font-size:12px;color:#3a4f63;">'+escHtml(dateLabel)+'</span>';
+                html += '<span style="font-size:13px;font-weight:700;color:#003768;">£'+(s.total||0).toFixed(2)+'</span>';
                 html += '</div>';
               });
-              var grandTotal = validStmts.reduce(function(sum,s){ return sum + (s.total||0); },0);
+              var grand = valid.reduce(function(s,x){ return s+(x.total||0); }, 0);
               html += '<div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1.5px solid #e8ecf0;">';
               html += '<span style="font-size:11px;color:#6b7c8f;font-weight:600;">TOTAL TRAIL</span>';
-              html += '<span style="font-size:14px;font-weight:800;color:#003768;">£' + grandTotal.toFixed(2) + '</span>';
+              html += '<span style="font-size:14px;font-weight:800;color:#003768;">£'+grand.toFixed(2)+'</span>';
               html += '</div>';
-              if (validStmts.length < stmts.length) {
-                html += '<div style="font-size:10px;color:#fcb034;margin-top:8px;">' + (stmts.length - validStmts.length) + ' file(s) could not be read</div>';
+              if (valid.length < stmts.length) {
+                html += '<div style="font-size:10px;color:#fcb034;margin-top:8px;">'+(stmts.length-valid.length)+' file(s) could not be read</div>';
               }
               bpPayEl.innerHTML = html;
             })
@@ -9332,6 +9351,61 @@ function payProductBadge(code) {
   return '<span style="display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+c.bg+';color:'+c.color+'">'+escHtml(code)+'</span>';
 }
 
+// Parse a raw ArrayBuffer of an xlsx file using the CDN XLSX.js already on the page
+function payParseXlsxBuffer(buf) {
+  var wb = XLSX.read(buf, { type: 'array', cellDates: true });
+  var ws = wb.Sheets[wb.SheetNames[0]];
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+  // Row 0 = [brokerName, statementDate], Row 1 = headers, Rows 2+ = data
+  var brokerCell     = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
+  var stmtDateRaw    = rows[0] && rows[0][1] ? rows[0][1] : null;
+  var statementDate  = null;
+  if (stmtDateRaw instanceof Date) {
+    statementDate = stmtDateRaw.toISOString().slice(0, 10);
+  } else if (stmtDateRaw) {
+    statementDate = String(stmtDateRaw).slice(0, 10);
+  }
+  var headers = (rows[1] || []).map(function(h){ return String(h || '').trim(); });
+
+  var entries = [], total = 0;
+  for (var i = 2; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r || r.every(function(c){ return c == null; })) continue;
+    var row = {};
+    headers.forEach(function(h, j){ row[h] = r[j] != null ? r[j] : null; });
+    var amt = typeof row['Commission-Amt'] === 'number' ? row['Commission-Amt'] : parseFloat(row['Commission-Amt']) || 0;
+    if (isNaN(amt) || !row['Policy No']) continue;
+    function toDateStr(v) {
+      if (v instanceof Date) return v.toISOString().slice(0,10);
+      return v ? String(v).slice(0,10) : null;
+    }
+    entries.push({
+      sdate:           toDateStr(row['SDate']),
+      superCrNo:       String(row['Super CR No']     || '').trim(),
+      agentNo:         String(row['Agent No']        || '').trim(),
+      policyNo:        String(row['Policy No']       || '').trim(),
+      submissionDate:  toDateStr(row['Submission Date']),
+      transactionDate: toDateStr(row['Transaction Date']),
+      productCode:     String(row['Product Code']    || '').trim(),
+      clientInit:      String(row['Client Init']     || '').trim(),
+      clientSurname:   String(row['Client Last Name']|| '').trim(),
+      amount:          parseFloat(amt.toFixed(4)),
+      reason:          String(row['Create-Reason']   || '').trim()
+    });
+    total += amt;
+  }
+
+  var byProduct = {};
+  entries.forEach(function(e) {
+    if (!byProduct[e.productCode]) byProduct[e.productCode] = 0;
+    byProduct[e.productCode] += e.amount;
+  });
+  Object.keys(byProduct).forEach(function(k){ byProduct[k] = parseFloat(byProduct[k].toFixed(4)); });
+
+  return { brokerCell: brokerCell, statementDate: statementDate, entries: entries, total: parseFloat(total.toFixed(4)), byProduct: byProduct };
+}
+
 function loadPayData() {
   if (_payLoaded) return;
   _payLoaded = true;
@@ -9340,24 +9414,37 @@ function loadPayData() {
   document.getElementById('pay-no-data').style.display  = 'none';
   document.getElementById('pay-no-parser').style.display = 'none';
 
-  fetch('/api/pay')
+  fetch('/api/pay/list')
     .then(function(r){ return r.json(); })
     .then(function(data) {
-      document.getElementById('pay-loading').style.display = 'none';
-      if (!data.statements || data.statements.length === 0) {
+      if (!data.files || data.files.length === 0) {
+        document.getElementById('pay-loading').style.display = 'none';
         document.getElementById('pay-no-data').style.display = 'block';
         return;
       }
-      // Check if any have a parser error
-      var noParser = data.statements.every(function(s){ return s.error && s.error.indexOf('not available') >= 0; });
-      if (noParser) {
-        document.getElementById('pay-no-parser').style.display = 'block';
-        return;
-      }
-      renderPayStatements(data.statements);
+      // Fetch and parse all files in parallel
+      return Promise.all(data.files.map(function(fname) {
+        return fetch('/api/pay/file/' + encodeURIComponent(fname))
+          .then(function(r){ return r.arrayBuffer(); })
+          .then(function(buf) {
+            try {
+              var parsed = payParseXlsxBuffer(new Uint8Array(buf));
+              parsed.filename = fname;
+              return parsed;
+            } catch(e) {
+              return { filename: fname, error: e.message };
+            }
+          })
+          .catch(function(e){ return { filename: fname, error: e.message }; });
+      }));
+    })
+    .then(function(statements) {
+      if (!statements) return;
+      document.getElementById('pay-loading').style.display = 'none';
+      renderPayStatements(statements);
       document.getElementById('pay-content').style.display = 'block';
     })
-    .catch(function(e) {
+    .catch(function() {
       document.getElementById('pay-loading').innerHTML = '<div style="color:#c0392b;font-size:14px;">Could not load pay data. Please try again.</div>';
     });
 }
@@ -9408,17 +9495,15 @@ function renderPayStatements(statements) {
       html += '</div>';
     }
 
-    // Toggle for detail
+    // Toggle for detail table
     var detailId = 'pay-detail-' + idx;
-    html += '<button onclick="payToggleDetail(\''+detailId+'\')" style="font-size:12px;color:#003768;background:none;border:1px solid #e8ecf0;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;margin-bottom:12px;" id="pay-toggle-'+idx+'">▼ Show '+entries.length+' transactions</button>';
+    html += '<button onclick="payToggleDetail(\''+detailId+'\','+idx+')" style="font-size:12px;color:#003768;background:none;border:1px solid #e8ecf0;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;margin-bottom:12px;" id="pay-toggle-'+idx+'">▼ Show '+entries.length+' transactions</button>';
 
-    // Detail table
-    html += '<div id="'+detailId+'" style="display:none;">';
-    html += '<div style="overflow-x:auto;">';
+    html += '<div id="'+detailId+'" style="display:none;overflow-x:auto;">';
     html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
     html += '<thead><tr style="border-bottom:1.5px solid #e8ecf0;">';
     ['Client','Product','Policy No.','Agent No.','Transaction Date','Commission'].forEach(function(h){
-      html += '<th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">'+escHtml(h)+'</th>';
+      html += '<th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">'+h+'</th>';
     });
     html += '</tr></thead><tbody>';
 
@@ -9435,10 +9520,10 @@ function renderPayStatements(statements) {
       html += '</tr>';
     });
 
-    html += '<tr style="background:#f7f9fc;font-weight:700;">';
-    html += '<td colspan="5" style="padding:8px 10px;text-align:right;font-size:12px;color:#6b7c8f;">Total</td>';
-    html += '<td style="padding:8px 10px;text-align:right;color:#003768;">£'+total.toFixed(2)+'</td>';
-    html += '</tr></tbody></table></div></div>';
+    html += '<tr style="background:#f7f9fc;">';
+    html += '<td colspan="5" style="padding:8px 10px;text-align:right;font-size:12px;color:#6b7c8f;font-weight:600;">Total</td>';
+    html += '<td style="padding:8px 10px;text-align:right;font-weight:700;color:#003768;">£'+total.toFixed(2)+'</td>';
+    html += '</tr></tbody></table></div>';
 
     html += '</div>'; // card
   });
@@ -9446,17 +9531,16 @@ function renderPayStatements(statements) {
   document.getElementById('pay-content').innerHTML = html;
 }
 
-function payToggleDetail(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var idx = id.replace('pay-detail-', '');
+function payToggleDetail(id, idx) {
+  var el  = document.getElementById(id);
   var btn = document.getElementById('pay-toggle-' + idx);
+  if (!el) return;
   if (el.style.display === 'none') {
     el.style.display = 'block';
-    if (btn) btn.innerHTML = btn.innerHTML.replace('▼ Show', '▲ Hide');
+    if (btn) btn.textContent = btn.textContent.replace('▼ Show', '▲ Hide');
   } else {
     el.style.display = 'none';
-    if (btn) btn.innerHTML = btn.innerHTML.replace('▲ Hide', '▼ Show');
+    if (btn) btn.textContent = btn.textContent.replace('▲ Hide', '▼ Show');
   }
 }
 </script>
