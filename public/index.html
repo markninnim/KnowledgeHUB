@@ -6158,8 +6158,10 @@ function loadHomeData() {
       setTimeout(function() {
         var myRow = leadersEl && leadersEl.querySelector('[data-isme]');
         if (myRow && leadersEl) {
-          var target = Math.max(0, myRow.offsetTop - leadersEl.clientHeight / 2 + myRow.offsetHeight / 2);
-          var t0 = null, dur = 1200;
+          var rowRect  = myRow.getBoundingClientRect();
+          var contRect = leadersEl.getBoundingClientRect();
+          var target   = Math.max(0, leadersEl.scrollTop + rowRect.top - contRect.top - leadersEl.clientHeight / 2 + myRow.offsetHeight / 2);
+          var t0 = null, dur = 3000;
           function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
           function step(ts) {
             if (!t0) t0 = ts;
