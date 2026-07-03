@@ -349,7 +349,7 @@ html { height: 100%; }
         </div>
 
         <!-- ACRE Surveying — spans both rows on the right -->
-        <div id="home-acre-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:span 2;">
+        <div id="home-acre-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
             <div style="width:36px;height:36px;background:#003768;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -401,23 +401,23 @@ html { height: 100%; }
           </div></div>
         </div>
 
-      </div>
-
-      <!-- CPD Summary card -->
-      <div id="home-cpd-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:24px;margin-bottom:20px;display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:#003768;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <!-- CPD Summary — col 3 row 2, auto-placed -->
+        <div id="home-cpd-card" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;background:#003768;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#003768;">CPD Summary</div>
+                <div id="home-cpd-subtitle" style="font-size:12px;color:#6b7c8f;"></div>
+              </div>
             </div>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:#003768;">CPD Summary</div>
-              <div id="home-cpd-subtitle" style="font-size:12px;color:#6b7c8f;"></div>
-            </div>
+            <a href="#" onclick="switchTab('compliance');return false;" style="font-size:12px;font-weight:600;color:#003768;text-decoration:none;">View log →</a>
           </div>
-          <a href="#" onclick="switchTab('compliance');return false;" style="font-size:12px;font-weight:600;color:#003768;text-decoration:none;">View full log →</a>
+          <div id="home-cpd-bars" style="display:flex;flex-direction:column;gap:12px;"></div>
         </div>
-        <div id="home-cpd-bars" style="display:flex;flex-direction:column;gap:14px;"></div>
+
       </div>
 
       <!-- Consumer Duty card -->
@@ -5986,9 +5986,11 @@ function loadHomeData() {
     if (behindTypes.length) {
       var recsWrap = document.createElement('div');
       recsWrap.id  = 'home-cpd-recs';
-      recsWrap.style.cssText = 'margin-top:18px;padding-top:16px;border-top:1px solid #f0f4f8;';
-      recsWrap.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">Suggested videos to catch up</div>'
-        + '<div id="home-cpd-recs-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"><span style="font-size:12px;color:#aaa;grid-column:1/-1;">Loading…</span></div>';
+      recsWrap.style.cssText = 'margin-top:14px;padding-top:12px;border-top:1px solid #f0f4f8;';
+      recsWrap.innerHTML = '<button onclick="var l=document.getElementById(\'home-cpd-recs-list\');var open=l.style.display!==\'none\';l.style.display=open?\'none\':\'flex\';this.querySelector(\'.arr\').textContent=open?\'▸\':\'▾\';" '
+        + 'style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#003768;padding:0;width:100%;text-align:left;">'
+        + '<span class="arr">▸</span> Catch-up videos</button>'
+        + '<div id="home-cpd-recs-list" style="display:none;flex-direction:column;gap:6px;margin-top:10px;"><span style="font-size:12px;color:#aaa;">Loading…</span></div>';
       card.appendChild(recsWrap);
 
       Promise.all(behindTypes.map(function(t) {
@@ -6008,17 +6010,17 @@ function loadHomeData() {
               var desc  = escAttr(v.description || '');
               var type  = escAttr(res.type.key);
               html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\')" '
-                + 'style="background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:9px;padding:12px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s;" '
-                + 'onmouseover="this.style.borderColor=\'#003768\';this.style.boxShadow=\'0 2px 8px rgba(0,55,104,.1)\'" '
-                + 'onmouseout="this.style.borderColor=\'#e8ecf0\';this.style.boxShadow=\'\'">'
-                + '<div style="width:32px;height:32px;background:#003768;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">'
-                + '<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'
-                + '<div style="font-size:12px;font-weight:600;color:#003768;line-height:1.4;margin-bottom:4px;">' + escHtml(v.title) + '</div>'
+                + 'style="display:flex;align-items:center;gap:10px;width:100%;background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:8px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s;" '
+                + 'onmouseover="this.style.borderColor=\'#003768\'" onmouseout="this.style.borderColor=\'#e8ecf0\'">'
+                + '<div style="width:28px;height:28px;background:#003768;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+                + '<svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'
+                + '<div style="min-width:0;flex:1;">'
+                + '<div style="font-size:12px;font-weight:600;color:#003768;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>'
                 + '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(res.type.key) + ' CPD</div>'
-                + '</button>';
+                + '</div></button>';
             });
         });
-        listEl.innerHTML = html || '<span style="font-size:12px;color:#aaa;grid-column:1/-1;">No new videos to recommend.</span>';
+        listEl.innerHTML = html || '<span style="font-size:12px;color:#aaa;">No new videos to recommend.</span>';
       }).catch(function() {});
     }
   }).catch(function() {});
