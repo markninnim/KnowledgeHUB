@@ -3204,10 +3204,45 @@ html { height: 100%; }
 
         </div>
 
-        <!-- Recent Feefo Reviews -->
+        <!-- Feefo Reviews (all, with date filter) -->
         <div id="bp-reviews-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
-          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Recent Feefo Reviews</div>
-          <div id="bp-reviews" style="display:flex;flex-direction:column;gap:12px;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Feefo Reviews <span id="bp-reviews-count" style="font-weight:400;color:#aaa;"></span></div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <span style="font-size:12px;color:#6b7c8f;">to</span>
+              <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <button onclick="document.getElementById('bp-rev-from').value='';document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+            </div>
+          </div>
+          <div id="bp-reviews" style="display:flex;flex-direction:column;gap:0;max-height:400px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- All Website Activity (CPD log) -->
+        <div id="bp-activity-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Activity <span id="bp-activity-count" style="font-weight:400;color:#aaa;"></span></div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <span style="font-size:12px;color:#6b7c8f;">to</span>
+              <input type="date" id="bp-act-to" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <button onclick="document.getElementById('bp-act-from').value='';document.getElementById('bp-act-to').value='';filterBpActivity();" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="border-bottom:2px solid #e8ecf0;">
+                  <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Date</th>
+                  <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">Activity</th>
+                  <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">CPD Type</th>
+                  <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Source</th>
+                  <th style="text-align:right;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Mins</th>
+                </tr>
+              </thead>
+              <tbody id="bp-activity-body"></tbody>
+            </table>
+          </div>
         </div>
 
       </div>
@@ -7025,22 +7060,11 @@ function openBrokerProfile(email, name) {
           '</div>' : '') +
         '</div>';
 
-      // Recent reviews
-      if (f.reviews && f.reviews.length) {
-        var revWrap = document.getElementById('bp-reviews-wrap');
-        revWrap.style.display = 'block';
-        document.getElementById('bp-reviews').innerHTML = f.reviews.map(function(r) {
-          var starStr = '';
-          if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'#fcb034':'#ddd') + ';font-size:12px;">★</span>';
-          return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
-              '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + escHtml(r.customer) + '</span>' +
-              '<span style="font-size:11px;color:#6b7c8f;">' + (r.date || '') + '</span>' +
-            '</div>' +
-            (starStr ? '<div style="margin-bottom:4px;">' + starStr + '</div>' : '') +
-            '<div style="font-size:12px;color:#4a5a6a;line-height:1.5;">' + escHtml(r.review || '') + '</div>' +
-          '</div>';
-        }).join('');
+      // All Feefo reviews with date filter
+      window._bpReviews = f.reviews || [];
+      if (window._bpReviews.length) {
+        document.getElementById('bp-reviews-wrap').style.display = 'block';
+        filterBpReviews();
       }
 
       // ── Consumer Duty ──
@@ -7077,22 +7101,82 @@ function openBrokerProfile(email, name) {
           }).join('')
         : '<div style="font-size:12px;color:#aaa;">No revalidation results found</div>';
 
-      // ── Videos Watched ──
-      var videos = d.videos || [];
+      // ── Videos Watched (from CPD log) ──
+      var allLog = (d.cpd && d.cpd.log) || [];
+      var videos = allLog.filter(function(e) { return e.video; });
       document.getElementById('bp-videos').innerHTML = videos.length
         ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + videos.length + ' video' + (videos.length!==1?'s':'') + ' logged</div>' +
           '<div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">' +
           videos.map(function(v) {
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</span>' +
+              '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.video) + '</span>' +
               '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
             '</div>';
           }).join('') + '</div>'
         : '<div style="font-size:12px;color:#aaa;">No videos logged yet</div>';
+
+      // ── All Activity (full CPD log) ──
+      window._bpActivity = allLog;
+      if (allLog.length) {
+        document.getElementById('bp-activity-wrap').style.display = 'block';
+        filterBpActivity();
+      }
     })
     .catch(function(err) {
       document.getElementById('bp-loading').textContent = 'Failed to load profile.';
     });
+}
+
+function filterBpReviews() {
+  var from = document.getElementById('bp-rev-from').value;
+  var to   = document.getElementById('bp-rev-to').value;
+  var all  = window._bpReviews || [];
+  var filtered = all.filter(function(r) {
+    if (from && r.date && r.date < from) return false;
+    if (to   && r.date && r.date > to)   return false;
+    return true;
+  });
+  document.getElementById('bp-reviews-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
+  document.getElementById('bp-reviews').innerHTML = filtered.length
+    ? filtered.map(function(r) {
+        var starStr = '';
+        if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'#fcb034':'#ddd') + ';font-size:12px;">★</span>';
+        return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px;">' +
+            '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + escHtml(r.customer) + '</span>' +
+            '<span style="font-size:11px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;">' + (r.date || '') + '</span>' +
+          '</div>' +
+          (starStr ? '<div style="margin-bottom:4px;">' + starStr + (r.nps != null ? '<span style="margin-left:8px;font-size:11px;color:#6b7c8f;">NPS: ' + r.nps + '</span>' : '') + '</div>' : '') +
+          (r.review ? '<div style="font-size:12px;color:#4a5a6a;line-height:1.5;">' + escHtml(r.review) + '</div>' : '') +
+        '</div>';
+      }).join('')
+    : '<div style="font-size:12px;color:#aaa;padding:10px 0;">No reviews match this date range.</div>';
+}
+
+function filterBpActivity() {
+  var from = document.getElementById('bp-act-from').value;
+  var to   = document.getElementById('bp-act-to').value;
+  var all  = window._bpActivity || [];
+  var filtered = all.filter(function(e) {
+    if (from && e.date && e.date < from) return false;
+    if (to   && e.date && e.date > to)   return false;
+    return true;
+  });
+  document.getElementById('bp-activity-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
+  var typeColor = { Mortgage: '#2e99d5', Protection: '#003768', Investment: '#fcb034' };
+  document.getElementById('bp-activity-body').innerHTML = filtered.length
+    ? filtered.map(function(e) {
+        var label = e.video || e.activity || '—';
+        var tc = typeColor[e.type] || '#6b7c8f';
+        return '<tr style="border-bottom:1px solid #f0f4f8;">' +
+          '<td style="padding:7px 10px;white-space:nowrap;color:#6b7c8f;">' + (e.date || '—') + '</td>' +
+          '<td style="padding:7px 10px;color:#1a2a3a;max-width:320px;">' + escHtml(label) + (e.learned ? '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.learned) + '</div>' : '') + '</td>' +
+          '<td style="padding:7px 10px;white-space:nowrap;"><span style="background:' + tc + '22;color:' + tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + escHtml(e.type || '—') + '</span></td>' +
+          '<td style="padding:7px 10px;color:#6b7c8f;">' + escHtml(e.source || '—') + '</td>' +
+          '<td style="padding:7px 10px;text-align:right;font-weight:600;color:#003768;">' + (e.mins || 0) + '</td>' +
+        '</tr>';
+      }).join('')
+    : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">No activity in this date range.</td></tr>';
 }
 
 function closeBrokerProfile() {

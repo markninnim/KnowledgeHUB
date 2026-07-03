@@ -2475,14 +2475,22 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     ]);
 
     // Process CPD
-    const cpdByType = {}, videoWatches = [];
+    const cpdByType = {}, cpdLog = [];
     cpdRecs.forEach(rec => {
       const f    = rec.cellValuesByFieldId || {};
       const type = f[CPD_TYPE]    || '';
       const mins = f[CPD_MINUTES] || 0;
       if (type) cpdByType[type] = (cpdByType[type] || 0) + mins;
-      const vt = f[CPD_VTITLE];
-      if (vt) videoWatches.push({ title: vt, date: f[CPD_DATE] || '', type, mins });
+      cpdLog.push({
+        date:     f[CPD_DATE]     || '',
+        activity: f[CPD_ACTIVITY] || '',
+        type,
+        mins,
+        category: f[CPD_CATEGORY] || '',
+        source:   f[CPD_SOURCE]   || '',
+        video:    f[CPD_VTITLE]   || '',
+        learned:  f[CPD_LEARNED]  || ''
+      });
     });
 
     // Process Feefo
@@ -2495,9 +2503,9 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       const d = npsRated.filter(r => r.fields['NPS'] <= 6).length;
       feefoNps = Math.round((p - d) / npsRated.length * 100);
     }
-    const feefoReviews = feefoRecs.filter(r => r.fields['Review']).slice(0, 5).map(r => ({
+    const feefoReviews = feefoRecs.map(r => ({
       customer: r.fields['Customer Name'] || 'Customer',
-      review:   r.fields['Review'],
+      review:   r.fields['Review'] || '',
       rating:   r.fields['Service Rating'] || null,
       nps:      r.fields['NPS'] || null,
       date:     r.fields['Date'] || null
@@ -2521,8 +2529,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
 
     res.json({
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'] },
-      cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length },
-      videos:        videoWatches,
+      cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
       consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults
