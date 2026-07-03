@@ -2193,20 +2193,23 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
     if (myLbEntry && myLbEntry.rank > 30) leaderboard.push(myLbEntry);
 
     // Leaderboard: average score per adviser
-    const totals = {}, ratedCounts = {};
+    // Leaderboard: NPS per adviser (5★=Promoter, 4★=Passive, 1-3★=Detractor)
+    const npsData = {};
     all.forEach(r => {
       const adv    = (r.fields['Adviser'] || '').trim();
       const rating = r.fields['Service Rating'];
       if (adv && rating) {
-        totals[adv]      = (totals[adv] || 0) + rating;
-        ratedCounts[adv] = (ratedCounts[adv] || 0) + 1;
+        if (!npsData[adv]) npsData[adv] = { p: 0, d: 0, total: 0 };
+        npsData[adv].total++;
+        if (rating === 5)      npsData[adv].p++;
+        else if (rating <= 3)  npsData[adv].d++;
       }
     });
-    const leaderboardAvg = Object.entries(ratedCounts)
-      .map(([name, c]) => ({ name, avg: totals[name] / c, count: c }))
-      .sort((a, b) => b.avg - a.avg || b.count - a.count)
+    const leaderboardNps = Object.entries(npsData)
+      .map(([name, d]) => ({ name, nps: Math.round((d.p - d.d) / d.total * 100), count: d.total }))
+      .sort((a, b) => b.nps - a.nps || b.count - a.count)
       .slice(0, 10)
-      .map((e, i) => ({ rank: i + 1, name: e.name, avg: e.avg.toFixed(1), count: e.count }));
+      .map((e, i) => ({ rank: i + 1, name: e.name, nps: e.nps, count: e.count }));
 
     // Rank of current user
     const sortedCounts = Object.values(counts).sort((a, b) => b - a);
@@ -2220,7 +2223,7 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       .sort((a, b) => (b.fields['Service Rating'] || 0) - (a.fields['Service Rating'] || 0))
       .map(r => ({ customer: r.fields['Customer Name'] || 'Customer', review: r.fields['Review'], rating: r.fields['Service Rating'] || null, date: r.fields['Date'] || null }));
 
-    res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard, leaderboardAvg });
+    res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard, leaderboardNps });
   } catch (err) {
     console.error('feefo error:', err);
     res.status(500).json({ error: err.message });
