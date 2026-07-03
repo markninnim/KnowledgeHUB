@@ -6444,8 +6444,8 @@ var _currentUser = null;
       var nlup = document.getElementById('nl-upload-wrap');
       if (nlup) nlup.style.display = 'block';
     }
-    // Show Pay tab for non-admin advisers (not supervisors/admin — they use broker profile)
-    if (user && !user.isSupervisor && !user.isAdmin) {
+    // Show Pay tab for all logged-in users
+    if (user) {
       var paybtn = document.getElementById('tab-btn-pay');
       if (paybtn) paybtn.style.display = '';
     }
