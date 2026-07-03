@@ -2162,7 +2162,7 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       const formula = encodeURIComponent(`AND(NOT({Adviser} = "")${extraClause})`);
       let records = [], offset = '';
       do {
-        const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Review&fields[]=Service Rating&fields[]=Customer Name&fields[]=Date&pageSize=100${offset ? '&offset=' + offset : ''}`;
+        const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Review&fields[]=Service Rating&fields[]=NPS&fields[]=Customer Name&fields[]=Date&pageSize=100${offset ? '&offset=' + offset : ''}`;
         const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
         const b  = await r.json();
         if (!r.ok) throw new Error(JSON.stringify(b));
@@ -2192,17 +2192,17 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
     const myLbEntry = allRanked.find(e => e.name.toLowerCase().trim() === safeName);
     if (myLbEntry && myLbEntry.rank > 30) leaderboard.push(myLbEntry);
 
-    // Leaderboard: average score per adviser
-    // Leaderboard: NPS per adviser (5★=Promoter, 4★=Passive, 1-3★=Detractor)
+    // Leaderboard: NPS per adviser using the actual NPS field (0-10 scale)
+    // 9-10 = Promoter, 7-8 = Passive, 0-6 = Detractor
     const npsData = {};
     all.forEach(r => {
-      const adv    = (r.fields['Adviser'] || '').trim();
-      const rating = r.fields['Service Rating'];
-      if (adv && rating) {
+      const adv = (r.fields['Adviser'] || '').trim();
+      const nps = r.fields['NPS'];
+      if (adv && nps != null) {
         if (!npsData[adv]) npsData[adv] = { p: 0, d: 0, total: 0 };
         npsData[adv].total++;
-        if (rating === 5)      npsData[adv].p++;
-        else if (rating <= 3)  npsData[adv].d++;
+        if (nps >= 9)       npsData[adv].p++;
+        else if (nps <= 6)  npsData[adv].d++;
       }
     });
     const allNpsRanked = Object.entries(npsData)
