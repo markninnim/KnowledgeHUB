@@ -2464,10 +2464,10 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
         return records;
       })(),
 
-      // Revalidation quiz results — by email
+      // Revalidation quiz results — by email, returnFieldsByFieldId for reliability
       (async () => {
         const formula = encodeURIComponent(`LOWER(TRIM({Email})) = "${brokerEmail.replace(/"/g, '\\"')}"`);
-        const qs = `?filterByFormula=${formula}&sort[0][field]=fldv8ukDVjln898kb&sort[0][direction]=desc&pageSize=50`;
+        const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=fldv8ukDVjln898kb&sort[0][direction]=desc&pageSize=50`;
         const r  = await fetch(`https://api.airtable.com/v0/${RV_BASE}/${RV_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
         const b  = await r.json();
         return b.records || [];
@@ -2475,21 +2475,24 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     ]);
 
     // Process CPD
+    // CPD_TYPE is a select field — with returnFieldsByFieldId=true it returns {id,name,color}
+    // Extract .name to get the string value (e.g. "Mortgage", "Protection")
+    function selectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
     const cpdByType = {}, cpdLog = [];
     cpdRecs.forEach(rec => {
       const f    = rec.cellValuesByFieldId || {};
-      const type = f[CPD_TYPE]    || '';
+      const type = selectName(f[CPD_TYPE]);
       const mins = f[CPD_MINUTES] || 0;
       if (type) cpdByType[type] = (cpdByType[type] || 0) + mins;
       cpdLog.push({
-        date:     f[CPD_DATE]     || '',
-        activity: f[CPD_ACTIVITY] || '',
+        date:     f[CPD_DATE]              || '',
+        activity: f[CPD_ACTIVITY]          || '',
         type,
         mins,
-        category: f[CPD_CATEGORY] || '',
-        source:   f[CPD_SOURCE]   || '',
-        video:    f[CPD_VTITLE]   || '',
-        learned:  f[CPD_LEARNED]  || ''
+        category: selectName(f[CPD_CATEGORY]) || '',
+        source:   selectName(f[CPD_SOURCE])   || '',
+        video:    f[CPD_VTITLE]            || '',
+        learned:  f[CPD_LEARNED]           || ''
       });
     });
 
@@ -2521,10 +2524,15 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues };
     });
 
-    // Process Revalidation
+    // Process Revalidation — use field IDs (returnFieldsByFieldId=true)
     const quizResults = rvRecs.map(rec => {
-      const f = rec.fields || {};
-      return { score: f['Score'] || null, result: f['Result'] || null, date: f['Date'] || null, timeTaken: f['Time Taken'] || null };
+      const f = rec.cellValuesByFieldId || {};
+      const score = f['fld8Yr5D8dKXmzAWf'];
+      const result = f['fldMeKZ3AWMRGFJEu'] || null;
+      const date   = f['fldv8ukDVjln898kb'] || (rec.createdTime ? rec.createdTime.slice(0,10) : null);
+      const tt     = f['fldSFCJ5IhOMgEPkl'];
+      const timeTaken = (tt && typeof tt === 'object' && tt.value != null) ? tt.value : (typeof tt === 'number' ? tt : null);
+      return { score: score != null ? Number(score) : null, result, date, timeTaken };
     });
 
     res.json({
