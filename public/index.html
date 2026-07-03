@@ -462,21 +462,43 @@ html { height: 100%; }
 
       <!-- Feefo card (full width) -->
       <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <!-- Header row -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
           <img src="/public-feefo-logo" alt="Feefo" style="height:52px;width:auto;flex-shrink:0;object-fit:contain;">
-          <div>
-            <div style="font-size:14px;font-weight:700;color:#003768;">Your Feefo Reviews</div>
+          <div style="flex:1;min-width:160px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-size:14px;font-weight:700;color:#003768;">Your Feefo Reviews</div>
+              <div id="home-feefo-rank-badge" style="display:none;background:#fcb034;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"></div>
+            </div>
             <div id="home-feefo-summary" style="font-size:12px;color:#6b7c8f;">Loading…</div>
           </div>
+          <!-- Date range filter -->
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <input type="date" id="feefo-date-from" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+            <span style="font-size:12px;color:#6b7c8f;">to</span>
+            <input type="date" id="feefo-date-to" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+            <button onclick="feefoDateClear()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+          </div>
         </div>
-        <div id="home-feefo-stars" style="margin-bottom:16px;"></div>
-        <div id="home-feefo-reviews" style="display:flex;flex-direction:column;gap:0;">
-          <div style="color:#aaa;font-size:13px;">Loading reviews…</div>
-        </div>
-        <div id="home-feefo-pagination" style="display:none;display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
-          <button id="home-feefo-prev" onclick="feefoPage(-1)" style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Prev</button>
-          <span id="home-feefo-page-label" style="font-size:12px;color:#6b7c8f;"></span>
-          <button id="home-feefo-next" onclick="feefoPage(1)"  style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">Next →</button>
+
+        <div style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;">
+          <!-- Left: stars + reviews -->
+          <div>
+            <div id="home-feefo-stars" style="margin-bottom:16px;"></div>
+            <div id="home-feefo-reviews" style="display:flex;flex-direction:column;gap:0;">
+              <div style="color:#aaa;font-size:13px;">Loading reviews…</div>
+            </div>
+            <div id="home-feefo-pagination" style="display:none;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
+              <button id="home-feefo-prev" onclick="feefoPage(-1)" style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Prev</button>
+              <span id="home-feefo-page-label" style="font-size:12px;color:#6b7c8f;"></span>
+              <button id="home-feefo-next" onclick="feefoPage(1)" style="background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">Next →</button>
+            </div>
+          </div>
+          <!-- Right: leaderboard -->
+          <div id="home-feefo-leaderboard" style="background:#f8fafc;border:1px solid #e8ecf0;border-radius:8px;padding:14px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Review Leaderboard</div>
+            <div id="home-feefo-leaders" style="font-size:13px;color:#aaa;">Loading…</div>
+          </div>
         </div>
       </div>
 
@@ -6073,40 +6095,67 @@ function loadHomeData() {
     if (card) card.style.display = 'none';
   });
 
-  fetch('/api/home-data').then(r => r.json()).then(function(data) {
-    // ── Feefo ───────────────────────────────────────────────
-    var summaryEl = document.getElementById('home-feefo-summary');
-    var starsEl   = document.getElementById('home-feefo-stars');
-    var reviewsEl = document.getElementById('home-feefo-reviews');
+  function loadFeefoFiltered() {
+    var from = (document.getElementById('feefo-date-from') || {}).value || '';
+    var to   = (document.getElementById('feefo-date-to')   || {}).value || '';
+    var qs   = (from ? '?dateFrom=' + from : '') + (to ? (from ? '&' : '?') + 'dateTo=' + to : '');
+    var summaryEl  = document.getElementById('home-feefo-summary');
+    var starsEl    = document.getElementById('home-feefo-stars');
+    var reviewsEl  = document.getElementById('home-feefo-reviews');
+    var rankBadge  = document.getElementById('home-feefo-rank-badge');
+    var leadersEl  = document.getElementById('home-feefo-leaders');
+    if (summaryEl) summaryEl.textContent = 'Loading…';
+    if (leadersEl) leadersEl.textContent = 'Loading…';
 
-    if (data.feefo && data.feefo.count > 0) {
-      var avg   = parseFloat(data.feefo.avg) || 0;
-      var count = data.feefo.count;
-      if (summaryEl) summaryEl.textContent = avg + ' average · ' + count + ' review' + (count !== 1 ? 's' : '');
+    fetch('/api/feefo' + qs).then(r => r.json()).then(function(d) {
+      if (d.error) { if (summaryEl) summaryEl.textContent = 'Error loading reviews'; return; }
+      var avg = parseFloat(d.avg) || 0, count = d.count;
+      if (summaryEl) summaryEl.textContent = (avg ? avg + ' average · ' : '') + count + ' review' + (count !== 1 ? 's' : '');
+
+      // Rank badge
+      if (rankBadge) {
+        if (d.rank) { rankBadge.textContent = '#' + d.rank + ' of ' + d.totalAdvisers; rankBadge.style.display = ''; }
+        else rankBadge.style.display = 'none';
+      }
 
       // Star bar
-      if (starsEl) {
+      if (starsEl && avg) {
         var pct = Math.round((avg / 5) * 100);
-        starsEl.innerHTML =
-          '<div style="display:flex;align-items:center;gap:8px;">'
-          + '<div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;">'
-          + '<div style="width:' + pct + '%;height:100%;background:#fcb034;border-radius:4px;"></div></div>'
-          + '<span style="font-size:13px;font-weight:700;color:#fcb034;">' + avg + '</span>'
-          + '<span style="font-size:12px;color:#aaa;">/ 5</span></div>';
-      }
+        starsEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#fcb034;border-radius:4px;"></div></div><span style="font-size:13px;font-weight:700;color:#fcb034;">' + avg + '</span><span style="font-size:12px;color:#aaa;">/ 5</span></div>';
+      } else if (starsEl) { starsEl.innerHTML = ''; }
 
       // Paginated reviews
-      _feefoAll  = data.feefo.reviews || [];
+      _feefoAll  = d.reviews || [];
       _feefoPage = 0;
-      if (_feefoAll.length) {
-        renderFeefoPage();
-      } else if (reviewsEl) {
-        reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">No written reviews yet.</p>';
+      if (_feefoAll.length) { renderFeefoPage(); }
+      else if (reviewsEl) { reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">No written reviews for this period.</p>'; }
+
+      // Leaderboard
+      if (leadersEl) {
+        var lb = d.leaderboard || [];
+        if (!lb.length) { leadersEl.textContent = 'No data yet.'; return; }
+        var me = (_currentUser && [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ')) || '';
+        leadersEl.innerHTML = lb.map(function(e) {
+          var isMe = me && e.name.toLowerCase().trim() === me.toLowerCase().trim();
+          return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;' + (isMe ? 'background:#fffbf0;margin:0 -14px;padding:5px 14px;border-radius:6px;' : '') + '">'
+            + '<span style="font-size:11px;font-weight:700;color:' + (e.rank <= 3 ? '#fcb034' : '#aaa') + ';width:20px;flex-shrink:0;">#' + e.rank + '</span>'
+            + '<span style="font-size:12px;color:#003768;font-weight:' + (isMe ? '700' : '500') + ';flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(e.name) + '</span>'
+            + '<span style="font-size:12px;font-weight:700;color:#003768;">' + e.count + '</span>'
+            + '</div>';
+        }).join('');
       }
-    } else {
-      if (summaryEl) summaryEl.textContent = 'No reviews found';
-      if (reviewsEl) reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">Reviews will appear here once your Feefo data is loaded.</p>';
-    }
+    }).catch(function() { if (summaryEl) summaryEl.textContent = 'Could not load reviews'; });
+  }
+
+  function feefoDateClear() {
+    var f = document.getElementById('feefo-date-from'), t = document.getElementById('feefo-date-to');
+    if (f) f.value = ''; if (t) t.value = '';
+    loadFeefoFiltered();
+  }
+
+  fetch('/api/home-data').then(r => r.json()).then(function(data) {
+    // ── Feefo via new filtered endpoint ─────────────────────
+    loadFeefoFiltered();
 
     // ── Latest video ────────────────────────────────────────
     var videoCard = document.getElementById('home-video-card');
@@ -6130,10 +6179,6 @@ function loadHomeData() {
     }
   }).catch(function(e) {
     console.error('home-data error', e);
-    var summaryEl = document.getElementById('home-feefo-summary');
-    var reviewsEl = document.getElementById('home-feefo-reviews');
-    if (summaryEl) summaryEl.textContent = 'Could not load reviews';
-    if (reviewsEl) reviewsEl.innerHTML = '';
   });
 }
 

@@ -2142,6 +2142,72 @@ sys.stdout.buffer.write(buf.getvalue())
 });
 
 
+// ── Feefo filtered + ranked ───────────────────────────────────
+app.get('/api/feefo', requireAuth, async (req, res) => {
+  try {
+    const user     = req.session.user;
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+    if (!fullName) return res.json({ count: 0, avg: null, reviews: [], rank: null, leaderboard: [] });
+
+    const safeName = fullName.toLowerCase().trim().replace(/"/g, '\\"');
+    const { dateFrom, dateTo } = req.query;
+
+    // Build date clause
+    let dateParts = [];
+    if (dateFrom) dateParts.push(`{Date} >= "${dateFrom}"`);
+    if (dateTo)   dateParts.push(`{Date} <= "${dateTo}"`);
+    const dateClause = dateParts.length ? ', ' + dateParts.join(', ') : '';
+
+    async function fetchFeefo(extraClause) {
+      const formula = encodeURIComponent(`AND(NOT({Adviser} = "")${extraClause})`);
+      let records = [], offset = '';
+      do {
+        const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Review&fields[]=Service Rating&fields[]=Customer Name&fields[]=Date&pageSize=100${offset ? '&offset=' + offset : ''}`;
+        const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const b  = await r.json();
+        if (!r.ok) throw new Error(JSON.stringify(b));
+        records = records.concat(b.records || []);
+        offset  = b.offset || '';
+      } while (offset);
+      return records;
+    }
+
+    // Fetch all records in date range for leaderboard + user's own
+    const all = await fetchFeefo(dateClause);
+
+    // User's own records
+    const mine = all.filter(r => (r.fields['Adviser'] || '').toLowerCase().trim() === safeName);
+
+    // Leaderboard: count per adviser
+    const counts = {};
+    all.forEach(r => {
+      const adv = (r.fields['Adviser'] || '').trim();
+      if (adv) counts[adv] = (counts[adv] || 0) + 1;
+    });
+    const leaderboard = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count], i) => ({ rank: i + 1, name, count }));
+
+    // Rank of current user
+    const sortedCounts = Object.values(counts).sort((a, b) => b - a);
+    const myCount = counts[fullName] || counts[Object.keys(counts).find(k => k.toLowerCase().trim() === safeName)] || 0;
+    const rank = sortedCounts.findIndex(v => v <= myCount) + 1;
+
+    const rated = mine.filter(r => r.fields['Service Rating']);
+    const avg   = rated.length ? (rated.reduce((s, r) => s + r.fields['Service Rating'], 0) / rated.length).toFixed(1) : null;
+    const reviews = mine
+      .filter(r => r.fields['Review'])
+      .sort((a, b) => (b.fields['Service Rating'] || 0) - (a.fields['Service Rating'] || 0))
+      .map(r => ({ customer: r.fields['Customer Name'] || 'Customer', review: r.fields['Review'], rating: r.fields['Service Rating'] || null, date: r.fields['Date'] || null }));
+
+    res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard });
+  } catch (err) {
+    console.error('feefo error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Home page data ────────────────────────────────────────────
 const FEEFO_TABLE     = 'tblU58wJ0rNFPMiKp';
 const FF_ADVISER      = 'Adviser';
