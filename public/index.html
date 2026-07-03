@@ -3136,7 +3136,85 @@ html { height: 100%; }
 
   <!-- ── Supervisor Zone tab ───────────────────────────────── -->
   <div id="tab-supervisor-zone" class="tab-pane">
-    <div style="max-width:1200px;margin:0 auto;padding:0 8px;">
+
+    <!-- Broker Profile Panel (shown when a broker is selected) -->
+    <div id="sv-broker-profile" style="display:none;max-width:1200px;margin:0 auto;padding:0 8px;">
+      <!-- Back + header -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+        <button onclick="closeBrokerProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Back</button>
+        <div>
+          <div id="bp-name" style="font-size:20px;font-weight:800;color:#003768;"></div>
+          <div id="bp-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
+        </div>
+      </div>
+
+      <!-- Loading / error state -->
+      <div id="bp-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading profile…</div>
+      <div id="bp-content" style="display:none;">
+
+        <!-- Row 1: CPD | Feefo | Consumer Duty -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+
+          <!-- CPD -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">CPD Progress</div>
+            <div id="bp-cpd" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+
+          <!-- Feefo -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Feefo</div>
+            <div id="bp-feefo"></div>
+          </div>
+
+          <!-- Consumer Duty -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Consumer Duty</div>
+            <div id="bp-cd"></div>
+          </div>
+
+        </div>
+
+        <!-- Row 2: Revalidation | Videos Watched | Placeholders -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+
+          <!-- Revalidation Quiz -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Revalidation</div>
+            <div id="bp-quiz"></div>
+          </div>
+
+          <!-- Videos Watched -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Videos Watched</div>
+            <div id="bp-videos"></div>
+          </div>
+
+          <!-- Newsletter & Sales Process -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;flex:1;">
+              <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Newsletter Reading</div>
+              <div style="font-size:12px;color:#aaa;font-style:italic;">Tracking coming soon</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;flex:1;">
+              <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Sales Process Access</div>
+              <div style="font-size:12px;color:#aaa;font-style:italic;">Tracking coming soon</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recent Feefo Reviews -->
+        <div id="bp-reviews-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Recent Feefo Reviews</div>
+          <div id="bp-reviews" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CPD Register (main view) -->
+    <div id="sv-cpd-register" style="max-width:1200px;margin:0 auto;padding:0 8px;">
       <!-- Header row -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
         <div>
@@ -3188,8 +3266,8 @@ html { height: 100%; }
         <div id="sv-supervisors-list" style="display:grid;gap:12px;"></div>
       </div>
       <div id="sv-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading team…</div>
-    </div>
-  </div>
+    </div><!-- /sv-cpd-register -->
+  </div><!-- /tab-supervisor-zone -->
 
   <!-- Transfer adviser modal -->
   <div id="sv-transfer-modal" onclick="if(event.target===this)closeSvTransfer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center;">
@@ -5927,7 +6005,7 @@ function loadHomeData() {
   if (_homeLoaded) return;
   _homeLoaded = true;
 
-  function fmtCpdTime(mins) {
+  window.fmtCpdTime = function fmtCpdTime(mins) {
     var h = Math.floor(mins / 60);
     var m = Math.round(mins % 60);
     return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
@@ -6880,6 +6958,148 @@ function svViewAs(email) {
   loadSupervisorZone();
 }
 
+// ── Broker Profile ────────────────────────────────────────────
+function openBrokerProfile(email, name) {
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  var panel = document.getElementById('sv-broker-profile');
+  panel.style.display = 'block';
+  document.getElementById('bp-name').textContent = name || email;
+  document.getElementById('bp-meta').textContent = email;
+  document.getElementById('bp-loading').style.display = 'block';
+  document.getElementById('bp-content').style.display = 'none';
+
+  fetch('/api/supervisor/broker-profile?email=' + encodeURIComponent(email))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('bp-loading').style.display = 'none';
+      document.getElementById('bp-content').style.display = 'block';
+
+      // Header meta
+      var u = d.user || {};
+      document.getElementById('bp-name').textContent = u.fullName || name || email;
+      document.getElementById('bp-meta').textContent = [u.jobTitle, u.email, u.mobile].filter(Boolean).join(' · ');
+
+      // ── CPD ──
+      var cpdEl = document.getElementById('bp-cpd');
+      var byType = d.cpd ? d.cpd.byType : {};
+      var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
+      var types = [];
+      if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: '#2e99d5' });
+      if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: '#003768' });
+      if (u.sellsInvestments) types.push({ key: 'Investment', color: '#fcb034' });
+      if (!types.length) types = [{ key: 'Mortgage', color: '#2e99d5' }, { key: 'Protection', color: '#003768' }];
+      cpdEl.innerHTML = types.map(function(t) {
+        var done    = byType[t.key] || 0;
+        var target  = targets[t.key] || 900;
+        var pct     = Math.min(100, Math.round(done / target * 100));
+        var complete = done >= target;
+        return '<div>' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
+            '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + t.key + '</span>' +
+            '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
+          '</div>' +
+          '<div style="height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden;">' +
+            '<div style="width:' + pct + '%;height:100%;background:' + (complete ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f4f8;font-size:12px;color:#6b7c8f;">' + (d.cpd ? d.cpd.entryCount : 0) + ' log entries · ' + fmtCpdTime(d.cpd ? d.cpd.totalMins : 0) + ' total</div>';
+
+      // ── Feefo ──
+      var f = d.feefo || {};
+      var stars = '';
+      if (f.avg) { var avgN = parseFloat(f.avg); for (var i=1;i<=5;i++) stars += '<span style="color:' + (i<=Math.round(avgN)?'#fcb034':'#ddd') + ';">★</span>'; }
+      document.getElementById('bp-feefo').innerHTML =
+        '<div style="display:flex;gap:16px;margin-bottom:14px;">' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#003768;">' + (f.count || 0) + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">reviews</div>' +
+          '</div>' +
+          (f.avg ? '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#003768;">' + f.avg + '</div>' +
+            '<div style="font-size:13px;">' + stars + '</div>' +
+          '</div>' : '') +
+          (f.nps != null ? '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:' + (f.nps >= 50 ? '#22c55e' : f.nps >= 0 ? '#f59e0b' : '#ef4444') + ';">' + (f.nps >= 0 ? '+' : '') + f.nps + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">NPS</div>' +
+          '</div>' : '') +
+        '</div>';
+
+      // Recent reviews
+      if (f.reviews && f.reviews.length) {
+        var revWrap = document.getElementById('bp-reviews-wrap');
+        revWrap.style.display = 'block';
+        document.getElementById('bp-reviews').innerHTML = f.reviews.map(function(r) {
+          var starStr = '';
+          if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'#fcb034':'#ddd') + ';font-size:12px;">★</span>';
+          return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+              '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + escHtml(r.customer) + '</span>' +
+              '<span style="font-size:11px;color:#6b7c8f;">' + (r.date || '') + '</span>' +
+            '</div>' +
+            (starStr ? '<div style="margin-bottom:4px;">' + starStr + '</div>' : '') +
+            '<div style="font-size:12px;color:#4a5a6a;line-height:1.5;">' + escHtml(r.review || '') + '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // ── Consumer Duty ──
+      var cd = d.consumerDuty || {};
+      var cdScore = cd.total ? Math.round(cd.full / cd.total * 100) : null;
+      document.getElementById('bp-cd').innerHTML =
+        '<div style="display:flex;gap:16px;margin-bottom:14px;">' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#003768;">' + (cd.total || 0) + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">responses</div>' +
+          '</div>' +
+          (cdScore != null ? '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:' + (cdScore>=90?'#22c55e':cdScore>=70?'#f59e0b':'#ef4444') + ';">' + cdScore + '%</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">full understanding</div>' +
+          '</div>' : '') +
+        '</div>' +
+        (cd.partial ? '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 12px;font-size:12px;color:#991b1b;">' + cd.partial + ' partial understanding ' + (cd.partial===1?'case':'cases') + ' require follow-up</div>' : '<div style="font-size:12px;color:#22c55e;font-weight:600;">✓ No partial understanding cases</div>');
+
+      // ── Quiz / Revalidation ──
+      var quiz = d.quiz || [];
+      document.getElementById('bp-quiz').innerHTML = quiz.length
+        ? quiz.map(function(q) {
+            var pass = (q.result || '').toLowerCase().includes('pass');
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;">' +
+              '<div>' +
+                '<div style="font-size:12px;font-weight:600;color:#1a2a3a;">' + (q.date || 'No date') + '</div>' +
+                (q.timeTaken ? '<div style="font-size:11px;color:#6b7c8f;">' + q.timeTaken + '</div>' : '') +
+              '</div>' +
+              '<div style="text-align:right;">' +
+                '<div style="font-size:14px;font-weight:800;color:#003768;">' + (q.score || '—') + '</div>' +
+                '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (q.result || '—') + '</span>' +
+              '</div>' +
+            '</div>';
+          }).join('')
+        : '<div style="font-size:12px;color:#aaa;">No revalidation results found</div>';
+
+      // ── Videos Watched ──
+      var videos = d.videos || [];
+      document.getElementById('bp-videos').innerHTML = videos.length
+        ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + videos.length + ' video' + (videos.length!==1?'s':'') + ' logged</div>' +
+          '<div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">' +
+          videos.map(function(v) {
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
+              '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</span>' +
+              '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
+            '</div>';
+          }).join('') + '</div>'
+        : '<div style="font-size:12px;color:#aaa;">No videos logged yet</div>';
+    })
+    .catch(function(err) {
+      document.getElementById('bp-loading').textContent = 'Failed to load profile.';
+    });
+}
+
+function closeBrokerProfile() {
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'block';
+}
+
 function svSidebarSelect(email, el) {
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -7109,7 +7329,10 @@ function renderSvDashboard(data) {
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
-            '<div style="font-size:14px;font-weight:700;color:#1a2a3a;">' + escHtml(name) + supLabel + '</div>' +
+            '<div style="font-size:14px;font-weight:700;color:#1a2a3a;">' +
+              (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+              supLabel +
+            '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
           '<div style="display:flex;gap:6px;align-items:center;">' +
@@ -7136,7 +7359,9 @@ function renderSvDashboard(data) {
     var drillId = 'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_');
     return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:14px;">' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + escHtml(name) + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' +
+          (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+        '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;min-width:180px;">' +

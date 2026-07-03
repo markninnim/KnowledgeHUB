@@ -2400,6 +2400,139 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
 });
 
 
+// ── Supervisor: Broker Profile ────────────────────────────────
+const RV_BASE  = 'applcWZPy40cayRzd';
+const RV_TABLE = 'tblI70qGiOJqICPfC'; // 2026 Revalidation Results
+
+app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const brokerEmail = (req.query.email || '').trim().toLowerCase();
+  if (!brokerEmail) return res.status(400).json({ error: 'email required' });
+
+  try {
+    // 1. Lookup user record for full name + profile
+    const uf = encodeURIComponent(`LOWER({Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+    const ur  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${uf}&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const ud  = await ur.json();
+    const userFields = ((ud.records || [])[0] || {}).fields || {};
+    const firstName  = userFields['First Name'] || '';
+    const lastName   = userFields['Last Name']  || '';
+    const fullName   = [firstName, lastName].filter(Boolean).join(' ');
+    const safeName   = fullName.toLowerCase().trim().replace(/"/g, '\\"');
+
+    // 2. Parallel data fetches
+    const [cpdRecs, feefoRecs, cdRecs, rvRecs] = await Promise.all([
+
+      // CPD Log — all entries for this email
+      (async () => {
+        const formula = encodeURIComponent(`LOWER({User Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        let records = [], offset = '';
+        do {
+          const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const d  = await cpdFetch(qs);
+          records  = records.concat(d.records || []);
+          offset   = d.offset || '';
+        } while (offset);
+        return records;
+      })(),
+
+      // Feefo — by adviser full name
+      (async () => {
+        if (!safeName) return [];
+        const formula = encodeURIComponent(`LOWER(TRIM({Adviser})) = "${safeName}"`);
+        const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Review&fields[]=Service Rating&fields[]=NPS&fields[]=Customer Name&fields[]=Date&sort[0][field]=Date&sort[0][direction]=desc&pageSize=100`;
+        const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const b  = await r.json();
+        return b.records || [];
+      })(),
+
+      // Consumer Duty — by broker full name
+      (async () => {
+        if (!safeName) return [];
+        const formula = encodeURIComponent(`LOWER(TRIM({${CD_BROKER}})) = "${safeName}"`);
+        let records = [], offset = '';
+        do {
+          const qs  = `?filterByFormula=${formula}&sort[0][field]=${CD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const r   = await fetch(`https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+          const b   = await r.json();
+          if (!r.ok) break;
+          records = records.concat(b.records || []);
+          offset  = b.offset || '';
+        } while (offset);
+        return records;
+      })(),
+
+      // Revalidation quiz results — by email
+      (async () => {
+        const formula = encodeURIComponent(`LOWER(TRIM({Email})) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        const qs = `?filterByFormula=${formula}&sort[0][field]=fldv8ukDVjln898kb&sort[0][direction]=desc&pageSize=50`;
+        const r  = await fetch(`https://api.airtable.com/v0/${RV_BASE}/${RV_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const b  = await r.json();
+        return b.records || [];
+      })()
+    ]);
+
+    // Process CPD
+    const cpdByType = {}, videoWatches = [];
+    cpdRecs.forEach(rec => {
+      const f    = rec.cellValuesByFieldId || {};
+      const type = f[CPD_TYPE]    || '';
+      const mins = f[CPD_MINUTES] || 0;
+      if (type) cpdByType[type] = (cpdByType[type] || 0) + mins;
+      const vt = f[CPD_VTITLE];
+      if (vt) videoWatches.push({ title: vt, date: f[CPD_DATE] || '', type, mins });
+    });
+
+    // Process Feefo
+    const rated   = feefoRecs.filter(r => r.fields['Service Rating']);
+    const feefoAvg = rated.length ? (rated.reduce((s,r) => s + r.fields['Service Rating'], 0) / rated.length).toFixed(1) : null;
+    const npsRated = feefoRecs.filter(r => r.fields['NPS'] != null);
+    let feefoNps = null;
+    if (npsRated.length) {
+      const p = npsRated.filter(r => r.fields['NPS'] >= 9).length;
+      const d = npsRated.filter(r => r.fields['NPS'] <= 6).length;
+      feefoNps = Math.round((p - d) / npsRated.length * 100);
+    }
+    const feefoReviews = feefoRecs.filter(r => r.fields['Review']).slice(0, 5).map(r => ({
+      customer: r.fields['Customer Name'] || 'Customer',
+      review:   r.fields['Review'],
+      rating:   r.fields['Service Rating'] || null,
+      nps:      r.fields['NPS'] || null,
+      date:     r.fields['Date'] || null
+    }));
+
+    // Process Consumer Duty
+    let cdFull = 0, cdPartial = 0;
+    const cdRecords = cdRecs.map(rec => {
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      const issues  = cdIsPerfect(f);
+      const perfect = issues.length === 0;
+      if (perfect) cdFull++; else cdPartial++;
+      return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues };
+    });
+
+    // Process Revalidation
+    const quizResults = rvRecs.map(rec => {
+      const f = rec.fields || {};
+      return { score: f['Score'] || null, result: f['Result'] || null, date: f['Date'] || null, timeTaken: f['Time Taken'] || null };
+    });
+
+    res.json({
+      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'] },
+      cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length },
+      videos:        videoWatches,
+      feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
+      consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },
+      quiz:          quizResults
+    });
+  } catch (err) {
+    console.error('broker-profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ACRE Surveying Stats ───────────────────────────────────────
 const ACRE_BASE        = 'appTQIvpD5TBphlq4';
 const ACRE_LEADS_TBL   = 'tblhGuMyeR3zPBJXe';
