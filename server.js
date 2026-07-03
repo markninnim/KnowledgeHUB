@@ -2203,7 +2203,7 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       .map(([name, c]) => ({ name, avg: totals[name] / c, count: c }))
       .sort((a, b) => b.avg - a.avg || b.count - a.count)
       .slice(0, 10)
-      .map((e, i) => ({ rank: i + 1, name: e.name, avg: parseFloat(e.avg.toFixed(2)), count: e.count }));
+      .map((e, i) => ({ rank: i + 1, name: e.name, avg: e.avg.toFixed(1), count: e.count }));
 
     // Rank of current user
     const sortedCounts = Object.values(counts).sort((a, b) => b - a);
