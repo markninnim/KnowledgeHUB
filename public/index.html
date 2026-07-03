@@ -502,7 +502,7 @@ html { height: 100%; }
             </div>
             <div style="background:#f8fafc;border:1px solid #e8ecf0;border-radius:8px;padding:14px;">
               <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Top NPS</div>
-              <div id="home-feefo-leaders-avg" style="font-size:13px;color:#aaa;">Loading…</div>
+              <div id="home-feefo-leaders-avg" style="font-size:13px;color:#aaa;height:220px;overflow:hidden;">Loading…</div>
             </div>
           </div>
         </div>
@@ -6154,24 +6154,25 @@ function loadHomeData() {
       }
       renderLeaderboard(leadersEl,    d.leaderboard    || [], 'count', '');
       renderLeaderboard(leadersAvgEl, d.leaderboardNps || [], 'nps',   '');
-      // Animate scroll to centre current user's row
-      setTimeout(function() {
-        var myRow = leadersEl && leadersEl.querySelector('[data-isme]');
-        if (myRow && leadersEl) {
-          var rowRect  = myRow.getBoundingClientRect();
-          var contRect = leadersEl.getBoundingClientRect();
-          var target   = Math.max(0, leadersEl.scrollTop + rowRect.top - contRect.top - leadersEl.clientHeight / 2 + myRow.offsetHeight / 2);
-          var t0 = null, dur = 6000;
-          function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-          function step(ts) {
-            if (!t0) t0 = ts;
-            var p = Math.min((ts - t0) / dur, 1);
-            leadersEl.scrollTop = target * ease(p);
-            if (p < 1) requestAnimationFrame(step);
-          }
-          requestAnimationFrame(step);
+      // Animate scroll to centre current user's row in both leaderboards
+      function scrollToMe(el) {
+        if (!el) return;
+        var myRow = el.querySelector('[data-isme]');
+        if (!myRow) return;
+        var rowRect  = myRow.getBoundingClientRect();
+        var contRect = el.getBoundingClientRect();
+        var target   = Math.max(0, el.scrollTop + rowRect.top - contRect.top - el.clientHeight / 2 + myRow.offsetHeight / 2);
+        var t0 = null, dur = 6000;
+        function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+        function step(ts) {
+          if (!t0) t0 = ts;
+          var p = Math.min((ts - t0) / dur, 1);
+          el.scrollTop = target * ease(p);
+          if (p < 1) requestAnimationFrame(step);
         }
-      }, 50);
+        requestAnimationFrame(step);
+      }
+      setTimeout(function() { scrollToMe(leadersEl); scrollToMe(leadersAvgEl); }, 50);
     }).catch(function() { if (summaryEl) summaryEl.textContent = 'Could not load reviews'; });
   }
 

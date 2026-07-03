@@ -2205,11 +2205,13 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
         else if (rating <= 3)  npsData[adv].d++;
       }
     });
-    const leaderboardNps = Object.entries(npsData)
+    const allNpsRanked = Object.entries(npsData)
       .map(([name, d]) => ({ name, nps: Math.round((d.p - d.d) / d.total * 100), count: d.total }))
       .sort((a, b) => b.nps - a.nps || b.count - a.count)
-      .slice(0, 10)
       .map((e, i) => ({ rank: i + 1, name: e.name, nps: e.nps, count: e.count }));
+    const leaderboardNps = allNpsRanked.slice(0, 30);
+    const myNpsEntry = allNpsRanked.find(e => e.name.toLowerCase().trim() === safeName);
+    if (myNpsEntry && myNpsEntry.rank > 30) leaderboardNps.push(myNpsEntry);
 
     // Rank of current user
     const sortedCounts = Object.values(counts).sort((a, b) => b - a);
