@@ -2189,6 +2189,22 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       .slice(0, 10)
       .map(([name, count], i) => ({ rank: i + 1, name, count }));
 
+    // Leaderboard: average score per adviser
+    const totals = {}, ratedCounts = {};
+    all.forEach(r => {
+      const adv    = (r.fields['Adviser'] || '').trim();
+      const rating = r.fields['Service Rating'];
+      if (adv && rating) {
+        totals[adv]      = (totals[adv] || 0) + rating;
+        ratedCounts[adv] = (ratedCounts[adv] || 0) + 1;
+      }
+    });
+    const leaderboardAvg = Object.entries(ratedCounts)
+      .map(([name, c]) => ({ name, avg: totals[name] / c, count: c }))
+      .sort((a, b) => b.avg - a.avg || b.count - a.count)
+      .slice(0, 10)
+      .map((e, i) => ({ rank: i + 1, name: e.name, avg: parseFloat(e.avg.toFixed(2)), count: e.count }));
+
     // Rank of current user
     const sortedCounts = Object.values(counts).sort((a, b) => b - a);
     const myCount = counts[fullName] || counts[Object.keys(counts).find(k => k.toLowerCase().trim() === safeName)] || 0;
@@ -2201,7 +2217,7 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       .sort((a, b) => (b.fields['Service Rating'] || 0) - (a.fields['Service Rating'] || 0))
       .map(r => ({ customer: r.fields['Customer Name'] || 'Customer', review: r.fields['Review'], rating: r.fields['Service Rating'] || null, date: r.fields['Date'] || null }));
 
-    res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard });
+    res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard, leaderboardAvg });
   } catch (err) {
     console.error('feefo error:', err);
     res.status(500).json({ error: err.message });
