@@ -3183,6 +3183,16 @@ html { height: 100%; }
           <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Revalidation</div>
             <div id="bp-quiz"></div>
+            <div id="bp-rv-videos-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
+              <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Videos Watched</div>
+              <div id="bp-rv-videos"></div>
+            </div>
+          </div>
+
+          <!-- Col 1 Row 3: Newsletter Access (below Revalidation) -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-column:1;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Newsletter Access</div>
+            <div id="bp-newsletter"></div>
           </div>
 
           <!-- Col 2 Row 2: Videos Watched (no scroll — fills naturally) -->
@@ -7214,6 +7224,59 @@ function openBrokerProfile(email, name) {
             '</div>';
           }).join('') + '</div>'
         : '<div style="font-size:12px;color:#aaa;">No videos logged yet</div>';
+
+      // ── Revalidation Videos (CPD log entries matching known revalidation video titles) ──
+      var rvTitles = _rvVideos.map(function(v) { return v.title.toLowerCase(); });
+      var rvVideos = allLog.filter(function(e) { return e.videoTitle && rvTitles.indexOf(e.videoTitle.toLowerCase()) !== -1; });
+      var rvVideosWrap = document.getElementById('bp-rv-videos-wrap');
+      var rvVideosEl   = document.getElementById('bp-rv-videos');
+      if (rvVideosEl) {
+        if (rvVideos.length) {
+          if (rvVideosWrap) rvVideosWrap.style.display = '';
+          rvVideosEl.innerHTML =
+            '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + rvVideos.length + ' video' + (rvVideos.length!==1?'s':'') + ' watched</div>' +
+            '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            rvVideos.map(function(v) {
+              return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
+                '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
+                '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
+              '</div>';
+            }).join('') + '</div>';
+        } else {
+          if (rvVideosWrap) rvVideosWrap.style.display = 'none';
+        }
+      }
+
+      // ── Newsletter Access (CPD log entries for FPG CPD Round-up newsletters) ──
+      var nlEl = document.getElementById('bp-newsletter');
+      if (nlEl) {
+        var nlEntries = allLog.filter(function(e) {
+          var learned = (e.learned || '').toLowerCase();
+          var act = (e.activity || '').toLowerCase();
+          return learned.indexOf('cpd round-up newsletter') !== -1 || act.indexOf('cpd round-up') !== -1;
+        });
+        // Deduplicate by date+activity (newsletter logs 2 entries: mortgage + protection)
+        var nlSeen = {};
+        var nlUniq = nlEntries.filter(function(e) {
+          var key = (e.date || '') + '|' + (e.activity || '');
+          if (nlSeen[key]) return false;
+          nlSeen[key] = true;
+          return true;
+        });
+        if (nlUniq.length) {
+          nlEl.innerHTML =
+            '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + nlUniq.length + ' newsletter' + (nlUniq.length!==1?'s':'') + ' read</div>' +
+            '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            nlUniq.map(function(e) {
+              return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">' +
+                '<span style="font-size:12px;color:#1a2a3a;flex:1;">' + escHtml(e.activity || 'Newsletter') + '</span>' +
+                '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (e.date || '') + '</span>' +
+              '</div>';
+            }).join('') + '</div>';
+        } else {
+          nlEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No newsletters read yet</div>';
+        }
+      }
 
       // ── Sales Process Access (from CPD log) ──
       var spEl = document.getElementById('bp-sales-process');
