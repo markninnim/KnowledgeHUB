@@ -3325,6 +3325,42 @@ html { height: 100%; }
     </div>
   </div>
 
+  <!-- ── Pay tab ──────────────────────────────────────────── -->
+  <div id="tab-pay" class="tab-pane">
+    <div style="max-width:960px;margin:0 auto;padding:32px 24px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#003768;letter-spacing:-.3px;">Commission Statements</div>
+          <div style="font-size:13px;color:#9bafc0;margin-top:3px;">Protection trail · provider panel</div>
+        </div>
+      </div>
+      <!-- States -->
+      <div id="pay-loading" style="text-align:center;padding:80px 0;color:#9bafc0;font-size:14px;">
+        <div style="font-size:32px;margin-bottom:12px;opacity:.4;">£</div>
+        Loading statements…
+      </div>
+      <div id="pay-no-parser" style="display:none;background:#fff8ec;border:1px solid #fcb034;border-radius:10px;padding:16px 20px;font-size:13px;color:#7a5300;">
+        The Excel parser is not yet available. This will resolve after the next deploy.
+      </div>
+      <div id="pay-no-data" style="display:none;text-align:center;padding:80px 0;color:#9bafc0;">
+        <div style="font-size:40px;margin-bottom:14px;opacity:.3;">£</div>
+        <div style="font-size:16px;font-weight:600;color:#3a4f63;margin-bottom:6px;">No statements found</div>
+        <div style="font-size:13px;">Commission files matching your name haven't been uploaded yet.</div>
+      </div>
+      <div id="pay-content" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ── Performance Zone tab ──────────────────────────────── -->
+  <div id="tab-performance-zone" class="tab-pane">
+    <div id="pz-main" style="padding:32px 40px;">
+      <div style="text-align:center;padding:60px 0;color:#6b7c8f;">
+        <div style="font-size:14px;">Loading brokers…</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 <div id="cp-modal" onclick="if(event.target===this)closeCp()">
   <div id="cp-box">
@@ -3532,43 +3568,6 @@ html { height: 100%; }
     </div>
   </div>
 </div>
-
-  <!-- ── Pay tab ──────────────────────────────────────────── -->
-  <div id="tab-pay" class="tab-pane">
-    <div style="max-width:960px;margin:0 auto;padding:32px 24px;">
-      <!-- Header -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <div style="font-size:22px;font-weight:800;color:#003768;letter-spacing:-.3px;">Commission Statements</div>
-          <div style="font-size:13px;color:#9bafc0;margin-top:3px;">Protection trail · provider panel</div>
-        </div>
-      </div>
-      <!-- States -->
-      <div id="pay-loading" style="text-align:center;padding:80px 0;color:#9bafc0;font-size:14px;">
-        <div style="font-size:32px;margin-bottom:12px;opacity:.4;">£</div>
-        Loading statements…
-      </div>
-      <div id="pay-no-parser" style="display:none;background:#fff8ec;border:1px solid #fcb034;border-radius:10px;padding:16px 20px;font-size:13px;color:#7a5300;">
-        The Excel parser is not yet available. This will resolve after the next deploy.
-      </div>
-      <div id="pay-no-data" style="display:none;text-align:center;padding:80px 0;color:#9bafc0;">
-        <div style="font-size:40px;margin-bottom:14px;opacity:.3;">£</div>
-        <div style="font-size:16px;font-weight:600;color:#3a4f63;margin-bottom:6px;">No statements found</div>
-        <div style="font-size:13px;">Commission files matching your name haven't been uploaded yet.</div>
-      </div>
-      <div id="pay-content" style="display:none;"></div>
-    </div>
-  </div>
-
-  <!-- ── Performance Zone tab ──────────────────────────────── -->
-  <div id="tab-performance-zone" class="tab-pane">
-    <div id="pz-main" style="padding:32px 40px;">
-      <div style="text-align:center;padding:60px 0;color:#6b7c8f;">
-        <div style="font-size:14px;">Loading brokers…</div>
-      </div>
-    </div>
-  </div>
-
 
 <!-- ── Admin Panel ─────────────────────────────────────────── -->
 <div id="admin-modal" onclick="if(event.target===this)closeAdminPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
