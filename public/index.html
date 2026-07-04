@@ -7197,21 +7197,31 @@ function openBrokerProfile(email, name) {
                 bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No readable commission files</div>';
                 return;
               }
-              // Sort by year desc, then month desc
-              var MONTH_ORDER = ['january','february','march','april','may','june','july','august','september','october','november','december'];
-              valid.sort(function(a, b) {
-                var ay = parseInt(a.year||0,10), by = parseInt(b.year||0,10);
-                if (ay !== by) return by - ay; // newest year first
-                var am = a.monthName ? MONTH_ORDER.indexOf(a.monthName.toLowerCase()) : -1;
-                var bm = b.monthName ? MONTH_ORDER.indexOf(b.monthName.toLowerCase()) : -1;
-                return bm - am; // newest month first
-              });
+              // Sort by pay cycle date: derive year from statementDate (Dec's statementDate is Jan next year)
+              function rtfCycleKey(s) {
+                var mi = typeof s.monthIndex === 'number' ? s.monthIndex : -1;
+                var yr;
+                if (s.statementDate) {
+                  var sdParts = s.statementDate.trim().split(/\s+/);
+                  var sdYr = parseInt(sdParts[sdParts.length - 1], 10);
+                  yr = (!isNaN(sdYr) && mi === 11) ? sdYr - 1 : sdYr;
+                } else {
+                  yr = parseInt(s.year || 0, 10);
+                }
+                return (isNaN(yr) ? 0 : yr) * 100 + (mi >= 0 ? mi : 0);
+              }
+              valid.sort(function(a, b) { return rtfCycleKey(b) - rtfCycleKey(a); });
               var html = '';
               valid.forEach(function(s) {
                 var rowAmt = s.type === 'rtf' ? (s.totalPay || 0) : (s.total || 0);
-                var dateLabel = s.type === 'rtf' && s.monthName
-                  ? s.monthName + ' ' + (s.statementDate ? s.statementDate.split(' ').pop() : s.year)
-                  : (s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : (s.filename || s.year));
+                var dateLabel;
+                if (s.type === 'rtf' && s.monthName) {
+                  var sdYr = s.statementDate ? parseInt(s.statementDate.trim().split(/\s+/).pop(), 10) : parseInt(s.year, 10);
+                  var labelYr = (!isNaN(sdYr) && s.monthIndex === 11) ? sdYr - 1 : sdYr;
+                  dateLabel = s.monthName + ' ' + (isNaN(labelYr) ? (s.year || '') : labelYr);
+                } else {
+                  dateLabel = s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : (s.filename || s.year);
+                }
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">';
                 html += '<span style="font-size:12px;color:#3a4f63;">'+escHtml(dateLabel)+'</span>';
                 html += '<span style="font-size:13px;font-weight:700;color:#003768;">£'+rowAmt.toFixed(2)+'</span>';
