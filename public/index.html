@@ -7190,7 +7190,7 @@ function openBrokerProfile(email, name) {
                   .then(function(r){ return r.arrayBuffer(); })
                   .then(function(buf) {
                     try {
-                      var p = payParseXlsxBuffer(new Uint8Array(buf));
+                      var p = payParseXlsxBuffer(new Uint8Array(buf), fobj.name);
                       p.filename = fobj.name; p.year = fobj.year; p.type = 'xlsx';
                       return p;
                     } catch(e) { return { filename: fobj.name, year: fobj.year, type: 'xlsx', error: e.message }; }
@@ -9407,21 +9407,16 @@ function payMonthKey(filename, folder, yearHint) {
   return null;
 }
 
-// Parse a raw ArrayBuffer — auto-detects L&G vs Vitality/simple format
+// Parse a raw ArrayBuffer — routes by filename pattern
+// "{BrokerName} - {DateCode}.xlsx"  →  initial commission (Vitality/headerless)
+// "{BrokerName}.xlsx"               →  L&G and renewal
 function payParseXlsxBuffer(buf, filename) {
   var wb   = XLSX.read(buf, { type: 'array', cellDates: true });
   var ws   = wb.Sheets[wb.SheetNames[0]];
   var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  var r0h  = (rows[0] || []).map(function(c){ return String(c||'').trim().toUpperCase(); });
-  var r1h  = (rows[1] || []).map(function(c){ return String(c||'').trim().toUpperCase(); });
-  var isLG  = r1h.indexOf('COMMISSION-AMT') !== -1;
-  var hasVitHeader = r0h.indexOf('AMOUNT') !== -1 || (r0h.indexOf('PRODUCT') !== -1 && r0h.indexOf('PROVIDER') !== -1);
-  // Headerless Vitality: row 0 all blank, row 1 has positional data (broker string, numeric amount at end)
-  var r0empty = r0h.every(function(c){ return !c; });
-  var r1 = rows[1] || [];
-  var r1hasData = r1.length >= 5 && typeof r1[r1.length-1] === 'number' && r1[0] != null;
-  var isVit = hasVitHeader || (!isLG && r0empty && r1hasData);
-  if (isVit && !isLG) return payParseXlsxVitality(rows, filename);
+  // Filename contains " -" (space then dash) → initial/Vitality; otherwise → L&G
+  var isVit = (filename || '').indexOf(' -') !== -1;
+  if (isVit) return payParseXlsxVitality(rows, filename);
   return payParseXlsxLG(rows, filename);
 }
 
@@ -9669,8 +9664,9 @@ function renderPayStatements(months) {
       var validFiles = m.files.filter(function(f){ return !f.error; });
       // Detect composite mode: RTF + at least one xlsx for the same month
       var rtfStmt = validFiles.find(function(f){ return f.type === 'rtf'; });
-      var vitalityStmt = validFiles.find(function(f){ return f.source === 'vitality'; });
-      var lgStmt = validFiles.find(function(f){ return f.source === 'lg'; });
+      // Filename-based: " -" in name = initial/Vitality; no " -" = L&G and renewal
+      var vitalityStmt = validFiles.find(function(f){ return f.type === 'xlsx' && f.filename && f.filename.indexOf(' -') !== -1; });
+      var lgStmt = validFiles.find(function(f){ return f.type === 'xlsx' && f.filename && f.filename.indexOf(' -') === -1; });
       var compositeMode = !!(rtfStmt && validFiles.some(function(f){ return f.type === 'xlsx'; }));
       var monthTotal = compositeMode ? (rtfStmt.totalPay || 0) :
         validFiles.reduce(function(s,f){ return s+(f.type==='rtf'?(f.totalPay||0):(f.total||0)); }, 0);
