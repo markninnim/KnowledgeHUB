@@ -9708,43 +9708,39 @@ function renderPayStatements(months) {
         payLines.forEach(function(p, pi) {
           // Compute sub-entries for this category
           var subRows = [];
-          if (p.description === 'Initial Commission' && vitEntries.length) {
-            // Initial: show client (product) — same structure as renewal
+          if (p.description === 'Initial Commission') {
             vitEntries.forEach(function(e){ subRows.push({ name: e.client||'—', detail: e.product||'', amount: e.amount }); });
-          } else if (p.description === 'Renewal Commission' && lgRenewalEntries.length) {
+          } else if (p.description === 'Renewal Commission') {
             lgRenewalEntries.forEach(function(e){ var cl=((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim()||'—'; subRows.push({ name: cl, detail: e.productCode, amount: e.amount }); });
-          } else if (p.description === 'L&G Mortgage Fees' && lgNewBizEntries.length) {
+          } else if (p.description === 'L&G Mortgage Fees') {
             lgNewBizEntries.forEach(function(e){ var cl=((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim()||'—'; subRows.push({ name: cl, detail: e.productCode, amount: e.amount }); });
           }
-          var hasSubRows = subRows.length > 0;
-          var isLGMort   = p.description === 'L&G Mortgage Fees';
-          var accBodyId  = 'pacc-'+detailId+'-'+pi;
-          var chevId     = 'pacc-chev-'+detailId+'-'+pi;
-          var startOpen  = isLGMort; // L&G Mortgage Fees open by default
+          var isLGMort  = p.description === 'L&G Mortgage Fees';
+          var accBodyId = 'pacc-'+detailId+'-'+pi;
+          var chevId    = 'pacc-chev-'+detailId+'-'+pi;
+          var startOpen = isLGMort;
+          var noEntries = subRows.length === 0;
 
-          // For Renewal Commission: net = sum of renewal entries (trail paid at 100%, no deduction)
-          var displayNet = p.net;
-          if (displayNet == null && p.description === 'Renewal Commission' && lgRenewalEntries.length) {
-            displayNet = parseFloat(lgRenewalEntries.reduce(function(s,e){ return s+e.amount; }, 0).toFixed(4));
-          }
+          // Renewal Commission: trail paid at 100%, so net = gross
+          var displayNet = p.description === 'Renewal Commission' ? p.gross : p.net;
 
-          // Category row in its own tbody
+          // Category row — always accordion-enabled
           html += '<tbody>';
-          html += '<tr style="border-top:1px solid #f0f4f8;'+(hasSubRows?'cursor:pointer;':'')+'" '+
-            (hasSubRows?'onclick="payToggleCat(\''+accBodyId+'\',\''+chevId+'\')" ':'')+
+          html += '<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" '+
+            'onclick="payToggleCat(\''+accBodyId+'\',\''+chevId+'\')" '+
             'onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
           html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:600;">'+escHtml(p.description)+
-            (hasSubRows?' <span id="'+chevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">'+(startOpen?'&#9660;':'&#9658;')+'</span>':'')+
-            (hasSubRows?' <span style="font-size:10px;color:#9bafc0;font-weight:400;margin-left:6px;">'+subRows.length+' '+(subRows.length===1?'entry':'entries')+'</span>':'')+
+            ' <span id="'+chevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">'+(startOpen?'&#9660;':'&#9658;')+'</span>'+
+            (!noEntries?' <span style="font-size:10px;color:#9bafc0;font-weight:400;margin-left:6px;">'+subRows.length+' '+(subRows.length===1?'entry':'entries')+'</span>':'')+
             '</td>';
           html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
           html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
           html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(displayNet!=null?'£'+displayNet.toFixed(2):'—')+'</td>';
           html += '</tr></tbody>';
 
-          // Collapsible sub-entries tbody
-          if (hasSubRows) {
-            html += '<tbody id="'+accBodyId+'" style="display:'+(startOpen?'table-row-group':'none')+'">';
+          // Collapsible sub-entries tbody — always rendered
+          html += '<tbody id="'+accBodyId+'" style="display:'+(startOpen?'table-row-group':'none')+'">';
+          if (!noEntries) {
             subRows.forEach(function(e) {
               html += '<tr style="background:#f8fafc;border-top:1px dashed #e0eaf4;">';
               html += '<td style="padding:7px 22px 7px 40px;font-size:12px;color:#5a7090;"><span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>'+escHtml(e.name)+(e.detail?' <span style="color:#9bafc0;font-size:11px;">('+escHtml(e.detail)+')</span>':'')+'</td>';
@@ -9753,8 +9749,12 @@ function renderPayStatements(months) {
               html += '<td style="padding:7px 16px;text-align:right;font-size:12px;font-weight:600;color:#003768;font-variant-numeric:tabular-nums;">£'+e.amount.toFixed(2)+'</td>';
               html += '</tr>';
             });
-            html += '</tbody>';
+          } else {
+            html += '<tr style="background:#f8fafc;border-top:1px dashed #e0eaf4;">';
+            html += '<td colspan="4" style="padding:8px 22px 8px 40px;font-size:12px;color:#9bafc0;font-style:italic;">No policy-level detail available for this period</td>';
+            html += '</tr>';
           }
+          html += '</tbody>';
         });
 
         // Payments totals in final tbody
@@ -9765,21 +9765,41 @@ function renderPayStatements(months) {
         html += '<td></td>';
         html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalNet!=null?'£'+rtfStmt.totalNet.toFixed(2):'')+'</td>';
         html += '</tr>';
+        html += '</tbody>';
 
-        // Adjustments (carryover etc.)
+        // Adjustments (carryover etc.) — accordion, same pattern as payment rows
         var adjs = (rtfStmt.adjustments||[]).filter(function(a){ return a.gross !== 0 && a.gross != null; });
         if (adjs.length) {
-          html += '<tr><td colspan="4" style="padding:7px 22px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;background:#fafbfc;border-top:1px solid #e8ecf0;letter-spacing:.06em;">Adjustments</td></tr>';
-          adjs.forEach(function(a) {
+          html += '<tbody><tr><td colspan="4" style="padding:7px 22px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;background:#fafbfc;border-top:1px solid #e8ecf0;letter-spacing:.06em;">Adjustments</td></tr></tbody>';
+          adjs.forEach(function(a, ai) {
             var isNeg = a.gross < 0;
-            html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<td style="padding:10px 22px;font-style:italic;color:'+(isNeg?'#7a3300':'#1a2a3a')+';font-size:12px;">'+escHtml(a.description)+'</td>';
+            var isCarry = /carried\s+over/i.test(a.description);
+            var adjBodyId = 'padj-'+detailId+'-'+ai;
+            var adjChevId = 'padj-chev-'+detailId+'-'+ai;
+            html += '<tbody>';
+            html += '<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" onclick="payToggleCat(\''+adjBodyId+'\',\''+adjChevId+'\')" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
+            html += '<td style="padding:10px 22px;font-style:italic;color:'+(isNeg?'#7a3300':'#1a2a3a')+';font-size:12px;">'+escHtml(a.description)+
+              ' <span id="'+adjChevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">&#9658;</span></td>';
             html += '<td style="padding:10px 16px;text-align:right;color:'+(isNeg?'#c0392b':'#3a4f63')+';font-weight:600;font-variant-numeric:tabular-nums;">'+(isNeg?'−':'')+'£'+Math.abs(a.gross).toFixed(2)+'</td>';
-            html += '<td></td><td></td></tr>';
+            html += '<td></td><td></td>';
+            html += '</tr></tbody>';
+            html += '<tbody id="'+adjBodyId+'" style="display:none">';
+            html += '<tr style="background:'+(isNeg?'#fff8f4':'#f8fafc')+';border-top:1px dashed '+(isNeg?'#f0d0c0':'#e0eaf4')+';">';
+            html += '<td colspan="4" style="padding:8px 22px 8px 40px;font-size:12px;color:'+(isNeg?'#7a3300':'#5a7090')+';font-style:italic;">';
+            if (isCarry) {
+              html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Debit carried forward from the previous statement period — offset against this month\'s net pay.';
+            } else if (isNeg) {
+              html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Deduction applied to this statement period.';
+            } else {
+              html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Credit adjustment applied to this statement period.';
+            }
+            html += '</td></tr>';
+            html += '</tbody>';
           });
         }
 
         // Total Pay — prominent dark row
+        html += '<tbody>';
         html += '<tr style="background:#003768;border-top:2px solid #002850;">';
         html += '<td style="padding:14px 22px;font-weight:800;color:#fff;font-size:14px;">Total Pay <span style="font-size:11px;font-weight:400;opacity:.65;">net payments − adjustments</span></td>';
         html += '<td></td><td></td>';
