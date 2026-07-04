@@ -3208,15 +3208,16 @@ function parseRtfPayStatement(rtfContent, filename) {
   ];
   PAY_LINES.forEach(label => {
     const esc = label.replace(/[.+?^${}()|[\]\\]/g, '\\$&'); // regex-safe
-    const re  = new RegExp(esc + ':?\\s*£\\s*([\\d,]+\\.?\\d*)(?:[\\s\\n]+([\\d.]+)%)?(?:[\\s\\n]+£\\s*([\\d,]+\\.?\\d*))?', 'i');
+    // Handle optional leading minus before £ (e.g. "L&G Mortgage Fees: -£293.11")
+    const re  = new RegExp(esc + ':?[\\s\\S]{0,10}?(-?)£\\s*([\\d,]+\\.?\\d*)(?:[\\s\\S]{0,15}?([\\d.]+)%)?(?:[\\s\\S]{0,15}?(-?)£\\s*([\\d,]+\\.?\\d*))?', 'i');
     const m   = text.match(re);
     if (m) {
-      const gross = parseFloat(m[1].replace(/,/g,''));
+      const gross = (m[1] === '-' ? -1 : 1) * parseFloat(m[2].replace(/,/g,''));
       result.payments.push({
         description: label,
         gross,
-        override: m[2] ? parseFloat(m[2]) : null,
-        net:      m[3] ? parseFloat(m[3].replace(/,/g,'')) : null,
+        override: m[3] ? parseFloat(m[3]) : null,
+        net:      m[5] ? (m[4] === '-' ? -1 : 1) * parseFloat(m[5].replace(/,/g,'')) : null,
       });
     }
   });

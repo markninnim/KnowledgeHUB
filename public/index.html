@@ -9433,12 +9433,25 @@ function payParseXlsxLG(rows, filename) {
     }
     return v ? String(v).slice(0, 10) : null;
   }
-  var brokerCell    = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
-  var stmtDateRaw   = rows[0] && rows[0][1] ? rows[0][1] : null;
-  var statementDate = stmtDateRaw ? toDateStr(stmtDateRaw) : null;
-  var headers = (rows[1] || []).map(function(h){ return String(h || '').trim(); });
+  // Some months (JAN/FEB/MAY) have no broker-info row — sheet dimension starts at row 2.
+  // Detect by checking if rows[0] contains known LG header strings.
+  var row0Strs = (rows[0] || []).map(function(c){ return String(c||'').trim(); });
+  var isHeaderAtRow0 = ['SDate','Policy No','Commission-Amt'].some(function(h){
+    return row0Strs.indexOf(h) !== -1;
+  });
+  var brokerCell, statementDate, headers, dataStart;
+  if (isHeaderAtRow0) {
+    brokerCell = ''; statementDate = null;
+    headers = row0Strs; dataStart = 1;
+  } else {
+    brokerCell = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
+    var stmtDateRaw = rows[0] && rows[0][1] ? rows[0][1] : null;
+    statementDate = stmtDateRaw ? toDateStr(stmtDateRaw) : null;
+    headers = (rows[1] || []).map(function(h){ return String(h || '').trim(); });
+    dataStart = 2;
+  }
   var entries = [], total = 0;
-  for (var i = 2; i < rows.length; i++) {
+  for (var i = dataStart; i < rows.length; i++) {
     var r = rows[i];
     if (!r || r.every(function(c){ return c == null; })) continue;
     var row = {};
@@ -9700,7 +9713,7 @@ function renderPayStatements(months) {
         var lgRenewalEntries = lgStmt ? (lgStmt.entries||[]).filter(function(e){ return e.reason === 'R'; }) : [];
         var lgNewBizEntries  = lgStmt ? (lgStmt.entries||[]).filter(function(e){ return e.reason !== 'R'; }) : [];
         var vitEntries       = vitalityStmt ? (vitalityStmt.entries||[]) : [];
-        var payLines = (rtfStmt.payments||[]).filter(function(p){ return p.gross > 0; });
+        var payLines = (rtfStmt.payments||[]).filter(function(p){ return p.gross !== 0 && p.gross != null; });
         // L&G Mortgage Fees at top
         payLines.sort(function(a,b){ return a.description==='L&G Mortgage Fees'?-1:b.description==='L&G Mortgage Fees'?1:0; });
 
@@ -9740,9 +9753,12 @@ function renderPayStatements(months) {
             ' <span id="'+chevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">'+(startOpen?'&#9660;':'&#9658;')+'</span>'+
             (!noEntries?' <span style="font-size:10px;color:#9bafc0;font-weight:400;margin-left:6px;">'+subRows.length+' '+(subRows.length===1?'entry':'entries')+'</span>':'')+
             '</td>';
-          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
+          var isNegPay = p.gross < 0;
+          var grossStr = (isNegPay?'−':'')+'£'+Math.abs(p.gross).toFixed(2);
+          var netStr   = displayNet!=null ? (displayNet<0?'−':'')+'£'+Math.abs(displayNet).toFixed(2) : '—';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:'+(isNegPay?'#c0392b':'#2c4a6e')+';font-variant-numeric:tabular-nums;">'+grossStr+'</td>';
           html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
-          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(displayNet!=null?'£'+displayNet.toFixed(2):'—')+'</td>';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:'+(displayNet!=null&&displayNet<0?'#c0392b':'#003768')+';font-variant-numeric:tabular-nums;">'+netStr+'</td>';
           html += '</tr></tbody>';
 
           // Collapsible sub-entries tbody — always rendered
