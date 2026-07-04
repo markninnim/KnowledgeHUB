@@ -3063,42 +3063,69 @@ app.post('/api/admin/features', requireAdmin, (req, res) => {
 });
 
 // ── Pay: list matching statement files for logged-in user ──────
-// ── Pay: helper — scan PAY/YEAR/BROKER_FOLDER/{xlsx,rtf} ────────
+// ── Pay: helper — scan PAY/BROKER_FOLDER/YEAR/MONTH_FOLDER/{xlsx,rtf} ────
 function payListForLastName(lastName) {
   const payDir = path.join(__dirname, 'public', 'pay');
+  const MONTH_NAMES = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   const result = [];
-  let yearDirs;
+
+  // Top-level: broker folders matching lastName
+  let brokerDirs;
   try {
-    yearDirs = fs.readdirSync(payDir)
-      .filter(d => /^\d{4}$/.test(d) && fs.statSync(path.join(payDir, d)).isDirectory());
+    brokerDirs = fs.readdirSync(payDir)
+      .filter(d => d.toUpperCase().includes(lastName) && fs.statSync(path.join(payDir, d)).isDirectory());
   } catch(_) { return result; }
-  yearDirs.sort((a, b) => b.localeCompare(a)); // newest first
-  for (const year of yearDirs) {
-    const yearPath = path.join(payDir, year);
-    let brokerDirs;
-    try { brokerDirs = fs.readdirSync(yearPath); } catch(_) { continue; }
-    const files = [];
-    for (const bDir of brokerDirs) {
-      if (!bDir.toUpperCase().includes(lastName)) continue;
-      const bPath = path.join(yearPath, bDir);
-      let stmts;
-      try { stmts = fs.readdirSync(bPath).filter(f => /\.(xlsx|rtf)$/i.test(f)); }
-      catch(_) { continue; }
-      // Sort RTF files by month name (newest first); xlsx by filename desc
-      const MONTH_NAMES = ['january','february','march','april','may','june','july','august','september','october','november','december'];
-      stmts.sort((a, b) => {
-        const ai = MONTH_NAMES.indexOf(a.replace(/\.rtf$/i,'').toLowerCase().trim());
-        const bi = MONTH_NAMES.indexOf(b.replace(/\.rtf$/i,'').toLowerCase().trim());
-        if (ai >= 0 && bi >= 0) return bi - ai; // Dec→Jan
-        return b.localeCompare(a);              // xlsx: filename desc
-      });
-      for (const f of stmts) {
-        const type = /\.rtf$/i.test(f) ? 'rtf' : 'xlsx';
-        files.push({ path: `${year}/${bDir}/${f}`, name: f, year, folder: bDir, type });
+
+  for (const brokerFolder of brokerDirs) {
+    const brokerPath = path.join(payDir, brokerFolder);
+
+    // Second level: year directories
+    let yearDirs;
+    try {
+      yearDirs = fs.readdirSync(brokerPath)
+        .filter(d => /^\d{4}$/.test(d) && fs.statSync(path.join(brokerPath, d)).isDirectory());
+    } catch(_) { continue; }
+    yearDirs.sort((a, b) => b.localeCompare(a));
+
+    for (const year of yearDirs) {
+      const yearPath = path.join(brokerPath, year);
+
+      // Third level: month/statement folders
+      let monthDirs;
+      try {
+        monthDirs = fs.readdirSync(yearPath)
+          .filter(d => fs.statSync(path.join(yearPath, d)).isDirectory());
+      } catch(_) { continue; }
+
+      const files = [];
+      for (const monthFolder of monthDirs) {
+        const monthPath = path.join(yearPath, monthFolder);
+        let stmts;
+        try { stmts = fs.readdirSync(monthPath).filter(f => /\.(xlsx|rtf)$/i.test(f)); }
+        catch(_) { continue; }
+
+        stmts.sort((a, b) => {
+          const ai = MONTH_NAMES.indexOf(a.replace(/\.rtf$/i,'').toLowerCase().trim());
+          const bi = MONTH_NAMES.indexOf(b.replace(/\.rtf$/i,'').toLowerCase().trim());
+          if (ai >= 0 && bi >= 0) return bi - ai;
+          return b.localeCompare(a);
+        });
+
+        for (const f of stmts) {
+          const type = /\.rtf$/i.test(f) ? 'rtf' : 'xlsx';
+          files.push({
+            path:   `${brokerFolder}/${year}/${monthFolder}/${f}`,
+            name:   f,
+            year,
+            folder: monthFolder,
+            type
+          });
+        }
       }
+      if (files.length) result.push({ year, files });
     }
-    if (files.length) result.push({ year, files });
   }
+  result.sort((a, b) => parseInt(b.year) - parseInt(a.year));
   return result;
 }
 
@@ -3204,24 +3231,25 @@ function parseRtfPayStatement(rtfContent, filename) {
 }
 
 // ── Pay: parse RTF statement — returns JSON ─────────────────────
-// Path format: YEAR/BROKER_FOLDER/FILENAME.rtf
+// Path format: BROKER_FOLDER/YEAR/MONTH_FOLDER/FILENAME.rtf
 function payPathCheck(subpath) {
-  const parts = (subpath || '').split('/');
-  if (parts.length !== 3) return null;
-  const [year, folder, filename] = parts;
-  if (!/^\d{4}$/.test(year) || /[/\\]|\.\./.test(folder) || /\.\./.test(filename)) return null;
-  return { year, folder, filename };
+  const parts = (subpath || '').split('/').map(decodeURIComponent);
+  if (parts.length !== 4) return null;
+  const [brokerFolder, year, monthFolder, filename] = parts;
+  if (!/^\d{4}$/.test(year)) return null;
+  if ([brokerFolder, monthFolder, filename].some(s => /\.\./.test(s) || /[/\\]/.test(s))) return null;
+  return { brokerFolder, year, monthFolder, filename };
 }
 
 app.get('/api/pay/parse-rtf/*', requireAuth, (req, res) => {
   const caller = req.session.user;
   const p = payPathCheck(req.params[0]);
   if (!p || !/\.rtf$/i.test(p.filename)) return res.status(400).json({ error: 'Invalid path' });
-  const filePath = path.join(__dirname, 'public', 'pay', p.year, p.folder, p.filename);
+  const filePath = path.join(__dirname, 'public', 'pay', p.brokerFolder, p.year, p.monthFolder, p.filename);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
   const lastName = (caller.lastName || '').toUpperCase().trim();
   const allowed  = caller.isSupervisor || caller.isAdmin ||
-                   (lastName && (p.folder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
+                   (lastName && (p.brokerFolder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
   if (!allowed) return res.status(403).json({ error: 'Forbidden' });
   try {
     const rtf = fs.readFileSync(filePath, 'latin1');
@@ -3232,16 +3260,16 @@ app.get('/api/pay/parse-rtf/*', requireAuth, (req, res) => {
 });
 
 // ── Pay: auth-gated file download ──────────────────────────────
-// Path format: YEAR/BROKER_FOLDER/FILENAME.{xlsx,rtf}
+// Path format: BROKER_FOLDER/YEAR/MONTH_FOLDER/FILENAME.{xlsx,rtf}
 app.get('/api/pay/file/*', requireAuth, (req, res) => {
   const caller = req.session.user;
   const p = payPathCheck(req.params[0]);
   if (!p || !/\.(xlsx|rtf)$/i.test(p.filename)) return res.status(400).json({ error: 'Invalid path' });
-  const filePath = path.join(__dirname, 'public', 'pay', p.year, p.folder, p.filename);
+  const filePath = path.join(__dirname, 'public', 'pay', p.brokerFolder, p.year, p.monthFolder, p.filename);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
   const lastName = (caller.lastName || '').toUpperCase().trim();
   const allowed  = caller.isSupervisor || caller.isAdmin ||
-                   (lastName && (p.folder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
+                   (lastName && (p.brokerFolder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
   if (!allowed) return res.status(403).json({ error: 'Forbidden' });
   const ct = /\.rtf$/i.test(p.filename) ? 'application/rtf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   res.setHeader('Content-Type', ct);

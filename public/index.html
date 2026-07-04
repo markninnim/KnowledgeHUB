@@ -9390,15 +9390,20 @@ function payProductBadge(code) {
   return '<span style="display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+c.bg+';color:'+c.color+'">'+escHtml(code)+'</span>';
 }
 
-// Extract month key from a filename like "M NINNIM MAR-26 .xlsx" → {year:2026, month:2, key:202602}
-function payMonthKey(filename) {
+// Extract month from folder name ("MAR"), full month filename ("january.rtf"), or "MAR-26" filename pattern
+function payMonthKey(filename, folder, yearHint) {
   var MMAP = { JAN:0, FEB:1, MAR:2, APR:3, MAY:4, JUN:5, JUL:6, AUG:7, SEP:8, OCT:9, NOV:10, DEC:11 };
-  var m = (filename||'').toUpperCase().match(/\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*[-\s]?(\d{2,4})/);
-  if (m) {
-    var mon = MMAP[m[1]];
-    var yr  = parseInt(m[2]); if (yr < 100) yr += 2000;
-    return { year: yr, month: mon, key: yr * 100 + mon };
-  }
+  var MNAMES = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  // 1. Folder is a bare month abbr (e.g. "MAR")
+  var ff = (folder||'').toUpperCase().match(/^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)$/);
+  if (ff) { var mo=MMAP[ff[1]]; var yr=parseInt(yearHint||0); return { year:yr, month:mo, key:yr*100+mo }; }
+  // 2. "MAR-26" pattern in filename
+  var fm = (filename||'').toUpperCase().match(/\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*[-\s]?(\d{2,4})/);
+  if (fm) { var mo=MMAP[fm[1]]; var yr=parseInt(fm[2]); if(yr<100)yr+=2000; return { year:yr, month:mo, key:yr*100+mo }; }
+  // 3. Full month name as filename base ("january.rtf")
+  var base=(filename||'').toLowerCase().replace(/\.[^.]+$/,'').trim();
+  var mi=MNAMES.indexOf(base);
+  if (mi>=0) { var yr=parseInt(yearHint||0); return { year:yr, month:mi, key:yr*100+mi }; }
   return null;
 }
 
@@ -9503,8 +9508,9 @@ function loadPayData() {
           return fetch('/api/pay/parse-rtf/' + encodedPath)
             .then(function(r){ return r.json(); })
             .then(function(parsed) {
-              parsed.year = fobj.year;
-              parsed.path = fobj.path;
+              parsed.year   = fobj.year;
+              parsed.folder = fobj.folder;
+              parsed.path   = fobj.path;
               return parsed;
             })
             .catch(function(e){ return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'rtf', error: e.message }; });
@@ -9516,9 +9522,10 @@ function loadPayData() {
               try {
                 var parsed = payParseXlsxBuffer(new Uint8Array(buf), fobj.name);
                 parsed.filename = fobj.name;
-                parsed.year = fobj.year;
-                parsed.path = fobj.path;
-                parsed.type = 'xlsx';
+                parsed.year   = fobj.year;
+                parsed.folder = fobj.folder;
+                parsed.path   = fobj.path;
+                parsed.type   = 'xlsx';
                 return parsed;
               } catch(e) {
                 return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'xlsx', error: e.message };
@@ -9527,9 +9534,9 @@ function loadPayData() {
             .catch(function(e){ return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'xlsx', error: e.message }; });
         }
       })).then(function(statements) {
-        // Compute month key for each statement (from filename first, fallback to statementDate)
+        // Compute month key for each statement (folder → filename → statementDate)
         statements.forEach(function(s) {
-          var mk = payMonthKey(s.filename);
+          var mk = payMonthKey(s.filename, s.folder, s.year);
           if (mk) {
             s._mk = mk.key; s._yr = mk.year; s._mo = mk.month;
           } else if (s.type === 'rtf' && typeof s.monthIndex === 'number') {
