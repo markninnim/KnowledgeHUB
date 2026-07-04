@@ -7205,44 +7205,40 @@ function openBrokerProfile(email, name) {
                 bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No readable commission files</div>';
                 return;
               }
-              // Sort by pay cycle date: derive year from statementDate (Dec's statementDate is Jan next year)
-              function rtfCycleKey(s) {
-                var mi = typeof s.monthIndex === 'number' ? s.monthIndex : -1;
-                var yr;
-                if (s.statementDate) {
-                  var sdParts = s.statementDate.trim().split(/\s+/);
-                  var sdYr = parseInt(sdParts[sdParts.length - 1], 10);
-                  yr = (!isNaN(sdYr) && mi === 11) ? sdYr - 1 : sdYr;
-                } else {
-                  yr = parseInt(s.year || 0, 10);
-                }
-                return (isNaN(yr) ? 0 : yr) * 100 + (mi >= 0 ? mi : 0);
-              }
-              valid.sort(function(a, b) { return rtfCycleKey(b) - rtfCycleKey(a); });
-              var html = '';
+              // Build monthly totals from RTF statements only (authoritative source).
+              // Filter to January 2026 onwards.
+              var months = {};
               valid.forEach(function(s) {
-                var rowAmt = s.type === 'rtf' ? (s.totalPay || 0) : (s.total || 0);
-                var dateLabel;
-                if (s.type === 'rtf' && s.monthName) {
-                  var sdYr = s.statementDate ? parseInt(s.statementDate.trim().split(/\s+/).pop(), 10) : parseInt(s.year, 10);
-                  var labelYr = (!isNaN(sdYr) && s.monthIndex === 11) ? sdYr - 1 : sdYr;
-                  dateLabel = s.monthName + ' ' + (isNaN(labelYr) ? (s.year || '') : labelYr);
-                } else {
-                  dateLabel = s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : (s.filename || s.year);
-                }
+                if (s.type !== 'rtf' || !s.monthName) return;
+                var sdYr = s.statementDate ? parseInt(s.statementDate.trim().split(/\s+/).pop(), 10) : parseInt(s.year, 10);
+                var labelYr = (!isNaN(sdYr) && s.monthIndex === 11) ? sdYr - 1 : sdYr;
+                if (isNaN(labelYr) || labelYr < 2026) return;
+                var mi = typeof s.monthIndex === 'number' ? s.monthIndex : 0;
+                var key = labelYr + '-' + mi;
+                months[key] = { label: s.monthName + ' ' + labelYr, total: s.totalPay || 0, sortKey: labelYr * 100 + mi };
+              });
+              var monthArr = Object.keys(months).map(function(k){ return months[k]; })
+                               .sort(function(a, b){ return b.sortKey - a.sortKey; });
+              if (!monthArr.length) {
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No commission data from January 2026</div>';
+                return;
+              }
+              var html = '';
+              monthArr.forEach(function(m) {
+                var isNeg = m.total < 0;
+                var amtStr = (isNeg ? '−' : '') + '£' + Math.abs(m.total).toFixed(2);
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">';
-                html += '<span style="font-size:12px;color:#3a4f63;">'+escHtml(dateLabel)+'</span>';
-                html += '<span style="font-size:13px;font-weight:700;color:#003768;">£'+rowAmt.toFixed(2)+'</span>';
+                html += '<span style="font-size:12px;color:#3a4f63;">'+escHtml(m.label)+'</span>';
+                html += '<span style="font-size:13px;font-weight:700;color:'+(isNeg?'#c0392b':'#003768')+';">'+amtStr+'</span>';
                 html += '</div>';
               });
-              var grand = valid.reduce(function(s,x){ return s + (x.type === 'rtf' ? (x.totalPay||0) : (x.total||0)); }, 0);
+              var grand = monthArr.reduce(function(s, m){ return s + m.total; }, 0);
+              var grandNeg = grand < 0;
+              var grandStr = (grandNeg ? '−' : '') + '£' + Math.abs(grand).toFixed(2);
               html += '<div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1.5px solid #e8ecf0;">';
-              html += '<span style="font-size:11px;color:#6b7c8f;font-weight:600;">TOTAL TRAIL</span>';
-              html += '<span style="font-size:14px;font-weight:800;color:#003768;">£'+grand.toFixed(2)+'</span>';
+              html += '<span style="font-size:11px;color:#6b7c8f;font-weight:600;">TOTAL COMMISSION</span>';
+              html += '<span style="font-size:14px;font-weight:800;color:'+(grandNeg?'#c0392b':'#003768')+';">'+grandStr+'</span>';
               html += '</div>';
-              if (valid.length < stmts.length) {
-                html += '<div style="font-size:10px;color:#fcb034;margin-top:8px;">'+(stmts.length-valid.length)+' file(s) could not be read</div>';
-              }
               bpPayEl.innerHTML = html;
             })
             .catch(function(){ bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">Commission data unavailable</div>'; });
