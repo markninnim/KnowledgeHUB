@@ -7163,40 +7163,51 @@ function openBrokerProfile(email, name) {
           fetch('/api/pay/broker/list?lastName=' + encodeURIComponent(bpLastName))
             .then(function(r){ return r.json(); })
             .then(function(pd) {
-              var files = pd.files || [];
-              if (files.length === 0) {
+              var years = pd.years || [];
+              var allFiles = [];
+              years.forEach(function(y){ y.files.forEach(function(f){ allFiles.push(f); }); });
+              if (!allFiles.length) {
                 bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No commission files found</div>';
                 return;
               }
-              return Promise.all(files.map(function(fname) {
-                return fetch('/api/pay/file/' + encodeURIComponent(fname))
+              return Promise.all(allFiles.map(function(fobj) {
+                var encodedPath = fobj.path.split('/').map(encodeURIComponent).join('/');
+                if (fobj.type === 'rtf') {
+                  return fetch('/api/pay/parse-rtf/' + encodedPath)
+                    .then(function(r){ return r.json(); })
+                    .then(function(p){ p.year = fobj.year; return p; })
+                    .catch(function(e){ return { filename: fobj.name, year: fobj.year, type: 'rtf', error: e.message }; });
+                }
+                return fetch('/api/pay/file/' + encodedPath)
                   .then(function(r){ return r.arrayBuffer(); })
                   .then(function(buf) {
                     try {
                       var p = payParseXlsxBuffer(new Uint8Array(buf));
-                      p.filename = fname;
+                      p.filename = fobj.name; p.year = fobj.year; p.type = 'xlsx';
                       return p;
-                    } catch(e) { return { filename: fname, error: e.message }; }
+                    } catch(e) { return { filename: fobj.name, year: fobj.year, type: 'xlsx', error: e.message }; }
                   })
-                  .catch(function(e){ return { filename: fname, error: e.message }; });
+                  .catch(function(e){ return { filename: fobj.name, year: fobj.year, error: e.message }; });
               }));
             })
             .then(function(stmts) {
               if (!stmts) return;
               var valid = stmts.filter(function(s){ return !s.error; });
-              if (valid.length === 0) {
+              if (!valid.length) {
                 bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No readable commission files</div>';
                 return;
               }
               var html = '';
               valid.forEach(function(s) {
-                var dateLabel = s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : s.filename;
+                var dateLabel = s.type === 'rtf' && s.monthName
+                  ? s.monthName + (s.statementDate ? ' ' + s.statementDate.split(' ').pop() : ' ' + s.year)
+                  : (s.statementDate ? new Date(s.statementDate+'T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : (s.filename || s.year));
                 html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">';
                 html += '<span style="font-size:12px;color:#3a4f63;">'+escHtml(dateLabel)+'</span>';
                 html += '<span style="font-size:13px;font-weight:700;color:#003768;">£'+(s.total||0).toFixed(2)+'</span>';
                 html += '</div>';
               });
-              var grand = valid.reduce(function(s,x){ return s+(x.total||0); }, 0);
+              var grand = valid.reduce(function(s,x){ return s + (x.type === 'rtf' ? (x.totalPay||0) : (x.total||0)); }, 0);
               html += '<div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1.5px solid #e8ecf0;">';
               html += '<span style="font-size:11px;color:#6b7c8f;font-weight:600;">TOTAL TRAIL</span>';
               html += '<span style="font-size:14px;font-weight:800;color:#003768;">£'+grand.toFixed(2)+'</span>';
@@ -9417,131 +9428,258 @@ function loadPayData() {
   fetch('/api/pay/list')
     .then(function(r){ return r.json(); })
     .then(function(data) {
-      if (!data.files || data.files.length === 0) {
+      var years = data.years || [];
+      if (!years.length) {
         document.getElementById('pay-loading').style.display = 'none';
         document.getElementById('pay-no-data').style.display = 'block';
         return;
       }
-      // Fetch and parse all files in parallel
-      return Promise.all(data.files.map(function(fname) {
-        return fetch('/api/pay/file/' + encodeURIComponent(fname))
-          .then(function(r){ return r.arrayBuffer(); })
-          .then(function(buf) {
-            try {
-              var parsed = payParseXlsxBuffer(new Uint8Array(buf));
-              parsed.filename = fname;
+      // Flatten all files for parallel fetch
+      var allFiles = [];
+      years.forEach(function(y){ y.files.forEach(function(f){ allFiles.push(f); }); });
+      return Promise.all(allFiles.map(function(fobj) {
+        var encodedPath = fobj.path.split('/').map(encodeURIComponent).join('/');
+        if (fobj.type === 'rtf') {
+          // RTF: server parses and returns JSON
+          return fetch('/api/pay/parse-rtf/' + encodedPath)
+            .then(function(r){ return r.json(); })
+            .then(function(parsed) {
+              parsed.year = fobj.year;
+              parsed.path = fobj.path;
               return parsed;
-            } catch(e) {
-              return { filename: fname, error: e.message };
-            }
-          })
-          .catch(function(e){ return { filename: fname, error: e.message }; });
-      }));
-    })
-    .then(function(statements) {
-      if (!statements) return;
-      document.getElementById('pay-loading').style.display = 'none';
-      renderPayStatements(statements);
-      document.getElementById('pay-content').style.display = 'block';
+            })
+            .catch(function(e){ return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'rtf', error: e.message }; });
+        } else {
+          // XLSX: stream to client, parse with XLSX.js
+          return fetch('/api/pay/file/' + encodedPath)
+            .then(function(r){ return r.arrayBuffer(); })
+            .then(function(buf) {
+              try {
+                var parsed = payParseXlsxBuffer(new Uint8Array(buf));
+                parsed.filename = fobj.name;
+                parsed.year = fobj.year;
+                parsed.path = fobj.path;
+                parsed.type = 'xlsx';
+                return parsed;
+              } catch(e) {
+                return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'xlsx', error: e.message };
+              }
+            })
+            .catch(function(e){ return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'xlsx', error: e.message }; });
+        }
+      })).then(function(statements) {
+        // Re-group by year preserving order
+        var byYear = {};
+        statements.forEach(function(s){ if (!byYear[s.year]) byYear[s.year] = []; byYear[s.year].push(s); });
+        var grouped = years.map(function(y){ return { year: y.year, statements: byYear[y.year] || [] }; });
+        document.getElementById('pay-loading').style.display = 'none';
+        renderPayStatements(grouped);
+        document.getElementById('pay-content').style.display = 'block';
+      });
     })
     .catch(function() {
       document.getElementById('pay-loading').innerHTML = '<div style="color:#c0392b;font-size:14px;">Could not load pay data. Please try again.</div>';
     });
 }
 
-function renderPayStatements(statements) {
+function renderPayStatements(grouped) {
+  // grouped = [{year, statements:[{...}]}, ...]
+  var grandTotal = 0;
+  grouped.forEach(function(g){
+    g.statements.forEach(function(s){
+      if (!s.error) grandTotal += s.type === 'rtf' ? (s.totalPay || 0) : (s.total || 0);
+    });
+  });
+
   var html = '';
 
-  statements.forEach(function(stmt, idx) {
-    if (stmt.error) {
-      html += '<div style="background:#fff8ec;border:1px solid #fcb034;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#7a5300;">';
-      html += '<strong>' + escHtml(stmt.filename) + '</strong> — could not be read (' + escHtml(stmt.error) + ')';
-      html += '</div>';
-      return;
-    }
+  // Grand total banner
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#003768;border-radius:12px;margin-bottom:24px;">';
+  html += '<div><div style="color:rgba(255,255,255,.7);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">Total Trail Commission</div>';
+  var totalStmts = grouped.reduce(function(n,g){ return n + g.statements.filter(function(s){return !s.error;}).length; }, 0);
+  html += '<div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:2px;">' + totalStmts + ' statement' + (totalStmts !== 1 ? 's' : '') + '</div></div>';
+  html += '<div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px;">£' + grandTotal.toFixed(2) + '</div>';
+  html += '</div>';
 
-    var total = stmt.total || 0;
-    var entries = stmt.entries || [];
-    var byProduct = stmt.byProduct || {};
-    var statDate  = stmt.statementDate || '';
-    var monthLabel = statDate ? new Date(statDate + 'T12:00:00').toLocaleDateString('en-GB', { month:'long', year:'numeric' }) : stmt.filename;
-
-    html += '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;padding:24px 28px;margin-bottom:24px;">';
-
-    // Header
-    html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">';
-    html += '<div>';
-    html += '<div style="font-size:18px;font-weight:700;color:#003768;margin-bottom:3px;">' + escHtml(monthLabel) + '</div>';
-    html += '<div style="font-size:12px;color:#6b7c8f;">Protection trail commission · All renewals (R) · ' + escHtml(stmt.brokerCell || '') + '</div>';
+  // Year tabs (only if multiple years)
+  if (grouped.length > 1) {
+    html += '<div style="display:flex;gap:8px;margin-bottom:20px;" id="pay-year-tabs">';
+    grouped.forEach(function(g, yi) {
+      var active = yi === 0;
+      html += '<button onclick="payShowYear(' + yi + ')" id="pay-year-tab-' + yi + '" style="padding:6px 20px;border-radius:20px;border:1.5px solid ' + (active ? '#003768' : '#d8e0e8') + ';background:' + (active ? '#003768' : '#fff') + ';color:' + (active ? '#fff' : '#3a4f63') + ';font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">' + escHtml(g.year) + '</button>';
+    });
     html += '</div>';
-    html += '<div style="text-align:right;">';
-    html += '<div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Total commission</div>';
-    html += '<div style="font-size:28px;font-weight:700;color:#003768;">£' + total.toFixed(2) + '</div>';
-    html += '</div></div>';
+  }
 
-    // Product breakdown chips
-    var productKeys = Object.keys(byProduct);
-    if (productKeys.length) {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">';
-      productKeys.forEach(function(code) {
-        var c = PAY_PRODUCT_COLORS[code] || { bg:'#f0f4f8', color:'#3a4f63' };
-        var label = PAY_PRODUCT_LABELS[code] || code;
-        html += '<div style="background:'+c.bg+';border-radius:8px;padding:8px 14px;">';
-        html += '<div style="font-size:11px;font-weight:600;color:'+c.color+';margin-bottom:1px;">'+escHtml(code)+'</div>';
-        html += '<div style="font-size:10px;color:'+c.color+';opacity:0.75;margin-bottom:4px;">'+escHtml(label)+'</div>';
-        html += '<div style="font-size:16px;font-weight:700;color:'+c.color+';">£'+byProduct[code].toFixed(2)+'</div>';
+  // Year sections
+  grouped.forEach(function(g, yi) {
+    var yearTotal = g.statements.reduce(function(s, st){ return s + (st.error ? 0 : (st.type === 'rtf' ? (st.totalPay||0) : (st.total||0))); }, 0);
+    var validCount = g.statements.filter(function(s){ return !s.error; }).length;
+    html += '<div class="pay-year-section" id="pay-year-' + yi + '" style="display:' + (yi === 0 ? 'block' : 'none') + ';">';
+    html += '<div style="font-size:12px;color:#6b7c8f;font-weight:500;margin-bottom:14px;">' + escHtml(g.year) + ' · £' + yearTotal.toFixed(2) + ' total · ' + validCount + ' statement' + (validCount !== 1 ? 's' : '') + '</div>';
+
+    g.statements.forEach(function(stmt, si) {
+      var detailId = 'pay-detail-' + yi + '-' + si;
+      var isFirst  = yi === 0 && si === 0;
+
+      if (stmt.error) {
+        html += '<div style="background:#fff8ec;border:1px solid #fcb034;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#7a5300;">';
+        html += '<strong>' + escHtml(stmt.filename) + '</strong> — could not be read (' + escHtml(stmt.error) + ')';
         html += '</div>';
-      });
+        return;
+      }
+
+      var isRtf    = stmt.type === 'rtf';
+      var total    = isRtf ? (stmt.totalPay || 0) : (stmt.total || 0);
+      var statDate = stmt.statementDate || '';
+
+      // Month label: RTF uses monthName from filename, xlsx derives from statementDate
+      var monthLabel;
+      if (isRtf && stmt.monthName) {
+        var sdYear = statDate ? statDate.split(' ').pop() : stmt.year;
+        monthLabel = stmt.monthName + ' ' + sdYear;
+      } else if (statDate) {
+        monthLabel = new Date(statDate + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      } else {
+        monthLabel = stmt.filename || stmt.year;
+      }
+
+      var subLabel = isRtf
+        ? (statDate || (stmt.bacsDate ? 'BACS: ' + stmt.bacsDate : 'Monthly statement'))
+        : ((stmt.entries || []).length + ' transaction' + ((stmt.entries||[]).length !== 1 ? 's' : '') + ' · Protection trail');
+
+      // Card
+      html += '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;margin-bottom:12px;overflow:hidden;">';
+
+      // Clickable header
+      html += '<div onclick="payToggleCard(\'' + detailId + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;cursor:pointer;user-select:none;">';
+      html += '<div style="display:flex;align-items:center;gap:12px;">';
+      html += '<span id="pay-chev-' + detailId + '" style="font-size:13px;color:#9bafc0;">' + (isFirst ? '▾' : '▸') + '</span>';
+      html += '<div><div style="font-size:16px;font-weight:700;color:#003768;">' + escHtml(monthLabel) + '</div>';
+      html += '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(subLabel) + '</div></div>';
       html += '</div>';
-    }
+      html += '<div style="text-align:right;"><div style="font-size:11px;color:#9bafc0;margin-bottom:1px;">' + (isRtf ? 'Net pay' : 'Commission') + '</div>';
+      html += '<div style="font-size:22px;font-weight:800;color:#003768;letter-spacing:-.3px;">£' + total.toFixed(2) + '</div></div>';
+      html += '</div>';
 
-    // Toggle for detail table
-    var detailId = 'pay-detail-' + idx;
-    html += '<button onclick="payToggleDetail(\''+detailId+'\','+idx+')" style="font-size:12px;color:#003768;background:none;border:1px solid #e8ecf0;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;margin-bottom:12px;" id="pay-toggle-'+idx+'">▼ Show '+entries.length+' transactions</button>';
+      // Expandable body
+      html += '<div id="' + detailId + '" style="display:' + (isFirst ? 'block' : 'none') + ';">';
 
-    html += '<div id="'+detailId+'" style="display:none;overflow-x:auto;">';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
-    html += '<thead><tr style="border-bottom:1.5px solid #e8ecf0;">';
-    ['Client','Product','Policy No.','Agent No.','Transaction Date','Commission'].forEach(function(h){
-      html += '<th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">'+h+'</th>';
+      if (isRtf) {
+        // ── RTF: category breakdown table ──────────────────────
+        var payments = (stmt.payments || []).filter(function(p){ return p.gross > 0; });
+        var adjustments = (stmt.adjustments || []).filter(function(a){ return a.gross > 0; });
+        html += '<div style="overflow-x:auto;border-top:1px solid #f0f4f8;">';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+        html += '<thead><tr style="background:#f7f9fc;">';
+        ['Description', 'Gross', 'Override', 'Net'].forEach(function(h) {
+          var align = (h === 'Gross' || h === 'Net') ? 'right' : 'left';
+          html += '<th style="text-align:' + align + ';padding:8px 16px;font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">' + h + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        payments.forEach(function(p) {
+          html += '<tr style="border-top:1px solid #f0f4f8;">';
+          html += '<td style="padding:9px 16px;color:#1a2a3a;font-weight:500;">' + escHtml(p.description) + '</td>';
+          html += '<td style="padding:9px 16px;text-align:right;color:#3a4f63;">£' + p.gross.toFixed(2) + '</td>';
+          html += '<td style="padding:9px 16px;text-align:left;color:#6b7c8f;">' + (p.override != null ? p.override.toFixed(0) + '%' : '—') + '</td>';
+          html += '<td style="padding:9px 16px;text-align:right;font-weight:600;color:#003768;">' + (p.net != null ? '£' + p.net.toFixed(2) : '—') + '</td>';
+          html += '</tr>';
+        });
+        if (adjustments.length) {
+          html += '<tr><td colspan="4" style="padding:6px 16px;font-size:11px;font-weight:600;color:#6b7c8f;background:#fafbfc;border-top:1px solid #e8ecf0;">Adjustments</td></tr>';
+          adjustments.forEach(function(a) {
+            html += '<tr style="border-top:1px solid #f0f4f8;">';
+            html += '<td style="padding:9px 16px;color:#1a2a3a;">' + escHtml(a.description) + '</td>';
+            html += '<td style="padding:9px 16px;text-align:right;color:#3a4f63;">£' + a.gross.toFixed(2) + '</td>';
+            html += '<td></td>';
+            html += '<td style="padding:9px 16px;text-align:right;font-weight:600;color:#003768;">' + (a.net != null ? '£' + a.net.toFixed(2) : '—') + '</td>';
+            html += '</tr>';
+          });
+        }
+        // Totals footer
+        html += '<tr style="background:#f7f9fc;border-top:1.5px solid #e8ecf0;">';
+        html += '<td style="padding:9px 16px;font-size:11px;color:#6b7c8f;font-weight:600;">Total</td>';
+        html += '<td style="padding:9px 16px;text-align:right;font-size:12px;color:#3a4f63;">' + (stmt.totalGross != null ? '£' + stmt.totalGross.toFixed(2) : '') + '</td>';
+        html += '<td></td>';
+        html += '<td style="padding:9px 16px;text-align:right;font-weight:800;color:#003768;font-size:14px;">£' + total.toFixed(2) + '</td>';
+        html += '</tr>';
+        if (stmt.bacsDate) {
+          html += '<tr><td colspan="4" style="padding:8px 16px;font-size:11px;color:#6b7c8f;border-top:1px solid #f0f4f8;">BACS payment: <strong style="color:#003768;">' + escHtml(stmt.bacsDate) + '</strong></td></tr>';
+        }
+        html += '</tbody></table></div>';
+
+      } else {
+        // ── XLSX: product chips + transaction table ─────────────
+        var entries   = stmt.entries || [];
+        var byProduct = stmt.byProduct || {};
+        var productKeys = Object.keys(byProduct);
+        if (productKeys.length) {
+          html += '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 20px;">';
+          productKeys.forEach(function(code) {
+            var c     = PAY_PRODUCT_COLORS[code] || { bg: '#f0f4f8', color: '#3a4f63' };
+            var lbl   = PAY_PRODUCT_LABELS[code] || code;
+            html += '<div style="background:' + c.bg + ';border-radius:8px;padding:8px 14px;">';
+            html += '<div style="font-size:10px;font-weight:700;color:' + c.color + ';opacity:.8;">' + escHtml(code) + '</div>';
+            html += '<div style="font-size:10px;color:' + c.color + ';opacity:.55;margin-bottom:3px;">' + escHtml(lbl) + '</div>';
+            html += '<div style="font-size:15px;font-weight:700;color:' + c.color + ';">£' + byProduct[code].toFixed(2) + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        html += '<div style="overflow-x:auto;border-top:1px solid #f0f4f8;">';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+        html += '<thead><tr style="background:#f7f9fc;">';
+        ['Client', 'Product', 'Policy No.', 'Agent No.', 'Tx Date', 'Commission'].forEach(function(h) {
+          html += '<th style="text-align:left;padding:8px 14px;font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">' + h + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        entries.forEach(function(e) {
+          var client = (e.clientInit ? e.clientInit + ' ' : '') + (e.clientSurname || '');
+          var txDate = e.transactionDate ? new Date(e.transactionDate + 'T12:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+          html += '<tr style="border-top:1px solid #f0f4f8;">';
+          html += '<td style="padding:8px 14px;color:#1a2a3a;">' + escHtml(client.trim()) + '</td>';
+          html += '<td style="padding:8px 14px;">' + payProductBadge(e.productCode) + '</td>';
+          html += '<td style="padding:8px 14px;font-family:monospace;font-size:11px;color:#3a4f63;">' + escHtml(e.policyNo) + '</td>';
+          html += '<td style="padding:8px 14px;font-size:11px;color:#6b7c8f;">' + escHtml(e.agentNo) + '</td>';
+          html += '<td style="padding:8px 14px;color:#3a4f63;white-space:nowrap;">' + escHtml(txDate) + '</td>';
+          html += '<td style="padding:8px 14px;text-align:right;font-weight:700;color:#003768;">£' + e.amount.toFixed(2) + '</td>';
+          html += '</tr>';
+        });
+        html += '<tr style="background:#f7f9fc;border-top:1.5px solid #e8ecf0;">';
+        html += '<td colspan="5" style="padding:8px 14px;text-align:right;font-size:11px;color:#6b7c8f;font-weight:600;">Total</td>';
+        html += '<td style="padding:8px 14px;text-align:right;font-weight:800;color:#003768;">£' + total.toFixed(2) + '</td>';
+        html += '</tr></tbody></table></div>';
+      }
+
+      html += '</div>'; // expandable body
+      html += '</div>'; // card
     });
-    html += '</tr></thead><tbody>';
 
-    entries.forEach(function(e) {
-      var client = (e.clientInit ? e.clientInit + ' ' : '') + (e.clientSurname || '');
-      var txDate = e.transactionDate ? new Date(e.transactionDate+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-      html += '<tr style="border-bottom:1px solid #f0f4f8;">';
-      html += '<td style="padding:8px 10px;color:#1a2a3a;">'+escHtml(client.trim())+'</td>';
-      html += '<td style="padding:8px 10px;">'+payProductBadge(e.productCode)+'</td>';
-      html += '<td style="padding:8px 10px;font-family:monospace;font-size:11px;color:#3a4f63;">'+escHtml(e.policyNo)+'</td>';
-      html += '<td style="padding:8px 10px;font-size:11px;color:#6b7c8f;">'+escHtml(e.agentNo)+'</td>';
-      html += '<td style="padding:8px 10px;color:#3a4f63;white-space:nowrap;">'+escHtml(txDate)+'</td>';
-      html += '<td style="padding:8px 10px;text-align:right;font-weight:600;color:#003768;">£'+e.amount.toFixed(2)+'</td>';
-      html += '</tr>';
-    });
-
-    html += '<tr style="background:#f7f9fc;">';
-    html += '<td colspan="5" style="padding:8px 10px;text-align:right;font-size:12px;color:#6b7c8f;font-weight:600;">Total</td>';
-    html += '<td style="padding:8px 10px;text-align:right;font-weight:700;color:#003768;">£'+total.toFixed(2)+'</td>';
-    html += '</tr></tbody></table></div>';
-
-    html += '</div>'; // card
+    html += '</div>'; // year section
   });
 
   document.getElementById('pay-content').innerHTML = html;
 }
 
-function payToggleDetail(id, idx) {
-  var el  = document.getElementById(id);
-  var btn = document.getElementById('pay-toggle-' + idx);
+function payToggleCard(detailId) {
+  var el  = document.getElementById(detailId);
+  var chev = document.getElementById('pay-chev-' + detailId);
   if (!el) return;
-  if (el.style.display === 'none') {
-    el.style.display = 'block';
-    if (btn) btn.textContent = btn.textContent.replace('▼ Show', '▲ Hide');
-  } else {
-    el.style.display = 'none';
-    if (btn) btn.textContent = btn.textContent.replace('▲ Hide', '▼ Show');
-  }
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (chev) chev.textContent = open ? '▸' : '▾';
+}
+
+function payShowYear(yi) {
+  document.querySelectorAll('.pay-year-section').forEach(function(el, i) {
+    el.style.display = i === yi ? 'block' : 'none';
+  });
+  document.querySelectorAll('[id^="pay-year-tab-"]').forEach(function(btn, i) {
+    var active = i === yi;
+    btn.style.background  = active ? '#003768' : '#fff';
+    btn.style.color       = active ? '#fff'    : '#3a4f63';
+    btn.style.borderColor = active ? '#003768' : '#d8e0e8';
+  });
 }
 </script>
 </body>

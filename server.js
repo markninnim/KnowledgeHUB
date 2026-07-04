@@ -3063,61 +3063,182 @@ app.post('/api/admin/features', requireAdmin, (req, res) => {
 });
 
 // ── Pay: list matching statement files for logged-in user ──────
-// Returns filenames only — the client fetches and parses each file
-// using the XLSX.js library already loaded on the page.
+// ── Pay: helper — scan PAY/YEAR/BROKER_FOLDER/{xlsx,rtf} ────────
+function payListForLastName(lastName) {
+  const payDir = path.join(__dirname, 'public', 'pay');
+  const result = [];
+  let yearDirs;
+  try {
+    yearDirs = fs.readdirSync(payDir)
+      .filter(d => /^\d{4}$/.test(d) && fs.statSync(path.join(payDir, d)).isDirectory());
+  } catch(_) { return result; }
+  yearDirs.sort((a, b) => b.localeCompare(a)); // newest first
+  for (const year of yearDirs) {
+    const yearPath = path.join(payDir, year);
+    let brokerDirs;
+    try { brokerDirs = fs.readdirSync(yearPath); } catch(_) { continue; }
+    const files = [];
+    for (const bDir of brokerDirs) {
+      if (!bDir.toUpperCase().includes(lastName)) continue;
+      const bPath = path.join(yearPath, bDir);
+      let stmts;
+      try { stmts = fs.readdirSync(bPath).filter(f => /\.(xlsx|rtf)$/i.test(f)); }
+      catch(_) { continue; }
+      stmts.sort((a, b) => b.localeCompare(a)); // newest first
+      for (const f of stmts) {
+        const type = /\.rtf$/i.test(f) ? 'rtf' : 'xlsx';
+        files.push({ path: `${year}/${bDir}/${f}`, name: f, year, folder: bDir, type });
+      }
+    }
+    if (files.length) result.push({ year, files });
+  }
+  return result;
+}
+
+// Returns year-grouped file list — client fetches + parses each xlsx using CDN XLSX.js
 app.get('/api/pay/list', requireAuth, (req, res) => {
   const user     = req.session.user;
   const lastName = (user.lastName || '').toUpperCase().trim();
-  if (!lastName) return res.json({ files: [] });
-
-  const payDir = path.join(__dirname, 'public', 'pay');
-  let all;
-  try { all = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
-  catch(_) { return res.json({ files: [] }); }
-
-  const matched = all.filter(f => f.toUpperCase().includes(lastName));
-  // Sort newest first by filename (files named "M NINNIM - MAY 26.xlsx" etc.)
-  matched.sort((a, b) => b.localeCompare(a));
-  res.json({ lastName, files: matched });
+  if (!lastName) return res.json({ years: [] });
+  res.json({ lastName, years: payListForLastName(lastName) });
 });
 
 // ── Pay: supervisor list — any broker by lastName query ─────────
 app.get('/api/pay/broker/list', requireAuth, (req, res) => {
   const caller = req.session.user;
   if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
-
   const brokerLastName = (req.query.lastName || '').toUpperCase().trim();
-  if (!brokerLastName) return res.json({ files: [] });
+  if (!brokerLastName) return res.json({ years: [] });
+  res.json({ lastName: brokerLastName, years: payListForLastName(brokerLastName) });
+});
 
-  const payDir = path.join(__dirname, 'public', 'pay');
-  let all;
-  try { all = fs.readdirSync(payDir).filter(f => f.endsWith('.xlsx')); }
-  catch(_) { return res.json({ files: [] }); }
+// ── Pay: RTF statement parser ───────────────────────────────────
+function parseRtfPayStatement(rtfContent, filename) {
+  // Strip RTF control codes and decode character escapes
+  let text = rtfContent
+    .replace(/\\'a3/gi, '£')                        // £ symbol
+    .replace(/\\par\b/g, '\n')                       // paragraph → newline
+    .replace(/\\tab\b/g, '\t')                       // tab control
+    .replace(/\\[a-z*]+[-]?\d*[ ]?/gi, '')          // strip control words
+    .replace(/[{}]/g, ' ')                           // strip braces
+    .replace(/[ \t]+/g, ' ')                         // collapse spaces
+    .replace(/ \n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
-  const matched = all.filter(f => f.toUpperCase().includes(brokerLastName));
-  matched.sort((a, b) => b.localeCompare(a));
-  res.json({ lastName: brokerLastName, files: matched });
+  // Normalise double-ampersand (RTF encodes & as &&)
+  text = text.replace(/&&/g, '&');
+
+  const result = { filename, type: 'rtf', payments: [], adjustments: [] };
+
+  // Month label from filename (e.g. "january.rtf" → "January")
+  const MONTHS = ['january','february','march','april','may','june',
+                  'july','august','september','october','november','december'];
+  const base = filename.replace(/\.rtf$/i, '').toLowerCase().trim();
+  const mi = MONTHS.indexOf(base);
+  if (mi >= 0) {
+    result.monthName  = MONTHS[mi][0].toUpperCase() + MONTHS[mi].slice(1);
+    result.monthIndex = mi;
+  }
+
+  // Statement Date  (e.g. "01 February 2025")
+  const sdm = text.match(/Statement Date:?\s*(\d{1,2}\s+\w+\s+\d{4})/i);
+  if (sdm) result.statementDate = sdm[1].trim();
+
+  // Broker
+  const brm = text.match(/For:\s+([^\n(]+)/i);
+  if (brm) result.brokerName = brm[1].trim();
+
+  // Totals — match £ then whitespace-tolerant number
+  const amt = (re) => { const m = text.match(re); return m ? parseFloat(m[1].replace(/,/g,'')) : null; };
+  result.totalGross = amt(/Total Gross Payments?:?\s*£\s*([\d,]+\.?\d*)/i);
+  result.totalNet   = amt(/Total Net Payments?:?\s*£\s*([\d,]+\.?\d*)/i);
+  result.totalPay   = amt(/Total Pay:?\s*[\n ]?\s*£\s*([\d,]+\.?\d*)/i);
+  result.totalDebits= amt(/Total Debits?:?\s*£\s*([\d,]+\.?\d*)/i);
+
+  // BACS date
+  const bacm = text.match(/To be paid by BACS on:?\s*(\d{1,2}\s+\w+\s+\d{4})/i);
+  if (bacm) result.bacsDate = bacm[1].trim();
+
+  // Payment line items (in the Payments section, before Adjustments)
+  const PAY_LINES = [
+    'Initial Commission', 'Renewal Commission', 'L&G Mortgage Fees',
+    'External Mortgage Fees', 'MAS Adjustments', 'GI Initial Commission',
+    'GI Renewal Commission', 'Arrangement Fees',
+  ];
+  PAY_LINES.forEach(label => {
+    const esc = label.replace(/[.+?^${}()|[\]\\]/g, '\\$&'); // regex-safe
+    const re  = new RegExp(esc + ':?\\s*£\\s*([\\d,]+\\.?\\d*)(?:[\\s\\n]+([\\d.]+)%)?(?:[\\s\\n]+£\\s*([\\d,]+\\.?\\d*))?', 'i');
+    const m   = text.match(re);
+    if (m) {
+      const gross = parseFloat(m[1].replace(/,/g,''));
+      result.payments.push({
+        description: label,
+        gross,
+        override: m[2] ? parseFloat(m[2]) : null,
+        net:      m[3] ? parseFloat(m[3].replace(/,/g,'')) : null,
+      });
+    }
+  });
+
+  // Adjustment line items
+  const ADJ_LINES = ['Initial Reclaims', 'Periodic Pay'];
+  ADJ_LINES.forEach(label => {
+    const esc = label.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    const re  = new RegExp(esc + ':?\\s*£\\s*([\\d,]+\\.?\\d*)(?:[\\s\\n]+([\\d.]+)%)?(?:[\\s\\n]+£\\s*([\\d,]+\\.?\\d*))?', 'i');
+    const m   = text.match(re);
+    if (m) {
+      const gross = parseFloat(m[1].replace(/,/g,''));
+      result.adjustments.push({ description: label, gross, net: m[3] ? parseFloat(m[3].replace(/,/g,'')) : null });
+    }
+  });
+
+  return result;
+}
+
+// ── Pay: parse RTF statement — returns JSON ─────────────────────
+// Path format: YEAR/BROKER_FOLDER/FILENAME.rtf
+function payPathCheck(subpath) {
+  const parts = (subpath || '').split('/');
+  if (parts.length !== 3) return null;
+  const [year, folder, filename] = parts;
+  if (!/^\d{4}$/.test(year) || /[/\\]|\.\./.test(folder) || /\.\./.test(filename)) return null;
+  return { year, folder, filename };
+}
+
+app.get('/api/pay/parse-rtf/*', requireAuth, (req, res) => {
+  const caller = req.session.user;
+  const p = payPathCheck(req.params[0]);
+  if (!p || !/\.rtf$/i.test(p.filename)) return res.status(400).json({ error: 'Invalid path' });
+  const filePath = path.join(__dirname, 'public', 'pay', p.year, p.folder, p.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  const lastName = (caller.lastName || '').toUpperCase().trim();
+  const allowed  = caller.isSupervisor || caller.isAdmin ||
+                   (lastName && (p.folder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
+  if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const rtf = fs.readFileSync(filePath, 'latin1');
+    res.json(parseRtfPayStatement(rtf, p.filename));
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ── Pay: auth-gated file download ──────────────────────────────
-// Serves the raw xlsx to the authenticated browser for client-side parsing
-app.get('/api/pay/file/:filename', requireAuth, (req, res) => {
-  const caller   = req.session.user;
-  const filename = req.params.filename;
-
-  // Security: only allow .xlsx, no path traversal
-  if (!/^[^/\\]+\.xlsx$/i.test(filename)) return res.status(400).json({ error: 'Invalid filename' });
-
-  const filePath = path.join(__dirname, 'public', 'pay', filename);
+// Path format: YEAR/BROKER_FOLDER/FILENAME.{xlsx,rtf}
+app.get('/api/pay/file/*', requireAuth, (req, res) => {
+  const caller = req.session.user;
+  const p = payPathCheck(req.params[0]);
+  if (!p || !/\.(xlsx|rtf)$/i.test(p.filename)) return res.status(400).json({ error: 'Invalid path' });
+  const filePath = path.join(__dirname, 'public', 'pay', p.year, p.folder, p.filename);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
-
-  // Advisers can only download files matching their own last name
   const lastName = (caller.lastName || '').toUpperCase().trim();
-  const allowed  = caller.isSupervisor || caller.isAdmin || (lastName && filename.toUpperCase().includes(lastName));
+  const allowed  = caller.isSupervisor || caller.isAdmin ||
+                   (lastName && (p.folder.toUpperCase().includes(lastName) || p.filename.toUpperCase().includes(lastName)));
   if (!allowed) return res.status(403).json({ error: 'Forbidden' });
-
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  const ct = /\.rtf$/i.test(p.filename) ? 'application/rtf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  res.setHeader('Content-Type', ct);
+  res.setHeader('Content-Disposition', `attachment; filename="${p.filename}"`);
   fs.createReadStream(filePath).pipe(res);
 });
 
