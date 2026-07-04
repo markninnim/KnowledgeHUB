@@ -298,9 +298,9 @@ html { height: 100%; }
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             <span>Marketing</span>
           </button>
-          <button onclick="switchTab('marketing');setTimeout(()=>show('templates',null),50)" class="home-ql-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span>Templates</span>
+          <button onclick="switchTab('pay');setTimeout(function(){ paySidebarSelect('statements', document.getElementById('pay-sb-statements')); },50)" class="home-ql-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Statements</span>
           </button>
           <button onclick="switchTab('marketing');setTimeout(()=>show('brochures',null),50)" class="home-ql-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
