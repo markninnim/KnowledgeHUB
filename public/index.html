@@ -9478,9 +9478,20 @@ function loadPayData() {
             .catch(function(e){ return { filename: fobj.name, year: fobj.year, path: fobj.path, type: 'xlsx', error: e.message }; });
         }
       })).then(function(statements) {
-        // Re-group by year preserving order
+        // Re-group by year and sort each group newest-month-first
+        var PAY_MONTH_ORDER = ['january','february','march','april','may','june','july','august','september','october','november','december'];
         var byYear = {};
         statements.forEach(function(s){ if (!byYear[s.year]) byYear[s.year] = []; byYear[s.year].push(s); });
+        Object.keys(byYear).forEach(function(yr) {
+          byYear[yr].sort(function(a, b) {
+            var am = a.monthName ? PAY_MONTH_ORDER.indexOf(a.monthName.toLowerCase()) : -1;
+            var bm = b.monthName ? PAY_MONTH_ORDER.indexOf(b.monthName.toLowerCase()) : -1;
+            if (am >= 0 && bm >= 0) return bm - am; // Dec first
+            // Fall back to statementDate
+            var ad = a.statementDate || '', bd = b.statementDate || '';
+            return bd.localeCompare(ad);
+          });
+        });
         var grouped = years.map(function(y){ return { year: y.year, statements: byYear[y.year] || [] }; });
         document.getElementById('pay-loading').style.display = 'none';
         renderPayStatements(grouped);
