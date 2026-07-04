@@ -9411,11 +9411,14 @@ function payMonthKey(filename, folder, yearHint) {
 // "{BrokerName} - {DateCode}.xlsx"  →  initial commission (Vitality/headerless)
 // "{BrokerName}.xlsx"               →  L&G and renewal
 function payParseXlsxBuffer(buf, filename) {
-  var wb   = XLSX.read(buf, { type: 'array', cellDates: true });
+  // Vitality files: cellDates:false keeps numeric cells as numbers
+  //   (some Vitality xlsx files have date-format codes on amount cells, which
+  //    would turn 3.99 into a Date object under cellDates:true → entries skipped)
+  // L&G files: cellDates:true is needed so date columns become Date objects
+  var isVit = (filename || '').indexOf(' -') !== -1;
+  var wb   = XLSX.read(buf, { type: 'array', cellDates: !isVit });
   var ws   = wb.Sheets[wb.SheetNames[0]];
   var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  // Filename contains " -" (space then dash) → initial/Vitality; otherwise → L&G
-  var isVit = (filename || '').indexOf(' -') !== -1;
   if (isVit) return payParseXlsxVitality(rows, filename);
   return payParseXlsxLG(rows, filename);
 }
