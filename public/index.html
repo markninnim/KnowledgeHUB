@@ -9415,7 +9415,12 @@ function payParseXlsxBuffer(buf, filename) {
   var r0h  = (rows[0] || []).map(function(c){ return String(c||'').trim().toUpperCase(); });
   var r1h  = (rows[1] || []).map(function(c){ return String(c||'').trim().toUpperCase(); });
   var isLG  = r1h.indexOf('COMMISSION-AMT') !== -1;
-  var isVit = r0h.indexOf('AMOUNT') !== -1 || (r0h.indexOf('PRODUCT') !== -1 && r0h.indexOf('PROVIDER') !== -1);
+  var hasVitHeader = r0h.indexOf('AMOUNT') !== -1 || (r0h.indexOf('PRODUCT') !== -1 && r0h.indexOf('PROVIDER') !== -1);
+  // Headerless Vitality: row 0 all blank, row 1 has positional data (broker string, numeric amount at end)
+  var r0empty = r0h.every(function(c){ return !c; });
+  var r1 = rows[1] || [];
+  var r1hasData = r1.length >= 5 && typeof r1[r1.length-1] === 'number' && r1[0] != null;
+  var isVit = hasVitHeader || (!isLG && r0empty && r1hasData);
   if (isVit && !isLG) return payParseXlsxVitality(rows, filename);
   return payParseXlsxLG(rows, filename);
 }
@@ -9454,23 +9459,38 @@ function payParseXlsxLG(rows, filename) {
            total:parseFloat(total.toFixed(4)), byProduct:byProduct };
 }
 
-// Vitality/simple format: row 0 = headers (Broker, Product, Policy No, Provider, Client, Amount), rows 1+ = data
+// Vitality/simple format.
+// With headers: row 0 = [Broker, Product, Policy No, Provider, Client, Amount], rows 1+ = data
+// Headerless:   row 0 = all blank, rows 1+ = positional data (same column order), last row = total
 function payParseXlsxVitality(rows, filename) {
-  var headers = (rows[0] || []).map(function(h){ return String(h||'').trim(); });
+  var r0 = rows[0] || [];
+  var r0empty = r0.every(function(c){ return c == null || String(c).trim() === ''; });
+  var getField;
+  if (r0empty) {
+    // Positional: Broker(0), Product(1), PolicyNo(2), Provider(3), Client(4), Amount(5)
+    getField = function(r, name) {
+      var map = { Broker:0, Product:1, 'Policy No':2, Provider:3, Client:4, Amount:5 };
+      return map[name] !== undefined ? r[map[name]] : null;
+    };
+  } else {
+    var headers = r0.map(function(h){ return String(h||'').trim(); });
+    getField = function(r, name) { var idx=headers.indexOf(name); return idx>=0?r[idx]:null; };
+  }
+  var startRow = r0empty ? 1 : 1; // both cases start at row 1
   var entries = [], total = 0;
-  for (var i = 1; i < rows.length; i++) {
+  for (var i = startRow; i < rows.length; i++) {
     var r = rows[i];
     if (!r || r.every(function(c){ return c == null; })) continue;
-    var row = {};
-    headers.forEach(function(h, j){ row[h] = r[j] != null ? r[j] : null; });
-    var rawAmt = row['Amount'];
+    // Skip total/summary rows (first column null = no broker name)
+    if (r[0] == null) continue;
+    var rawAmt = getField(r, 'Amount');
     var amt = typeof rawAmt === 'number' ? rawAmt : parseFloat(String(rawAmt||'').replace(/[£,\s]/g,'')) || 0;
     if (isNaN(amt) || amt === 0) continue;
     entries.push({
-      policyNo: String(row['Policy No']||'').trim(),
-      product:  String(row['Product']||'').trim(),
-      provider: String(row['Provider']||'').trim(),
-      client:   String(row['Client']||'').trim(),
+      policyNo: String(getField(r,'Policy No')||'').trim(),
+      product:  String(getField(r,'Product')||'').trim(),
+      provider: String(getField(r,'Provider')||'').trim(),
+      client:   String(getField(r,'Client')||'').trim(),
       amount:   parseFloat(amt.toFixed(4))
     });
     total += amt;
