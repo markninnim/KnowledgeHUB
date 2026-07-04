@@ -9521,12 +9521,22 @@ function loadPayData() {
         var sortedYears = Object.keys(byYear).sort(function(a, b) { return parseInt(b) - parseInt(a); });
         var grouped = sortedYears.map(function(yr) { return { year: yr, statements: byYear[yr] }; });
         document.getElementById('pay-loading').style.display = 'none';
-        renderPayStatements(grouped);
-        document.getElementById('pay-content').style.display = 'block';
+        try {
+          renderPayStatements(grouped);
+          document.getElementById('pay-content').style.display = 'block';
+        } catch(renderErr) {
+          document.getElementById('pay-loading').style.display = 'block';
+          document.getElementById('pay-loading').innerHTML = '<div style="color:#c0392b;font-size:13px;padding:20px;">Render error: ' + escHtml(String(renderErr && renderErr.message || renderErr)) + '</div>';
+        }
       });
     })
-    .catch(function() {
-      document.getElementById('pay-loading').innerHTML = '<div style="color:#c0392b;font-size:14px;">Could not load pay data. Please try again.</div>';
+    .catch(function(err) {
+      var el = document.getElementById('pay-loading');
+      if (el) {
+        el.style.display = 'block';
+        el.innerHTML = '<div style="color:#c0392b;font-size:13px;padding:20px;">Could not load pay data: ' + escHtml(String(err && err.message || err)) + '</div>';
+      }
+      _payLoaded = false;
     });
 }
 
