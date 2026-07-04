@@ -3158,29 +3158,29 @@ html { height: 100%; }
       <div id="bp-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading profile…</div>
       <div id="bp-content" style="display:none;">
 
-        <!-- 3-column grid: all rows share same column widths -->
+        <!-- 3-column grid: explicit grid positions prevent auto-placement gaps -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;align-items:start;">
 
-          <!-- Col 1 Row 1: CPD -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 1 Col 1: CPD (stretch to match tallest in row) -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:1;grid-column:1;align-self:stretch;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">CPD Progress</div>
             <div id="bp-cpd" style="display:flex;flex-direction:column;gap:12px;"></div>
           </div>
 
-          <!-- Col 2 Row 1: Feefo -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 1 Col 2: Feefo (stretch) -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:1;grid-column:2;align-self:stretch;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Feefo</div>
             <div id="bp-feefo"></div>
           </div>
 
-          <!-- Col 3 Row 1: Consumer Duty -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 1 Col 3: Consumer Duty (stretch) -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:1;grid-column:3;align-self:stretch;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Consumer Duty</div>
             <div id="bp-cd"></div>
           </div>
 
-          <!-- Col 1 Row 2: Revalidation -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 2 Col 1: Revalidation (videos watched only — no quiz rows) -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:2;grid-column:1;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Revalidation</div>
             <div id="bp-quiz"></div>
             <div id="bp-rv-videos-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
@@ -3189,26 +3189,26 @@ html { height: 100%; }
             </div>
           </div>
 
-          <!-- Col 1 Row 3: Newsletter Access (below Revalidation) -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-column:1;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Newsletter Access</div>
-            <div id="bp-newsletter"></div>
-          </div>
-
-          <!-- Col 2 Row 2: Videos Watched (no scroll — fills naturally) -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 2 Col 2: Videos Watched -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:2;grid-column:2;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Videos Watched</div>
             <div id="bp-videos"></div>
           </div>
 
-          <!-- Col 3 Row 2: Commission -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;">
+          <!-- Row 2 Col 3: Commission -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:2;grid-column:3;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Commission</div>
             <div id="bp-pay"></div>
           </div>
 
-          <!-- Col 3 Row 3: Sales Process Access (below Commission) -->
-          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-column:3;">
+          <!-- Row 3 Col 1: Newsletter Access -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:3;grid-column:1;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Newsletter Access</div>
+            <div id="bp-newsletter"></div>
+          </div>
+
+          <!-- Row 3 Col 3: Sales Process Access -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;grid-row:3;grid-column:3;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Sales Process Access</div>
             <div id="bp-sales-process"></div>
           </div>
@@ -7193,23 +7193,24 @@ function openBrokerProfile(email, name) {
         }
       }
 
-      // ── Quiz / Revalidation ──
+      // ── Quiz / Revalidation ── (compact summary, no per-row date lines)
       var quiz = d.quiz || [];
-      document.getElementById('bp-quiz').innerHTML = quiz.length
-        ? quiz.map(function(q) {
-            var pass = (q.result || '').toLowerCase().includes('pass');
-            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<div>' +
-                '<div style="font-size:12px;font-weight:600;color:#1a2a3a;">' + (q.date || 'No date') + '</div>' +
-                (q.timeTaken ? '<div style="font-size:11px;color:#6b7c8f;">' + q.timeTaken + '</div>' : '') +
-              '</div>' +
-              '<div style="text-align:right;">' +
-                '<div style="font-size:14px;font-weight:800;color:#003768;">' + (q.score || '—') + '</div>' +
-                '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (q.result || '—') + '</span>' +
-              '</div>' +
-            '</div>';
-          }).join('')
-        : '<div style="font-size:12px;color:#aaa;">No revalidation results found</div>';
+      if (quiz.length) {
+        var latestQ  = quiz[0];
+        var passCount = quiz.filter(function(q){ return (q.result||'').toLowerCase().includes('pass'); }).length;
+        var latestPass = (latestQ.result||'').toLowerCase().includes('pass');
+        document.getElementById('bp-quiz').innerHTML =
+          '<div style="font-size:12px;color:#6b7c8f;margin-bottom:10px;">' + quiz.length + ' test' + (quiz.length!==1?'s':'') + ' completed · ' + passCount + ' pass' + (passCount!==1?'es':'') + '</div>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+            '<span style="font-size:12px;color:#6b7c8f;">Latest: ' + (latestQ.date||'—') + '</span>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<span style="font-size:14px;font-weight:800;color:#003768;">' + (latestQ.score||'—') + '</span>' +
+              '<span style="background:' + (latestPass?'#dcfce7':'#fef2f2') + ';color:' + (latestPass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (latestQ.result||'—') + '</span>' +
+            '</div>' +
+          '</div>';
+      } else {
+        document.getElementById('bp-quiz').innerHTML = '<div style="font-size:12px;color:#aaa;">No revalidation results found</div>';
+      }
 
       // ── Videos Watched (from CPD log) ──
       var allLog = (d.cpd && d.cpd.log) || [];
