@@ -7183,7 +7183,7 @@ function openBrokerProfile(email, name) {
                 if (fobj.type === 'rtf') {
                   return fetch('/api/pay/parse-rtf/' + encodedPath)
                     .then(function(r){ return r.json(); })
-                    .then(function(p){ p.year = fobj.year; return p; })
+                    .then(function(p){ p.year = fobj.year; p.path = fobj.path; return p; })
                     .catch(function(e){ return { filename: fobj.name, year: fobj.year, type: 'rtf', error: e.message }; });
                 }
                 return fetch('/api/pay/file/' + encodedPath)
@@ -7207,15 +7207,48 @@ function openBrokerProfile(email, name) {
               }
               // Build monthly totals from RTF statements only (authoritative source).
               // Filter to January 2026 onwards.
+              var BP_MONTHS = ['january','february','march','april','may','june',
+                               'july','august','september','october','november','december'];
+              var BP_MONTH_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+              function bpGetMonthIndex(s) {
+                // 1. From RTF parser (filename was a plain month name)
+                if (typeof s.monthIndex === 'number' && s.monthIndex >= 0) return s.monthIndex;
+                // 2. From statementDate (e.g. "3 February 2026")
+                if (s.statementDate) {
+                  var parts = s.statementDate.trim().split(/\s+/);
+                  if (parts.length >= 2) {
+                    var mStr = parts[1].toLowerCase();
+                    var mi2 = BP_MONTHS.indexOf(mStr);
+                    if (mi2 >= 0) return mi2;
+                    mi2 = BP_MONTH_SHORT.indexOf(mStr.slice(0, 3));
+                    if (mi2 >= 0) return mi2;
+                  }
+                }
+                // 3. From folder in path (e.g. ".../2026/JAN/...")
+                if (s.path) {
+                  var segs = s.path.split('/');
+                  for (var si = 0; si < segs.length; si++) {
+                    var seg = segs[si].toLowerCase();
+                    var mi3 = BP_MONTHS.indexOf(seg);
+                    if (mi3 >= 0) return mi3;
+                    mi3 = BP_MONTH_SHORT.indexOf(seg.slice(0, 3));
+                    if (mi3 >= 0) return mi3;
+                  }
+                }
+                return -1;
+              }
               var months = {};
               valid.forEach(function(s) {
-                if (s.type !== 'rtf' || !s.monthName) return;
+                if (s.type !== 'rtf') return;
+                var mi = bpGetMonthIndex(s);
+                if (mi < 0) return;
+                var mName = BP_MONTHS[mi][0].toUpperCase() + BP_MONTHS[mi].slice(1);
                 var sdYr = s.statementDate ? parseInt(s.statementDate.trim().split(/\s+/).pop(), 10) : parseInt(s.year, 10);
-                var labelYr = (!isNaN(sdYr) && s.monthIndex === 11) ? sdYr - 1 : sdYr;
+                var labelYr = (!isNaN(sdYr) && mi === 11) ? sdYr - 1 : sdYr;
+                if (isNaN(labelYr)) labelYr = parseInt(s.year, 10);
                 if (isNaN(labelYr) || labelYr < 2026) return;
-                var mi = typeof s.monthIndex === 'number' ? s.monthIndex : 0;
                 var key = labelYr + '-' + mi;
-                months[key] = { label: s.monthName + ' ' + labelYr, total: s.totalPay || 0, sortKey: labelYr * 100 + mi };
+                months[key] = { label: mName + ' ' + labelYr, total: s.totalPay || 0, sortKey: labelYr * 100 + mi };
               });
               var monthArr = Object.keys(months).map(function(k){ return months[k]; })
                                .sort(function(a, b){ return b.sortKey - a.sortKey; });
