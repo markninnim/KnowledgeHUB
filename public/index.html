@@ -9678,18 +9678,20 @@ function renderPayStatements(months) {
         var sourceLabel = isVitality ? 'Vitality trail' : (isRtf ? 'Monthly statement' : 'L&G transactions');
         var eLen = (stmt.entries||[]).length;
 
-        // Source header bar
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 22px 8px;background:#f7f9fc;border-top:1px solid #edf1f5;">';
-        html += '<div><div style="font-size:12px;font-weight:600;color:#1a2a3a;">'+escHtml(stmt.filename||sourceLabel)+'</div>';
-        html += '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">'+escHtml(sourceLabel)+' &nbsp;·&nbsp; '+eLen+' line'+(eLen!==1?'s':'')+'</div></div>';
-        html += '<div style="display:flex;align-items:center;gap:12px;">';
-        html += '<div style="font-size:17px;font-weight:800;color:#003768;font-variant-numeric:tabular-nums;">£'+stmtTotal.toFixed(2)+'</div>';
-        if (stmt.path) {
-          html += '<a href="/api/pay/file/'+stmt.path.split('/').map(encodeURIComponent).join('/')+'" download ' +
-            'style="font-size:11px;font-weight:600;color:#003768;text-decoration:none;padding:4px 12px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:4px;">' +
-            '<span>↓</span> Download</a>';
+        // Source header bar — only when multiple files share this month (avoids duplicating card header)
+        if (validFiles.length > 1) {
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 22px 8px;background:#f7f9fc;border-top:1px solid #edf1f5;">';
+          html += '<div><div style="font-size:12px;font-weight:600;color:#1a2a3a;">'+escHtml(stmt.filename||sourceLabel)+'</div>';
+          html += '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">'+escHtml(sourceLabel)+' &nbsp;·&nbsp; '+eLen+' line'+(eLen!==1?'s':'')+'</div></div>';
+          html += '<div style="display:flex;align-items:center;gap:12px;">';
+          html += '<div style="font-size:17px;font-weight:800;color:#003768;font-variant-numeric:tabular-nums;">£'+stmtTotal.toFixed(2)+'</div>';
+          if (stmt.path) {
+            html += '<a href="/api/pay/file/'+stmt.path.split('/').map(encodeURIComponent).join('/')+'" download ' +
+              'style="font-size:11px;font-weight:600;color:#003768;text-decoration:none;padding:4px 12px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:4px;">' +
+              '<span>↓</span> Download</a>';
+          }
+          html += '</div></div>';
         }
-        html += '</div></div>'; // source header
 
         if (isRtf) {
           // RTF breakdown table
@@ -9726,9 +9728,19 @@ function renderPayStatements(months) {
           html += '<td style="padding:11px 16px;text-align:right;color:#3a4f63;font-weight:600;font-variant-numeric:tabular-nums;">'+(stmt.totalGross!=null?'£'+stmt.totalGross.toFixed(2):'')+'</td>';
           html += '<td></td><td style="padding:11px 16px;text-align:right;font-size:16px;font-weight:800;color:#003768;font-variant-numeric:tabular-nums;">£'+stmtTotal.toFixed(2)+'</td>';
           html += '</tr></tbody></table></div>';
-          if (stmt.bacsDate) {
-            html += '<div style="padding:8px 22px;font-size:12px;color:#6b7c8f;background:#fafbfc;border-top:1px solid #f0f4f8;">BACS: <strong style="color:#003768;">'+escHtml(stmt.bacsDate)+'</strong></div>';
+          // Detail + download footer
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#fafbfc;border-top:1px solid #f0f4f8;flex-wrap:wrap;gap:8px;">';
+          html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+          if (stmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(stmt.brokerName)+'</strong></span>';
+          if (stmt.statementDate) html += '<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(stmt.statementDate)+'</strong></span>';
+          if (stmt.bacsDate)      html += '<span style="font-size:12px;color:#6b7c8f;">BACS payment: <strong style="color:#003768;">'+escHtml(stmt.bacsDate)+'</strong></span>';
+          html += '</div>';
+          if (stmt.path) {
+            html += '<a href="/api/pay/file/'+stmt.path.split('/').map(encodeURIComponent).join('/')+'" download ' +
+              'style="font-size:12px;font-weight:600;color:#003768;text-decoration:none;padding:5px 14px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:5px;">' +
+              '<span style="font-size:11px;">↓</span> Download statement</a>';
           }
+          html += '</div>';
 
         } else if (isVitality) {
           // Vitality trail table
