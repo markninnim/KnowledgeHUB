@@ -9437,8 +9437,17 @@ function payParseXlsxLG(rows, filename) {
     if (!r || r.every(function(c){ return c == null; })) continue;
     var row = {};
     headers.forEach(function(h, j){ row[h] = r[j] != null ? r[j] : null; });
-    var amt = typeof row['Commission-Amt'] === 'number' ? row['Commission-Amt'] : parseFloat(row['Commission-Amt']) || 0;
-    if (isNaN(amt) || !row['Policy No']) continue;
+    var rawAmt = row['Commission-Amt'];
+    var amt;
+    if (typeof rawAmt === 'number') {
+      amt = rawAmt;
+    } else if (rawAmt instanceof Date) {
+      // Cell has a date numFmt applied to a numeric amount; recover the Excel serial value
+      amt = (rawAmt.getTime() - new Date(Date.UTC(1899, 11, 30)).getTime()) / 86400000;
+    } else {
+      amt = parseFloat(String(rawAmt||'').replace(/[£,\s]/g,'')) || 0;
+    }
+    if (!isFinite(amt) || !row['Policy No']) continue;
     function toDateStr(v) { if (v instanceof Date) return v.toISOString().slice(0,10); return v ? String(v).slice(0,10) : null; }
     entries.push({
       sdate: toDateStr(row['SDate']), superCrNo: String(row['Super CR No']||'').trim(),
@@ -9787,7 +9796,14 @@ function renderPayStatements(months) {
             html += '<tr style="background:'+(isNeg?'#fff8f4':'#f8fafc')+';border-top:1px dashed '+(isNeg?'#f0d0c0':'#e0eaf4')+';">';
             html += '<td colspan="4" style="padding:8px 22px 8px 40px;font-size:12px;color:'+(isNeg?'#7a3300':'#5a7090')+';font-style:italic;">';
             if (isCarry) {
-              html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Debit carried forward from the previous statement period — offset against this month\'s net pay.';
+              var prevMonIdx = m.month === 0 ? 11 : m.month - 1;
+              var prevYr     = m.month === 0 ? m.year - 1 : m.year;
+              var prevLabel  = (MONTH_NAMES[prevMonIdx]||'') + ' ' + prevYr;
+              var prevM      = months.find(function(pm){ return pm.month === prevMonIdx && pm.year === prevYr; });
+              html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Debit originated in <strong>'+escHtml(prevLabel)+'</strong> and carried forward — offset against this month\'s net pay.';
+              if (prevM) {
+                html += ' <button onclick="(function(){var el=document.getElementById(\'pay-m-'+prevM.key+'\');if(el&&el.style.display===\'none\')payToggleCard(\'pay-m-'+prevM.key+'\');setTimeout(function(){document.getElementById(\'pay-m-'+prevM.key+'\').closest(\'.pay-card\')||document.getElementById(\'pay-m-'+prevM.key+'\').parentElement.scrollIntoView({behavior:\'smooth\',block:\'start\'});},80);})()" style="margin-left:10px;font-size:11px;font-weight:600;color:#003768;background:#e8f0fa;border:1px solid #b8cfe8;border-radius:6px;padding:2px 9px;cursor:pointer;">View '+escHtml(prevLabel)+' ↗</button>';
+              }
             } else if (isNeg) {
               html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Deduction applied to this statement period.';
             } else {
