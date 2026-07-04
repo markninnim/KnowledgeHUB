@@ -3205,6 +3205,39 @@ html { height: 100%; }
 
         </div>
 
+        <!-- Consumer Duty expanded (full card, above Feefo) -->
+        <div id="bp-cd-expanded" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:24px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;background:#003768;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#003768;">Consumer Duty</div>
+                <div style="font-size:12px;color:#6b7c8f;max-width:600px;line-height:1.5;">Each time a suitability report is issued, the client receives a questionnaire confirming their understanding and preventing foreseeable harm.</div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Consumer Duty Score</div>
+              <div id="bp-cd-score" style="font-size:28px;font-weight:800;color:#003768;line-height:1;"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:9px;padding:14px 16px;">
+              <div id="bp-cd-full-count" style="font-size:28px;font-weight:800;color:#003768;line-height:1;margin-bottom:4px;"></div>
+              <div style="font-size:12px;font-weight:600;color:#003768;">Full Understanding</div>
+              <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
+            </div>
+            <div style="background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:9px;padding:14px 16px;">
+              <div id="bp-cd-partial-count" style="font-size:28px;font-weight:800;color:#ef4444;line-height:1;margin-bottom:4px;"></div>
+              <div style="font-size:12px;font-weight:600;color:#ef4444;">Partial Understanding</div>
+              <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
+            </div>
+          </div>
+          <div id="bp-cd-recent-label" style="display:none;font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Recent Responses</div>
+          <div id="bp-cd-recent" style="display:flex;flex-direction:column;gap:0;"></div>
+        </div>
+
         <!-- Feefo Reviews (all, with date filter) -->
         <div id="bp-reviews-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
@@ -7117,6 +7150,38 @@ function openBrokerProfile(email, name) {
           '</div>' : '') +
         '</div>' +
         (cd.partial ? '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 12px;font-size:12px;color:#991b1b;">' + cd.partial + ' partial understanding ' + (cd.partial===1?'case':'cases') + ' require follow-up</div>' : '<div style="font-size:12px;color:#22c55e;font-weight:600;">✓ No partial understanding cases</div>');
+
+      // ── Consumer Duty expanded card (above Feefo reviews) ──
+      var cdExpanded = document.getElementById('bp-cd-expanded');
+      if (cdExpanded && cd.total) {
+        cdExpanded.style.display = '';
+        var cdScoreEl = document.getElementById('bp-cd-score');
+        var cdFullEl  = document.getElementById('bp-cd-full-count');
+        var cdPartEl  = document.getElementById('bp-cd-partial-count');
+        if (cdScoreEl) cdScoreEl.textContent = (cdScore != null ? cdScore + '%' : '—');
+        if (cdFullEl)  cdFullEl.textContent  = cd.full || 0;
+        if (cdPartEl)  cdPartEl.textContent  = cd.partial || 0;
+        // Recent responses list
+        var recs = cd.records || [];
+        var recentEl = document.getElementById('bp-cd-recent');
+        var recentLabel = document.getElementById('bp-cd-recent-label');
+        if (recs.length && recentEl) {
+          if (recentLabel) recentLabel.style.display = '';
+          recentEl.style.display = 'flex';
+          recentEl.innerHTML = recs.map(function(r) {
+            var dateStr = r.date ? new Date(r.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '';
+            var statusColor = r.perfect ? '#22c55e' : '#ef4444';
+            var statusLabel = r.perfect ? 'Full Understanding' : 'Partial';
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f4f8;">' +
+              '<div>' +
+                '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(r.consumer || 'Unknown') + '</div>' +
+                (dateStr ? '<div style="font-size:11px;color:#6b7c8f;">' + dateStr + '</div>' : '') +
+              '</div>' +
+              '<span style="background:' + (r.perfect?'#f0fdf4':'#fef2f2') + ';color:' + statusColor + ';border:1px solid ' + (r.perfect?'#bbf7d0':'#fecaca') + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + statusLabel + '</span>' +
+            '</div>';
+          }).join('');
+        }
+      }
 
       // ── Quiz / Revalidation ──
       var quiz = d.quiz || [];
