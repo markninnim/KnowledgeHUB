@@ -9458,34 +9458,23 @@ function payParseXlsxLG(rows, filename) {
 // With headers: row 0 = [Broker, Product, Policy No, Provider, Client, Amount], rows 1+ = data
 // Headerless:   row 0 = all blank, rows 1+ = positional data (same column order), last row = total
 function payParseXlsxVitality(rows, filename) {
-  var r0 = rows[0] || [];
-  var r0empty = r0.every(function(c){ return c == null || String(c).trim() === ''; });
-  var getField;
-  if (r0empty) {
-    // Positional: Broker(0), Product(1), PolicyNo(2), Provider(3), Client(4), Amount(5)
-    getField = function(r, name) {
-      var map = { Broker:0, Product:1, 'Policy No':2, Provider:3, Client:4, Amount:5 };
-      return map[name] !== undefined ? r[map[name]] : null;
-    };
-  } else {
-    var headers = r0.map(function(h){ return String(h||'').trim(); });
-    getField = function(r, name) { var idx=headers.indexOf(name); return idx>=0?r[idx]:null; };
-  }
-  var startRow = r0empty ? 1 : 1; // both cases start at row 1
+  // Vitality files are always positional — no named header row.
+  // Some months have a blank row 0, others start data at row 0.
+  // Columns always: Broker(0), Product(1), PolicyNo(2), Provider(3), Client(4), Amount(5)
+  // Skip rows where col 0 is null/empty (total/summary rows).
   var entries = [], total = 0;
-  for (var i = startRow; i < rows.length; i++) {
+  for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
-    if (!r || r.every(function(c){ return c == null; })) continue;
-    // Skip total/summary rows (first column null = no broker name)
-    if (r[0] == null) continue;
-    var rawAmt = getField(r, 'Amount');
+    if (!r || r.every(function(c){ return c == null || c === undefined; })) continue;
+    if (r[0] == null || r[0] === undefined || String(r[0]).trim() === '') continue;
+    var rawAmt = r[5];
     var amt = typeof rawAmt === 'number' ? rawAmt : parseFloat(String(rawAmt||'').replace(/[£,\s]/g,'')) || 0;
     if (isNaN(amt) || amt === 0) continue;
     entries.push({
-      policyNo: String(getField(r,'Policy No')||'').trim(),
-      product:  String(getField(r,'Product')||'').trim(),
-      provider: String(getField(r,'Provider')||'').trim(),
-      client:   String(getField(r,'Client')||'').trim(),
+      policyNo: String(r[2]||'').trim(),
+      product:  String(r[1]||'').trim(),
+      provider: String(r[3]||'').trim(),
+      client:   String(r[4]||'').trim(),
       amount:   parseFloat(amt.toFixed(4))
     });
     total += amt;
