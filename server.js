@@ -3183,12 +3183,18 @@ function parseRtfPayStatement(rtfContent, filename) {
   const brm = text.match(/For:\s+([^\n(]+)/i);
   if (brm) result.brokerName = brm[1].trim();
 
-  // Totals — match £ then whitespace-tolerant number
-  const amt = (re) => { const m = text.match(re); return m ? parseFloat(m[1].replace(/,/g,'')) : null; };
-  result.totalGross = amt(/Total Gross Payments?:?\s*£\s*([\d,]+\.?\d*)/i);
-  result.totalNet   = amt(/Total Net Payments?:?\s*£\s*([\d,]+\.?\d*)/i);
-  result.totalPay   = amt(/Total Pay:?\s*[\n ]?\s*£\s*([\d,]+\.?\d*)/i);
-  result.totalDebits= amt(/Total Debits?:?\s*£\s*([\d,]+\.?\d*)/i);
+  // Totals — handle optional minus before £, and multi-line gaps (e.g. "-£280.91")
+  const amt = (re) => {
+    const m = text.match(re);
+    if (!m) return null;
+    const neg = m[1] === '-';
+    const val = parseFloat(m[2].replace(/,/g,''));
+    return neg ? -val : val;
+  };
+  result.totalGross = amt(/Total Gross Payments?:?[\s\S]{0,20}?(-?)£\s*([\d,]+\.?\d*)/i);
+  result.totalNet   = amt(/Total Net Payments?:?[\s\S]{0,20}?(-?)£\s*([\d,]+\.?\d*)/i);
+  result.totalPay   = amt(/Total Pay:?[\s\S]{0,20}?(-?)£\s*([\d,]+\.?\d*)/i);
+  result.totalDebits= amt(/Total Debits?:?[\s\S]{0,10}?(-?)£\s*([\d,]+\.?\d*)/i);
 
   // BACS date
   const bacm = text.match(/To be paid by BACS on:?\s*(\d{1,2}\s+\w+\s+\d{4})/i);

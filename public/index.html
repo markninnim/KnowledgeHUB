@@ -9411,12 +9411,11 @@ function payMonthKey(filename, folder, yearHint) {
 // "{BrokerName} - {DateCode}.xlsx"  →  initial commission (Vitality/headerless)
 // "{BrokerName}.xlsx"               →  L&G and renewal
 function payParseXlsxBuffer(buf, filename) {
-  // Vitality files: cellDates:false keeps numeric cells as numbers
-  //   (some Vitality xlsx files have date-format codes on amount cells, which
-  //    would turn 3.99 into a Date object under cellDates:true → entries skipped)
-  // L&G files: cellDates:true is needed so date columns become Date objects
+  // Always use cellDates:false — some xlsx files have date numFmt on amount columns
+  // which causes XLSX.js to silently convert numeric amounts to Date objects.
+  // We handle date-column conversion manually in payParseXlsxLG.
   var isVit = (filename || '').indexOf(' -') !== -1;
-  var wb   = XLSX.read(buf, { type: 'array', cellDates: !isVit });
+  var wb   = XLSX.read(buf, { type: 'array', cellDates: false });
   var ws   = wb.Sheets[wb.SheetNames[0]];
   var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
   if (isVit) return payParseXlsxVitality(rows, filename);
@@ -9425,11 +9424,18 @@ function payParseXlsxBuffer(buf, filename) {
 
 // L&G format: row 0 = [brokerName, statementDate], row 1 = headers, rows 2+ = data
 function payParseXlsxLG(rows, filename) {
+  // cellDates:false — date columns return as Excel serial numbers, amounts stay numeric
+  var LG_EPOCH = new Date(Date.UTC(1899, 11, 30)).getTime();
+  function toDateStr(v) {
+    if (typeof v === 'number' && v > 1000) {
+      // Excel date serial → ISO string
+      return new Date(LG_EPOCH + Math.round(v * 86400000)).toISOString().slice(0, 10);
+    }
+    return v ? String(v).slice(0, 10) : null;
+  }
   var brokerCell    = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
   var stmtDateRaw   = rows[0] && rows[0][1] ? rows[0][1] : null;
-  var statementDate = null;
-  if (stmtDateRaw instanceof Date) statementDate = stmtDateRaw.toISOString().slice(0, 10);
-  else if (stmtDateRaw) statementDate = String(stmtDateRaw).slice(0, 10);
+  var statementDate = stmtDateRaw ? toDateStr(stmtDateRaw) : null;
   var headers = (rows[1] || []).map(function(h){ return String(h || '').trim(); });
   var entries = [], total = 0;
   for (var i = 2; i < rows.length; i++) {
@@ -9438,17 +9444,9 @@ function payParseXlsxLG(rows, filename) {
     var row = {};
     headers.forEach(function(h, j){ row[h] = r[j] != null ? r[j] : null; });
     var rawAmt = row['Commission-Amt'];
-    var amt;
-    if (typeof rawAmt === 'number') {
-      amt = rawAmt;
-    } else if (rawAmt instanceof Date) {
-      // Cell has a date numFmt applied to a numeric amount; recover the Excel serial value
-      amt = (rawAmt.getTime() - new Date(Date.UTC(1899, 11, 30)).getTime()) / 86400000;
-    } else {
-      amt = parseFloat(String(rawAmt||'').replace(/[£,\s]/g,'')) || 0;
-    }
+    var amt = typeof rawAmt === 'number' ? rawAmt
+            : parseFloat(String(rawAmt||'').replace(/[£,\s]/g,'')) || 0;
     if (!isFinite(amt) || !row['Policy No']) continue;
-    function toDateStr(v) { if (v instanceof Date) return v.toISOString().slice(0,10); return v ? String(v).slice(0,10) : null; }
     entries.push({
       sdate: toDateStr(row['SDate']), superCrNo: String(row['Super CR No']||'').trim(),
       agentNo: String(row['Agent No']||'').trim(), policyNo: String(row['Policy No']||'').trim(),
@@ -9688,7 +9686,7 @@ function renderPayStatements(months) {
       html += '<div style="font-size:12px;color:#6b7c8f;margin-top:3px;">'+escHtml(subText)+'</div>';
       html += '</div>';
       html += '<div style="text-align:right;flex-shrink:0;margin-right:8px;">';
-      html += '<div style="font-size:21px;font-weight:800;color:#003768;letter-spacing:-.3px;">£'+monthTotal.toFixed(2)+'</div>';
+      html += '<div style="font-size:21px;font-weight:800;color:'+(monthTotal<0?'#c0392b':'#003768')+';letter-spacing:-.3px;">'+(monthTotal<0?'−':'')+'£'+Math.abs(monthTotal).toFixed(2)+'</div>';
       html += '<div style="font-size:10px;color:#9bafc0;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">Commission</div>';
       html += '</div>';
       html += '<span id="pay-chev-'+detailId+'" style="font-size:14px;color:#c0cdd8;flex-shrink:0;">'+(isFirst?'▾':'▸')+'</span>';
