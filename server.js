@@ -2525,9 +2525,9 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues };
     });
 
-    // Process Revalidation — use field IDs (returnFieldsByFieldId=true)
+    // Process Revalidation — returnFieldsByFieldId=true → data is in rec.fields
     const quizResults = rvRecs.map(rec => {
-      const f = rec.cellValuesByFieldId || {};
+      const f = rec.fields || {};
       const score = f['fld8Yr5D8dKXmzAWf'];
       const result = f['fldMeKZ3AWMRGFJEu'] || null;
       const date   = f['fldv8ukDVjln898kb'] || (rec.createdTime ? rec.createdTime.slice(0,10) : null);
