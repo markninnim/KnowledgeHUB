@@ -9816,6 +9816,12 @@ function payShowYear(yi) {
     if (spans[1]) spans[1].style.color = active ? 'rgba(255,255,255,.65)' : '#9bafc0';
   });
 }
+// Block 3 is now loaded — if the page opened on #pay, the block-1 IIFE
+// already activated the tab but couldn't call loadPayData (not yet defined).
+// Call it now if we're on pay and it hasn't run yet.
+(function() {
+  if (window.location.hash === '#pay' && !_payLoaded) { loadPayData(); }
+})();
 </script>
 </body>
 </html>
