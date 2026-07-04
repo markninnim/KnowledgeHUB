@@ -3227,6 +3227,14 @@ function parseRtfPayStatement(rtfContent, filename) {
     }
   });
 
+  // "Carried over from last month" — appears under Miscellaneous Adjustments with -£ prefix
+  const carryM = text.match(/Carried\s+over\s+from\s+last\s+month\s*-?\s*£\s*([\d,]+\.?\d*)/i);
+  if (carryM) {
+    const v = -(parseFloat(carryM[1].replace(/,/g,'')));
+    result.carriedOver = v;
+    result.adjustments.push({ description: 'Carried over from last month', gross: v, net: null });
+  }
+
   return result;
 }
 

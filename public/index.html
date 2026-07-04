@@ -9592,9 +9592,13 @@ function renderPayStatements(months) {
   var grandTotal = 0, thisYearTotal = 0;
   var thisYear = new Date().getFullYear();
   months.forEach(function(m) {
-    m.files.forEach(function(f) {
-      if (!f.error) { var a = f.type==='rtf'?(f.totalPay||0):(f.total||0); grandTotal+=a; if(m.year===thisYear)thisYearTotal+=a; }
-    });
+    // For months with RTF + xlsx, the RTF totalPay is the authoritative figure (xlsx amounts are already baked in)
+    var mRtf = m.files.find(function(f){ return !f.error && f.type === 'rtf'; });
+    var mHasXlsx = m.files.some(function(f){ return !f.error && f.type === 'xlsx'; });
+    var mTotal = (mRtf && mHasXlsx) ? (mRtf.totalPay || 0) :
+      m.files.reduce(function(s,f){ return s+(f.error?0:(f.type==='rtf'?(f.totalPay||0):(f.total||0))); }, 0);
+    grandTotal += mTotal;
+    if (m.year === thisYear) thisYearTotal += mTotal;
   });
 
   var html = '';
@@ -9618,7 +9622,10 @@ function renderPayStatements(months) {
   months.forEach(function(m) {
     var yk = String(m.year);
     if (!byYear[yk]) byYear[yk] = { year:m.year, months:[], total:0 };
-    var mt = m.files.reduce(function(s,f){ return s+(f.error?0:(f.type==='rtf'?(f.totalPay||0):(f.total||0))); }, 0);
+    var mRtf2 = m.files.find(function(f){ return !f.error && f.type === 'rtf'; });
+    var mHasXlsx2 = m.files.some(function(f){ return !f.error && f.type === 'xlsx'; });
+    var mt = (mRtf2 && mHasXlsx2) ? (mRtf2.totalPay || 0) :
+      m.files.reduce(function(s,f){ return s+(f.error?0:(f.type==='rtf'?(f.totalPay||0):(f.total||0))); }, 0);
     byYear[yk].months.push(m);
     byYear[yk].total += mt;
   });
@@ -9637,12 +9644,20 @@ function renderPayStatements(months) {
     yg.months.forEach(function(m) {
       var isFirst = String(m.key) === globalFirstKey;
       var detailId = 'pay-m-'+m.key;
-      var monthTotal = m.files.reduce(function(s,f){ return s+(f.error?0:(f.type==='rtf'?(f.totalPay||0):(f.total||0))); }, 0);
       var abbr  = MONTH_ABBR[m.month]  || '???';
       var label = (MONTH_NAMES[m.month]||'') + ' ' + m.year;
       var validFiles = m.files.filter(function(f){ return !f.error; });
+      // Detect composite mode: RTF + at least one xlsx for the same month
+      var rtfStmt = validFiles.find(function(f){ return f.type === 'rtf'; });
+      var vitalityStmt = validFiles.find(function(f){ return f.source === 'vitality'; });
+      var lgStmt = validFiles.find(function(f){ return f.source === 'lg'; });
+      var compositeMode = !!(rtfStmt && validFiles.some(function(f){ return f.type === 'xlsx'; }));
+      var monthTotal = compositeMode ? (rtfStmt.totalPay || 0) :
+        validFiles.reduce(function(s,f){ return s+(f.type==='rtf'?(f.totalPay||0):(f.total||0)); }, 0);
       var entryCount = validFiles.reduce(function(s,f){ return s+((f.entries||[]).length); }, 0);
-      var subText = validFiles.length + ' source' + (validFiles.length!==1?'s':'') + ' · ' + entryCount + ' line' + (entryCount!==1?'s':'');
+      var subText = compositeMode
+        ? ('Monthly statement' + (rtfStmt.bacsDate ? ' · BACS ' + rtfStmt.bacsDate : ''))
+        : (validFiles.length + ' source' + (validFiles.length!==1?'s':'') + ' · ' + entryCount + ' line' + (entryCount!==1?'s':''));
 
       // Month card
       html += '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:14px;margin-bottom:10px;overflow:hidden;">';
@@ -9665,10 +9680,95 @@ function renderPayStatements(months) {
       // Expandable body
       html += '<div id="'+detailId+'" style="display:'+(isFirst?'block':'none')+';border-top:1px solid #f0f4f8;">';
 
-      // Section label when multiple sources
-      if (validFiles.length > 1) {
-        html += '<div style="padding:10px 22px 4px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;letter-spacing:.06em;">Statement composition</div>';
-      }
+      if (compositeMode) {
+        // ── COMPOSITE MODE: RTF as primary frame, xlsx entries embedded inline ──
+        var lgRenewalEntries = lgStmt ? (lgStmt.entries||[]).filter(function(e){ return e.reason === 'R'; }) : [];
+        var lgNewBizEntries  = lgStmt ? (lgStmt.entries||[]).filter(function(e){ return e.reason !== 'R'; }) : [];
+        var vitEntries       = vitalityStmt ? (vitalityStmt.entries||[]) : [];
+        var payLines = (rtfStmt.payments||[]).filter(function(p){ return p.gross > 0; });
+
+        html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+        html += '<thead><tr style="background:#f7f9fc;">';
+        ['Description','Gross','Rate','Net Payment'].forEach(function(h,i){
+          var al=i===0?'left':'right', pd=i===0?'22px':'16px'; if(i===2)al='center';
+          html += '<th style="text-align:'+al+';padding:9px '+pd+';font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;letter-spacing:.06em;">'+h+'</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        payLines.forEach(function(p) {
+          // Category row
+          html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
+          html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:600;">'+escHtml(p.description)+'</td>';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
+          html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(p.net!=null?'£'+p.net.toFixed(2):'—')+'</td>';
+          html += '</tr>';
+          // Sub-entries from matching xlsx
+          var subRows = [];
+          if (p.description === 'Initial Commission' && vitEntries.length) {
+            vitEntries.forEach(function(e){ subRows.push({ name: e.client||e.product, detail: (e.product?e.product+' · ':'')+e.policyNo, amount: e.amount }); });
+          } else if (p.description === 'Renewal Commission' && lgRenewalEntries.length) {
+            lgRenewalEntries.forEach(function(e){ var cl=((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim()||'—'; subRows.push({ name: cl, detail: e.productCode, amount: e.amount }); });
+          } else if (p.description === 'L&G Mortgage Fees' && lgNewBizEntries.length) {
+            lgNewBizEntries.forEach(function(e){ var cl=((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim()||'—'; subRows.push({ name: cl, detail: e.productCode, amount: e.amount }); });
+          }
+          subRows.forEach(function(e) {
+            html += '<tr style="background:#f8fafc;border-top:1px dashed #e0eaf4;">';
+            html += '<td style="padding:7px 22px 7px 40px;font-size:12px;color:#5a7090;"><span style="color:#c0d4e8;margin-right:5px;">└</span>'+escHtml(e.name)+(e.detail?' <span style="color:#9bafc0;font-size:11px;">('+escHtml(e.detail)+')</span>':'')+'</td>';
+            html += '<td style="padding:7px 16px;text-align:right;font-size:12px;color:#4a6080;font-variant-numeric:tabular-nums;">£'+e.amount.toFixed(2)+'</td>';
+            html += '<td></td><td></td></tr>';
+          });
+        });
+
+        // Payments totals
+        html += '<tr style="background:#f2f6fa;border-top:2px solid #d5e0ec;">';
+        html += '<td style="padding:10px 22px;font-weight:700;color:#003768;font-size:12px;">Total Payments</td>';
+        html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalGross!=null?'£'+rtfStmt.totalGross.toFixed(2):'')+'</td>';
+        html += '<td></td>';
+        html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalNet!=null?'£'+rtfStmt.totalNet.toFixed(2):'')+'</td>';
+        html += '</tr>';
+
+        // Adjustments (carryover etc.)
+        var adjs = (rtfStmt.adjustments||[]).filter(function(a){ return a.gross !== 0 && a.gross != null; });
+        if (adjs.length) {
+          html += '<tr><td colspan="4" style="padding:7px 22px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;background:#fafbfc;border-top:1px solid #e8ecf0;letter-spacing:.06em;">Adjustments</td></tr>';
+          adjs.forEach(function(a) {
+            var isNeg = a.gross < 0;
+            html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
+            html += '<td style="padding:10px 22px;font-style:italic;color:'+(isNeg?'#7a3300':'#1a2a3a')+';font-size:12px;">'+escHtml(a.description)+'</td>';
+            html += '<td style="padding:10px 16px;text-align:right;color:'+(isNeg?'#c0392b':'#3a4f63')+';font-weight:600;font-variant-numeric:tabular-nums;">'+(isNeg?'−':'')+'£'+Math.abs(a.gross).toFixed(2)+'</td>';
+            html += '<td></td><td></td></tr>';
+          });
+        }
+
+        // Total Pay — prominent dark row
+        html += '<tr style="background:#003768;border-top:2px solid #002850;">';
+        html += '<td style="padding:14px 22px;font-weight:800;color:#fff;font-size:14px;">Total Pay <span style="font-size:11px;font-weight:400;opacity:.65;">net payments − adjustments</span></td>';
+        html += '<td></td><td></td>';
+        html += '<td style="padding:14px 22px;text-align:right;font-size:22px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">£'+monthTotal.toFixed(2)+'</td>';
+        html += '</tr>';
+        html += '</tbody></table></div>';
+
+        // Footer: broker/dates + download buttons for all files
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#fafbfc;border-top:1px solid #f0f4f8;flex-wrap:wrap;gap:8px;">';
+        html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+        if (rtfStmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(rtfStmt.brokerName)+'</strong></span>';
+        if (rtfStmt.statementDate) html += '<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(rtfStmt.statementDate)+'</strong></span>';
+        if (rtfStmt.bacsDate) html += '<span style="font-size:12px;color:#6b7c8f;">BACS: <strong style="color:#003768;">'+escHtml(rtfStmt.bacsDate)+'</strong></span>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+        validFiles.forEach(function(f) {
+          if (f.path) { var fn=f.filename||f.path.split('/').pop(); html += '<a href="/api/pay/file/'+f.path.split('/').map(encodeURIComponent).join('/')+'" download style="font-size:11px;font-weight:600;color:#003768;text-decoration:none;padding:4px 10px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:4px;"><span>↓</span> '+escHtml(fn)+'</a>'; }
+        });
+        html += '</div></div>';
+
+      } else {
+        // ── ORIGINAL MODE: show each file separately ──
+
+        // Section label when multiple sources
+        if (validFiles.length > 1) {
+          html += '<div style="padding:10px 22px 4px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;letter-spacing:.06em;">Statement composition</div>';
+        }
 
       // Render each source file
       m.files.forEach(function(stmt, fi) {
@@ -9819,6 +9919,8 @@ function renderPayStatements(months) {
         html += '<div style="font-size:20px;font-weight:800;color:#003768;font-variant-numeric:tabular-nums;">£'+monthTotal.toFixed(2)+'</div>';
         html += '</div>';
       }
+
+      } // end original mode else
 
       html += '</div>'; // expandable
       html += '</div>'; // card
