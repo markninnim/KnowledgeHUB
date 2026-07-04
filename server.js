@@ -3084,7 +3084,14 @@ function payListForLastName(lastName) {
       let stmts;
       try { stmts = fs.readdirSync(bPath).filter(f => /\.(xlsx|rtf)$/i.test(f)); }
       catch(_) { continue; }
-      stmts.sort((a, b) => b.localeCompare(a)); // newest first
+      // Sort RTF files by month name (newest first); xlsx by filename desc
+      const MONTH_NAMES = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+      stmts.sort((a, b) => {
+        const ai = MONTH_NAMES.indexOf(a.replace(/\.rtf$/i,'').toLowerCase().trim());
+        const bi = MONTH_NAMES.indexOf(b.replace(/\.rtf$/i,'').toLowerCase().trim());
+        if (ai >= 0 && bi >= 0) return bi - ai; // Dec→Jan
+        return b.localeCompare(a);              // xlsx: filename desc
+      });
       for (const f of stmts) {
         const type = /\.rtf$/i.test(f) ? 'rtf' : 'xlsx';
         files.push({ path: `${year}/${bDir}/${f}`, name: f, year, folder: bDir, type });
