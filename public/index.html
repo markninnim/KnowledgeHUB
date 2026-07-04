@@ -9686,6 +9686,8 @@ function renderPayStatements(months) {
         var lgNewBizEntries  = lgStmt ? (lgStmt.entries||[]).filter(function(e){ return e.reason !== 'R'; }) : [];
         var vitEntries       = vitalityStmt ? (vitalityStmt.entries||[]) : [];
         var payLines = (rtfStmt.payments||[]).filter(function(p){ return p.gross > 0; });
+        // L&G Mortgage Fees at top
+        payLines.sort(function(a,b){ return a.description==='L&G Mortgage Fees'?-1:b.description==='L&G Mortgage Fees'?1:0; });
 
         html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
         html += '<thead><tr style="background:#f7f9fc;">';
@@ -9693,17 +9695,10 @@ function renderPayStatements(months) {
           var al=i===0?'left':'right', pd=i===0?'22px':'16px'; if(i===2)al='center';
           html += '<th style="text-align:'+al+';padding:9px '+pd+';font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;letter-spacing:.06em;">'+h+'</th>';
         });
-        html += '</tr></thead><tbody>';
+        html += '</tr></thead>';
 
-        payLines.forEach(function(p) {
-          // Category row
-          html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-          html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:600;">'+escHtml(p.description)+'</td>';
-          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
-          html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
-          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(p.net!=null?'£'+p.net.toFixed(2):'—')+'</td>';
-          html += '</tr>';
-          // Sub-entries from matching xlsx
+        payLines.forEach(function(p, pi) {
+          // Compute sub-entries for this category
           var subRows = [];
           if (p.description === 'Initial Commission' && vitEntries.length) {
             vitEntries.forEach(function(e){ subRows.push({ name: e.client||e.product, detail: (e.product?e.product+' · ':'')+e.policyNo, amount: e.amount }); });
@@ -9712,15 +9707,41 @@ function renderPayStatements(months) {
           } else if (p.description === 'L&G Mortgage Fees' && lgNewBizEntries.length) {
             lgNewBizEntries.forEach(function(e){ var cl=((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim()||'—'; subRows.push({ name: cl, detail: e.productCode, amount: e.amount }); });
           }
-          subRows.forEach(function(e) {
-            html += '<tr style="background:#f8fafc;border-top:1px dashed #e0eaf4;">';
-            html += '<td style="padding:7px 22px 7px 40px;font-size:12px;color:#5a7090;"><span style="color:#c0d4e8;margin-right:5px;">└</span>'+escHtml(e.name)+(e.detail?' <span style="color:#9bafc0;font-size:11px;">('+escHtml(e.detail)+')</span>':'')+'</td>';
-            html += '<td style="padding:7px 16px;text-align:right;font-size:12px;color:#4a6080;font-variant-numeric:tabular-nums;">£'+e.amount.toFixed(2)+'</td>';
-            html += '<td></td><td></td></tr>';
-          });
+          var hasSubRows = subRows.length > 0;
+          var isLGMort   = p.description === 'L&G Mortgage Fees';
+          var accBodyId  = 'pacc-'+detailId+'-'+pi;
+          var chevId     = 'pacc-chev-'+detailId+'-'+pi;
+          var startOpen  = isLGMort; // L&G Mortgage Fees open by default
+
+          // Category row in its own tbody
+          html += '<tbody>';
+          html += '<tr style="border-top:1px solid #f0f4f8;'+(hasSubRows?'cursor:pointer;':'')+'" '+
+            (hasSubRows?'onclick="payToggleCat(\''+accBodyId+'\',\''+chevId+'\')" ':'')+
+            'onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
+          html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:600;">'+escHtml(p.description)+
+            (hasSubRows?' <span id="'+chevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">'+(startOpen?'&#9660;':'&#9658;')+'</span>':'')+
+            (hasSubRows?' <span style="font-size:10px;color:#9bafc0;font-weight:400;margin-left:6px;">'+subRows.length+' '+(subRows.length===1?'entry':'entries')+'</span>':'')+
+            '</td>';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
+          html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
+          html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(p.net!=null?'£'+p.net.toFixed(2):'—')+'</td>';
+          html += '</tr></tbody>';
+
+          // Collapsible sub-entries tbody
+          if (hasSubRows) {
+            html += '<tbody id="'+accBodyId+'" style="display:'+(startOpen?'table-row-group':'none')+'">';
+            subRows.forEach(function(e) {
+              html += '<tr style="background:#f8fafc;border-top:1px dashed #e0eaf4;">';
+              html += '<td style="padding:7px 22px 7px 40px;font-size:12px;color:#5a7090;"><span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>'+escHtml(e.name)+(e.detail?' <span style="color:#9bafc0;font-size:11px;">('+escHtml(e.detail)+')</span>':'')+'</td>';
+              html += '<td style="padding:7px 16px;text-align:right;font-size:12px;color:#4a6080;font-variant-numeric:tabular-nums;">£'+e.amount.toFixed(2)+'</td>';
+              html += '<td></td><td></td></tr>';
+            });
+            html += '</tbody>';
+          }
         });
 
-        // Payments totals
+        // Payments totals in final tbody
+        html += '<tbody>';
         html += '<tr style="background:#f2f6fa;border-top:2px solid #d5e0ec;">';
         html += '<td style="padding:10px 22px;font-weight:700;color:#003768;font-size:12px;">Total Payments</td>';
         html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalGross!=null?'£'+rtfStmt.totalGross.toFixed(2):'')+'</td>';
@@ -9750,6 +9771,7 @@ function renderPayStatements(months) {
         html += '</tbody></table></div>';
 
         // Footer: broker/dates + download buttons for all files
+        // (payToggleCat is defined below renderPayStatements)
         html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#fafbfc;border-top:1px solid #f0f4f8;flex-wrap:wrap;gap:8px;">';
         html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
         if (rtfStmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(rtfStmt.brokerName)+'</strong></span>';
@@ -9939,6 +9961,16 @@ function payToggleCard(detailId) {
   var open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
   if (chev) chev.textContent = open ? '▸' : '▾';
+}
+
+// Toggle collapsible sub-entry tbody in composite statement
+function payToggleCat(bodyId, chevId) {
+  var el   = document.getElementById(bodyId);
+  var chev = document.getElementById(chevId);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'table-row-group';
+  if (chev) chev.innerHTML = open ? '&#9658;' : '&#9660;';
 }
 
 function payShowYear(yi) {
