@@ -6460,8 +6460,10 @@ var _currentUser = null;
     initShareButtons();
     // Apply feature flags to nav tabs
     applyFeatureFlags();
-    // Load home page data (default tab) — also apply home layout
-    switchTab('home');
+    // Navigate to the URL hash tab if valid, otherwise home
+    var _initHash = window.location.hash.replace('#', '');
+    var _initTab  = (TAB_IDS.indexOf(_initHash) !== -1) ? _initHash : 'home';
+    switchTab(_initTab);
     loadHomeData();
     // Pre-load surveying so the tab button shows fees on arrival
     loadSurveying();
