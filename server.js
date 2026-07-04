@@ -2480,19 +2480,20 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     function selectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
     const cpdByType = {}, cpdLog = [];
     cpdRecs.forEach(rec => {
-      const f    = rec.cellValuesByFieldId || {};
+      const f    = rec.fields || {};
       const type = selectName(f[CPD_TYPE]);
       const mins = f[CPD_MINUTES] || 0;
       if (type) cpdByType[type] = (cpdByType[type] || 0) + mins;
       cpdLog.push({
-        date:     f[CPD_DATE]              || '',
-        activity: f[CPD_ACTIVITY]          || '',
+        date:       f[CPD_DATE]              || '',
+        activity:   f[CPD_ACTIVITY]          || '',
         type,
         mins,
-        category: selectName(f[CPD_CATEGORY]) || '',
-        source:   selectName(f[CPD_SOURCE])   || '',
-        video:    f[CPD_VTITLE]            || '',
-        learned:  f[CPD_LEARNED]           || ''
+        category:   selectName(f[CPD_CATEGORY]) || '',
+        source:     selectName(f[CPD_SOURCE])   || '',
+        videoTitle: f[CPD_VTITLE]            || '',
+        cpdType:    type,
+        learned:    f[CPD_LEARNED]           || ''
       });
     });
 
