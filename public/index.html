@@ -3746,6 +3746,15 @@ html { height: 100%; }
                 <input id="uf-pmi" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">PMI
               </label>
             </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f2f5;">
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-cas" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">CAS — Competent Adviser Status</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Adviser is deemed competent to give advice without supervision</div>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- SUPERVISION -->
@@ -6898,6 +6907,7 @@ function renderUserList(users) {
     var name = [u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
     var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
     var supBadge = u.isSupervisor ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
+    var casBadge = u.cas ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">CAS</span>' : '<span style="background:#f5f7fa;color:#6b7c8f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Non-CAS</span>';
     var mktBadge = u.isMarketing ? '<span style="background:#e8740c;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
     var products = [];
     if (u.sellsInvestments)   products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
@@ -6921,7 +6931,7 @@ function renderUserList(users) {
     }
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + mktBadge + products.join('') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + products.join('') + '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (displayTitle ? ' · ' + escHtml(displayTitle) : '') + '</div>' +
         supInfo +
       '</div>' +
@@ -7017,6 +7027,7 @@ function openUserForm(userId) {
     document.getElementById('uf-equity-release').checked       = u.equityRelease      || false;
     document.getElementById('uf-commercial-mortgages').checked = u.commercialMortgages|| false;
     document.getElementById('uf-pmi').checked                  = u.pmi               || false;
+    document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
@@ -7036,6 +7047,7 @@ function openUserForm(userId) {
     document.getElementById('uf-equity-release').checked       = false;
     document.getElementById('uf-commercial-mortgages').checked = false;
     document.getElementById('uf-pmi').checked                  = false;
+    document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
     populateSupervisorDropdown('');
   }
@@ -7075,6 +7087,7 @@ function saveUser() {
     equityRelease:       document.getElementById('uf-equity-release').checked,
     commercialMortgages: document.getElementById('uf-commercial-mortgages').checked,
     pmi:              document.getElementById('uf-pmi').checked,
+    cas:              document.getElementById('uf-cas').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
     supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim()
   };

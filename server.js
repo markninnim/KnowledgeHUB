@@ -585,7 +585,9 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     // Handle extra products
     _extraProducts[normEmail] = {
       equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
-      commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true'
+      commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
+      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
+      cas:                 req.body.cas                 === true || req.body.cas                 === 'true'
     };
     saveExtraProducts();
     res.json(recordToUser(data.records[0]));
@@ -699,7 +701,9 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
       _extraProducts[normEmail] = {
         equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
-        commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true'
+        commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
+        pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
+        cas:                 req.body.cas                 === true || req.body.cas                 === 'true'
       };
       saveExtraProducts();
     }
