@@ -7024,6 +7024,7 @@ var _svTransferName  = '';
 var _svListLoaded = false;
 var _svView = 'card'; // 'card' | 'list'
 var _svViewAsEmail = ''; // empty = own view
+var _svViewAsName  = ''; // display name of selected supervisor
 
 function setSvView(v) {
   _svView = v;
@@ -7495,6 +7496,7 @@ function svSidebarSelect(email, el) {
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   _svViewAsEmail = email === 'all' ? 'all' : email;
+  _svViewAsName  = (el && email !== 'all') ? (el.textContent || '').trim() : '';
   // Reload team data for selected supervisor
   _svLoaded = false;
   document.getElementById('sv-loading').style.display = 'block';
@@ -7637,14 +7639,13 @@ function renderSvDashboard(data) {
   var subtitleEl = document.getElementById('sv-subtitle');
   if (subtitleEl) {
     if (_svViewAsEmail === 'all') {
-      subtitleEl.textContent = 'Adviser group — whole company';
+      subtitleEl.textContent = 'Whole company';
     } else if (_svViewAsEmail) {
-      var sel2 = document.getElementById('sv-viewas-select');
-      var svName2 = sel2 ? (sel2.options[sel2.selectedIndex] || {}).text || _svViewAsEmail : _svViewAsEmail;
-      subtitleEl.textContent = 'Adviser group for ' + svName2;
+      var svFirst2 = (_svViewAsName || _svViewAsEmail).split(' ')[0];
+      subtitleEl.textContent = svFirst2 + '’s Team';
     } else if (_currentUser) {
-      var svName3 = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') || _currentUser.email;
-      subtitleEl.textContent = 'Adviser group for ' + svName3;
+      var svFirst3 = _currentUser.firstName || _currentUser.email.split('@')[0];
+      subtitleEl.textContent = svFirst3 + '’s Team';
     }
   }
 
