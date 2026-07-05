@@ -225,6 +225,7 @@ html { height: 100%; }
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE QUIZ</span></div>
     <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
+    <a href="#" id="lv-nav-kt-induction" onclick="return showLvSection('knowledge-tests',this)">Induction Tests</a>
     <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
     <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
     <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
@@ -1457,6 +1458,8 @@ html { height: 100%; }
       <div id="kt-landing">
         <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Quiz</h2>
         <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">20 questions per quiz · 75% passmark · Pass logs 30 minutes CPD</p>
+        <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Induction Tests</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-induction"></div>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-mortgage"></div>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Protection</div>
@@ -9330,7 +9333,7 @@ function ktShowLanding() {
     if(el) el.style.display = i===0 ? '' : 'none';
   });
   // Build grids
-  ['Mortgage','Protection'].forEach(function(group){
+  ['Induction','Mortgage','Protection'].forEach(function(group){
     var grid = document.getElementById('kt-grid-'+group.toLowerCase());
     if(!grid) return;
     grid.innerHTML = '';
