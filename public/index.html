@@ -7638,13 +7638,13 @@ function renderSvDashboard(data) {
   var headingEl = document.getElementById(‘sv-heading’);
   if (headingEl) {
     if (_svViewAsEmail === ‘all’) {
-      headingEl.textContent = ‘Whole Team’;
+      headingEl.textContent = 'Whole Team';
     } else if (_svViewAsEmail) {
       var svFirst2 = (_svViewAsName || _svViewAsEmail).split(‘ ‘)[0];
-      headingEl.textContent = svFirst2 + ‘’s Team’;
+      headingEl.textContent = svFirst2 + '’s Team';
     } else if (_currentUser) {
       var svFirst3 = _currentUser.firstName || _currentUser.email.split(‘@’)[0];
-      headingEl.textContent = svFirst3 + ‘’s Team’;
+      headingEl.textContent = svFirst3 + '’s Team';
     }
   }
 
