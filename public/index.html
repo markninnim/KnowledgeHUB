@@ -6486,7 +6486,7 @@ var _currentUser = null;
     }
     if (user && (user.isSupervisor || user.isAdmin)) {
       var sbtn = document.getElementById('tab-btn-supervisor-zone');
-      if (sbtn) { sbtn.style.display = ''; if (user.isSupervisor) sbtn.textContent = 'My Team'; }
+      if (sbtn) { sbtn.style.display = ''; sbtn.textContent = 'My Team'; }
       var pbtn = document.getElementById('tab-btn-performance-zone');
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
