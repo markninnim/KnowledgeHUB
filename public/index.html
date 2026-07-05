@@ -9500,7 +9500,7 @@ function pzRender(map) {
   // ── Blue sidebar: supervisor list ──
   var supList = document.getElementById('pz-supervisor-list');
   if (supList) {
-    var sHtml = '';
+    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">Whole Team<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
     for (var s = 0; s < supNames.length; s++) {
       var sup = supNames[s];
       var cnt = PZ_GROUPS[sup].length;
@@ -9512,20 +9512,31 @@ function pzRender(map) {
   }
 
   // ── Main page broker directory ──
+  pzShowMainView(null);
+}
+
+function pzShowMainView(filterSup) {
   var main = document.getElementById('pz-main');
   if (!main) return;
-  var mHtml = '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 4px;">Performance Zone</h2>' +
+  var supNames = Object.keys(PZ_GROUPS).sort(function(a,b){
+    if (a==='Management') return -1; if (b==='Management') return 1;
+    return a.localeCompare(b);
+  });
+  var groups = filterSup ? [filterSup] : supNames;
+  var mHtml = filterSup ? '' :
+    '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 4px;">Performance Zone</h2>' +
     '<p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;">Select a supervisor from the sidebar, or click any broker below.</p>';
-  for (var s = 0; s < supNames.length; s++) {
-    var sup = supNames[s];
-    var bks = PZ_GROUPS[sup];
+  for (var s = 0; s < groups.length; s++) {
+    var sup = groups[s];
+    var bks = (PZ_GROUPS[sup] || []).slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
     mHtml += '<div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">' + escHtml(sup) + '</div>';
     mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:32px;">';
     for (var b = 0; b < bks.length; b++) {
-      var n = bks[b]; var d = PZ_DATA[n]; var ne = escHtml(n);
+      var n = bks[b]; var d = PZ_DATA[n] || {}; var ne = escHtml(n);
+      var lpStr = (d.lp !== null && d.lp !== undefined && d.ms) ? ' (' + d.lp + '%)' : '';
       mHtml += '<div class="ov-card" onclick="pzOpenBroker(' + escHtml(JSON.stringify(n)) + ');">' +
         '<div class="ov-card-title">' + ne + '</div>' +
-        '<div class="ov-card-sub">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+' · GI: '+(d.gs||0)+'</div>' +
+        '<div class="ov-card-sub">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+' · GI: '+(d.gs||0)+'</div>' +
         '<div class="ov-card-btn">View stats →</div></div>';
     }
     mHtml += '</div>';
@@ -9536,7 +9547,8 @@ function pzRender(map) {
 function pzClickSup(el) {
   document.querySelectorAll('#pz-supervisor-list a').forEach(function(a){ a.classList.remove('active'); });
   el.classList.add('active');
-  pzShowBrokerPanel(el.getAttribute('data-sup'));
+  var sup = el.getAttribute('data-sup');
+  pzShowMainView(sup === '__all__' ? null : sup);
   return false;
 }
 
@@ -9570,22 +9582,12 @@ function pzFilterPanel(q) {
 }
 
 function pzOpenBroker(name) {
-  var sup = (PZ_SUP_MAP && PZ_SUP_MAP[name]) || 'Other';
-  var supEl = document.querySelector('#pz-supervisor-list a[data-sup="' + escHtml(sup) + '"]');
-  if (supEl) { document.querySelectorAll('#pz-supervisor-list a').forEach(function(a){ a.classList.remove('active'); }); supEl.classList.add('active'); }
-  pzShowBrokerPanel(sup);
-  setTimeout(function() {
-    var panel = document.getElementById('pz-broker-panel');
-    if (panel) panel.querySelectorAll('a').forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-broker') === name); });
-    pzShowBroker(name);
-  }, 0);
+  pzShowBroker(name);
 }
 
 function pzHideOverlay() {
   var ov = document.getElementById('pz-overlay');
   if (ov) ov.style.display = 'none';
-  var panel = document.getElementById('pz-broker-panel');
-  if (panel) { panel.style.display = 'none'; panel.querySelectorAll('a').forEach(function(a){ a.classList.remove('active'); }); }
 }
 
 function pzFilter(q) {
@@ -9606,7 +9608,7 @@ function pzShowBroker(name) {
     ov.id = 'pz-overlay';
     document.body.appendChild(ov);
   }
-  ov.style.cssText = 'position:fixed;top:60px;left:440px;right:0;bottom:0;background:#f7f8fa;overflow-y:auto;z-index:10;padding:40px;';
+  ov.style.cssText = 'position:fixed;top:60px;left:220px;right:0;bottom:0;background:#f7f8fa;overflow-y:auto;z-index:10;padding:40px;';
   ov.style.display = 'block';
   pzRenderBroker(name, 0, 5); // default Jan–Jun (indices 0–5)
 }
