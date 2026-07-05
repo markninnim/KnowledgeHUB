@@ -38,8 +38,10 @@ html { height: 100%; }
 .topbar img { height: 36px; object-fit: contain; }
 .sidebar { width: 220px; background: #003768; position: fixed; top: 60px; bottom: 0; padding: 24px 0; overflow-y: auto; }
 .sidebar h2 { color: #fcb034; font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
-.ov-card { background:#fff; border:1.5px solid #e8ecf0; border-radius:10px; padding:18px 20px; cursor:pointer; transition:box-shadow .15s,border-color .15s; }
+.ov-card { background:#fff; border:1.5px solid #e8ecf0; border-radius:10px; padding:18px 20px; cursor:pointer; transition:box-shadow .15s,border-color .15s; position:relative; overflow:hidden; }
 .ov-card:hover { border-color:#003768; box-shadow:0 4px 14px rgba(0,55,104,.1); }
+.ov-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:10px; pointer-events:none; }
+.ov-card:hover::after { opacity:1; }
 .ov-card-title { font-size:14px; font-weight:700; color:#003768; margin-bottom:5px; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:14px; }
 .ov-card-btn { display:inline-block; background:#fff; color:#6b7c8f; border:1.5px solid #d1d5db; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; }
@@ -148,7 +150,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-pay"             onclick="switchTab('pay')" style="display:none;">Pay</button>
-    <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Performance Zone</button>
+    <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Selling Zone</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
   </div>
@@ -253,7 +255,7 @@ html { height: 100%; }
   </div>
   <!-- Performance Zone sidebar -->
   <div id="sidebar-performance-zone" style="display:none">
-    <h2 style="margin-top: 8px;">Performance Zone</h2>
+    <h2 style="margin-top: 8px;">Numbers</h2>
     <div id="pz-supervisor-list"></div>
   </div>
   <!-- Supervisor Zone sidebar -->
@@ -6905,7 +6907,7 @@ var FEATURE_LABELS = {
   learning:        { label: 'Learning',          tab: 'tab-btn-learning',          pane: 'tab-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
   sellingZone:     { label: 'Selling Zone',      tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
-  performanceZone: { label: 'Performance Zone',  tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
+  performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
   supervisorZone:  { label: 'Supervisor Zone',   tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' }
 };
 
@@ -9500,7 +9502,8 @@ function pzRender(map) {
   // ── Blue sidebar: supervisor list ──
   var supList = document.getElementById('pz-supervisor-list');
   if (supList) {
-    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">Whole Team<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
+    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">MY TEAM<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
+    sHtml += '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
     for (var s = 0; s < supNames.length; s++) {
       var sup = supNames[s];
       var cnt = PZ_GROUPS[sup].length;
@@ -9529,13 +9532,15 @@ function pzShowMainView(filterSup) {
 
   var groups = filterSup ? [filterSup] : supNames;
   var mHtml = filterSup ? '' :
-    '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 4px;">Performance Zone</h2>' +
-    '<p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;">Select a supervisor from the sidebar, or click any broker below.</p>';
+    '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 28px;">Numbers</h2>';
   for (var s = 0; s < groups.length; s++) {
     var sup = groups[s];
     var bks = (PZ_GROUPS[sup] || []).slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
-    mHtml += '<div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">' + escHtml(sup) + '</div>';
-    mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:32px;">';
+    mHtml += '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;">' +
+      ‘<h2 style="font-size:20px;font-weight:800;color:#003768;margin:0;">’ + escHtml(sup) + ‘&#x2019;s Team</h2>’ +
+      '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">' + bks.length + ' Advisers</span>' +
+    '</div>';
+    mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:36px;">';
     for (var b = 0; b < bks.length; b++) {
       var n = bks[b]; var d = PZ_DATA[n] || {}; var ne = escHtml(n);
       var lpPct = (d.ms > 0) ? Math.round((d.ps || 0) / d.ms * 100) : 0;
@@ -9547,8 +9552,8 @@ function pzShowMainView(filterSup) {
           (rank ? '<span style="font-size:14px;font-weight:700;color:#fcb034;white-space:nowrap;margin-left:6px;">#' + rank + '</span>' : '') +
         '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-bottom:2px;">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+'</div>' +
-        '<div style="font-size:12px;color:#6b7c8f;margin-bottom:14px;">GI: '+(d.gs||0)+'</div>' +
-        '<div class="ov-card-btn">Read more</div></div>';
+        '<div style="font-size:12px;color:#6b7c8f;">GI: '+(d.gs||0)+'</div>' +
+        '</div>';
     }
     mHtml += '</div>';
   }
@@ -9957,7 +9962,7 @@ function toggleQlMenu(e) {
     { label: 'Statements',       tab: 'pay' },
   ];
   if (isSvAdmin) {
-    items.push({ label: 'Performance Zone', tab: 'performance-zone' });
+    items.push({ label: 'Numbers', tab: 'performance-zone' });
     items.push({ label: 'Supervisor Zone',  tab: 'supervisor-zone' });
   }
 
