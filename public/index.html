@@ -3720,45 +3720,77 @@ html { height: 100%; }
             <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Website</label>
             <input id="uf-website" type="text" placeholder="https://…" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
-          <div style="grid-column:1/-1;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-            <div id="uf-admin-row" style="display:flex;align-items:center;gap:10px;">
-              <input id="uf-admin" type="checkbox" style="width:16px;height:16px;cursor:pointer;accent-color:#003768;">
-              <label for="uf-admin" style="font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">Admin access (can manage users)</label>
+          <!-- LICENCES -->
+          <div style="grid-column:1/-1;margin-top:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Licences</span>
+              <div style="flex:1;height:1px;background:#e8ecf0;"></div>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <input id="uf-marketing" type="checkbox" style="width:16px;height:16px;cursor:pointer;accent-color:#e8740c;">
-              <label for="uf-marketing" style="font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">Marketing access (can add featured posts)</label>
-            </div>
-          </div>
-          <div style="grid-column:1/-1;padding-top:4px;border-top:1px solid #f0f2f5;margin-top:4px;">
-            <div style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Products Sold</div>
-            <div style="display:flex;gap:24px;flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#003768;">Investments
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Mortgages
               </label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#2e99d5;">Mortgages
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Protection
               </label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#fcb034;">Protection
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Investments
               </label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-equity-release" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#16a34a;">Equity Release
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-equity-release" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Lifetime Mortgages
               </label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-commercial-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#7c3aed;">Commercial Mortgages
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-commercial-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Commercial Mortgages
+              </label>
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-pmi" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">PMI
               </label>
             </div>
           </div>
-          <div style="grid-column:1/-1;padding-top:4px;border-top:1px solid #f0f2f5;margin-top:4px;">
-            <div style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Supervision</div>
-            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;">
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1a2a3a;cursor:pointer;">
-                <input id="uf-issupervisor" type="checkbox" style="width:15px;height:15px;cursor:pointer;accent-color:#2e99d5;">Is Supervisor (can view Team CPD)
+
+          <!-- SUPERVISION -->
+          <div style="grid-column:1/-1;margin-top:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Supervision</span>
+              <div style="flex:1;height:1px;background:#e8ecf0;"></div>
+            </div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Supervisor <span style="font-weight:400;color:#6b7c8f;">— leave blank if none</span></label>
+            <select id="uf-supervisoremail" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#1a2a3a;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
+              <option value="">— No supervisor —</option>
+            </select>
+          </div>
+
+          <!-- ACCESS -->
+          <div style="grid-column:1/-1;margin-top:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Access</span>
+              <div style="flex:1;height:1px;background:#e8ecf0;"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-issupervisor" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Grant supervisor access</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and manage their team's CPD</div>
+                </div>
+              </label>
+              <div id="uf-admin-row">
+                <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                  <input id="uf-admin" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Admin access</div>
+                    <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can manage all users and system settings</div>
+                  </div>
+                </label>
+              </div>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+                <input id="uf-marketing" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Marketing access</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can add and manage featured posts</div>
+                </div>
               </label>
             </div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Supervisor Email <span style="font-weight:400;color:#6b7c8f;">(their supervisor's email — leave blank for supervisors)</span></label>
-            <input id="uf-supervisoremail" type="email" placeholder="supervisor@financeplanning.co.uk" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
         </div>
         <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
@@ -6929,6 +6961,30 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function populateSupervisorDropdown(selected) {
+  var sel = document.getElementById('uf-supervisoremail');
+  if (!sel) return;
+  var supervisors = (_adminUsers || []).filter(function(u){ return u.isSupervisor; })
+    .sort(function(a,b){ return (a.firstName||'').localeCompare(b.firstName||''); });
+  sel.innerHTML = '<option value="">— No supervisor —</option>';
+  supervisors.forEach(function(s) {
+    var name = [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email;
+    var opt = document.createElement('option');
+    opt.value = s.email;
+    opt.textContent = name + ' (' + s.email + ')';
+    if (s.email === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // If selected value isn't in list (e.g. manually set), add it
+  if (selected && !supervisors.find(function(s){ return s.email === selected; })) {
+    var opt = document.createElement('option');
+    opt.value = selected;
+    opt.textContent = selected;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
 function openUserForm(userId) {
   _editingUserId = userId || null;
   var form = document.getElementById('admin-user-form');
@@ -6960,8 +7016,9 @@ function openUserForm(userId) {
     document.getElementById('uf-protection').checked           = u.sellsProtection    || false;
     document.getElementById('uf-equity-release').checked       = u.equityRelease      || false;
     document.getElementById('uf-commercial-mortgages').checked = u.commercialMortgages|| false;
+    document.getElementById('uf-pmi').checked                  = u.pmi               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
-    document.getElementById('uf-supervisoremail').value    = u.supervisorEmail  || '';
+    populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
     title.textContent = 'Add New User';
     hint.textContent  = '(required for new user)';
@@ -6978,8 +7035,9 @@ function openUserForm(userId) {
     document.getElementById('uf-protection').checked           = false;
     document.getElementById('uf-equity-release').checked       = false;
     document.getElementById('uf-commercial-mortgages').checked = false;
+    document.getElementById('uf-pmi').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
-    document.getElementById('uf-supervisoremail').value   = '';
+    populateSupervisorDropdown('');
   }
   form.style.display = 'block';
   document.getElementById('admin-user-list').style.display = 'none';
@@ -7016,6 +7074,7 @@ function saveUser() {
     sellsProtection:     document.getElementById('uf-protection').checked,
     equityRelease:       document.getElementById('uf-equity-release').checked,
     commercialMortgages: document.getElementById('uf-commercial-mortgages').checked,
+    pmi:              document.getElementById('uf-pmi').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
     supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim()
   };
