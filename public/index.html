@@ -144,15 +144,15 @@ html { height: 100%; }
   <img src="/public-logo" alt="Finance Planning Group">
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-btn-home"          onclick="switchTab('home')">Home</button>
-    <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
-    <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
     <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Advice Standards</button>
+    <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
     <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
-    <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
-    <button class="tab-btn"        id="tab-btn-pay"             onclick="switchTab('pay')" style="display:none;">Pay</button>
-    <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
+    <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Opportunities</button>
+    <button class="tab-btn"        id="tab-btn-pay"           onclick="switchTab('pay')" style="display:none;">Pay</button>
+    <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
+    <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1.5px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -9956,23 +9956,29 @@ function toggleQlMenu(e) {
   var divStyle = 'width:1px;';
 
   var items = [
-    { label: 'Marketing',        tab: 'marketing' },
-    { label: 'Compliance',       tab: 'compliance' },
     { label: 'Advice Standards', tab: 'sales-process' },
+    { label: 'Compliance',       tab: 'compliance' },
     { label: 'Learning',         tab: 'learning' },
-    { label: 'Surveying',        tab: 'surveying' },
+    { label: 'Marketing',        tab: 'marketing' },
     { label: 'Opportunities',    tab: 'selling-zone' },
-    { label: 'Statements',       tab: 'pay' },
+    { label: 'Pay',              tab: 'pay' },
+    { label: 'Surveying',        tab: 'surveying' },
   ];
-  if (isSvAdmin) {
-    items.push({ label: 'Numbers',  tab: 'performance-zone' });
-    items.push({ label: 'My Team',  tab: 'supervisor-zone' });
-  }
+  var adminItems = isSvAdmin ? [
+    { label: 'My Team',  tab: 'supervisor-zone' },
+    { label: 'Numbers',  tab: 'performance-zone' },
+  ] : [];
 
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Navigate to</div>';
   items.forEach(function(item) {
     html += '<button onclick="switchTab(\'' + item.tab + '\');closeQlMenu()" style="' + btnStyle + '" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'none\'">' + item.label + '</button>';
   });
+  if (adminItems.length) {
+    html += '<div style="margin:6px 8px;border-top:1px solid #e8ecf0;"></div>';
+    adminItems.forEach(function(item) {
+      html += '<button onclick="switchTab(\'' + item.tab + '\');closeQlMenu()" style="' + btnStyle + '" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'none\'">' + item.label + '</button>';
+    });
+  }
   p.innerHTML = html;
   p.style.display = 'block';
 
