@@ -7486,6 +7486,7 @@ function closeBrokerProfile() {
 }
 
 function svSidebarSelect(email, el) {
+  closeBrokerProfile();
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   _svViewAsEmail = email === 'all' ? 'all' : email;
@@ -7510,6 +7511,7 @@ function svSidebarSelect(email, el) {
 }
 
 function loadSupervisorZone() {
+  closeBrokerProfile();
   _svLoaded = false;
   document.getElementById('sv-loading').style.display = 'block';
   document.getElementById('sv-stats').innerHTML = '';
