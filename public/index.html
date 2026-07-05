@@ -9585,7 +9585,7 @@ function pzHideOverlay() {
   var ov = document.getElementById('pz-overlay');
   if (ov) ov.style.display = 'none';
   var panel = document.getElementById('pz-broker-panel');
-  if (panel) panel.querySelectorAll('a').forEach(function(a){ a.classList.remove('active'); });
+  if (panel) { panel.style.display = 'none'; panel.querySelectorAll('a').forEach(function(a){ a.classList.remove('active'); }); }
 }
 
 function pzFilter(q) {
