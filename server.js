@@ -58,7 +58,10 @@ const EXTRA_PRODUCTS_PATH = path.join(__dirname, 'extra-products.json');
 let _extraProducts = {}; // { "email": { equityRelease: true, commercialMortgages: false } }
 try { _extraProducts = JSON.parse(fs.readFileSync(EXTRA_PRODUCTS_PATH, 'utf8')); } catch(_) {}
 function saveExtraProducts() { fs.writeFileSync(EXTRA_PRODUCTS_PATH, JSON.stringify(_extraProducts, null, 2)); }
-function getExtraProducts(email) { return _extraProducts[(email||'').toLowerCase()] || {}; }
+function getExtraProducts(email) {
+  const stored = _extraProducts[(email||'').toLowerCase()] || {};
+  return { cas: true, ...stored }; // default CAS to true; explicit false overrides
+}
 
 // ── Login attempt tracking (in-memory, resets on restart) ────────
 // { "email@x.com": { count: 3, lockedUntil: <ms timestamp> } }
