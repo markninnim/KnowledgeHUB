@@ -3329,6 +3329,7 @@ html { height: 100%; }
       <!-- Advisers section -->
       <div id="sv-advisers-wrap" style="display:none;margin-bottom:28px;">
         <div id="sv-advisers-list" style="display:grid;gap:12px;"></div>
+        <div id="sv-noncas-legend" style="display:none;margin-top:18px;text-align:center;"></div>
       </div>
       <!-- Supervisors section -->
       <div id="sv-supervisors-wrap" style="display:none;margin-top:28px;">
@@ -7766,7 +7767,7 @@ function renderSvDashboard(data) {
 
   // Update sidebar count
   var sbCount = document.getElementById('sv-sidebar-count');
-  if (sbCount) sbCount.textContent = totalOnTrack + '/' + members.length;
+  if (sbCount) sbCount.textContent = totalOnTrack + '/' + allAdvisers.length;
 
   // Update heading title
   var headingEl = document.getElementById('sv-heading');
@@ -7787,7 +7788,7 @@ function renderSvDashboard(data) {
   if (inlineEl) {
     inlineEl.innerHTML =
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
-        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + members.length + '</span>' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + allAdvisers.length + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Advisers</span>' +
       '</div>' +
       '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
@@ -7795,16 +7796,7 @@ function renderSvDashboard(data) {
         '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
       '</div>' +
-      '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
-      '<div class="sv-noncas-wrap" style="position:relative;display:flex;align-items:center;gap:5px;cursor:default;" onmouseenter="this.querySelector(\'.sv-noncas-tip\').style.display=\'block\'" onmouseleave="this.querySelector(\'.sv-noncas-tip\').style.display=\'none\'">' +
-        '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
-        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalNonCas + '</span>' +
-        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
-        (totalNonCas > 0 ?
-          '<div class="sv-noncas-tip" style="display:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#1a2a3a;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:500;line-height:1.7;white-space:nowrap;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18);">' +
-            nonCasNames.map(function(n){ return '● ' + n; }).join('<br>') +
-          '</div>' : '') +
-      '</div>';
+      '';
   }
 
   function buildCard(obj) {
@@ -7911,6 +7903,23 @@ function renderSvDashboard(data) {
   if (allAdvisers.length) {
     document.getElementById('sv-advisers-wrap').style.display = 'block';
     document.getElementById('sv-advisers-list').innerHTML = allAdvisers.map(renderer).join('');
+    // Non-CAS legend at bottom
+    var legendEl = document.getElementById('sv-noncas-legend');
+    if (legendEl) {
+      if (totalNonCas > 0) {
+        legendEl.style.display = 'block';
+        legendEl.innerHTML =
+          '<div class="sv-noncas-wrap" style="position:relative;display:inline-flex;align-items:center;gap:6px;cursor:default;padding:6px 14px;border-radius:20px;background:#fef2f2;border:1px solid #fecaca;" onmouseenter="this.querySelector(\'.sv-noncas-tip\').style.display=\'block\'" onmouseleave="this.querySelector(\'.sv-noncas-tip\').style.display=\'none\'">' +
+            '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
+            '<span style="font-size:12px;font-weight:700;color:#991b1b;">' + totalNonCas + ' Non-CAS</span>' +
+            '<div class="sv-noncas-tip" style="display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a2a3a;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:500;line-height:1.7;white-space:nowrap;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18);">' +
+              nonCasNames.map(function(n){ return '● ' + n; }).join('<br>') +
+            '</div>' +
+          '</div>';
+      } else {
+        legendEl.style.display = 'none';
+      }
+    }
   }
   // Populate Supervisors
   if (supervisorCards.length) {
