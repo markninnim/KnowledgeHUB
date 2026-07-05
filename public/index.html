@@ -262,6 +262,9 @@ html { height: 100%; }
     <div id="sv-sb-supervisors" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>
     </div>
+    <div id="sv-sb-noncas" style="display:none;">
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>
+    </div>
   </div>
 </div>
 <!-- Hero triangles -->
@@ -7638,6 +7641,7 @@ function svSidebarSelect(email, el) {
   document.getElementById('sv-advisers-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
   slideIn(document.getElementById('tab-supervisor-zone'));
+  var _ncReset = document.getElementById('sv-sb-noncas'); if (_ncReset) _ncReset.style.display = 'none';
   var url = '/api/supervisor/team?as=' + encodeURIComponent(_svViewAsEmail);
   fetch(url).then(function(r){ return r.json(); }).then(function(data) {
     _svData = data;
@@ -7833,7 +7837,8 @@ function renderSvDashboard(data) {
     var cardBg = m.isSupervisor ? '#f0f2f5' : '#fff';
     var supLabel = m.isSupervisor ? '<span style="background:#6b7c8f;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-left:6px;vertical-align:middle;flex-shrink:0;"></span>' : '';
-    return '<div style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;">' +
+    var cardId = 'sv-card-' + m.email.replace(/[^a-z0-9]/gi, '_');
+    return '<div id="' + cardId + '" style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;">' +
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
@@ -7898,6 +7903,25 @@ function renderSvDashboard(data) {
     var el = document.getElementById(id);
     if (el) el.style.gridTemplateColumns = isCard ? 'repeat(3,1fr)' : '1fr';
   });
+
+  // Populate Non-CAS sidebar section
+  var ncWrap = document.getElementById('sv-sb-noncas');
+  if (ncWrap) {
+    if (totalNonCas > 0) {
+      var ncHtml = '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>';
+      nonCasAdvisers.forEach(function(o) {
+        var n = [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email;
+        var cardId = 'sv-card-' + o.m.email.replace(/[^a-z0-9]/gi, '_');
+        ncHtml += '<a href="#" onclick="var el=document.getElementById(\'' + cardId + '\');if(el){el.scrollIntoView({behavior:\'smooth\',block:\'center\'});el.style.outline=\'2px solid #ef4444\';setTimeout(function(){el.style.outline=\'\'},1800);}return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
+          '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
+          escHtml(n) + '</a>';
+      });
+      ncWrap.innerHTML = ncHtml;
+      ncWrap.style.display = 'block';
+    } else {
+      ncWrap.style.display = 'none';
+    }
+  }
 
   // Populate Advisers
   if (allAdvisers.length) {
