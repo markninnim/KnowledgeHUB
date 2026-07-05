@@ -8345,6 +8345,7 @@ function filterBpActivity() {
 
 function closeBrokerProfile() {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'block';
 }
 
@@ -8451,7 +8452,8 @@ function renderSvDashboard(data) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
-    if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
+    // In View All mode, include everyone (admins may also be advisers without a supervisor assigned)
+    if (_svViewAsEmail !== 'all' && m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
@@ -8524,7 +8526,7 @@ function renderSvDashboard(data) {
       '</div>' +
       '<span style="font-size:14px;font-weight:400;color:#d1d9e0;margin:0 2px;">—</span>' +
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
-        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + ((totalNonCas * 2) + allAdvisers.length) + '</span>' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + (allAdvisers.length + totalNonCas) + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">SPOC</span>' +
       '</div>';
   }
