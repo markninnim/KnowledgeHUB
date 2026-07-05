@@ -3224,9 +3224,9 @@ html { height: 100%; }
           <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e99d5;"></span>
-              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Induction Videos</span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Induction Videos &amp; Tests</span>
             </div>
-            <span id="cas-iv-count" style="font-size:12px;font-weight:700;color:#6b7c8f;">0/10</span>
+            <span id="cas-iv-count" style="font-size:12px;font-weight:700;color:#6b7c8f;">0/10 watched</span>
           </div>
           <div id="cas-entries-Induction-Video" style="min-height:40px;"></div>
         </div>
@@ -7464,27 +7464,46 @@ function renderCasEntries(entries) {
       var watchedCount = _INDUCTION_VIDEOS.filter(function(t) { return !!_casInductionWatchDates[t]; }).length;
       var countEl = document.getElementById('cas-iv-count');
       if (countEl) {
-        countEl.textContent = watchedCount + '/10';
+        countEl.textContent = watchedCount + '/10 watched';
         countEl.style.color = watchedCount === 10 ? '#059669' : '#6b7c8f';
       }
-      el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
-        '<tr style="background:#f8fafc;">' +
-          '<th style="text-align:left;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;">Module</th>' +
-          '<th style="text-align:right;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;width:150px;">Date Watched</th>' +
-        '</tr>' +
+      // Build test map keyed by title
+      var testByTitle = {};
+      (buckets['Test'] || []).forEach(function(e) { if (e.title && !testByTitle[e.title]) testByTitle[e.title] = e; });
+      el.innerHTML = '<div style="padding:12px 16px;">' +
         _INDUCTION_VIDEOS.map(function(title) {
           var dateVal = _casInductionWatchDates[title] || '';
-          return '<tr style="border-top:1px solid #f0f2f5;">' +
-            '<td style="padding:10px 20px;font-size:13px;">' +
-              '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle;background:' + (dateVal ? '#10b981' : '#d1d5db') + ';"></span>' +
-              '<span style="font-weight:' + (dateVal ? '700' : '400') + ';color:' + (dateVal ? '#1a2a3a' : '#6b7c8f') + ';">' + escHtml(title) + '</span>' +
-            '</td>' +
-            '<td style="padding:10px 20px;text-align:right;font-size:12px;font-weight:' + (dateVal ? '700' : '400') + ';color:' + (dateVal ? '#059669' : '#aab4be') + ';">' +
-              (dateVal ? formatCasDate(dateVal) : '—') +
-            '</td>' +
-          '</tr>';
+          var te = testByTitle[title] || null;
+          var st = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          // Video box
+          var videoBox = '<div style="flex:1;border:1.5px solid ' + (dateVal ? '#a7f3d0' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (dateVal ? '#f0fdf4' : '#fafafa') + ';">' +
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span>' +
+              '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Video</span>' +
+            '</div>' +
+            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;margin-bottom:3px;">' + escHtml(title) + '</div>' +
+            '<div style="font-size:11px;color:' + (dateVal ? '#059669' : '#aab4be') + ';font-weight:' + (dateVal ? '700' : '400') + ';">' + (dateVal ? formatCasDate(dateVal) : 'Not watched') + '</div>' +
+          '</div>';
+          // Test box
+          var testBox = '<div style="flex:1;border:1.5px solid ' + (te ? '#ddd6fe' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (te ? '#faf5ff' : '#fafafa') + ';">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">' +
+              '<div style="display:flex;align-items:center;gap:6px;">' +
+                '<span style="width:7px;height:7px;border-radius:50%;background:#7c3aed;flex-shrink:0;display:inline-block;"></span>' +
+                '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Test</span>' +
+              '</div>' +
+              (te ? '<button onclick="deleteCasEntry(\'' + te.id + '\',\'Test\')" style="font-size:10px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0;line-height:1;" title="Remove">✕</button>' : '') +
+            '</div>' +
+            (te ?
+              '<div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:3px;">' + (te.score !== null && te.score !== undefined ? te.score + '%' : 'Complete') + '</div>' +
+              '<div style="font-size:11px;color:#aab4be;">' + formatCasDate(te.date) + '</div>'
+              :
+              '<div style="font-size:12px;color:#aab4be;margin-bottom:3px;">Not completed</div>' +
+              '<button onclick="openCasEntryForTitle(\'Test\',\'' + st + '\')" style="font-size:11px;font-weight:600;color:#7c3aed;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">+ Add result</button>'
+            ) +
+          '</div>';
+          return '<div style="display:flex;gap:10px;margin-bottom:8px;">' + videoBox + testBox + '</div>';
         }).join('') +
-      '</table>';
+      '</div>';
       return;
     }
 
@@ -7592,7 +7611,6 @@ function loadBrokerCasPath() {
 
 function openCasEntry(type) {
   _casPathCurrentType = type;
-  var titleLabel = document.querySelector('#cas-entry-form label');
   document.getElementById('cas-entry-form-title').textContent = type === 'Task' ? 'Set Task' : 'Add ' + type;
   document.getElementById('cas-entry-title').placeholder = type === 'Task' ? 'e.g. Complete Module 3 before Friday' : 'e.g. Module 1 — FCA Overview';
   var dateLbl = document.getElementById('cas-date-label'); if (dateLbl) dateLbl.textContent = type === 'Task' ? 'Due Date' : 'Date';
@@ -7604,6 +7622,11 @@ function openCasEntry(type) {
   document.getElementById('cas-notes-row').style.display = (type === 'Role Play' || type === 'Observed Interview' || type === 'Task') ? 'block' : 'none';
   document.getElementById('cas-entry-form').style.display = 'block';
   document.getElementById('cas-entry-title').focus();
+}
+
+function openCasEntryForTitle(type, title) {
+  openCasEntry(type);
+  document.getElementById('cas-entry-title').value = title;
 }
 
 function submitCasEntry() {
