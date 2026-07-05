@@ -59,7 +59,7 @@ html { height: 100%; }
 .badge { display: inline-block; background: #f5f7fa; color: #6b7c8f; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
 .badge.ready { background: rgba(0,119,68,.1); color: #007744; }
 .badge.expired { background: rgba(204,0,0,.1); color: #cc0000; }
-.btn { display: inline-block; background: transparent; color: #6b7c8f; border: 1.5px solid #e8ecf0; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; margin-top: 8px; }
+.btn { display: inline-block; background: #fff; color: #6b7c8f; border: 1.5px solid #d1d5db; padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 700; margin-top: 8px; }
 .btn:hover { border-color:#003768; color:#003768; }
 .btn.off { background: #f5f7fa; color: #ccc; border-color:#e8ecf0; pointer-events: none; }
 .btn-view { display: none !important; }
@@ -83,7 +83,7 @@ html { height: 100%; }
 .cp-actions { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 .btn-platform { display:inline-block; padding:6px 0; border-radius:6px; font-size:12px; text-decoration:none; cursor:pointer; border:none; width:130px; text-align:center; }
 .btn-dl { background:#003768; color:#fff; }
-.btn-open { background:transparent; border:1px solid #003768; color:#003768; }
+.btn-open { background:#fff; border:1.5px solid #d1d5db; color:#6b7c8f; }
 #preview-box { background:#fff; border-radius:12px; width:90vw; max-width:960px; height:85vh; display:flex; flex-direction:column; overflow:hidden; }
 #preview-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #e8ecf0; }
 #preview-title { color:#003768; font-weight:700; font-size:14px; }
@@ -501,7 +501,7 @@ html { height: 100%; }
             <input type="date" id="feefo-date-from" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
             <span style="font-size:12px;color:#6b7c8f;">to</span>
             <input type="date" id="feefo-date-to" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
-            <button onclick="feefoDateClear()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+            <button onclick="feefoDateClear()" style="border:1.5px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
           </div>
         </div>
 
@@ -1095,9 +1095,9 @@ html { height: 100%; }
             <div style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;">CPD Progress</div>
             <div style="display:flex;gap:3px;align-items:center;">
               <button id="cpd-period-month"   onclick="setCpdPeriod('month')"   style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #003768;background:#003768;color:#fff;">Month</button>
-              <button id="cpd-period-quarter" onclick="setCpdPeriod('quarter')" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#6b7c8f;">Quarter</button>
-              <button id="cpd-period-year"    onclick="setCpdPeriod('year')"    style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#6b7c8f;">Year</button>
-              <button id="cpd-pdf-btn" onclick="downloadCpdPdf()" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;margin-left:3px;">
+              <button id="cpd-period-quarter" onclick="setCpdPeriod('quarter')" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;">Quarter</button>
+              <button id="cpd-period-year"    onclick="setCpdPeriod('year')"    style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;">Year</button>
+              <button id="cpd-pdf-btn" onclick="downloadCpdPdf()" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;margin-left:3px;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 PDF
               </button>
@@ -1162,7 +1162,7 @@ html { height: 100%; }
         <div id="cpd-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:12px;"></div>
         <div style="display:flex;gap:10px;margin-top:16px;">
           <button onclick="saveCpdEntry()" style="background:#003768;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save Entry</button>
-          <button onclick="closeCpdForm()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="closeCpdForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
 
@@ -1370,7 +1370,7 @@ html { height: 100%; }
             <div style="font-size:12px;color:#6b7c8f;margin-bottom:20px;">Article is open in another tab</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button onclick="msStopAndLog()" style="background:#003768;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Stop &amp; Log CPD</button>
-              <button onclick="msCancel()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+              <button onclick="msCancel()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
             </div>
           </div>
         </div>
@@ -1425,7 +1425,7 @@ html { height: 100%; }
               <div id="nl-up-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
               <div style="display:flex;gap:8px;">
                 <button onclick="nlUpload()" style="flex:1;background:#003768;color:#fff;border:none;padding:9px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Upload</button>
-                <button onclick="nlToggleUpload()" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:9px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
+                <button onclick="nlToggleUpload()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
               </div>
             </div>
           </div>
@@ -3238,7 +3238,7 @@ html { height: 100%; }
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed;"></span>
               <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tests</span>
             </div>
-            <button onclick="openCasEntry('Test')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+            <button onclick="openCasEntry('Test')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">+ Add</button>
           </div>
           <div id="cas-entries-Test" style="padding:4px 0;min-height:40px;"></div>
         </div>
@@ -3250,7 +3250,7 @@ html { height: 100%; }
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>
               <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Role Plays</span>
             </div>
-            <button onclick="openCasEntry('Role Play')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+            <button onclick="openCasEntry('Role Play')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">+ Add</button>
           </div>
           <div id="cas-entries-Role-Play" style="padding:4px 0;min-height:40px;"></div>
         </div>
@@ -3262,7 +3262,7 @@ html { height: 100%; }
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
               <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Observed Interviews</span>
             </div>
-            <button onclick="openCasEntry('Observed Interview')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+            <button onclick="openCasEntry('Observed Interview')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">+ Add</button>
           </div>
           <div id="cas-entries-Observed-Interview" style="padding:4px 0;min-height:40px;"></div>
         </div>
@@ -3274,7 +3274,7 @@ html { height: 100%; }
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#003768;"></span>
               <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tasks</span>
             </div>
-            <button onclick="openCasEntry('Task')" class="sv-add-btn" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Set Task</button>
+            <button onclick="openCasEntry('Task')" class="sv-add-btn" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">+ Set Task</button>
           </div>
           <div id="cas-entries-Task" style="padding:4px 0;min-height:40px;"></div>
         </div>
@@ -3316,7 +3316,7 @@ html { height: 100%; }
         </div>
         <div style="display:flex;gap:8px;">
           <button onclick="submitCasEntry()" style="background:#003768;color:#fff;border:none;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>
-          <button onclick="document.getElementById('cas-entry-form').style.display='none'" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="document.getElementById('cas-entry-form').style.display='none'" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
           <span id="cas-entry-saving" style="display:none;font-size:12px;color:#6b7c8f;align-self:center;">Saving…</span>
         </div>
       </div>
@@ -3440,7 +3440,7 @@ html { height: 100%; }
               <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
               <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
-              <button onclick="document.getElementById('bp-rev-from').value='';document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+              <button onclick="document.getElementById('bp-rev-from').value='';document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1.5px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
             </div>
           </div>
           <div id="bp-reviews" style="display:flex;flex-direction:column;gap:0;max-height:400px;overflow-y:auto;"></div>
@@ -3454,7 +3454,7 @@ html { height: 100%; }
               <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
               <input type="date" id="bp-act-to" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
-              <button onclick="document.getElementById('bp-act-from').value='';document.getElementById('bp-act-to').value='';filterBpActivity();" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#f5f7fa;cursor:pointer;font-family:inherit;">Clear</button>
+              <button onclick="document.getElementById('bp-act-from').value='';document.getElementById('bp-act-to').value='';filterBpActivity();" style="border:1.5px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
             </div>
           </div>
           <div style="overflow-x:auto;">
@@ -3828,7 +3828,7 @@ html { height: 100%; }
         </div>
         <div style="display:flex;gap:8px;">
           <button onclick="confirmImport()" style="background:#003768;color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Import All</button>
-          <button onclick="cancelImport()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:7px 12px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="cancelImport()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
       <div id="import-preview-table" style="overflow-x:auto;font-size:12px;"></div>
@@ -3978,7 +3978,7 @@ html { height: 100%; }
         <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
         <div style="display:flex;gap:10px;margin-top:20px;">
           <button onclick="saveUser()" style="background:#003768;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save User</button>
-          <button onclick="cancelUserForm()" style="background:#f5f7fa;color:#6b7c8f;border:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="cancelUserForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
     </div>
@@ -8359,9 +8359,9 @@ function renderSvDashboard(data) {
       '</div>' +
       '<span style="background:' + overall.bg + ';color:' + overall.tc + ';font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;white-space:nowrap;">' + overall.label + '</span>' +
       '<div style="display:flex;gap:6px;">' +
-        '<button onclick="svDrillDown(\'' + safeEmail + '\',\'' + drillId + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;cursor:pointer;font-family:inherit;">View ▾</button>' +
-        '<button onclick="svExportAdviserCsv(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#003768;cursor:pointer;font-family:inherit;">↓ CSV</button>' +
-        '<button onclick="openSvTransfer(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #e8ecf0;background:#f5f7fa;color:#6b7c8f;cursor:pointer;font-family:inherit;">Transfer →</button>' +
+        '<button onclick="svDrillDown(\'' + safeEmail + '\',\'' + drillId + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">View ▾</button>' +
+        '<button onclick="svExportAdviserCsv(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">↓ CSV</button>' +
+        '<button onclick="openSvTransfer(\'' + safeEmail + '\',\'' + safeName + '\')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">Transfer →</button>' +
       '</div>' +
     '</div>' +
     '<div id="' + drillId + '" style="display:none;border-radius:0 0 8px 8px;border-top:1px solid #f0f2f5;background:#f9fafb;"></div>';
@@ -9731,7 +9731,7 @@ function pzFmt(n) {
     <div id="mku-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
     <div style="display:flex;gap:8px;">
       <button onclick="saveFeaturedPost()" style="flex:1;background:#003768;color:#fff;border:none;padding:10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Post</button>
-      <button onclick="closeMarketingUpload()" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:10px 16px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
+      <button onclick="closeMarketingUpload()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
     </div>
   </div>
 </div>
@@ -9765,7 +9765,7 @@ function pzFmt(n) {
     <p id="share-status" style="margin:0 0 12px;font-size:13px;min-height:18px;"></p>
     <div style="display:flex;gap:10px;">
       <button onclick="sendShareEmail()" style="flex:1;background:#003768;color:#fff;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Send Email</button>
-      <button onclick="closeShareModal()" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+      <button onclick="closeShareModal()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
     </div>
   </div>
 </div>
