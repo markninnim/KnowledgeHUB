@@ -40,12 +40,12 @@ html { height: 100%; }
 .sidebar h2 { color: #fcb034; font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
 .ov-card { background:#fff; border:1.5px solid #e8ecf0; border-radius:10px; padding:18px 20px; cursor:pointer; transition:box-shadow .15s,border-color .15s; position:relative; overflow:hidden; }
 .ov-card:hover { border-color:#003768; box-shadow:0 4px 14px rgba(0,55,104,.1); }
-.ov-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:10px; pointer-events:none; }
+.ov-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
 .ov-card:hover::after { opacity:1; }
 .ov-card-title { font-size:14px; font-weight:700; color:#003768; margin-bottom:5px; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:14px; }
 .ov-card-btn { display:inline-block; background:#fff; color:#6b7c8f; border:1.5px solid #d1d5db; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; }
-.sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; }
+.sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
 #pz-broker-panel a:hover { background:#f5f7fa; color:#003768; }
@@ -151,7 +151,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-pay"             onclick="switchTab('pay')" style="display:none;">Pay</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
-    <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Selling Zone</button>
+    <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Opportunities</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
@@ -250,7 +250,7 @@ html { height: 100%; }
   </div>
   <!-- Selling Zone sidebar -->
   <div id="sidebar-selling-zone" style="display:none">
-    <h2 style="margin-top: 8px;">Selling Zone</h2>
+    <h2 style="margin-top: 8px;">Opportunities</h2>
     <a href="#" class="active">Overview</a>
   </div>
   <!-- Performance Zone sidebar -->
@@ -320,7 +320,7 @@ html { height: 100%; }
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             <span>Advice Standards</span>
           </button>
-          <button onclick="switchTab('marketing');setTimeout(()=>show('social',null),50)" class="home-ql-btn">
+          <button id="ql-social-btn" onclick="switchTab('marketing');setTimeout(()=>show('social',null),50)" class="home-ql-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             <span>Social Media</span>
           </button>
@@ -3199,7 +3199,7 @@ html { height: 100%; }
   <div id="tab-selling-zone" class="tab-pane">
     <div class="coming-soon">
       <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-      <h2>Selling Zone</h2>
+      <h2>Opportunities</h2>
       <p>Sales tools, objection handling, and performance resources will appear here. This section is coming soon.</p>
     </div>
   </div>
@@ -6720,6 +6720,12 @@ var _currentUser = null;
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
       if (nlup) nlup.style.display = 'block';
+      // Replace Social Media quick-link with My Team
+      var qlSocial = document.getElementById('ql-social-btn');
+      if (qlSocial) {
+        qlSocial.onclick = function(){ switchTab('supervisor-zone'); };
+        qlSocial.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>My Team</span>';
+      }
     }
     // Show My CAS Path in Learning sidebar for non-CAS advisers
     if (user && !user.cas) {
@@ -6906,9 +6912,9 @@ var FEATURE_LABELS = {
   adviceStandards: { label: 'Advice Standards',  tab: 'tab-btn-sales-process',     pane: 'tab-sales-process' },
   learning:        { label: 'Learning',          tab: 'tab-btn-learning',          pane: 'tab-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
-  sellingZone:     { label: 'Selling Zone',      tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
+  sellingZone:     { label: 'Opportunities',     tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
   performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
-  supervisorZone:  { label: 'Supervisor Zone',   tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' }
+  supervisorZone:  { label: 'My Team',            tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' }
 };
 
 function applyFeatureFlags() {
@@ -9531,15 +9537,11 @@ function pzShowMainView(filterSup) {
   allBrokerNames.forEach(function(nm, i){ rankMap[nm] = i + 1; });
 
   var groups = filterSup ? [filterSup] : supNames;
-  var mHtml = filterSup ? '' :
-    '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 28px;">Numbers</h2>';
+  var mHtml = '';
   for (var s = 0; s < groups.length; s++) {
     var sup = groups[s];
     var bks = (PZ_GROUPS[sup] || []).slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
-    mHtml += '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;">' +
-      '<h2 style="font-size:20px;font-weight:800;color:#003768;margin:0;">' + escHtml(sup) + '&#x2019;s Team</h2>' +
-      '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">' + bks.length + ' Advisers</span>' +
-    '</div>';
+    mHtml += '<h2 style="font-size:20px;font-weight:800;color:#003768;margin:0 0 16px;">' + escHtml(sup) + '&#x2019;s Team</h2>';
     mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:36px;">';
     for (var b = 0; b < bks.length; b++) {
       var n = bks[b]; var d = PZ_DATA[n] || {}; var ne = escHtml(n);
@@ -9959,11 +9961,12 @@ function toggleQlMenu(e) {
     { label: 'Advice Standards', tab: 'sales-process' },
     { label: 'Learning',         tab: 'learning' },
     { label: 'Surveying',        tab: 'surveying' },
+    { label: 'Opportunities',    tab: 'selling-zone' },
     { label: 'Statements',       tab: 'pay' },
   ];
   if (isSvAdmin) {
-    items.push({ label: 'Numbers', tab: 'performance-zone' });
-    items.push({ label: 'Supervisor Zone',  tab: 'supervisor-zone' });
+    items.push({ label: 'Numbers',  tab: 'performance-zone' });
+    items.push({ label: 'My Team',  tab: 'supervisor-zone' });
   }
 
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Navigate to</div>';
