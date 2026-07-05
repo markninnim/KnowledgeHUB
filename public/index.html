@@ -7668,7 +7668,12 @@ function renderSvDashboard(data) {
     var name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
     var safeEmail = m.email.replace(/'/g, "\\'");
     var safeName  = name.replace(/'/g, "\\'");
-    var borderColor = worstPct >= 100 ? '#22c55e' : worstPct >= 60 ? '#f59e0b' : '#ef4444';
+
+    // Combined total for top-right
+    var cYtd    = visible.reduce(function(s,t){ return s+(cpd[t.key]||0); }, 0);
+    var cTarget = visible.reduce(function(s,t){ return s+(targets[t.key]||900); }, 0);
+    var cPct    = cTarget > 0 ? Math.min(100, Math.round((cYtd/cTarget)*100)) : 0;
+    var cStatus = getStatus(cPct);
 
     var barsHtml = visible.map(function(t) {
       var ytd    = cpd[t.key] || 0;
@@ -7689,25 +7694,6 @@ function renderSvDashboard(data) {
       '</div>';
     }).join('');
 
-    if (visible.length > 1) {
-      var cYtd    = visible.reduce(function(s,t){ return s+(cpd[t.key]||0); }, 0);
-      var cTarget = visible.reduce(function(s,t){ return s+(targets[t.key]||900); }, 0);
-      var cPct    = Math.min(100, Math.round((cYtd/cTarget)*100));
-      var cStatus = getStatus(cPct);
-      barsHtml += '<div style="border-top:1px solid #f0f2f5;padding-top:8px;margin-top:2px;">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
-          '<span style="font-size:12px;font-weight:700;color:#003768;">Combined Total</span>' +
-          '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<span style="font-size:12px;font-weight:700;color:#003768;">' + fmtMins(cYtd) + ' / ' + fmtMins(cTarget) + '</span>' +
-            '<span style="background:' + cStatus.bg + ';color:' + cStatus.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + cStatus.label + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<div style="background:#f0f4f8;border-radius:4px;height:9px;overflow:hidden;">' +
-          '<div style="background:' + (cPct >= 100 ? '#22c55e' : '#003768') + ';height:100%;width:' + cPct + '%;border-radius:4px;"></div>' +
-        '</div>' +
-      '</div>';
-    }
-
     // Drill-down entries panel
     var drillId = 'sv-drill-' + m.email.replace(/[^a-z0-9]/gi, '_');
 
@@ -7723,7 +7709,9 @@ function renderSvDashboard(data) {
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
-          '<div style="display:flex;gap:6px;align-items:center;">' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+            '<span style="background:' + cStatus.bg + ';color:' + cStatus.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + cStatus.label + '</span>' +
+            '<span style="font-size:12px;font-weight:700;color:#003768;white-space:nowrap;">' + fmtMins(cYtd) + ' / ' + fmtMins(cTarget) + '</span>' +
           '</div>' +
         '</div>' +
         barsHtml +
