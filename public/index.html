@@ -7787,7 +7787,7 @@ function renderSvDashboard(data) {
     }
   }
 
-    // Inline stats (Advisers + On Track only)
+  // Inline stats
   var inlineEl = document.getElementById('sv-inline-stats');
   if (inlineEl) {
     inlineEl.innerHTML =
@@ -7795,12 +7795,11 @@ function renderSvDashboard(data) {
         '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + allAdvisers.length + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Advisers</span>' +
       '</div>' +
-      '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
+      '<span style="font-size:14px;font-weight:400;color:#d1d9e0;margin:0 2px;">—</span>' +
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
-        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</span>' +
-        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
-      '</div>' +
-      '';
+        '<span style="font-size:22px;font-weight:800;color:#ef4444;line-height:1;">' + totalNonCas + '</span>' +
+        '<span style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
+      '</div>';
   }
 
   function buildCard(obj) {
