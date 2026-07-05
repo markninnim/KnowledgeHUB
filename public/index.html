@@ -8109,6 +8109,7 @@ function svSidebarSelect(email, el) {
   var _ncReset = document.getElementById('sv-sb-noncas'); if (_ncReset) _ncReset.style.display = 'none';
   var url = '/api/supervisor/team?as=' + encodeURIComponent(_svViewAsEmail);
   fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+    if (data && data.error) { document.getElementById('sv-loading').textContent = 'Could not load team data: ' + data.error; return; }
     _svData = data;
     _svLoaded = true;
     document.getElementById('sv-loading').style.display = 'none';
@@ -8155,11 +8156,12 @@ function loadSupervisorZone() {
 
   var url = '/api/supervisor/team' + (_svViewAsEmail ? '?as=' + encodeURIComponent(_svViewAsEmail) : '');
   fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+    if (data && data.error) { document.getElementById('sv-loading').textContent = 'Could not load team data: ' + data.error; return; }
     _svData = data;
     _svLoaded = true;
     document.getElementById('sv-loading').style.display = 'none';
     renderSvDashboard(data);
-  }).catch(function() {
+  }).catch(function(err) {
     document.getElementById('sv-loading').textContent = 'Could not load team data.';
   });
 }

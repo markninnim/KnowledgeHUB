@@ -933,13 +933,35 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
 
     if (!members.length) return res.json({ members: [], cpdByMember: {} });
 
-    // 2. Fetch this year's CPD entries for all team members in one query
+    // 2. Fetch this year's CPD entries — paginate through all records
     const thisYear = new Date().getFullYear();
     const startOfYear = `${thisYear}-01-01`;
-    const emails = members.map(m => `{User Email}="${m.email}"`).join(',');
-    const cpdFormula = encodeURIComponent(`AND(OR(${emails}),IS_AFTER({Date},"${startOfYear}"))`);
-    const cpdData = await cpdFetch(`?filterByFormula=${cpdFormula}&returnFieldsByFieldId=true&pageSize=50`);
-    const allEntries = (cpdData.records || []).map(cpdRecordToEntry);
+    const memberEmails = new Set(members.map(m => m.email.toLowerCase()));
+
+    // For large teams (>20), skip the per-email filter to avoid URL length limits;
+    // fetch all CPD records this year and filter in memory instead.
+    let allEntries = [];
+    if (members.length <= 20) {
+      const emailFilter = members.map(m => `{User Email}="${m.email}"`).join(',');
+      const formula = encodeURIComponent(`AND(OR(${emailFilter}),IS_AFTER({Date},"${startOfYear}"))`);
+      let cpdOffset = '';
+      do {
+        const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`;
+        const page = await cpdFetch(qs);
+        allEntries.push(...(page.records || []).map(cpdRecordToEntry));
+        cpdOffset = page.offset || '';
+      } while (cpdOffset);
+    } else {
+      // Large team: fetch all CPD for the year, filter in memory
+      const formula = encodeURIComponent(`IS_AFTER({Date},"${startOfYear}")`);
+      let cpdOffset = '';
+      do {
+        const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`;
+        const page = await cpdFetch(qs);
+        allEntries.push(...(page.records || []).map(cpdRecordToEntry).filter(e => memberEmails.has((e.email || '').toLowerCase())));
+        cpdOffset = page.offset || '';
+      } while (cpdOffset);
+    }
 
     // 3. Aggregate per member per CPD type
     const cpdByMember = {};
