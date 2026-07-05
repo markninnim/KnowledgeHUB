@@ -47,6 +47,7 @@ const F_IS_SUPERVISOR  = 'fldhOYcUHF3SrnC5C';
 const F_SUPERVISOR_EMAIL = 'fldvyCzxvpIEjD7PU';
 const F_CO_SUPERVISES  = 'fld2fG2C8sK9PQ3o2'; // "Co-supervises Email" — shares team view with
 const F_AVATAR         = 'fldiQ06FtP4BehJU7';
+const F_CAS            = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser Status (checkbox)
 
 // ── Marketing users (local, no Airtable field needed) ─────────
 const MARKETING_USERS_PATH = path.join(__dirname, 'marketing-users.json');
@@ -60,7 +61,9 @@ try { _extraProducts = JSON.parse(fs.readFileSync(EXTRA_PRODUCTS_PATH, 'utf8'));
 function saveExtraProducts() { fs.writeFileSync(EXTRA_PRODUCTS_PATH, JSON.stringify(_extraProducts, null, 2)); }
 function getExtraProducts(email) {
   const stored = _extraProducts[(email||'').toLowerCase()] || {};
-  return { cas: true, ...stored }; // default CAS to true; explicit false overrides
+  // cas is now stored in Airtable — exclude from here
+  const { cas: _cas, ...rest } = stored;
+  return rest;
 }
 
 // ── Login attempt tracking (in-memory, resets on restart) ────────
@@ -167,6 +170,7 @@ function recordToUser(record) {
     supervisorEmail:  f[F_SUPERVISOR_EMAIL] || '',
     avatarUrl:        f[F_AVATAR]           || '',
     isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
+    cas:              f[F_CAS]              || false,
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
@@ -574,7 +578,8 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_PROTECTION]:       sellsProtection  === true || sellsProtection  === 'true',
       [F_INVESTMENTS]:      sellsInvestments === true || sellsInvestments === 'true',
       [F_IS_SUPERVISOR]:    isSupervisor === true || isSupervisor === 'true',
-      [F_SUPERVISOR_EMAIL]: supervisorEmail  || null
+      [F_SUPERVISOR_EMAIL]: supervisorEmail  || null,
+      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true'
     };
     const data = await atFetch('', {
       method: 'POST',
@@ -585,12 +590,11 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     if (mktFlag) _marketingUsers.add(normEmail);
     else _marketingUsers.delete(normEmail);
     fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
-    // Handle extra products
+    // Handle extra products (cas now in Airtable)
     _extraProducts[normEmail] = {
       equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
       commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
-      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
-      cas:                 req.body.cas                 === true || req.body.cas                 === 'true'
+      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true'
     };
     saveExtraProducts();
     res.json(recordToUser(data.records[0]));
@@ -688,14 +692,15 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_PROTECTION]:       sellsProtection  === true || sellsProtection  === 'true',
       [F_INVESTMENTS]:      sellsInvestments === true || sellsInvestments === 'true',
       [F_IS_SUPERVISOR]:    isSupervisor === true || isSupervisor === 'true',
-      [F_SUPERVISOR_EMAIL]: supervisorEmail  || null
+      [F_SUPERVISOR_EMAIL]: supervisorEmail  || null,
+      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true'
     };
     if (password) fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
     const data = await atFetch(`/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true })
     });
-    // Handle marketing role + extra products (keyed by email)
+    // Handle marketing role + extra products (keyed by email; cas now in Airtable)
     if (email !== undefined) {
       const normEmail = email.trim().toLowerCase();
       const mktFlag = isMarketing === true || isMarketing === 'true';
@@ -705,8 +710,7 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       _extraProducts[normEmail] = {
         equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
         commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
-        pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
-        cas:                 req.body.cas                 === true || req.body.cas                 === 'true'
+        pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true'
       };
       saveExtraProducts();
     }
