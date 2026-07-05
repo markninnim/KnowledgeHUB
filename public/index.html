@@ -258,7 +258,7 @@ html { height: 100%; }
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
     <h2 style="margin-top: 8px;">Supervisor Zone</h2>
-    <a href="#" id="sv-sb-all" class="active" onclick="return svSidebarSelect('all',this)">Group CPD <span id="sv-sidebar-count" style="margin-left:6px;background:rgba(255,255,255,0.25);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;"></span></a>
+    <a href="#" id="sv-sb-all" class="active" onclick="return svSidebarSelect('all',this)">Whole company <span id="sv-sidebar-count" style="margin-left:6px;background:rgba(255,255,255,0.25);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;"></span></a>
     <div id="sv-sb-supervisors" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>
     </div>
@@ -3301,8 +3301,8 @@ html { height: 100%; }
       <!-- Header row -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
         <div>
-          <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">CPD Register</h2>
-          <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">CPD register for your team</div>
+          <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Adviser Groups</h2>
+          <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Adviser group for your team</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
@@ -7529,7 +7529,7 @@ function loadSupervisorZone() {
       if (sbWrap && supervisors.length > 0) {
         var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
         if (_currentUser && _currentUser.isAdmin) {
-          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'all\',this)" style="padding-left:24px;">All Company</a>';
+          // "All Company" removed — use "Whole company" top-level link instead
         }
         supervisors.forEach(function(s) {
           sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="padding-left:24px;">' + escHtml(s.name) + '</a>';
@@ -7626,14 +7626,14 @@ function renderSvDashboard(data) {
   var subtitleEl = document.getElementById('sv-subtitle');
   if (subtitleEl) {
     if (_svViewAsEmail === 'all') {
-      subtitleEl.textContent = 'CPD register — all advisers';
+      subtitleEl.textContent = 'Adviser group — whole company';
     } else if (_svViewAsEmail) {
       var sel2 = document.getElementById('sv-viewas-select');
       var svName2 = sel2 ? (sel2.options[sel2.selectedIndex] || {}).text || _svViewAsEmail : _svViewAsEmail;
-      subtitleEl.textContent = 'CPD register for ' + svName2 + '\u2019s team';
+      subtitleEl.textContent = 'Adviser group for ' + svName2;
     } else if (_currentUser) {
       var svName3 = [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') || _currentUser.email;
-      subtitleEl.textContent = 'CPD register for ' + svName3 + '\u2019s team';
+      subtitleEl.textContent = 'Adviser group for ' + svName3;
     }
   }
 
@@ -7643,7 +7643,7 @@ function renderSvDashboard(data) {
     '<div style="background:#fff;border-radius:12px;border:1.5px solid #e8ecf0;padding:16px 0;display:flex;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05);width:100%;">' +
       '<div style="flex:1;text-align:center;padding:0 20px;">' +
         '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + members.length + '</div>' +
-        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Team Members</div>' +
+        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Advisers</div>' +
       '</div>' +
       '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
       '<div style="flex:1;text-align:center;padding:0 20px;">' +
