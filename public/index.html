@@ -266,10 +266,10 @@ html { height: 100%; }
     <h2 style="margin-top: 8px;">My Team</h2>
     <a href="#" id="sv-sb-all" class="active" onclick="return svSidebarSelect('all',this)">View All <span id="sv-sidebar-count" style="margin-left:6px;background:rgba(255,255,255,0.25);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;"></span></a>
     <div id="sv-sb-supervisors" style="display:none;">
-      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>
+      <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>
     </div>
     <div id="sv-sb-noncas" style="display:none;">
-      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>
+      <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>
     </div>
   </div>
 </div>
@@ -9512,8 +9512,8 @@ function pzRender(map) {
   // ── Blue sidebar: supervisor list ──
   var supList = document.getElementById('pz-supervisor-list');
   if (supList) {
-    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">MY TEAM<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
-    sHtml += '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
+    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">View All<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
+    sHtml += '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
     for (var s = 0; s < supNames.length; s++) {
       var sup = supNames[s];
       var cnt = PZ_GROUPS[sup].length;
