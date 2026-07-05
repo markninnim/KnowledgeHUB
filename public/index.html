@@ -258,6 +258,15 @@ html { height: 100%; }
       <a href="#" id="lv-nav-rv-ind-4" onclick="return ktNavLoad('ind-4',this)"><span class="kd-test-num">Test 4</span><span class="kd-test-line">Record Keeping</span><span class="kd-test-line">Sales Process</span></a>
     </div>
 
+    <!-- Fitness & Properness accordion -->
+    <button class="kd-acc-btn" id="kd-btn-fitproper" onclick="kdToggle('kd-fitproper','kd-btn-fitproper')">
+      <span>Fitness &amp; Properness</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="kd-fitproper" class="kd-acc-body" style="display:none;">
+      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Fitness &amp; Properness</span></a>
+    </div>
+
     <!-- General accordion -->
     <button class="kd-acc-btn" id="kd-btn-general" onclick="kdToggle('kd-general','kd-btn-general')">
       <span>General</span>
@@ -275,7 +284,6 @@ html { height: 100%; }
       <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
       <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – PMI</a>
       <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
-      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)">Fitness &amp; Properness</a>
     </div>
   </div>
   <!-- Sales Process sidebar -->
@@ -11158,11 +11166,13 @@ function kdToggle(bodyId, btnId) {
 function kdEnsureOpen(navId) {
   var induction  = ['lv-nav-ind-1','lv-nav-ind-2','lv-nav-ind-3','lv-nav-ind-4'];
   var revalidate = ['lv-nav-rv-ind-1','lv-nav-rv-ind-2','lv-nav-rv-ind-3','lv-nav-rv-ind-4'];
-  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8','lv-nav-fp'];
+  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8'];
+  var fitproper  = ['lv-nav-fp'];
   var map = {};
   induction.forEach(function(id){ map[id]='kd-induction'; });
   revalidate.forEach(function(id){ map[id]='kd-revalidation'; });
   general.forEach(function(id){ map[id]='kd-general'; });
+  fitproper.forEach(function(id){ map[id]='kd-fitproper'; });
   var target = map[navId];
   if (!target) return;
   var body = document.getElementById(target);
