@@ -7709,9 +7709,9 @@ function renderSvDashboard(data) {
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
-          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
-            '<span style="background:' + cStatus.bg + ';color:' + cStatus.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + cStatus.label + '</span>' +
-            '<span style="font-size:12px;font-weight:700;color:#003768;white-space:nowrap;">' + fmtMins(cYtd) + ' / ' + fmtMins(cTarget) + '</span>' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">' +
+            '<span style="font-size:15px;font-weight:800;color:#003768;white-space:nowrap;line-height:1.2;">' + fmtMins(cYtd) + '</span>' +
+            '<span style="font-size:11px;color:#6b7c8f;white-space:nowrap;">/ ' + fmtMins(cTarget) + '</span>' +
           '</div>' +
         '</div>' +
         barsHtml +
