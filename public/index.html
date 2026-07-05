@@ -3208,13 +3208,12 @@ html { height: 100%; }
     <!-- CAS Path Panel -->
     <div id="sv-cas-path-panel" style="display:none;max-width:900px;margin:0 auto;padding:0 8px;">
       <div style="margin-bottom:24px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <div id="cas-path-name" style="font-size:22px;font-weight:800;color:#003768;"></div>
           <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em;">Non-CAS</span>
         </div>
-        <div style="background:#f0f6ff;border-left:3px solid #003768;border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;color:#374151;line-height:1.6;max-width:700px;">
-          This page records <span id="cas-path-name2" style="font-weight:700;"></span>'s path to Competent Adviser Status. Every step of the journey is logged here — induction videos, knowledge tests, role plays and observed interviews — so we can track progress clearly and get there as fast as possible. Tasks set by the supervisor appear below and should be worked through in order.
-        </div>
+        <p style="font-size:13px;color:#374151;line-height:1.7;margin:0 0 8px;">This page records <span id="cas-path-name2" style="font-weight:700;"></span>'s path to Competent Adviser Status. Every step of the journey is logged here — induction videos, knowledge tests, role plays and observed interviews — so we can track progress clearly and get there as fast as possible. Tasks set by the supervisor appear below and should be worked through in order.</p>
+        <p style="font-size:12px;color:#6b7c8f;margin:0;"><span id="cas-path-name3"></span> can see this page and their tasks when they log in to their Knowledge Hub under <strong>Learning → My CAS Path</strong>.</p>
       </div>
 
       <div id="cas-path-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
@@ -3281,14 +3280,14 @@ html { height: 100%; }
         </div>
 
         <!-- Predicted CAS Date -->
-        <div style="background:#f0f6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+        <div style="background:#003768;border-radius:10px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
           <div>
-            <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Predicted CAS Date</div>
-            <div id="cas-predicted-display" style="font-size:18px;font-weight:800;color:#003768;">Not set</div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Predicted CAS Date</div>
+            <div id="cas-predicted-display" style="font-size:22px;font-weight:800;color:#fff;">Not set</div>
+            <div id="cas-countdown" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="date" id="cas-predicted-input" style="padding:7px 10px;border:1.5px solid #bfdbfe;border-radius:7px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;" onchange="savePredictedCasDate()">
-            <span style="font-size:11px;color:#6b7c8f;">Set by supervisor</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="date" id="cas-predicted-input" style="padding:7px 10px;border:1.5px solid rgba(255,255,255,0.25);border-radius:7px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;" onchange="savePredictedCasDate()">
           </div>
         </div>
 
@@ -7414,6 +7413,7 @@ function openCasPath(email, name) {
   document.getElementById('sv-broker-profile').style.display = 'none';
   document.getElementById('cas-path-name').textContent = name;
   var n2 = document.getElementById('cas-path-name2'); if (n2) n2.textContent = name;
+  var n3 = document.getElementById('cas-path-name3'); if (n3) n3.textContent = name;
   document.getElementById('cas-path-loading').style.display = 'block';
   document.getElementById('cas-path-content').style.display = 'none';
   document.getElementById('cas-entry-form').style.display = 'none';
@@ -7427,6 +7427,7 @@ function openCasPath(email, name) {
       var predicted = d.predictedCasDate || '';
       document.getElementById('cas-predicted-input').value = predicted;
       document.getElementById('cas-predicted-display').textContent = predicted ? formatCasDate(predicted) : 'Not set';
+      renderCasCountdown(predicted);
     }).catch(function() {
       document.getElementById('cas-path-loading').textContent = 'Could not load CAS path.';
     });
@@ -7603,9 +7604,23 @@ function deleteCasEntry(id, type) {
     });
 }
 
+function renderCasCountdown(dateStr) {
+  var el = document.getElementById('cas-countdown');
+  if (!el) return;
+  if (!dateStr) { el.style.display = 'none'; el.textContent = ''; return; }
+  var target = new Date(dateStr);
+  var today  = new Date(); today.setHours(0,0,0,0);
+  var diff   = Math.round((target - today) / 86400000);
+  el.style.display = 'block';
+  if (diff > 0)      el.textContent = diff + ' day' + (diff === 1 ? '' : 's') + ' to go';
+  else if (diff === 0) el.textContent = 'Target date is today';
+  else               el.textContent = Math.abs(diff) + ' day' + (Math.abs(diff) === 1 ? '' : 's') + ' overdue';
+}
+
 function savePredictedCasDate() {
   var date = document.getElementById('cas-predicted-input').value;
   document.getElementById('cas-predicted-display').textContent = date ? formatCasDate(date) : 'Not set';
+  renderCasCountdown(date);
   if (!_casPathRecordId) return;
   fetch('/api/cas-path/predicted-date', {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
