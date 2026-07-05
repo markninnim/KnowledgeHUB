@@ -3303,6 +3303,7 @@ html { height: 100%; }
         <div>
           <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Adviser Groups</h2>
           <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Adviser group for your team</div>
+          <div id="sv-inline-stats" style="display:flex;align-items:center;gap:14px;margin-top:10px;"></div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
@@ -3323,7 +3324,7 @@ html { height: 100%; }
         </div>
       </div>
       <!-- Summary stats -->
-      <div id="sv-stats" style="display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;"></div>
+      <div id="sv-stats" style="display:none;"></div>
       <!-- Behind target section -->
       <div id="sv-behind-wrap" style="display:none;margin-bottom:28px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -7639,30 +7640,20 @@ function renderSvDashboard(data) {
     }
   }
 
-  // Stats bar
-  var totalMins = members.reduce(function(s,m){ var c = cpdByMember[m.email]||{}; return s+(c.total||0); }, 0);
-  document.getElementById('sv-stats').innerHTML =
-    '<div style="background:#fff;border-radius:12px;border:1.5px solid #e8ecf0;padding:16px 0;display:flex;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05);width:100%;">' +
-      '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + members.length + '</div>' +
-        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Advisers</div>' +
+  // Inline stats (Advisers + On Track only)
+  var inlineEl = document.getElementById('sv-inline-stats');
+  if (inlineEl) {
+    inlineEl.innerHTML =
+      '<div style="display:flex;align-items:baseline;gap:5px;">' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + members.length + '</span>' +
+        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Advisers</span>' +
       '</div>' +
-      '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
-      '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + totalBehind + '</div>' +
-        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Behind Target</div>' +
-      '</div>' +
-      '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
-      '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</div>' +
-        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">On Track</div>' +
-      '</div>' +
-      '<div style="width:1px;background:#e8ecf0;align-self:stretch;"></div>' +
-      '<div style="flex:1;text-align:center;padding:0 20px;">' +
-        '<div style="font-size:32px;font-weight:800;color:#003768;line-height:1;">' + fmtMins(totalMins) + '</div>' +
-        '<div style="font-size:11px;color:#6b7c8f;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;">Total CPD</div>' +
-      '</div>' +
-    '</div>';
+      '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
+      '<div style="display:flex;align-items:baseline;gap:5px;">' +
+        '<span style="font-size:22px;font-weight:800;color:#22c55e;line-height:1;">' + totalOnTrack + '</span>' +
+        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
+      '</div>';
+  }
 
   function buildCard(obj) {
     var m = obj.m, cpd = obj.cpd, visible = obj.visible, worstPct = obj.worstPct;
