@@ -9523,7 +9523,7 @@ function pzRender(map) {
     mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:32px;">';
     for (var b = 0; b < bks.length; b++) {
       var n = bks[b]; var d = PZ_DATA[n]; var ne = escHtml(n);
-      mHtml += '<div class="ov-card" onclick="pzOpenBroker(' + JSON.stringify(n) + ');">' +
+      mHtml += '<div class="ov-card" onclick="pzOpenBroker(' + escHtml(JSON.stringify(n)) + ');">' +
         '<div class="ov-card-title">' + ne + '</div>' +
         '<div class="ov-card-sub">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+' · GI: '+(d.gs||0)+'</div>' +
         '<div class="ov-card-btn">View stats →</div></div>';
