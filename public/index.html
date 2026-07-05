@@ -8452,8 +8452,7 @@ function renderSvDashboard(data) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
-    // In View All mode, include everyone (admins may also be advisers without a supervisor assigned)
-    if (_svViewAsEmail !== 'all' && m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
+    if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
