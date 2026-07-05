@@ -4968,7 +4968,7 @@ function switchTab(tab) {
   if (sidebarEl) sidebarEl.style.display = isHome ? 'none' : '';
   if (tabNavEl)  tabNavEl.style.display  = isHome ? 'none' : '';
   if (mainEl)    mainEl.style.marginLeft  = isHome ? '0'    : '220px';
-  window.location.hash = tab;
+  window.location.hash = (tab === 'supervisor-zone') ? 'my-team' : tab;
   if (tab === 'home')             { loadHomeData(); }
   if (tab === 'surveying')        { loadSurveying(); }
   if (tab === 'learning')         { showLvSection('weekly-recordings', document.getElementById('lv-nav-weekly')); loadLearningZone(); }
@@ -4989,6 +4989,7 @@ var FEEFO_PER_PG = 5;
 // Hash routing — navigate on load (called directly, no event wrapper needed)
 (function() {
   var hash = window.location.hash.replace('#', '');
+  if (hash === 'my-team') hash = 'supervisor-zone';
   if (!hash) return;
   // Deep link format: sales-process:mortgage-advice-standards:mas-kyc
   if (hash.indexOf(':') !== -1) {
@@ -6503,6 +6504,7 @@ var _currentUser = null;
     applyFeatureFlags();
     // Navigate to the URL hash tab if valid, otherwise home
     var _initHash = window.location.hash.replace('#', '');
+    if (_initHash === 'my-team') _initHash = 'supervisor-zone';
     var _initTab  = (TAB_IDS.indexOf(_initHash) !== -1) ? _initHash : 'home';
     switchTab(_initTab);
     loadHomeData();
