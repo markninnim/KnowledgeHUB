@@ -7677,20 +7677,32 @@ function renderCasEntries(entries) {
         countEl.style.color = watchedCount === 10 ? '#059669' : '#6b7c8f';
       }
       // Groups: videos (left) paired with induction test (right, auto from CPD)
+      // Feedback notes come from manually-added Test entries in the CAS path
+      var feedbackByKey = {};
+      (buckets['Test'] || []).forEach(function(e) {
+        var t = (e.title || '').trim();
+        for (var k = 1; k <= 4; k++) {
+          if (t.charAt(0) === String(k) && t.charAt(1) === '.') {
+            if (!feedbackByKey[k]) feedbackByKey[k] = e;
+            break;
+          }
+        }
+      });
       var ivGroups = [
         { videos: ['Introduction'], testKey: null },
-        { videos: ['Complaints', 'Conduct Rules'], testKey: 1, testLabel: 'Test 1 · Complaints & Conduct Rules' },
-        { videos: ['Consumer Duty', 'Financial Crime'], testKey: 2, testLabel: 'Test 2 · Consumer Duty & Financial Crime' },
-        { videos: ['Information Security', 'Vulnerable Customers'], testKey: 3, testLabel: 'Test 3 · Vulnerable Customers & Info Sec' },
-        { videos: ['Record Keeping', 'Sales Process'], testKey: 4, testLabel: 'Test 4 · Record Keeping & Sales Process' },
+        { videos: ['Complaints', 'Conduct Rules'], testKey: 1, testName: '1. Complaints, Conduct Rules & Breaches', testShort: 'Complaints & Conduct Rules' },
+        { videos: ['Consumer Duty', 'Financial Crime'], testKey: 2, testName: '2. Consumer Duty & Financial Crime', testShort: 'Consumer Duty & Financial Crime' },
+        { videos: ['Information Security', 'Vulnerable Customers'], testKey: 3, testName: '3. Vulnerable Clients & Information Security', testShort: 'Vulnerable Customers & Info Sec' },
+        { videos: ['Record Keeping', 'Sales Process'], testKey: 4, testName: '4. Record Keeping & Sales Process', testShort: 'Record Keeping & Sales Process' },
         { videos: ['Support Systems'], testKey: null }
       ];
       el.innerHTML = '<div style="padding:12px 16px;">' +
         ivGroups.map(function(grp) {
-          // Left: one box per video in the group
-          var videoBoxes = grp.videos.map(function(title) {
+          // Left: one box per video in the group, last has no margin-bottom
+          var videoBoxes = grp.videos.map(function(title, vi) {
             var dv = _casInductionWatchDates[title] || '';
-            return '<div style="border:1.5px solid ' + (dv ? '#a7f3d0' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (dv ? '#f0fdf4' : '#fafafa') + ';margin-bottom:6px;">' +
+            var isLast = vi === grp.videos.length - 1;
+            return '<div style="border:1.5px solid ' + (dv ? '#a7f3d0' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (dv ? '#f0fdf4' : '#fafafa') + ';' + (isLast ? '' : 'margin-bottom:6px;') + '">' +
               '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
                 '<span style="width:7px;height:7px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span>' +
                 '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Video</span>' +
@@ -7699,28 +7711,48 @@ function renderCasEntries(entries) {
               '<div style="font-size:11px;color:' + (dv ? '#059669' : '#aab4be') + ';font-weight:' + (dv ? '700' : '400') + ';">' + (dv ? '✓ ' + formatCasDate(dv) : 'Not watched') + '</div>' +
             '</div>';
           }).join('');
-          // Right: auto-populated test result (or empty)
+          // Right: full-height test box with name, result, feedback
           var testBox = '';
           if (grp.testKey) {
-            var tr = _casInductionTests[grp.testKey] || null;
+            var tr  = _casInductionTests[grp.testKey] || null;
+            var fb  = feedbackByKey[grp.testKey] || null;
             var bdr = tr ? (tr.passed ? '#a7f3d0' : '#fca5a5') : '#e8ecf0';
             var bg  = tr ? (tr.passed ? '#f0fdf4' : '#fef2f2') : '#fafafa';
-            testBox = '<div style="border:1.5px solid ' + bdr + ';border-radius:8px;padding:10px 14px;background:' + bg + ';height:100%;box-sizing:border-box;">' +
-              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
-                '<span style="width:7px;height:7px;border-radius:50%;background:#7c3aed;flex-shrink:0;display:inline-block;"></span>' +
-                '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Test ' + grp.testKey + '</span>' +
-              '</div>' +
-              (tr ?
-                '<div style="font-size:18px;font-weight:800;color:' + (tr.passed ? '#059669' : '#dc2626') + ';margin-bottom:3px;">' + (tr.score !== null ? tr.score + '%' : '—') + '</div>' +
-                '<div style="display:inline-block;background:' + (tr.passed ? '#dcfce7' : '#fee2e2') + ';color:' + (tr.passed ? '#166534' : '#991b1b') + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-bottom:5px;">' + (tr.passed ? 'PASS' : 'FAIL') + '</div><br>' +
-                '<div style="font-size:11px;color:#6b7c8f;">' + formatCasDate(tr.date) + '</div>'
-                :
-                '<div style="font-size:12px;color:#aab4be;font-style:italic;">Not yet taken</div>'
-              ) +
-            '</div>';
+            var divBdr = tr ? (tr.passed ? '#bbf7d0' : '#fecaca') : '#e8ecf0';
+            var esc_name = grp.testName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+            testBox =
+              '<div style="border:1.5px solid ' + bdr + ';border-radius:8px;padding:14px 16px;background:' + bg + ';height:100%;box-sizing:border-box;display:flex;flex-direction:column;">' +
+                // Header
+                '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
+                  '<span style="width:7px;height:7px;border-radius:50%;background:#7c3aed;flex-shrink:0;display:inline-block;"></span>' +
+                  '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Test ' + grp.testKey + '</span>' +
+                '</div>' +
+                // Test name
+                '<div style="font-size:12px;font-weight:700;color:#003768;line-height:1.35;margin-bottom:10px;">' + escHtml(grp.testShort) + '</div>' +
+                // Result
+                (tr ?
+                  '<div style="font-size:24px;font-weight:800;color:' + (tr.passed ? '#059669' : '#dc2626') + ';line-height:1;margin-bottom:5px;">' + (tr.score !== null ? tr.score + '%' : '—') + '</div>' +
+                  '<div style="margin-bottom:5px;"><span style="background:' + (tr.passed ? '#dcfce7' : '#fee2e2') + ';color:' + (tr.passed ? '#166534' : '#991b1b') + ';font-size:10px;font-weight:700;padding:2px 9px;border-radius:8px;">' + (tr.passed ? 'PASS' : 'FAIL') + '</span></div>' +
+                  '<div style="font-size:11px;color:#6b7c8f;margin-bottom:10px;">' + formatCasDate(tr.date) + '</div>'
+                  :
+                  '<div style="font-size:12px;color:#aab4be;font-style:italic;flex:1;">Not yet taken</div>'
+                ) +
+                // Feedback section
+                '<div style="margin-top:auto;border-top:1px solid ' + divBdr + ';padding-top:10px;">' +
+                  '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Supervisor Feedback</div>' +
+                  (fb ?
+                    '<div style="font-size:12px;color:#374151;line-height:1.5;margin-bottom:6px;white-space:pre-wrap;">' + escHtml(fb.notes || '—') + '</div>' +
+                    '<div style="font-size:11px;color:#aab4be;margin-bottom:4px;">Added ' + formatCasDate(fb.date) + (fb.loggedBy ? ' by ' + escHtml(fb.loggedBy) : '') + '</div>' +
+                    '<button onclick="deleteCasEntry(\'' + fb.id + '\',\'Test\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">Remove</button>'
+                    :
+                    '<button onclick="openCasEntryForTitle(\'Test\',\'' + esc_name + '\')" style="font-size:11px;font-weight:600;color:#7c3aed;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">+ Add feedback</button>'
+                  ) +
+                '</div>' +
+              '</div>';
           }
-          return '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">' +
-            '<div style="flex:1;min-width:0;">' + videoBoxes + '</div>' +
+          // Use align-items:stretch so test box spans full height of video column
+          return '<div style="display:flex;gap:10px;align-items:stretch;margin-bottom:12px;">' +
+            '<div style="flex:1;min-width:0;display:flex;flex-direction:column;">' + videoBoxes + '</div>' +
             '<div style="flex:1;min-width:0;">' + testBox + '</div>' +
           '</div>';
         }).join('') +
