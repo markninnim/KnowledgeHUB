@@ -57,7 +57,9 @@ html { height: 100%; }
 .hero h1 { font-size: 28px; margin: 8px 0; }
 .hero p { color: rgba(255,255,255,.7); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.card { background: #fff; border: 1px solid #e8ecf0; border-radius: 8px; padding: 20px; }
+.card { background: #fff; border: 1px solid #e8ecf0; border-radius: 8px; padding: 20px; position:relative; overflow:hidden; cursor:pointer; }
+.card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
+.card:hover::after { opacity:1; }
 .card h3 { color: #003768; font-size: 14px; margin: 8px 0 4px; }
 .card p { color: #6b7c8f; font-size: 12px; }
 .badge { display: inline-block; background: #f5f7fa; color: #6b7c8f; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
@@ -100,9 +102,7 @@ html { height: 100%; }
 .sc-filter { background:#f5f7fa; border:1px solid #e8ecf0; color:#6b7c8f; padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer; }
 .sc-filter.active { background:#003768; border-color:#003768; color:#fff; }
 .sc-filter:hover:not(.active) { border-color:#003768; color:#003768; }
-.thumb { background:#f5f7fa; border:1px solid #e8ecf0; border-radius:7px; padding:8px; margin-bottom:4px; text-align:center; height:120px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; position:relative; }
-.thumb::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/36px no-repeat; opacity:0; transition:opacity .18s; border-radius:7px; pointer-events:none; }
-.thumb:hover::after { opacity:1; }
+.thumb { background:#f5f7fa; border:1px solid #e8ecf0; border-radius:7px; padding:8px; margin-bottom:4px; text-align:center; height:120px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
 .thumb img { max-height:104px; max-width:100%; object-fit:contain; position:relative; z-index:1; }
 .thumb canvas { max-height:104px; max-width:100%; }
 .thumb .type-badge { color:#fff; width:40px; height:40px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
@@ -4175,9 +4175,8 @@ function navigateToSection(id) {
 }
 
 document.addEventListener('click', function(e) {
-  var thumb = e.target.closest('.thumb');
-  if (!thumb) return;
-  var card = thumb.closest('.card');
+  if (e.target.closest('a, button, .btn, .btn-view')) return;
+  var card = e.target.closest('.card');
   if (!card) return;
   var viewBtn = card.querySelector('.btn-view');
   if (viewBtn) viewBtn.click();
