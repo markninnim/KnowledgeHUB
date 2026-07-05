@@ -3301,9 +3301,11 @@ html { height: 100%; }
       <!-- Header row -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
         <div>
-          <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Adviser Groups</h2>
+          <div style="display:flex;align-items:center;gap:20px;">
+            <h2 style="margin:0;font-size:20px;font-weight:800;color:#003768;">Adviser Groups</h2>
+            <div id="sv-inline-stats" style="display:flex;align-items:center;gap:14px;"></div>
+          </div>
           <div id="sv-subtitle" style="font-size:13px;color:#6b7c8f;margin-top:3px;">Adviser group for your team</div>
-          <div id="sv-inline-stats" style="display:flex;align-items:center;gap:14px;margin-top:10px;"></div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
@@ -6799,7 +6801,7 @@ function renderUserList(users) {
     return;
   }
   var rows = users.map(function(u) {
-    var name = [u.salutation, u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
+    var name = [u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
     var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
     var supBadge = u.isSupervisor ? '<span style="background:#2e99d5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var mktBadge = u.isMarketing ? '<span style="background:#e8740c;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
@@ -7615,6 +7617,12 @@ function renderSvDashboard(data) {
     if (worstPct < 100) behind.push(obj); else onTrack.push(obj);
   });
 
+  // Sort all groups alphabetically by first name
+  function byFirst(a, b) { return (a.m.firstName || '').localeCompare(b.m.firstName || ''); }
+  behind.sort(byFirst);
+  onTrack.sort(byFirst);
+  supervisorCards.sort(byFirst);
+
   // Supervisor sub-totals (needed for sidebar + stats bar)
   var svBehind  = supervisorCards.filter(function(s){ return s.visible.length > 0 && s.worstPct < 100; }).length;
   var svOnTrack = supervisorCards.filter(function(s){ return s.visible.length === 0 || s.worstPct >= 100; }).length;
@@ -7650,14 +7658,14 @@ function renderSvDashboard(data) {
       '</div>' +
       '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
-        '<span style="font-size:22px;font-weight:800;color:#22c55e;line-height:1;">' + totalOnTrack + '</span>' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
       '</div>';
   }
 
   function buildCard(obj) {
     var m = obj.m, cpd = obj.cpd, visible = obj.visible, worstPct = obj.worstPct;
-    var name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
+    var name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
     var safeEmail = m.email.replace(/'/g, "\\'");
     var safeName  = name.replace(/'/g, "\\'");
     var borderColor = worstPct >= 100 ? '#22c55e' : worstPct >= 60 ? '#f59e0b' : '#ef4444';
@@ -7728,7 +7736,7 @@ function renderSvDashboard(data) {
 
   function buildListRow(obj) {
     var m = obj.m, cpd = obj.cpd, visible = obj.visible, worstPct = obj.worstPct;
-    var name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
+    var name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
     var safeEmail = m.email.replace(/'/g, "\\'");
     var safeName  = name.replace(/'/g, "\\'");
     var overall = getStatus(worstPct);
