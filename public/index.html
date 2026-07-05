@@ -7759,8 +7759,10 @@ function renderSvDashboard(data) {
   supervisorCards.sort(byFirst);
 
   // Supervisor sub-totals (needed for sidebar + stats bar)
-  var totalOnTrack = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
-  var totalNonCas  = allAdvisers.filter(function(o){ return !o.m.cas; }).length;
+  var totalOnTrack  = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
+  var nonCasAdvisers = allAdvisers.filter(function(o){ return !o.m.cas; });
+  var totalNonCas   = nonCasAdvisers.length;
+  var nonCasNames   = nonCasAdvisers.map(function(o){ return [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email; });
 
   // Update sidebar count
   var sbCount = document.getElementById('sv-sidebar-count');
@@ -7794,10 +7796,14 @@ function renderSvDashboard(data) {
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
       '</div>' +
       '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
-      '<div style="display:flex;align-items:center;gap:5px;">' +
+      '<div class="sv-noncas-wrap" style="position:relative;display:flex;align-items:center;gap:5px;cursor:default;" onmouseenter="this.querySelector(\'.sv-noncas-tip\').style.display=\'block\'" onmouseleave="this.querySelector(\'.sv-noncas-tip\').style.display=\'none\'">' +
         '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
         '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalNonCas + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
+        (totalNonCas > 0 ?
+          '<div class="sv-noncas-tip" style="display:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#1a2a3a;color:#fff;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:500;line-height:1.7;white-space:nowrap;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.18);">' +
+            nonCasNames.map(function(n){ return '● ' + n; }).join('<br>') +
+          '</div>' : '') +
       '</div>';
   }
 
