@@ -7334,7 +7334,7 @@ function openCasPath(email, name) {
   _casPathRecordId = '';
   _casPathCurrentType = '';
   document.getElementById('sv-cas-path-panel').style.display = 'block';
-  document.getElementById('sv-dashboard').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'none';
   document.getElementById('cas-path-name').textContent = name;
   document.getElementById('cas-path-loading').style.display = 'block';
@@ -7357,7 +7357,7 @@ function openCasPath(email, name) {
 
 function closeCasPath() {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
-  document.getElementById('sv-dashboard').style.display = 'block';
+  document.getElementById('sv-cpd-register').style.display = 'block';
 }
 
 function formatCasDate(iso) {
