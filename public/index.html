@@ -3642,13 +3642,12 @@ html { height: 100%; }
     </div>
 
     <!-- User search -->
-    <div id="admin-search-bar" style="padding:14px 28px;border-bottom:1px solid #e8ecf0;background:#fafbfc;">
-      <div style="position:relative;">
-        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="admin-user-search" type="text" placeholder="Search by name, email, role…" oninput="filterUsers()" style="width:100%;padding:9px 36px 9px 34px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#1a2a3a;transition:border-color .15s;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
-        <button id="admin-search-clear" onclick="clearUserSearch()" style="display:none;position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7c8f;font-size:16px;line-height:1;padding:2px 4px;">&#x2715;</button>
+    <div id="admin-search-bar" style="padding:10px 28px;border-bottom:1px solid #e8ecf0;background:#fff;">
+      <div style="position:relative;max-width:320px;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="admin-user-search" type="text" placeholder="Search for your adviser here…" oninput="filterUsers()" style="width:100%;padding:7px 30px 7px 30px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:12px;font-family:inherit;box-sizing:border-box;outline:none;background:#fafbfc;color:#1a2a3a;transition:border-color .15s;" onfocus="this.style.borderColor='#003768';this.style.background='#fff'" onblur="this.style.borderColor='#e8ecf0';this.style.background='#fafbfc'">
+        <button id="admin-search-clear" onclick="clearUserSearch()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7c8f;font-size:14px;line-height:1;padding:2px 3px;">&#x2715;</button>
       </div>
-      <div id="admin-search-meta" style="display:none;margin-top:8px;font-size:12px;color:#6b7c8f;"></div>
     </div>
 
     <!-- Import preview -->
@@ -6831,22 +6830,15 @@ function filterUsers() {
 
   renderUserList(filtered);
 
-  if (meta) {
-    if (q || _userRoleFilter) {
-      meta.style.display = '';
-      meta.textContent = filtered.length + ' of ' + (_adminUsers || []).length + ' users';
-    } else {
-      meta.style.display = 'none';
-    }
-  }
 }
 
 function clearUserSearch() {
-  document.getElementById('admin-user-search').value = '';
+  var inp = document.getElementById('admin-user-search');
+  if (inp) { inp.value = ''; inp.style.background = '#fafbfc'; inp.style.borderColor = '#e8ecf0'; }
   _userRoleFilter = null;
-  document.getElementById('filter-supervisor').style.cssText = 'background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
-  document.getElementById('filter-admin').style.cssText = 'background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
-  filterUsers();
+  var clearBtn = document.getElementById('admin-search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  renderUserList(_adminUsers || []);
 }
 
 function filterByRole(role) {
