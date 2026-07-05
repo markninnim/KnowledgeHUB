@@ -7635,20 +7635,20 @@ function renderSvDashboard(data) {
   if (sbCount) sbCount.textContent = totalOnTrack + '/' + members.length;
 
   // Update heading title
-  var headingEl = document.getElementById(‘sv-heading’);
+  var headingEl = document.getElementById('sv-heading');
   if (headingEl) {
-    if (_svViewAsEmail === ‘all’) {
+    if (_svViewAsEmail === 'all') {
       headingEl.textContent = 'Whole Team';
     } else if (_svViewAsEmail) {
-      var svFirst2 = (_svViewAsName || _svViewAsEmail).split(‘ ‘)[0];
-      headingEl.textContent = svFirst2 + '’s Team';
+      var svFirst2 = (_svViewAsName || _svViewAsEmail).split(' ')[0];
+      headingEl.textContent = svFirst2 + '\u2019s Team';
     } else if (_currentUser) {
-      var svFirst3 = _currentUser.firstName || _currentUser.email.split(‘@’)[0];
-      headingEl.textContent = svFirst3 + '’s Team';
+      var svFirst3 = _currentUser.firstName || _currentUser.email.split('@')[0];
+      headingEl.textContent = svFirst3 + '\u2019s Team';
     }
   }
 
-  // Inline stats (Advisers + On Track only)
+    // Inline stats (Advisers + On Track only)
   var inlineEl = document.getElementById('sv-inline-stats');
   if (inlineEl) {
     inlineEl.innerHTML =
