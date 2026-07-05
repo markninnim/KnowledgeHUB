@@ -7403,6 +7403,7 @@ function svViewAs(email) {
 
 // ── CAS Path ──────────────────────────────────────────────────
 var _casPathEmail = '', _casPathRecordId = '', _casPathCurrentType = '';
+var _casInductionWatchDates = {};
 
 function openCasPath(email, name) {
   _casPathEmail = email;
@@ -7421,6 +7422,7 @@ function openCasPath(email, name) {
     .then(function(r){ return r.json(); })
     .then(function(d) {
       _casPathRecordId = d.userRecordId || '';
+      _casInductionWatchDates = d.inductionWatchDates || {};
       document.getElementById('cas-path-loading').style.display = 'none';
       document.getElementById('cas-path-content').style.display = 'block';
       renderCasEntries(d.entries || []);
@@ -7459,32 +7461,26 @@ function renderCasEntries(entries) {
     var list = buckets[type];
 
     if (type === 'Induction Video') {
-      // Build watched map by title
-      var watchedMap = {};
-      list.forEach(function(e) { watchedMap[e.title] = e; });
-      var watchedCount = _INDUCTION_VIDEOS.filter(function(t) { return !!watchedMap[t]; }).length;
+      var watchedCount = _INDUCTION_VIDEOS.filter(function(t) { return !!_casInductionWatchDates[t]; }).length;
       var countEl = document.getElementById('cas-iv-count');
-      if (countEl) countEl.textContent = watchedCount + '/10';
+      if (countEl) {
+        countEl.textContent = watchedCount + '/10';
+        countEl.style.color = watchedCount === 10 ? '#059669' : '#6b7c8f';
+      }
       el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
         '<tr style="background:#f8fafc;">' +
           '<th style="text-align:left;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;">Module</th>' +
-          '<th style="text-align:right;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;width:175px;">Date Watched</th>' +
+          '<th style="text-align:right;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;width:150px;">Date Watched</th>' +
         '</tr>' +
         _INDUCTION_VIDEOS.map(function(title) {
-          var entry = watchedMap[title];
-          var dateVal = entry ? entry.date : '';
-          var entryId = entry ? entry.id : '';
-          var st = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          var si = (entryId || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          var dateVal = _casInductionWatchDates[title] || '';
           return '<tr style="border-top:1px solid #f0f2f5;">' +
             '<td style="padding:10px 20px;font-size:13px;">' +
               '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle;background:' + (dateVal ? '#10b981' : '#d1d5db') + ';"></span>' +
               '<span style="font-weight:' + (dateVal ? '700' : '400') + ';color:' + (dateVal ? '#1a2a3a' : '#6b7c8f') + ';">' + escHtml(title) + '</span>' +
             '</td>' +
-            '<td style="padding:10px 20px;text-align:right;">' +
-              '<input type="date" value="' + escHtml(dateVal) + '" ' +
-              'onchange="saveInductionVideoDate(\'' + st + '\',\'' + si + '\',this.value)" ' +
-              'style="font-size:12px;border:1.5px solid ' + (dateVal ? '#a7f3d0' : '#e8ecf0') + ';border-radius:6px;padding:4px 8px;font-family:inherit;background:' + (dateVal ? '#ecfdf5' : '#fff') + ';color:' + (dateVal ? '#059669' : '#374151') + ';font-weight:' + (dateVal ? '700' : '400') + ';">' +
+            '<td style="padding:10px 20px;text-align:right;font-size:12px;font-weight:' + (dateVal ? '700' : '400') + ';color:' + (dateVal ? '#059669' : '#aab4be') + ';">' +
+              (dateVal ? formatCasDate(dateVal) : '—') +
             '</td>' +
           '</tr>';
         }).join('') +
@@ -7527,26 +7523,6 @@ function renderCasEntries(entries) {
   });
 }
 
-function saveInductionVideoDate(title, existingId, date) {
-  function reload() {
-    fetch('/api/cas-path?email=' + encodeURIComponent(_casPathEmail))
-      .then(function(r){ return r.json(); })
-      .then(function(d){ renderCasEntries(d.entries || []); });
-  }
-  if (existingId && date) {
-    fetch('/api/cas-path/' + existingId + '/date', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: date })
-    }).then(reload);
-  } else if (!existingId && date) {
-    fetch('/api/cas-path', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: _casPathEmail, type: 'Induction Video', date: date, title: title })
-    }).then(reload);
-  } else if (existingId && !date) {
-    fetch('/api/cas-path/' + existingId, { method: 'DELETE' }).then(reload);
-  }
-}
 
 function completeCasTask(id, completed) {
   fetch('/api/cas-path/' + id + '/complete', {

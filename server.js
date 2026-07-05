@@ -1195,7 +1195,18 @@ app.get('/api/cas-path', requireAuth, async (req, res) => {
     const userData = await atFetch(`?filterByFormula=${userFormula}&returnFieldsByFieldId=true&fields[]=${F_PREDICTED_CAS_DATE}&pageSize=1`);
     const predictedCasDate = ((userData.records || [])[0] || {}).fields?.[F_PREDICTED_CAS_DATE] || null;
     const userRecordId     = ((userData.records || [])[0] || {}).id || null;
-    res.json({ entries, predictedCasDate, userRecordId });
+    // Fetch induction video watch dates from CPD log
+    const ivTitles = ['Introduction','Complaints','Conduct Rules','Consumer Duty','Financial Crime','Information Security','Vulnerable Customers','Record Keeping','Sales Process','Support Systems'];
+    const ivOr = ivTitles.map(t => `{Video Title}="${t.replace(/"/g,'\\"')}"`).join(',');
+    const ivFormula = encodeURIComponent(`AND(LOWER({User Email})="${email.toLowerCase().replace(/"/g,'\\"')}",OR(${ivOr}))`);
+    const ivData = await cpdFetch(`?filterByFormula=${ivFormula}&returnFieldsByFieldId=true&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&pageSize=100`);
+    const inductionWatchDates = {};
+    (ivData.records || []).forEach(r => {
+      const t = r.fields[CPD_VTITLE] || '';
+      const d = r.fields[CPD_DATE]   || '';
+      if (t && d && !inductionWatchDates[t]) inductionWatchDates[t] = d; // keep earliest
+    });
+    res.json({ entries, predictedCasDate, userRecordId, inductionWatchDates });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
