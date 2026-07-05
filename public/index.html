@@ -6914,11 +6914,14 @@ function applyFeatureFlags() {
     var activePane = document.querySelector('.tab-pane.active');
     var activePaneId = activePane ? activePane.id : null;
     var activeDisabled = false;
+    var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
+    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true };
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
       var enabled = f[key] !== false;
       var btn = document.getElementById(cfg.tab);
-      if (btn) btn.style.display = enabled ? '' : 'none';
+      // Supervisor-only tabs must never be shown to regular brokers
+      if (btn) btn.style.display = (enabled && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
       if (!enabled && cfg.pane === activePaneId) activeDisabled = true;
     });
     // If the currently-visible tab was disabled, jump to the first enabled one
