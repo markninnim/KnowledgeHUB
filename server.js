@@ -47,7 +47,29 @@ const F_IS_SUPERVISOR  = 'fldhOYcUHF3SrnC5C';
 const F_SUPERVISOR_EMAIL = 'fldvyCzxvpIEjD7PU';
 const F_CO_SUPERVISES  = 'fld2fG2C8sK9PQ3o2'; // "Co-supervises Email" — shares team view with
 const F_AVATAR         = 'fldiQ06FtP4BehJU7';
-const F_CAS            = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser Status (checkbox)
+const F_CAS                = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser Status (checkbox)
+const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
+
+// ── CAS Path table ────────────────────────────────────────────
+const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
+const CP_EMAIL           = 'fld2kcIKyLmNlH3Kk';
+const CP_TYPE            = 'fldjjTSYobbT37BLX';
+const CP_DATE            = 'fldnuLztTgK0lpKPH';
+const CP_TITLE           = 'fld3hoLm4EZhwwQH8';
+const CP_SCORE           = 'fldwgQrRLcgn55Ecd';
+const CP_NOTES           = 'fldR1C0Fk0zY7gLyQ';
+const CP_LOGGED_BY       = 'fldlgkR7XgEZWTAmv';
+
+async function casPathFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${CAS_PATH_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...(options.headers || {}) }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(JSON.stringify(body));
+  return body;
+}
 
 // ── Marketing users (local, no Airtable field needed) ─────────
 const MARKETING_USERS_PATH = path.join(__dirname, 'marketing-users.json');
@@ -171,6 +193,7 @@ function recordToUser(record) {
     avatarUrl:        f[F_AVATAR]           || '',
     isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
     cas:              f[F_CAS]              || false,
+    predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
@@ -1146,6 +1169,86 @@ function cpdRecordToEntry(record) {
     learned:    f[CPD_LEARNED]   || ''
   };
 }
+
+// ── CAS Path endpoints ────────────────────────────────────────
+
+// GET /api/cas-path?email=X  — all entries for an adviser
+app.get('/api/cas-path', requireAuth, async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  try {
+    const formula = encodeURIComponent(`{Adviser Email} = "${email.replace(/"/g,'\\"')}"`);
+    const data = await casPathFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${CP_DATE}&sort[0][direction]=asc&pageSize=100`);
+    const entries = (data.records || []).map(r => ({
+      id:       r.id,
+      type:     r.fields[CP_TYPE]      || '',
+      date:     r.fields[CP_DATE]      || '',
+      title:    r.fields[CP_TITLE]     || '',
+      score:    r.fields[CP_SCORE]     ?? null,
+      notes:    r.fields[CP_NOTES]     || '',
+      loggedBy: r.fields[CP_LOGGED_BY] || ''
+    }));
+    // Also fetch predicted CAS date from user record
+    const userFormula = encodeURIComponent(`LOWER({${F_EMAIL}}) = "${email.toLowerCase().replace(/"/g,'\\"')}"`);
+    const userData = await atFetch(`?filterByFormula=${userFormula}&returnFieldsByFieldId=true&fields[]=${F_PREDICTED_CAS_DATE}&pageSize=1`);
+    const predictedCasDate = ((userData.records || [])[0] || {}).fields?.[F_PREDICTED_CAS_DATE] || null;
+    const userRecordId     = ((userData.records || [])[0] || {}).id || null;
+    res.json({ entries, predictedCasDate, userRecordId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cas-path  — add new entry
+app.post('/api/cas-path', requireAuth, async (req, res) => {
+  const { email, type, date, title, score, notes } = req.body;
+  if (!email || !type || !date) return res.status(400).json({ error: 'email, type and date required' });
+  const loggedBy = [req.session.user.firstName, req.session.user.lastName].filter(Boolean).join(' ') || req.session.user.email;
+  try {
+    const fields = {
+      [CP_EMAIL]:     email,
+      [CP_TYPE]:      type,
+      [CP_DATE]:      date,
+      [CP_TITLE]:     title     || '',
+      [CP_NOTES]:     notes     || '',
+      [CP_LOGGED_BY]: loggedBy
+    };
+    if (score !== undefined && score !== null && score !== '') fields[CP_SCORE] = Number(score);
+    const data = await casPathFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
+    });
+    const r = data.records[0];
+    res.json({ id: r.id, type: r.fields[CP_TYPE] || '', date: r.fields[CP_DATE] || '', title: r.fields[CP_TITLE] || '', score: r.fields[CP_SCORE] ?? null, notes: r.fields[CP_NOTES] || '', loggedBy: r.fields[CP_LOGGED_BY] || '' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/cas-path/:id
+app.delete('/api/cas-path/:id', requireAuth, async (req, res) => {
+  try {
+    await casPathFetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/cas-path/predicted-date  — set predicted CAS date on user record
+app.patch('/api/cas-path/predicted-date', requireAuth, async (req, res) => {
+  const { recordId, date } = req.body;
+  if (!recordId) return res.status(400).json({ error: 'recordId required' });
+  try {
+    await atFetch(`/${recordId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_PREDICTED_CAS_DATE]: date || null }, returnFieldsByFieldId: true })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/cpd — current user's entries + totals
 app.get('/api/cpd', requireAuth, async (req, res) => {

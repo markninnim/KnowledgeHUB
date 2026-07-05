@@ -3146,6 +3146,114 @@ html { height: 100%; }
   <!-- ── Supervisor Zone tab ───────────────────────────────── -->
   <div id="tab-supervisor-zone" class="tab-pane">
 
+    <!-- CAS Path Panel -->
+    <div id="sv-cas-path-panel" style="display:none;max-width:900px;margin:0 auto;padding:0 8px;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+        <button onclick="closeCasPath()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Back</button>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="cas-path-name" style="font-size:20px;font-weight:800;color:#003768;"></div>
+            <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em;">Non-CAS</span>
+          </div>
+          <div id="cas-path-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;">CAS Path</div>
+        </div>
+      </div>
+
+      <div id="cas-path-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="cas-path-content" style="display:none;">
+
+        <!-- Induction Videos -->
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e99d5;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Induction Videos</span>
+            </div>
+            <button onclick="openCasEntry('Induction Video')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+          </div>
+          <div id="cas-entries-Induction-Video" style="padding:4px 0;min-height:40px;"></div>
+        </div>
+
+        <!-- Tests -->
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tests</span>
+            </div>
+            <button onclick="openCasEntry('Test')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+          </div>
+          <div id="cas-entries-Test" style="padding:4px 0;min-height:40px;"></div>
+        </div>
+
+        <!-- Role Plays -->
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Role Plays</span>
+            </div>
+            <button onclick="openCasEntry('Role Play')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+          </div>
+          <div id="cas-entries-Role-Play" style="padding:4px 0;min-height:40px;"></div>
+        </div>
+
+        <!-- Observed Interviews -->
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Observed Interviews</span>
+            </div>
+            <button onclick="openCasEntry('Observed Interview')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+          </div>
+          <div id="cas-entries-Observed-Interview" style="padding:4px 0;min-height:40px;"></div>
+        </div>
+
+        <!-- Predicted CAS Date -->
+        <div style="background:#f0f6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Predicted CAS Date</div>
+            <div id="cas-predicted-display" style="font-size:18px;font-weight:800;color:#003768;">Not set</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="date" id="cas-predicted-input" style="padding:7px 10px;border:1.5px solid #bfdbfe;border-radius:7px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;" onchange="savePredictedCasDate()">
+            <span style="font-size:11px;color:#6b7c8f;">Set by supervisor</span>
+          </div>
+        </div>
+
+      </div><!-- /cas-path-content -->
+
+      <!-- Add Entry Form (hidden by default) -->
+      <div id="cas-entry-form" style="display:none;margin-top:16px;background:#fff;border:1.5px solid #e8ecf0;border-radius:10px;padding:20px 24px;">
+        <div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:16px;" id="cas-entry-form-title">Add Entry</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Title / Name</label>
+            <input id="cas-entry-title" type="text" placeholder="e.g. Module 1 — FCA Overview" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Date</label>
+            <input id="cas-entry-date" type="date" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+          </div>
+        </div>
+        <div id="cas-score-row" style="display:none;margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Score (%)</label>
+          <input id="cas-entry-score" type="number" min="0" max="100" placeholder="e.g. 85" style="width:160px;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;">
+        </div>
+        <div id="cas-notes-row" style="display:none;margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Notes</label>
+          <textarea id="cas-entry-notes" rows="3" placeholder="Observations, feedback, outcomes…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="submitCasEntry()" style="background:#003768;color:#fff;border:none;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>
+          <button onclick="document.getElementById('cas-entry-form').style.display='none'" style="background:#f5f7fa;color:#6b7c8f;border:1.5px solid #e8ecf0;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <span id="cas-entry-saving" style="display:none;font-size:12px;color:#6b7c8f;align-self:center;">Saving…</span>
+        </div>
+      </div>
+
+    </div><!-- /sv-cas-path-panel -->
+
     <!-- Broker Profile Panel (shown when a broker is selected) -->
     <div id="sv-broker-profile" style="display:none;max-width:1200px;margin:0 auto;padding:0 8px;">
       <!-- Back + header -->
@@ -7218,6 +7326,131 @@ function svViewAs(email) {
   loadSupervisorZone();
 }
 
+// ── CAS Path ──────────────────────────────────────────────────
+var _casPathEmail = '', _casPathRecordId = '', _casPathCurrentType = '';
+
+function openCasPath(email, name) {
+  _casPathEmail = email;
+  _casPathRecordId = '';
+  _casPathCurrentType = '';
+  document.getElementById('sv-cas-path-panel').style.display = 'block';
+  document.getElementById('sv-dashboard').style.display = 'none';
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('cas-path-name').textContent = name;
+  document.getElementById('cas-path-loading').style.display = 'block';
+  document.getElementById('cas-path-content').style.display = 'none';
+  document.getElementById('cas-entry-form').style.display = 'none';
+  fetch('/api/cas-path?email=' + encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      _casPathRecordId = d.userRecordId || '';
+      document.getElementById('cas-path-loading').style.display = 'none';
+      document.getElementById('cas-path-content').style.display = 'block';
+      renderCasEntries(d.entries || []);
+      var predicted = d.predictedCasDate || '';
+      document.getElementById('cas-predicted-input').value = predicted;
+      document.getElementById('cas-predicted-display').textContent = predicted ? formatCasDate(predicted) : 'Not set';
+    }).catch(function() {
+      document.getElementById('cas-path-loading').textContent = 'Could not load CAS path.';
+    });
+}
+
+function closeCasPath() {
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-dashboard').style.display = 'block';
+}
+
+function formatCasDate(iso) {
+  if (!iso) return 'Not set';
+  var parts = iso.split('-');
+  if (parts.length !== 3) return iso;
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+var _casTypeColors = { 'Induction Video': '#2e99d5', 'Test': '#7c3aed', 'Role Play': '#f59e0b', 'Observed Interview': '#10b981' };
+
+function renderCasEntries(entries) {
+  var buckets = { 'Induction Video': [], 'Test': [], 'Role Play': [], 'Observed Interview': [] };
+  entries.forEach(function(e) { if (buckets[e.type]) buckets[e.type].push(e); });
+  Object.keys(buckets).forEach(function(type) {
+    var containerId = 'cas-entries-' + type.replace(/ /g, '-');
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var list = buckets[type];
+    if (!list.length) {
+      el.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">No entries yet</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(e) {
+      var scoreHtml = (e.score !== null && e.score !== undefined) ? '<span style="background:#f0f6ff;color:#1e40af;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px;">' + e.score + '%</span>' : '';
+      var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;line-height:1.5;">' + escHtml(e.notes) + '</div>' : '';
+      return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
+          '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
+          notesHtml +
+        '</div>' +
+        '<button onclick="deleteCasEntry(\'' + e.id + '\',\'' + type + '\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:2px 6px;flex-shrink:0;" title="Delete">✕</button>' +
+      '</div>';
+    }).join('');
+  });
+}
+
+function openCasEntry(type) {
+  _casPathCurrentType = type;
+  document.getElementById('cas-entry-form-title').textContent = 'Add ' + type;
+  document.getElementById('cas-entry-title').value = '';
+  document.getElementById('cas-entry-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cas-entry-score').value = '';
+  document.getElementById('cas-entry-notes').value = '';
+  document.getElementById('cas-score-row').style.display = type === 'Test' ? 'block' : 'none';
+  document.getElementById('cas-notes-row').style.display = (type === 'Role Play' || type === 'Observed Interview') ? 'block' : 'none';
+  document.getElementById('cas-entry-form').style.display = 'block';
+  document.getElementById('cas-entry-title').focus();
+}
+
+function submitCasEntry() {
+  var title = document.getElementById('cas-entry-title').value.trim();
+  var date  = document.getElementById('cas-entry-date').value;
+  var score = document.getElementById('cas-entry-score').value;
+  var notes = document.getElementById('cas-entry-notes').value.trim();
+  if (!date) { alert('Please enter a date'); return; }
+  var saving = document.getElementById('cas-entry-saving');
+  saving.style.display = 'inline';
+  var body = { email: _casPathEmail, type: _casPathCurrentType, date: date, title: title, notes: notes };
+  if (_casPathCurrentType === 'Test' && score !== '') body.score = parseInt(score);
+  fetch('/api/cas-path', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  }).then(function(r){ return r.json(); }).then(function() {
+    saving.style.display = 'none';
+    document.getElementById('cas-entry-form').style.display = 'none';
+    // Reload entries
+    fetch('/api/cas-path?email=' + encodeURIComponent(_casPathEmail))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ renderCasEntries(d.entries || []); });
+  }).catch(function() { saving.style.display = 'none'; alert('Could not save entry'); });
+}
+
+function deleteCasEntry(id, type) {
+  if (!confirm('Delete this entry?')) return;
+  fetch('/api/cas-path/' + id, { method: 'DELETE' })
+    .then(function() {
+      fetch('/api/cas-path?email=' + encodeURIComponent(_casPathEmail))
+        .then(function(r){ return r.json(); })
+        .then(function(d){ renderCasEntries(d.entries || []); });
+    });
+}
+
+function savePredictedCasDate() {
+  var date = document.getElementById('cas-predicted-input').value;
+  document.getElementById('cas-predicted-display').textContent = date ? formatCasDate(date) : 'Not set';
+  if (!_casPathRecordId) return;
+  fetch('/api/cas-path/predicted-date', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recordId: _casPathRecordId, date: date || null })
+  });
+}
+
 // ── Broker Profile ────────────────────────────────────────────
 function openBrokerProfile(email, name) {
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -7799,6 +8032,11 @@ function renderSvDashboard(data) {
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
         '<span style="font-size:22px;font-weight:800;color:#ef4444;line-height:1;">' + totalNonCas + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
+      '</div>' +
+      '<span style="font-size:14px;font-weight:400;color:#d1d9e0;margin:0 2px;">—</span>' +
+      '<div style="display:flex;align-items:baseline;gap:5px;">' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + ((totalNonCas * 2) + allAdvisers.length) + '</span>' +
+        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">SPOC</span>' +
       '</div>';
   }
 
@@ -7911,7 +8149,7 @@ function renderSvDashboard(data) {
       nonCasAdvisers.forEach(function(o) {
         var n = [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email;
         var cardId = 'sv-card-' + o.m.email.replace(/[^a-z0-9]/gi, '_');
-        ncHtml += '<a href="#" onclick="var el=document.getElementById(\'' + cardId + '\');if(el){el.scrollIntoView({behavior:\'smooth\',block:\'center\'});el.style.outline=\'2px solid #ef4444\';setTimeout(function(){el.style.outline=\'\'},1800);}return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
+        ncHtml += '<a href="#" onclick="openCasPath(' + JSON.stringify(o.m.email) + ',' + JSON.stringify(n) + ');return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
           '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
           escHtml(n) + '</a>';
       });
