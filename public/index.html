@@ -9475,8 +9475,11 @@ function pzInit() {
   if (PZ_SUP_MAP) { pzRender(PZ_SUP_MAP); return; }
   fetch('/api/pz/supervisor-map')
     .then(function(r){ return r.json(); })
-    .then(function(map){ PZ_SUP_MAP = map; pzRender(map); })
-    .catch(function(){ PZ_SUP_MAP = {}; pzRender({}); });
+    .then(function(map){
+      if (!map || map.error || Object.keys(map).length === 0) { PZ_SUP_MAP = null; pzRender(null); }
+      else { PZ_SUP_MAP = map; pzRender(map); }
+    })
+    .catch(function(){ PZ_SUP_MAP = null; pzRender(null); });
 }
 
 function pzRender(map) {
