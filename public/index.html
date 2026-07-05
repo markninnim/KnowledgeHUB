@@ -3226,9 +3226,9 @@ html { height: 100%; }
               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e99d5;"></span>
               <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Induction Videos</span>
             </div>
-            <button onclick="openCasEntry('Induction Video')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
+            <span id="cas-iv-count" style="font-size:12px;font-weight:700;color:#6b7c8f;">0/10</span>
           </div>
-          <div id="cas-entries-Induction-Video" style="padding:4px 0;min-height:40px;"></div>
+          <div id="cas-entries-Induction-Video" style="min-height:40px;"></div>
         </div>
 
         <!-- Tests -->
@@ -7447,6 +7447,8 @@ function formatCasDate(iso) {
 
 var _casTypeColors = { 'Induction Video': '#2e99d5', 'Test': '#7c3aed', 'Role Play': '#f59e0b', 'Observed Interview': '#10b981' };
 
+var _INDUCTION_VIDEOS = ['Introduction','Complaints','Conduct Rules','Consumer Duty','Financial Crime','Information Security','Vulnerable Customers','Record Keeping','Sales Process','Support Systems'];
+
 function renderCasEntries(entries) {
   var buckets = { 'Task': [], 'Induction Video': [], 'Test': [], 'Role Play': [], 'Observed Interview': [] };
   entries.forEach(function(e) { if (buckets[e.type] !== undefined) buckets[e.type].push(e); });
@@ -7455,6 +7457,41 @@ function renderCasEntries(entries) {
     var el = document.getElementById(containerId);
     if (!el) return;
     var list = buckets[type];
+
+    if (type === 'Induction Video') {
+      // Build watched map by title
+      var watchedMap = {};
+      list.forEach(function(e) { watchedMap[e.title] = e; });
+      var watchedCount = _INDUCTION_VIDEOS.filter(function(t) { return !!watchedMap[t]; }).length;
+      var countEl = document.getElementById('cas-iv-count');
+      if (countEl) countEl.textContent = watchedCount + '/10';
+      el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+        '<tr style="background:#f8fafc;">' +
+          '<th style="text-align:left;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;">Module</th>' +
+          '<th style="text-align:right;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;padding:8px 20px;font-family:inherit;width:175px;">Date Watched</th>' +
+        '</tr>' +
+        _INDUCTION_VIDEOS.map(function(title) {
+          var entry = watchedMap[title];
+          var dateVal = entry ? entry.date : '';
+          var entryId = entry ? entry.id : '';
+          var st = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          var si = (entryId || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return '<tr style="border-top:1px solid #f0f2f5;">' +
+            '<td style="padding:10px 20px;font-size:13px;">' +
+              '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle;background:' + (dateVal ? '#10b981' : '#d1d5db') + ';"></span>' +
+              '<span style="font-weight:' + (dateVal ? '700' : '400') + ';color:' + (dateVal ? '#1a2a3a' : '#6b7c8f') + ';">' + escHtml(title) + '</span>' +
+            '</td>' +
+            '<td style="padding:10px 20px;text-align:right;">' +
+              '<input type="date" value="' + escHtml(dateVal) + '" ' +
+              'onchange="saveInductionVideoDate(\'' + st + '\',\'' + si + '\',this.value)" ' +
+              'style="font-size:12px;border:1.5px solid ' + (dateVal ? '#a7f3d0' : '#e8ecf0') + ';border-radius:6px;padding:4px 8px;font-family:inherit;background:' + (dateVal ? '#ecfdf5' : '#fff') + ';color:' + (dateVal ? '#059669' : '#374151') + ';font-weight:' + (dateVal ? '700' : '400') + ';">' +
+            '</td>' +
+          '</tr>';
+        }).join('') +
+      '</table>';
+      return;
+    }
+
     if (!list.length) {
       el.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">' + (type === 'Task' ? 'No tasks set yet' : 'No entries yet') + '</div>';
       return;
@@ -7488,6 +7525,27 @@ function renderCasEntries(entries) {
       }).join('');
     }
   });
+}
+
+function saveInductionVideoDate(title, existingId, date) {
+  function reload() {
+    fetch('/api/cas-path?email=' + encodeURIComponent(_casPathEmail))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ renderCasEntries(d.entries || []); });
+  }
+  if (existingId && date) {
+    fetch('/api/cas-path/' + existingId + '/date', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: date })
+    }).then(reload);
+  } else if (!existingId && date) {
+    fetch('/api/cas-path', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: _casPathEmail, type: 'Induction Video', date: date, title: title })
+    }).then(reload);
+  } else if (existingId && !date) {
+    fetch('/api/cas-path/' + existingId, { method: 'DELETE' }).then(reload);
+  }
 }
 
 function completeCasTask(id, completed) {

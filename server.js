@@ -1252,6 +1252,20 @@ app.patch('/api/cas-path/predicted-date', requireAuth, async (req, res) => {
   }
 });
 
+// PATCH /api/cas-path/:id/date  — update entry date
+app.patch('/api/cas-path/:id/date', requireAuth, async (req, res) => {
+  const { date } = req.body;
+  try {
+    await casPathFetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [CP_DATE]: date || null }, returnFieldsByFieldId: true })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PATCH /api/cas-path/:id/complete  — toggle task completion
 app.patch('/api/cas-path/:id/complete', requireAuth, async (req, res) => {
   const { completed } = req.body;
