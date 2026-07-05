@@ -8136,13 +8136,13 @@ function loadSupervisorZone() {
       // ── Populate sidebar supervisor links
       var sbWrap = document.getElementById('sv-sb-supervisors');
       if (sbWrap && supervisors.length > 0) {
-        var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
+        var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
         if (_currentUser && _currentUser.isAdmin) {
           // "All Company" removed — use "Whole company" top-level link instead
         }
         supervisors.forEach(function(s) {
           var countBadge = s.count ? '<span style="margin-left:auto;background:rgba(255,255,255,0.22);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0;">' + s.count + '</span>' : '';
-          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="padding-left:24px;display:flex;align-items:center;gap:4px;">' + escHtml(s.name) + countBadge + '</a>';
+          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="display:flex;align-items:center;gap:4px;">' + escHtml(s.name) + countBadge + '</a>';
         });
         sbWrap.innerHTML = sbHtml;
         sbWrap.style.display = 'block';
@@ -8379,13 +8379,13 @@ function renderSvDashboard(data) {
   var ncWrap = document.getElementById('sv-sb-noncas');
   if (ncWrap) {
     if (totalNonCas > 0) {
-      var ncHtml = '<div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>';
+      var ncHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#ef4444;">NON CAS</span></div>';
       nonCasAdvisers.forEach(function(o) {
         var n = [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email;
         var cardId = 'sv-card-' + o.m.email.replace(/[^a-z0-9]/gi, '_');
         var safeEmail = o.m.email.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
         var safeName  = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        ncHtml += '<a href="#" onclick="openCasPath(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
+        ncHtml += '<a href="#" onclick="openCasPath(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="display:flex;align-items:center;gap:6px;">' +
           '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
           escHtml(n) + '</a>';
       });
