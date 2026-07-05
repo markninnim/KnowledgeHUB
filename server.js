@@ -1839,20 +1839,22 @@ app.get('/social-copy.json', requireAuth, (req, res) => {
 
 // ── Social content manifest ───────────────────────────────────
 app.get('/api/social-content', requireAuth, (req, res) => {
-  const baseDir = path.join(__dirname, 'public/assets/social-content');
-  if (!fs.existsSync(baseDir)) return res.json([]);
-  const posts = fs.readdirSync(baseDir)
-    .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
-    .sort()
-    .map(name => ({
-      name,
-      files: fs.readdirSync(path.join(baseDir, name))
-        .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
-        .map(f => {
-          return { name: f, created: getAssetDate('social/' + name + '/' + f) };
-        })
-    }));
-  res.json(posts);
+  try {
+    const baseDir = path.join(__dirname, 'public/assets/social-content');
+    if (!fs.existsSync(baseDir)) return res.json([]);
+    const posts = fs.readdirSync(baseDir)
+      .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
+      .sort()
+      .map(name => ({
+        name,
+        files: fs.readdirSync(path.join(baseDir, name))
+          .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
+          .map(f => ({ name: f, created: getAssetDate('social/' + name + '/' + f) }))
+      }));
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Graphics folder (nested paths) ───────────────────────────

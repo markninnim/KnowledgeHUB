@@ -4683,7 +4683,10 @@ var _socialCopyDb = {};
 function loadSocialContent() {
   loadFeaturedSocial();
   Promise.all([
-    fetch('/api/social-content').then(function(r){ return r.json(); }),
+    fetch('/api/social-content').then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error('HTTP ' + r.status + ': ' + t.slice(0,120)); });
+      return r.json();
+    }),
     fetch('/social-copy.json').then(function(r){ return r.json(); }).catch(function(){ return {}; })
   ]).then(function(results) {
     var posts   = results[0];
