@@ -1228,7 +1228,31 @@ app.get('/api/cas-path', requireAuth, async (req, res) => {
       const d = r.fields[CPD_DATE]   || '';
       if (t && d && !inductionWatchDates[t]) inductionWatchDates[t] = d; // keep earliest
     });
-    res.json({ entries, predictedCasDate, userRecordId, inductionWatchDates });
+    // Fetch induction knowledge test results from CPD
+    const KT_NAME_TO_NUM = {
+      '1. Complaints, Conduct Rules & Breaches': 1,
+      '2. Consumer Duty & Financial Crime': 2,
+      '3. Vulnerable Clients & Information Security': 3,
+      '4. Record Keeping & Sales Process': 4
+    };
+    const ktFormula = encodeURIComponent(`AND(LOWER(TRIM({User Email}))="${email.toLowerCase().replace(/"/g,'\\"')}",{Source}="Knowledge Test")`);
+    const ktData = await cpdFetch(`?filterByFormula=${ktFormula}&returnFieldsByFieldId=true&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&pageSize=50`);
+    const inductionTests = {};
+    (ktData.records || []).forEach(r => {
+      const activity = (r.fields[CPD_ACTIVITY] || '').replace(/ – Knowledge Test$/, '').replace(/ – Knowledge Test$/, '');
+      const learned  = r.fields[CPD_LEARNED] || '';
+      const date     = r.fields[CPD_DATE]    || '';
+      const num = KT_NAME_TO_NUM[activity];
+      if (!num) return;
+      const pctMatch = learned.match(/\((\d+)%\)/);
+      const pct    = pctMatch ? parseInt(pctMatch[1]) : null;
+      const passed = learned.toUpperCase().includes('PASSED');
+      const ex = inductionTests[num];
+      if (!ex || (!ex.passed && passed) || (ex.passed === passed && date > ex.date)) {
+        inductionTests[num] = { date, score: pct, passed };
+      }
+    });
+    res.json({ entries, predictedCasDate, userRecordId, inductionWatchDates, inductionTests });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

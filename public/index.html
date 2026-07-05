@@ -7611,6 +7611,7 @@ function svViewAs(email) {
 // ── CAS Path ──────────────────────────────────────────────────
 var _casPathEmail = '', _casPathRecordId = '', _casPathCurrentType = '';
 var _casInductionWatchDates = {};
+var _casInductionTests = {};
 
 function openCasPath(email, name) {
   _casPathEmail = email;
@@ -7630,6 +7631,7 @@ function openCasPath(email, name) {
     .then(function(d) {
       _casPathRecordId = d.userRecordId || '';
       _casInductionWatchDates = d.inductionWatchDates || {};
+      _casInductionTests = d.inductionTests || {};
       document.getElementById('cas-path-loading').style.display = 'none';
       document.getElementById('cas-path-content').style.display = 'block';
       renderCasEntries(d.entries || []);
@@ -7674,41 +7676,53 @@ function renderCasEntries(entries) {
         countEl.textContent = watchedCount + '/10 watched';
         countEl.style.color = watchedCount === 10 ? '#059669' : '#6b7c8f';
       }
-      // Build test map keyed by title
-      var testByTitle = {};
-      (buckets['Test'] || []).forEach(function(e) { if (e.title && !testByTitle[e.title]) testByTitle[e.title] = e; });
+      // Groups: videos (left) paired with induction test (right, auto from CPD)
+      var ivGroups = [
+        { videos: ['Introduction'], testKey: null },
+        { videos: ['Complaints', 'Conduct Rules'], testKey: 1, testLabel: 'Test 1 · Complaints & Conduct Rules' },
+        { videos: ['Consumer Duty', 'Financial Crime'], testKey: 2, testLabel: 'Test 2 · Consumer Duty & Financial Crime' },
+        { videos: ['Information Security', 'Vulnerable Customers'], testKey: 3, testLabel: 'Test 3 · Vulnerable Customers & Info Sec' },
+        { videos: ['Record Keeping', 'Sales Process'], testKey: 4, testLabel: 'Test 4 · Record Keeping & Sales Process' },
+        { videos: ['Support Systems'], testKey: null }
+      ];
       el.innerHTML = '<div style="padding:12px 16px;">' +
-        _INDUCTION_VIDEOS.map(function(title) {
-          var dateVal = _casInductionWatchDates[title] || '';
-          var te = testByTitle[title] || null;
-          var st = title.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          // Video box
-          var videoBox = '<div style="flex:1;border:1.5px solid ' + (dateVal ? '#a7f3d0' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (dateVal ? '#f0fdf4' : '#fafafa') + ';">' +
-            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">' +
-              '<span style="width:7px;height:7px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span>' +
-              '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Video</span>' +
-            '</div>' +
-            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;margin-bottom:3px;">' + escHtml(title) + '</div>' +
-            '<div style="font-size:11px;color:' + (dateVal ? '#059669' : '#aab4be') + ';font-weight:' + (dateVal ? '700' : '400') + ';">' + (dateVal ? formatCasDate(dateVal) : 'Not watched') + '</div>' +
-          '</div>';
-          // Test box
-          var testBox = '<div style="flex:1;border:1.5px solid ' + (te ? '#ddd6fe' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (te ? '#faf5ff' : '#fafafa') + ';">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">' +
-              '<div style="display:flex;align-items:center;gap:6px;">' +
-                '<span style="width:7px;height:7px;border-radius:50%;background:#7c3aed;flex-shrink:0;display:inline-block;"></span>' +
-                '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Test</span>' +
+        ivGroups.map(function(grp) {
+          // Left: one box per video in the group
+          var videoBoxes = grp.videos.map(function(title) {
+            var dv = _casInductionWatchDates[title] || '';
+            return '<div style="border:1.5px solid ' + (dv ? '#a7f3d0' : '#e8ecf0') + ';border-radius:8px;padding:10px 14px;background:' + (dv ? '#f0fdf4' : '#fafafa') + ';margin-bottom:6px;">' +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+                '<span style="width:7px;height:7px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span>' +
+                '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Video</span>' +
               '</div>' +
-              (te ? '<button onclick="deleteCasEntry(\'' + te.id + '\',\'Test\')" style="font-size:10px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0;line-height:1;" title="Remove">✕</button>' : '') +
-            '</div>' +
-            (te ?
-              '<div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:3px;">' + (te.score !== null && te.score !== undefined ? te.score + '%' : 'Complete') + '</div>' +
-              '<div style="font-size:11px;color:#aab4be;">' + formatCasDate(te.date) + '</div>'
-              :
-              '<div style="font-size:12px;color:#aab4be;margin-bottom:3px;">Not completed</div>' +
-              '<button onclick="openCasEntryForTitle(\'Test\',\'' + st + '\')" style="font-size:11px;font-weight:600;color:#7c3aed;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">+ Add result</button>'
-            ) +
+              '<div style="font-size:13px;font-weight:600;color:#1a2a3a;margin-bottom:2px;">' + escHtml(title) + '</div>' +
+              '<div style="font-size:11px;color:' + (dv ? '#059669' : '#aab4be') + ';font-weight:' + (dv ? '700' : '400') + ';">' + (dv ? '✓ ' + formatCasDate(dv) : 'Not watched') + '</div>' +
+            '</div>';
+          }).join('');
+          // Right: auto-populated test result (or empty)
+          var testBox = '';
+          if (grp.testKey) {
+            var tr = _casInductionTests[grp.testKey] || null;
+            var bdr = tr ? (tr.passed ? '#a7f3d0' : '#fca5a5') : '#e8ecf0';
+            var bg  = tr ? (tr.passed ? '#f0fdf4' : '#fef2f2') : '#fafafa';
+            testBox = '<div style="border:1.5px solid ' + bdr + ';border-radius:8px;padding:10px 14px;background:' + bg + ';height:100%;box-sizing:border-box;">' +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
+                '<span style="width:7px;height:7px;border-radius:50%;background:#7c3aed;flex-shrink:0;display:inline-block;"></span>' +
+                '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Test ' + grp.testKey + '</span>' +
+              '</div>' +
+              (tr ?
+                '<div style="font-size:18px;font-weight:800;color:' + (tr.passed ? '#059669' : '#dc2626') + ';margin-bottom:3px;">' + (tr.score !== null ? tr.score + '%' : '—') + '</div>' +
+                '<div style="display:inline-block;background:' + (tr.passed ? '#dcfce7' : '#fee2e2') + ';color:' + (tr.passed ? '#166534' : '#991b1b') + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-bottom:5px;">' + (tr.passed ? 'PASS' : 'FAIL') + '</div><br>' +
+                '<div style="font-size:11px;color:#6b7c8f;">' + formatCasDate(tr.date) + '</div>'
+                :
+                '<div style="font-size:12px;color:#aab4be;font-style:italic;">Not yet taken</div>'
+              ) +
+            '</div>';
+          }
+          return '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">' +
+            '<div style="flex:1;min-width:0;">' + videoBoxes + '</div>' +
+            '<div style="flex:1;min-width:0;">' + testBox + '</div>' +
           '</div>';
-          return '<div style="display:flex;gap:10px;margin-bottom:8px;">' + videoBox + testBox + '</div>';
         }).join('') +
       '</div>';
       return;
