@@ -7723,6 +7723,8 @@ function renderSvDashboard(data) {
   members.forEach(function(m) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
+    // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
+    if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     if (m.isSupervisor) {
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
