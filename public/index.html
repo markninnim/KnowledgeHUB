@@ -203,6 +203,7 @@ html { height: 100%; }
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
     <h2 style="margin-top: 8px;">Learning</h2>
+    <a href="#" id="lv-nav-cas-path" style="display:none;color:#ef4444;font-weight:700;" onclick="return showLvSection('lv-cas-path-section',this)">My CAS Path</a>
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
@@ -1181,6 +1182,64 @@ html { height: 100%; }
 
   <!-- ── Learning tab ──────────────────────────────────────── -->
   <div id="tab-learning" class="tab-pane">
+
+    <!-- My CAS Path (broker view — only shown to non-CAS advisers) -->
+    <div id="lv-cas-path-section" style="display:none;padding:32px;">
+      <div style="max-width:860px;margin:0 auto;">
+        <div style="margin-bottom:24px;">
+          <h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 8px;">My CAS Path</h2>
+          <div style="background:#f0f6ff;border-left:3px solid #003768;border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;color:#374151;line-height:1.6;max-width:700px;">
+            This is your personal roadmap to Competent Adviser Status (CAS). Every milestone is tracked here — induction videos, knowledge tests, role plays and observed interviews — so you always know exactly where you stand and how far there is to go. Work through any tasks your supervisor has set and keep this page bookmarked: the goal is to get you to CAS as quickly as possible.
+          </div>
+        </div>
+        <div id="broker-cas-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+        <div id="broker-cas-content" style="display:none;">
+          <!-- Tasks first for broker view -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#003768;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tasks from your Supervisor</span>
+            </div>
+            <div id="broker-cas-entries-Task" style="padding:4px 0;min-height:40px;"></div>
+          </div>
+          <!-- Milestones read-only -->
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e99d5;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Induction Videos</span>
+            </div>
+            <div id="broker-cas-entries-Induction-Video" style="padding:4px 0;min-height:40px;"></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tests</span>
+            </div>
+            <div id="broker-cas-entries-Test" style="padding:4px 0;min-height:40px;"></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Role Plays</span>
+            </div>
+            <div id="broker-cas-entries-Role-Play" style="padding:4px 0;min-height:40px;"></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f5;display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Observed Interviews</span>
+            </div>
+            <div id="broker-cas-entries-Observed-Interview" style="padding:4px 0;min-height:40px;"></div>
+          </div>
+          <!-- Predicted CAS Date -->
+          <div id="broker-cas-predicted-wrap" style="display:none;background:#f0f6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:20px 24px;">
+            <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Predicted CAS Date</div>
+            <div id="broker-cas-predicted-display" style="font-size:22px;font-weight:800;color:#003768;"></div>
+            <div style="font-size:12px;color:#6b7c8f;margin-top:4px;">Set by your supervisor</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Weekly Recordings -->
     <div id="weekly-recordings">
@@ -3148,14 +3207,13 @@ html { height: 100%; }
 
     <!-- CAS Path Panel -->
     <div id="sv-cas-path-panel" style="display:none;max-width:900px;margin:0 auto;padding:0 8px;">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
-        <button onclick="closeCasPath()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1.5px solid #e8ecf0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Back</button>
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div id="cas-path-name" style="font-size:20px;font-weight:800;color:#003768;"></div>
-            <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em;">Non-CAS</span>
-          </div>
-          <div id="cas-path-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;">CAS Path</div>
+      <div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div id="cas-path-name" style="font-size:22px;font-weight:800;color:#003768;"></div>
+          <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em;">Non-CAS</span>
+        </div>
+        <div style="background:#f0f6ff;border-left:3px solid #003768;border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;color:#374151;line-height:1.6;max-width:700px;">
+          This page records <span id="cas-path-name2" style="font-weight:700;"></span>'s path to Competent Adviser Status. Every step of the journey is logged here — induction videos, knowledge tests, role plays and observed interviews — so we can track progress clearly and get there as fast as possible. Tasks set by the supervisor appear below and should be worked through in order.
         </div>
       </div>
 
@@ -3208,6 +3266,18 @@ html { height: 100%; }
             <button onclick="openCasEntry('Observed Interview')" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Add</button>
           </div>
           <div id="cas-entries-Observed-Interview" style="padding:4px 0;min-height:40px;"></div>
+        </div>
+
+        <!-- Tasks -->
+        <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#003768;"></span>
+              <span style="font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;">Tasks</span>
+            </div>
+            <button onclick="openCasEntry('Task')" class="sv-add-btn" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;border:1.5px solid #003768;background:#fff;color:#003768;cursor:pointer;font-family:inherit;">+ Set Task</button>
+          </div>
+          <div id="cas-entries-Task" style="padding:4px 0;min-height:40px;"></div>
         </div>
 
         <!-- Predicted CAS Date -->
@@ -5953,7 +6023,7 @@ function openNewsletter(url, title, monthLabel) {
 }
 
 function showLvSection(id, el) {
-  ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests'].forEach(function(s) {
+  ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests','lv-cas-path-section'].forEach(function(s) {
     var div = document.getElementById(s);
     if (div) div.style.display = s === id ? '' : 'none';
   });
@@ -5964,6 +6034,7 @@ function showLvSection(id, el) {
   if (id === 'revalidation-recordings') loadRevalidationVideos();
   if (id === 'monthly-newsletters')     loadNewsletters();
   if (id === 'knowledge-tests')         ktShowLanding();
+  if (id === 'lv-cas-path-section')    loadBrokerCasPath();
   return false;
 }
 
@@ -6648,6 +6719,11 @@ var _currentUser = null;
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
       if (nlup) nlup.style.display = 'block';
+    }
+    // Show My CAS Path in Learning sidebar for non-CAS advisers
+    if (user && !user.cas) {
+      var casLink = document.getElementById('lv-nav-cas-path');
+      if (casLink) casLink.style.display = 'block';
     }
     // Show Pay tab for all logged-in users
     if (user) {
@@ -7337,6 +7413,7 @@ function openCasPath(email, name) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'none';
   document.getElementById('cas-path-name').textContent = name;
+  var n2 = document.getElementById('cas-path-name2'); if (n2) n2.textContent = name;
   document.getElementById('cas-path-loading').style.display = 'block';
   document.getElementById('cas-path-content').style.display = 'none';
   document.getElementById('cas-entry-form').style.display = 'none';
@@ -7370,41 +7447,126 @@ function formatCasDate(iso) {
 var _casTypeColors = { 'Induction Video': '#2e99d5', 'Test': '#7c3aed', 'Role Play': '#f59e0b', 'Observed Interview': '#10b981' };
 
 function renderCasEntries(entries) {
-  var buckets = { 'Induction Video': [], 'Test': [], 'Role Play': [], 'Observed Interview': [] };
-  entries.forEach(function(e) { if (buckets[e.type]) buckets[e.type].push(e); });
+  var buckets = { 'Task': [], 'Induction Video': [], 'Test': [], 'Role Play': [], 'Observed Interview': [] };
+  entries.forEach(function(e) { if (buckets[e.type] !== undefined) buckets[e.type].push(e); });
   Object.keys(buckets).forEach(function(type) {
     var containerId = 'cas-entries-' + type.replace(/ /g, '-');
     var el = document.getElementById(containerId);
     if (!el) return;
     var list = buckets[type];
     if (!list.length) {
-      el.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">No entries yet</div>';
+      el.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">' + (type === 'Task' ? 'No tasks set yet' : 'No entries yet') + '</div>';
       return;
     }
-    el.innerHTML = list.map(function(e) {
-      var scoreHtml = (e.score !== null && e.score !== undefined) ? '<span style="background:#f0f6ff;color:#1e40af;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px;">' + e.score + '%</span>' : '';
-      var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;line-height:1.5;">' + escHtml(e.notes) + '</div>' : '';
-      return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
-          '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
-          notesHtml +
-        '</div>' +
-        '<button onclick="deleteCasEntry(\'' + e.id + '\',\'' + type + '\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:2px 6px;flex-shrink:0;" title="Delete">✕</button>' +
-      '</div>';
-    }).join('');
+    if (type === 'Task') {
+      el.innerHTML = list.map(function(e) {
+        var done = !!e.completed;
+        var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;line-height:1.5;">' + escHtml(e.notes) + '</div>' : '';
+        return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
+          '<input type="checkbox"' + (done ? ' checked' : '') + ' onchange="completeCasTask(\'' + e.id + '\',this.checked)" style="margin-top:3px;width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#003768;">' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#1a2a3a') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
+            '<div style="font-size:11px;color:#aab4be;margin-top:1px;">Due ' + formatCasDate(e.date) + (e.loggedBy ? ' · set by ' + escHtml(e.loggedBy) : '') + '</div>' +
+            notesHtml +
+          '</div>' +
+          '<button onclick="deleteCasEntry(\'' + e.id + '\',\'Task\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:2px 6px;flex-shrink:0;" title="Delete">✕</button>' +
+        '</div>';
+      }).join('');
+    } else {
+      el.innerHTML = list.map(function(e) {
+        var scoreHtml = (e.score !== null && e.score !== undefined) ? '<span style="background:#f0f6ff;color:#1e40af;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px;">' + e.score + '%</span>' : '';
+        var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;line-height:1.5;">' + escHtml(e.notes) + '</div>' : '';
+        return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
+          '<div>' +
+            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
+            '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
+            notesHtml +
+          '</div>' +
+          '<button onclick="deleteCasEntry(\'' + e.id + '\',\'' + type + '\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:2px 6px;flex-shrink:0;" title="Delete">✕</button>' +
+        '</div>';
+      }).join('');
+    }
   });
+}
+
+function completeCasTask(id, completed) {
+  fetch('/api/cas-path/' + id + '/complete', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ completed: completed })
+  });
+}
+
+function loadBrokerCasPath() {
+  if (!window._currentUser || window._currentUser.cas) return;
+  var email = window._currentUser.email;
+  document.getElementById('broker-cas-loading').style.display = 'block';
+  document.getElementById('broker-cas-content').style.display = 'none';
+  fetch('/api/cas-path?email=' + encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      document.getElementById('broker-cas-loading').style.display = 'none';
+      document.getElementById('broker-cas-content').style.display = 'block';
+      var entries = d.entries || [];
+      var buckets = { 'Task': [], 'Induction Video': [], 'Test': [], 'Role Play': [], 'Observed Interview': [] };
+      entries.forEach(function(e) { if (buckets[e.type] !== undefined) buckets[e.type].push(e); });
+      // Tasks with checkboxes
+      var taskEl = document.getElementById('broker-cas-entries-Task');
+      if (taskEl) {
+        if (!buckets['Task'].length) {
+          taskEl.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">No tasks set yet — check back with your supervisor</div>';
+        } else {
+          taskEl.innerHTML = buckets['Task'].map(function(e) {
+            var done = !!e.completed;
+            var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.notes) + '</div>' : '';
+            return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
+              '<input type="checkbox"' + (done ? ' checked' : '') + ' onchange="completeCasTask(\'' + e.id + '\',this.checked)" style="margin-top:3px;width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#003768;">' +
+              '<div style="flex:1;">' +
+                '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#1a2a3a') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
+                '<div style="font-size:11px;color:#aab4be;margin-top:1px;">Due ' + formatCasDate(e.date) + (e.loggedBy ? ' · set by ' + escHtml(e.loggedBy) : '') + '</div>' +
+                notesHtml +
+              '</div>' +
+            '</div>';
+          }).join('');
+        }
+      }
+      // Milestones read-only
+      ['Induction Video','Test','Role Play','Observed Interview'].forEach(function(type) {
+        var elId = 'broker-cas-entries-' + type.replace(/ /g, '-');
+        var el = document.getElementById(elId);
+        if (!el) return;
+        var list = buckets[type];
+        if (!list.length) { el.innerHTML = '<div style="padding:12px 20px;font-size:12px;color:#aab4be;font-style:italic;">No entries yet</div>'; return; }
+        el.innerHTML = list.map(function(e) {
+          var scoreHtml = (e.score !== null && e.score !== undefined) ? '<span style="background:#f0f6ff;color:#1e40af;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px;">' + e.score + '%</span>' : '';
+          var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.notes) + '</div>' : '';
+          return '<div style="padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
+            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
+            '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
+            notesHtml + '</div>';
+        }).join('');
+      });
+      // Predicted date
+      if (d.predictedCasDate) {
+        document.getElementById('broker-cas-predicted-wrap').style.display = 'block';
+        document.getElementById('broker-cas-predicted-display').textContent = formatCasDate(d.predictedCasDate);
+      }
+    }).catch(function() {
+      document.getElementById('broker-cas-loading').textContent = 'Could not load CAS Path. Please try refreshing.';
+    });
 }
 
 function openCasEntry(type) {
   _casPathCurrentType = type;
-  document.getElementById('cas-entry-form-title').textContent = 'Add ' + type;
+  var titleLabel = document.querySelector('#cas-entry-form label');
+  document.getElementById('cas-entry-form-title').textContent = type === 'Task' ? 'Set Task' : 'Add ' + type;
+  document.getElementById('cas-entry-title').placeholder = type === 'Task' ? 'e.g. Complete Module 3 before Friday' : 'e.g. Module 1 — FCA Overview';
+  var dateLbl = document.getElementById('cas-date-label'); if (dateLbl) dateLbl.textContent = type === 'Task' ? 'Due Date' : 'Date';
   document.getElementById('cas-entry-title').value = '';
   document.getElementById('cas-entry-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('cas-entry-score').value = '';
   document.getElementById('cas-entry-notes').value = '';
   document.getElementById('cas-score-row').style.display = type === 'Test' ? 'block' : 'none';
-  document.getElementById('cas-notes-row').style.display = (type === 'Role Play' || type === 'Observed Interview') ? 'block' : 'none';
+  document.getElementById('cas-notes-row').style.display = (type === 'Role Play' || type === 'Observed Interview' || type === 'Task') ? 'block' : 'none';
   document.getElementById('cas-entry-form').style.display = 'block';
   document.getElementById('cas-entry-title').focus();
 }
@@ -7963,7 +8125,7 @@ function renderSvDashboard(data) {
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
     if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
-    if (m.isSupervisor) {
+    if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
         return (t.key === 'Mortgage' && m.sellsMortgages) ||

@@ -59,6 +59,7 @@ const CP_TITLE           = 'fld3hoLm4EZhwwQH8';
 const CP_SCORE           = 'fldwgQrRLcgn55Ecd';
 const CP_NOTES           = 'fldR1C0Fk0zY7gLyQ';
 const CP_LOGGED_BY       = 'fldlgkR7XgEZWTAmv';
+const CP_COMPLETED       = 'flduziKk1Rz99oTSW';
 
 async function casPathFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${CAS_PATH_TABLE}${endpoint}`;
@@ -1180,13 +1181,14 @@ app.get('/api/cas-path', requireAuth, async (req, res) => {
     const formula = encodeURIComponent(`{Adviser Email} = "${email.replace(/"/g,'\\"')}"`);
     const data = await casPathFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${CP_DATE}&sort[0][direction]=asc&pageSize=100`);
     const entries = (data.records || []).map(r => ({
-      id:       r.id,
-      type:     r.fields[CP_TYPE]      || '',
-      date:     r.fields[CP_DATE]      || '',
-      title:    r.fields[CP_TITLE]     || '',
-      score:    r.fields[CP_SCORE]     ?? null,
-      notes:    r.fields[CP_NOTES]     || '',
-      loggedBy: r.fields[CP_LOGGED_BY] || ''
+      id:        r.id,
+      type:      r.fields[CP_TYPE]      || '',
+      date:      r.fields[CP_DATE]      || '',
+      title:     r.fields[CP_TITLE]     || '',
+      score:     r.fields[CP_SCORE]     ?? null,
+      notes:     r.fields[CP_NOTES]     || '',
+      loggedBy:  r.fields[CP_LOGGED_BY] || '',
+      completed: r.fields[CP_COMPLETED] || false
     }));
     // Also fetch predicted CAS date from user record
     const userFormula = encodeURIComponent(`LOWER({${F_EMAIL}}) = "${email.toLowerCase().replace(/"/g,'\\"')}"`);
@@ -1219,7 +1221,7 @@ app.post('/api/cas-path', requireAuth, async (req, res) => {
       body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
     });
     const r = data.records[0];
-    res.json({ id: r.id, type: r.fields[CP_TYPE] || '', date: r.fields[CP_DATE] || '', title: r.fields[CP_TITLE] || '', score: r.fields[CP_SCORE] ?? null, notes: r.fields[CP_NOTES] || '', loggedBy: r.fields[CP_LOGGED_BY] || '' });
+    res.json({ id: r.id, type: r.fields[CP_TYPE] || '', date: r.fields[CP_DATE] || '', title: r.fields[CP_TITLE] || '', score: r.fields[CP_SCORE] ?? null, notes: r.fields[CP_NOTES] || '', loggedBy: r.fields[CP_LOGGED_BY] || '', completed: r.fields[CP_COMPLETED] || false });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1243,6 +1245,20 @@ app.patch('/api/cas-path/predicted-date', requireAuth, async (req, res) => {
     await atFetch(`/${recordId}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields: { [F_PREDICTED_CAS_DATE]: date || null }, returnFieldsByFieldId: true })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/cas-path/:id/complete  — toggle task completion
+app.patch('/api/cas-path/:id/complete', requireAuth, async (req, res) => {
+  const { completed } = req.body;
+  try {
+    await casPathFetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [CP_COMPLETED]: !!completed }, returnFieldsByFieldId: true })
     });
     res.json({ ok: true });
   } catch (err) {
