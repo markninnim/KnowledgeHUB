@@ -225,7 +225,11 @@ html { height: 100%; }
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE TESTS</span></div>
     <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
-    <a href="#" id="lv-nav-kt-induction" onclick="return showLvSection('knowledge-tests',this)">Induction Tests</a>
+    <div style="margin:10px 0 3px;padding:0 18px;"><span style="font-size:9px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase;">Induction</span></div>
+    <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)">Complaints &amp; Conduct Rules</a>
+    <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)">Consumer Duty &amp; Fin. Crime</a>
+    <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)">Vulnerable Clients &amp; Info Sec</a>
+    <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)">Record Keeping &amp; Sales</a>
     <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
     <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
     <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
@@ -1456,8 +1460,8 @@ html { height: 100%; }
     <div id="knowledge-tests" style="display:none;padding:32px;">
       <!-- Test selection landing -->
       <div id="kt-landing">
-        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Quiz</h2>
-        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">20 questions per quiz · 75% passmark · Pass logs 30 minutes CPD</p>
+        <h2 style="color:#003768;font-size:20px;margin:0 0 6px;">Knowledge Tests</h2>
+        <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">75% passmark · Pass logs 30 minutes CPD</p>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Induction Tests</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-induction"></div>
         <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
@@ -6078,14 +6082,9 @@ function renderLvGrid(containerId, videos, isFeatured) {
   items.forEach(function(v) {
     var thumb = makeLvThumb(v.title);
     cards.push(
-      '<div onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
-          '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">' +
-            '<div style="width:44px;height:44px;background:#003768;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.2);">' +
-              '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" style="margin-left:2px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
-            '</div>' +
-          '</div>' +
         '</div>' +
         '<div style="padding:11px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
           (formatLvDate(v.added) ? '<div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + formatLvDate(v.added) + '</div>' : '') +
@@ -9067,17 +9066,66 @@ async function confirmImport() {
 
 // ── Induction Tests (SurveyMonkey) ────────────────────────────
 
-var KT_INDUCTION_TESTS = [
-  { title: '1. Complaints, Conduct Rules & Breaches',  url: 'https://www.surveymonkey.com/r/5LDJKRX' },
-  { title: '2. Consumer Duty & Financial Crime',        url: 'https://www.surveymonkey.com/r/5LDRSGK' },
-  { title: '3. Vulnerable Clients & Information Security', url: 'https://www.surveymonkey.com/r/SZPD2P2' },
-  { title: '4. Record Keeping & Sales Process',         url: 'https://www.surveymonkey.com/r/SZPJBLF' },
-  { title: '5. Fitness & Properness Questionnaire',     url: 'https://www.surveymonkey.com/r/SZPTYCL' }
-];
-
 // ── Knowledge Tests ───────────────────────────────────────────
 
 var KT_TESTS = [
+  // ── Induction Tests ─────────────────────────────────────────
+  { id:'ind-1', group:'Induction', title:'1. Complaints, Conduct Rules & Breaches', cpdType:'Compliance', passmark:9, questions:[
+    {q:"COMPLAINTS. If a complaint cannot be resolved within 3 working days, what is the regulatory maximum timeframe for the firm to investigate and provide its Final Response Letter?",o:["5 working days","4 weeks","As long as it takes, provided the client is updated.","8 weeks"],a:3},
+    {q:"COMPLAINTS. The nature of recent complaints suggests a need for mindfulness regarding which two Consumer Duty outcomes?",o:["Products & Service and Price & Value","Price & Value and Consumer Support","Consumer Understanding and Consumer Support","Products & Service and Consumer Understanding"],a:2},
+    {q:"COMPLAINTS. What specific advice is given regarding emails that contain 'ideas and options on rates' to avoid potential misunderstandings?",o:["To require the client to reply with a confirmation that they understood it's not advice","To include a caveat that the email is for information only and does not constitute advice","To avoid mentioning specific lender names until the research is complete","To only send such information in a formal Suitability Report"],a:1},
+    {q:"COMPLAINTS. What is the Financial Ombudsman Service (FOS) fee for investigating a case, and who pays it?",o:["£2,500, paid by the adviser/firm irrespective of the outcome","£500, paid by the client if their complaint is refuted","£650, paid by the adviser/firm only if the complaint is upheld","£650, paid by the adviser/firm irrespective of the outcome"],a:3},
+    {q:"COMPLAINTS. Under which of the following circumstances could an Adviser's Professional Indemnity (PI) insurance cover be declined?",o:["If the complaint is for a very large sum, such as £30,000","If the client rejects a settlement offer and goes to the FOS","If the Adviser fails to add the case to the Acre system","If the Adviser admits liability to the client before reporting the complaint"],a:2},
+    {q:"BREACHES. An adviser consistently fails to upload Suitability Reports within the required timescale. This repetitive action could lead to a breach of which FCA Conduct Rule?",o:["Proper standards of market conduct","Integrity","Being open with the regulators","Due skill, care and diligence"],a:3},
+    {q:"COMPLAINTS. Regarding insurance applications, what proactive step is suggested to ensure clients have fully considered their medical history and to protect the adviser?",o:["Rely solely on the insurer's post-application communication with the client","Record a note on the file confirming that all medical questions were asked correctly","Send the client a copy of their application answers and ask for email confirmation of their accuracy","Only accept clients who can provide a clean bill of health from their doctor"],a:2},
+    {q:"BREACHES. What is the specified timescale for issuing a Suitability Letter to a client after giving advice?",o:["15 working days","10 working days","As soon as the application is submitted","5 working days"],a:1},
+    {q:"CONDUCT RULES. If an Adviser knowingly helps a client falsify documents for a mortgage application, this would be a breach of which FCA Conduct Rule?",o:["Paying due regard to your clients interests","Being open with the regulators","Integrity","Due skill, care and diligence"],a:2},
+    {q:"BREACHES. What is the most frequently recorded type of breach in 2025?",o:["Data Protection","Advertising","Record Keeping","Sales Process"],a:2},
+    {q:"ADVERTISING. Which of these statements are correct concerning Social Media posts?",o:["As it is social media, these do NOT need to be approved, meaning I can post my thoughts on any of the platforms","Social Media posts MUST be approved by Finance Planning, in the same way that all other forms of advertising are approved"],a:1},
+    {q:"CONDUCT RULES. What statement best describes the FCA Conduct Rules?",o:["There are just 5 Conduct Rules","There are 5 Conduct Rules for staff/advisers, plus a 6th Conduct Rule concerning Consumer Duty, plus 4 Senior Manager Conduct Rules","There are 12 Conduct Rules in total","The Consumer Duty Conduct Rule has replaced some of the existing Conduct Rules"],a:1}
+  ]},
+  { id:'ind-2', group:'Induction', title:'2. Consumer Duty & Financial Crime', cpdType:'Compliance', passmark:9, questions:[
+    {q:"FINANCIAL CRIME. If you have a 'gut feeling' that a client's second job may not be legitimate, what should you do?",o:["Discuss your concerns with the Money Laundering Reporting Officer (MLRO)","Submit the application to avoid tipping-off the client","Ignore the feeling unless you have concrete evidence","Decline the case immediately without explanation"],a:0},
+    {q:"FINANCIAL CRIME. What is the maximum penalty for the offence of 'Tipping Off' a money launderer?",o:["Up to 6 months imprisonment","Up to 14 years imprisonment","Up to 5 years imprisonment","A significant financial penalty but no imprisonment"],a:2},
+    {q:"FINANCIAL CRIME. In the three stages of money laundering, what does 'Layering' involve?",o:["Concealing the source of the funds through a series of complex transactions to disguise the audit trail","Introducing illegally gained money into a bank account","Using the laundered money to purchase a house","Setting up a cash-intensive front business to launder funds"],a:0},
+    {q:"FINANCIAL CRIME. If you are aware that an applicant has been declined by a previous lender, what must you do?",o:["Advise the client not to mention the decline on the new application","Refuse to work with the client until the reason is established","Inform the new lender of the previous decline on the application","Only inform the lender if you know the specific reason for the decline"],a:2},
+    {q:"FINANCIAL CRIME. Which of the following is highlighted as a particularly useful tool for verifying a client's income?",o:["The client's LinkedIn profile and employment history","A download of income and tax records from the client's HMRC Gateway portal","A signed letter from the client's line manager","A Google search for average salaries in the client's profession"],a:1},
+    {q:"FINANCIAL CRIME. What is our policy regarding gifts or hospitality received from clients?",o:["You can use your personal judgment about whether to accept a gift","All gifts and hospitality must be reported for recording, and cash must never be accepted","All gifts, including cash, are acceptable as a token of client appreciation","Only gifts worth over £50 need to be reported to your manager"],a:1},
+    {q:"CONSUMER DUTY. What is the maximum fee an adviser can charge for a standard mortgage?",o:["There is no cap — the fee is at the adviser's discretion","£500, but it can be increased for complex cases","£1,499","£999"],a:3},
+    {q:"CONSUMER DUTY. What is described as the industry's 'number one foreseeable harm' for mortgage clients?",o:["Placing single life policies into trust incorrectly","Not recommending a suitable protection solution when arranging a mortgage","Recommending level life cover for a repayment mortgage","Splitting the amount of cover needed between both clients"],a:1},
+    {q:"CONSUMER DUTY. What is the primary purpose of the 'Consumer Understanding' outcome?",o:["To ensure the cost of services is fair and represents good value","To ensure Advisers are available to support clients in the future","To ensure mortgage and insurance products are distributed to the correct target markets","To ensure Advisers explain things clearly so clients fully understand a product's key risks and benefits"],a:3},
+    {q:"CONSUMER DUTY. When an Adviser helps a client consolidate a 3-year loan into their 20-year mortgage, how should the Consumer Duty principle be upheld?",o:["By charging a reduced fee to offset the additional cost to the client","By documenting the client's reasoning, explaining the risks and costs, and proceeding only if the client still agrees","By refusing to proceed unless the client can demonstrate financial need","By setting an automatic review reminder in 3 years' time"],a:1},
+    {q:"CONSUMER DUTY. Which ONE of the following was NOT mentioned as a possible foreseeable harm that advisers must be mindful of?",o:["Not reviewing a maturing fixed rate","Arranging a purchase mortgage without recommending a homebuyers report","Selecting the wrong mortgage product","Recommending a Re-mortgage over a Product Transfer"],a:3},
+    {q:"CONSUMER DUTY. Which of the following best describes the 'Consumer Support' outcome?",o:["Helping clients meet their objectives, being there for them in the future, and adapting processes for vulnerable clients","Making sure the fees charged for a service represent fair value","Confirming in writing that a client has chosen not to take out protection","Ensuring all marketing materials are clear and easy to understand"],a:0}
+  ]},
+  { id:'ind-3', group:'Induction', title:'3. Vulnerable Clients & Information Security', cpdType:'Compliance', passmark:9, questions:[
+    {q:"VULNERABILITY. There are four key categories of vulnerability as defined by the FCA. Which of the following is NOT one of those four categories?",o:["Resilience","Health","Occupation","Life Events"],a:2},
+    {q:"VULNERABILITY. In the TEXAS model for handling vulnerability disclosures, what is the purpose of the 'X' step?",o:["To explain the next steps in the advice process to the client","To examine the client's circumstances in more detail","To exclude any information the client does not wish to share","To gain the client's explicit consent to share sensitive information with relevant third parties"],a:3},
+    {q:"VULNERABILITY. According to the FCA's Financial Lives survey data published in May 2025, approximately what proportion of UK adults show characteristics of vulnerability?",o:["Approximately a third (31%)","Approximately a quarter (25%)","Approximately half (49%)","Approximately two thirds (65%)"],a:2},
+    {q:"VULNERABILITY. What do we advise AGAINST doing when you suspect a client might be vulnerable?",o:["Noting your suspicions in the fact find","Picking up the phone and speaking to the client rather than relying on email","Offering additional support, like more time to make a decision","Directly asking the client, 'are you a vulnerable person'?"],a:3},
+    {q:"VULNERABILITY. For a client with a significant and unexplained build-up of debt, what is the recommended course of action?",o:["Sign-post the client to a specialist debt advice charity like Step Change","Offer to arrange a debt consolidation mortgage immediately","Advise the client to increase their personal protection coverage","Document the debt and proceed with the mortgage as planned"],a:0},
+    {q:"INFORMATION SECURITY. What are the primary causes of most cyber breaches, according to the training?",o:["Failure of hardware firewalls","Unpatched software vulnerabilities","Sophisticated state-sponsored hacking tools","Human error"],a:3},
+    {q:"INFORMATION SECURITY. Why is an authenticator app with face/finger ID considered more secure than email-based two-factor authentication?",o:["Email messages can be significantly delayed, reducing their usefulness","A hacker who has already compromised a device can access incoming emails and intercept the code","Authenticator apps are end-to-end encrypted, whereas email messages are not","Mobile phone carriers have weaker security protocols than authentication app providers"],a:1},
+    {q:"INFORMATION SECURITY. To protect data on a portable device if it is lost or stolen, what is the recommended technical safeguard?",o:["Encryption (e.g. Bitlocker)","A physical security cable lock","Remote wipe capability","A complex login password"],a:0},
+    {q:"INFORMATION SECURITY. What did we say is the primary risk associated with inputting client information into a public AI system like ChatGPT?",o:["Using AI for work could violate our software licensing agreements","The AI may provide a factually incorrect response about the client","The client information becomes part of the AI's public dataset and can be used indefinitely","The AI system could be hacked and client data stolen"],a:2},
+    {q:"INFORMATION SECURITY. What is the primary reason for keeping all of your software and computer systems up-to-date?",o:["To reduce the amount of storage space used on your device","To receive fixes from providers that protect against newly discovered malware and vulnerabilities","To ensure compatibility with the firm's central client management system","To gain access to new features that improve your productivity"],a:1},
+    {q:"INFORMATION SECURITY. Who do Finance Planning need to report data breaches to, and within what timeframe?",o:["The Financial Conduct Authority, within 24 hours","The ICO (Information Commissioner's Office), within 72 hours","The Financial Ombudsman Service, within 48 hours","Our PI Insurers, within 72 hours"],a:1},
+    {q:"INFORMATION SECURITY. If you click on a suspicious link by mistake, what is the first thing you should do?",o:["Inform your manager and the IT Support Team (Weald) immediately","Delete the email and clear your browser history to remove any trace","Disconnect your device from the internet and wait to see if anything happens","Immediately run a full antivirus scan before doing anything else"],a:0}
+  ]},
+  { id:'ind-4', group:'Induction', title:'4. Record Keeping & Sales Process', cpdType:'Compliance', passmark:8, questions:[
+    {q:"SALES PROCESS. Is it a FCA requirement to inform customers of the cost of your services?",o:["YES","NO"],a:0},
+    {q:"SALES PROCESS. Why is it important that we offer advice to our clients on both mortgages and insurances?",o:["Because that is our product offering","We will probably earn more money"],a:0},
+    {q:"SALES PROCESS. When do we need to give the client an IPID?",o:["When their mortgage completes","When we recommend a Buildings & Contents policy","If their life policy is rated by the insurer","We don't, as the providers will always do this"],a:1},
+    {q:"SALES PROCESS. How many providers do we claim to have access to?",o:["Those in the L&G Mortgage Club and on the PMS Zenith panel","In total, about 100 lenders and insurers","We're independent, so everyone out there","Over 100 lenders and 20 insurers"],a:3},
+    {q:"SALES PROCESS. When discussing protection we recommended that you be assumptive — is this TRUE or FALSE?",o:["TRUE","FALSE"],a:0},
+    {q:"SALES PROCESS. Which of these did Matt NOT conclude with recommending that we be?",o:["Be Curious","Be Confident","Be Human","Be Hungry"],a:3},
+    {q:"RECORD KEEPING. Which of the following is NOT important concerning your Suitability Report?",o:["Its length","Checking for spelling and grammar","Utilising our suggested paragraphs and standard wording where applicable","Including soft facts to help justify your recommendation"],a:0},
+    {q:"RECORD KEEPING. Which of the following timescales is correct?",o:["14 working days for the Suitability Report to be sent to the client","7 working days for the Suitability Report to be sent to the client","5 working days for the Suitability Report to be sent to the client","10 working days for the Suitability Report to be sent to the client"],a:3},
+    {q:"RECORD KEEPING. What did we say was important for debt consolidation cases?",o:["Obtain evidence, challenge clients on the build-up, explore alternatives to adding debt to the mortgage","Challenge clients on the build-up, explore alternatives to adding debt to the mortgage, consider a 2nd charge","Obtain evidence, challenge clients on the build-up, consider a 2nd charge","Obtain evidence, explore alternatives to adding debt to the mortgage, consider interest only"],a:0},
+    {q:"RECORD KEEPING. Which of the following statements was NOT mentioned in the training?",o:["If you are cancelling existing CIC, you need to note why the new policy is better","If you are recommending Income Protection, start with full cover and adjust from there","When recommending CIC, start with our preferred provider","Life cover to match the mortgage is your initial protection recommendation"],a:3},
+    {q:"RECORD KEEPING. What did we specifically mention about you needing to include additional notes in your Suitability Report?",o:["Whenever you recommend a mortgage product transfer over a re-mortgage","When the product, i.e. the mortgage or the life cover, isn't the cheapest on the sourcing list","Why we have a preferred CIC provider","Why a BTL is Ltd Co over personal name"],a:1}
+  ]},
+  // ── Mortgage Tests ───────────────────────────────────────────
   { id:'mas', group:'Mortgage', title:'Mortgage Advice Standards', cpdType:'Mortgage', passmark:15, questions:[
     {q:"FPG is authorised by the FCA for which of the following activities?",o:["Regulated residential mortgages only","Regulated residential mortgages, consumer buy to let, non-investment insurance and certain consumer credit","All mortgage types including commercial only","Investment mortgages and residential mortgages only"],a:1},
     {q:"What is the occupancy requirement within the definition of a regulated mortgage contract?",o:["100% of the land must be used as a dwelling","At least 51% must be used as a dwelling","At least 40% must be used as a dwelling","The borrower must personally occupy the property"],a:2},
@@ -9342,21 +9390,8 @@ function ktShowLanding() {
     var el = document.getElementById(id);
     if(el) el.style.display = i===0 ? '' : 'none';
   });
-  // Build induction grid (SurveyMonkey links)
-  var indGrid = document.getElementById('kt-grid-induction');
-  if (indGrid) {
-    indGrid.innerHTML = '';
-    KT_INDUCTION_TESTS.forEach(function(t) {
-      var card = document.createElement('div');
-      card.className = 'ov-card';
-      card.onclick = function(){ window.open(t.url, '_blank'); };
-      card.innerHTML = '<div style="font-size:14px;font-weight:700;color:#003768;margin-bottom:6px;">'+escHtml(t.title)+'</div>'+
-        '<div style="font-size:12px;color:#6b7c8f;">Opens in SurveyMonkey</div>';
-      indGrid.appendChild(card);
-    });
-  }
-  // Build grids
-  ['Mortgage','Protection'].forEach(function(group){
+  // Build all grids from KT_TESTS
+  ['Induction','Mortgage','Protection'].forEach(function(group){
     var grid = document.getElementById('kt-grid-'+group.toLowerCase());
     if(!grid) return;
     grid.innerHTML = '';
@@ -9365,7 +9400,7 @@ function ktShowLanding() {
       card.className = 'ov-card';
       card.onclick = function(){ktLoadTest(test.id);};
       card.innerHTML = '<div style="font-size:14px;font-weight:700;color:#003768;margin-bottom:6px;">'+test.title+'</div>'+
-        '<div style="font-size:12px;color:#6b7c8f;">20 questions · 75% passmark</div>';
+        '<div style="font-size:12px;color:#6b7c8f;">'+test.questions.length+' questions · 75% passmark</div>';
       grid.appendChild(card);
     });
   });
