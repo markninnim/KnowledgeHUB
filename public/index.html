@@ -58,6 +58,11 @@ html { height: 100%; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:0; }
 .fp-yn-btn { padding:7px 22px; border-radius:7px; border:1.5px solid #e8ecf0; background:#fff; color:#1a2a3a; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .12s; }
 .fp-yn-btn:hover { border-color:#003768; color:#003768; }
+.kd-acc-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 18px; border:none; background:none; cursor:pointer; color:#fcb034; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-family:inherit; text-align:left; margin:12px 0 2px; }
+.kd-acc-btn:hover { color:#ffd07a; }
+.kd-acc-btn svg { transition:transform .2s; flex-shrink:0; }
+.kd-acc-btn.open svg { transform:rotate(180deg); }
+.kd-acc-body a { padding-left:30px; font-size:12.5px; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
@@ -225,25 +230,52 @@ html { height: 100%; }
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">READING</span></div>
     <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters</a>
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE TESTS</span></div>
-    <a href="#" id="lv-nav-kt" onclick="return showLvSection('knowledge-tests',this)">All Tests</a>
-    <div style="margin:10px 0 3px;padding:0 18px;"><span style="font-size:9px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase;">Induction</span></div>
-    <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)">Complaints &amp; Conduct Rules</a>
-    <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)">Consumer Duty &amp; Fin. Crime</a>
-    <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)">Vulnerable Clients &amp; Info Sec</a>
-    <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)">Record Keeping &amp; Sales</a>
-    <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)">Fitness &amp; Properness</a>
-    <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
-    <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
-    <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
-    <a href="#" id="lv-nav-pas-app1" onclick="return ktNavLoad('pas-app1',this)">App 1 – Serious Illness Cover</a>
-    <a href="#" id="lv-nav-pas-app2" onclick="return ktNavLoad('pas-app2',this)">App 2 – Income Protection</a>
-    <a href="#" id="lv-nav-pas-app3" onclick="return ktNavLoad('pas-app3',this)">App 3 – Relevant Life Plan</a>
-    <a href="#" id="lv-nav-pas-app4" onclick="return ktNavLoad('pas-app4',this)">App 4 – Business Protection</a>
-    <a href="#" id="lv-nav-pas-app5" onclick="return ktNavLoad('pas-app5',this)">App 5 – Whole of Life</a>
-    <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
-    <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – PMI</a>
-    <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
+    <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE DEMONSTRATION</span></div>
+
+    <!-- Induction accordion -->
+    <button class="kd-acc-btn" id="kd-btn-induction" onclick="kdToggle('kd-induction','kd-btn-induction')">
+      <span>Induction</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="kd-induction" class="kd-acc-body" style="display:none;">
+      <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)">1. Complaints &amp; Conduct Rules</a>
+      <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)">2. Consumer Duty &amp; Fin. Crime</a>
+      <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)">3. Vulnerable Clients &amp; Info Sec</a>
+      <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)">4. Record Keeping &amp; Sales</a>
+      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)">5. Fitness &amp; Properness</a>
+    </div>
+
+    <!-- Revalidation accordion (same tests) -->
+    <button class="kd-acc-btn" id="kd-btn-revalidation" onclick="kdToggle('kd-revalidation','kd-btn-revalidation')">
+      <span>Revalidation</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="kd-revalidation" class="kd-acc-body" style="display:none;">
+      <a href="#" id="lv-nav-rv-ind-1" onclick="return ktNavLoad('ind-1',this)">1. Complaints &amp; Conduct Rules</a>
+      <a href="#" id="lv-nav-rv-ind-2" onclick="return ktNavLoad('ind-2',this)">2. Consumer Duty &amp; Fin. Crime</a>
+      <a href="#" id="lv-nav-rv-ind-3" onclick="return ktNavLoad('ind-3',this)">3. Vulnerable Clients &amp; Info Sec</a>
+      <a href="#" id="lv-nav-rv-ind-4" onclick="return ktNavLoad('ind-4',this)">4. Record Keeping &amp; Sales</a>
+      <a href="#" id="lv-nav-rv-fp" onclick="return showFpForm(this)">5. Fitness &amp; Properness</a>
+    </div>
+
+    <!-- General accordion -->
+    <button class="kd-acc-btn" id="kd-btn-general" onclick="kdToggle('kd-general','kd-btn-general')">
+      <span>General</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="kd-general" class="kd-acc-body" style="display:none;">
+      <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
+      <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
+      <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
+      <a href="#" id="lv-nav-pas-app1" onclick="return ktNavLoad('pas-app1',this)">App 1 – Serious Illness Cover</a>
+      <a href="#" id="lv-nav-pas-app2" onclick="return ktNavLoad('pas-app2',this)">App 2 – Income Protection</a>
+      <a href="#" id="lv-nav-pas-app3" onclick="return ktNavLoad('pas-app3',this)">App 3 – Relevant Life Plan</a>
+      <a href="#" id="lv-nav-pas-app4" onclick="return ktNavLoad('pas-app4',this)">App 4 – Business Protection</a>
+      <a href="#" id="lv-nav-pas-app5" onclick="return ktNavLoad('pas-app5',this)">App 5 – Whole of Life</a>
+      <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
+      <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – PMI</a>
+      <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
+    </div>
   </div>
   <!-- Sales Process sidebar -->
   <div id="sidebar-sales-process" style="display:none">
@@ -9545,6 +9577,7 @@ function ktNavLoad(id, el) {
   // Mark active in sidebar
   document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
   if(el) el.classList.add('active');
+  if(el) kdEnsureOpen(el.id);
   // Ensure the knowledge-tests section is visible
   ['weekly-recordings','induction-recordings','revalidation-recordings','monthly-newsletters','knowledge-tests'].forEach(function(s){
     var d=document.getElementById(s);if(d) d.style.display=s==='knowledge-tests'?'':'none';
@@ -11110,12 +11143,42 @@ function payShowYear(yi) {
     if (spans[1]) spans[1].style.color = active ? 'rgba(255,255,255,.65)' : '#9bafc0';
   });
 }
+// ── Knowledge Demonstration accordion ────────────────────────
+function kdToggle(bodyId, btnId) {
+  var body = document.getElementById(bodyId);
+  var btn  = document.getElementById(btnId);
+  if (!body) return;
+  var opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  if (btn) { opening ? btn.classList.add('open') : btn.classList.remove('open'); }
+}
+
+// Ensure the correct accordion panel is open for a given nav link id
+function kdEnsureOpen(navId) {
+  var induction  = ['lv-nav-ind-1','lv-nav-ind-2','lv-nav-ind-3','lv-nav-ind-4','lv-nav-fp'];
+  var revalidate = ['lv-nav-rv-ind-1','lv-nav-rv-ind-2','lv-nav-rv-ind-3','lv-nav-rv-ind-4','lv-nav-rv-fp'];
+  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8'];
+  var map = {};
+  induction.forEach(function(id){ map[id]='kd-induction'; });
+  revalidate.forEach(function(id){ map[id]='kd-revalidation'; });
+  general.forEach(function(id){ map[id]='kd-general'; });
+  var target = map[navId];
+  if (!target) return;
+  var body = document.getElementById(target);
+  var btn  = document.getElementById(target.replace('kd-','kd-btn-'));
+  if (body && body.style.display === 'none') {
+    body.style.display = 'block';
+    if (btn) btn.classList.add('open');
+  }
+}
+
 // ── Fitness & Properness Form ─────────────────────────────────
 var _fpAnswers = {};
 
 function showFpForm(el) {
   document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
   if (el) el.classList.add('active');
+  if (el) kdEnsureOpen(el.id);
   ['weekly-recordings','induction-recordings','revalidation-recordings','monthly-newsletters','knowledge-tests'].forEach(function(s){
     var d = document.getElementById(s); if (d) d.style.display = s === 'knowledge-tests' ? '' : 'none';
   });
