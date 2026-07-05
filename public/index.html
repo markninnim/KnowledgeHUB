@@ -3326,21 +3326,9 @@ html { height: 100%; }
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:none;"></div>
-      <!-- Behind target section -->
-      <div id="sv-behind-wrap" style="display:none;margin-bottom:28px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
-          <div style="font-size:13px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:.5px;">Behind Target</div>
-        </div>
-        <div id="sv-behind-list" style="display:grid;gap:12px;"></div>
-      </div>
-      <!-- On track section -->
-      <div id="sv-ontrack-wrap" style="display:none;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
-          <div style="font-size:13px;font-weight:800;color:#166534;text-transform:uppercase;letter-spacing:.5px;">On Track / Complete</div>
-        </div>
-        <div id="sv-ontrack-list" style="display:grid;gap:12px;"></div>
+      <!-- Advisers section -->
+      <div id="sv-advisers-wrap" style="display:none;margin-bottom:28px;">
+        <div id="sv-advisers-list" style="display:grid;gap:12px;"></div>
       </div>
       <!-- Supervisors section -->
       <div id="sv-supervisors-wrap" style="display:none;margin-top:28px;">
@@ -7646,8 +7634,7 @@ function svSidebarSelect(email, el) {
   _svLoaded = false;
   document.getElementById('sv-loading').style.display = 'block';
   document.getElementById('sv-stats').innerHTML = '';
-  document.getElementById('sv-behind-wrap').style.display = 'none';
-  document.getElementById('sv-ontrack-wrap').style.display = 'none';
+  document.getElementById('sv-advisers-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
   slideIn(document.getElementById('tab-supervisor-zone'));
   var url = '/api/supervisor/team?as=' + encodeURIComponent(_svViewAsEmail);
@@ -7667,8 +7654,7 @@ function loadSupervisorZone() {
   _svLoaded = false;
   document.getElementById('sv-loading').style.display = 'block';
   document.getElementById('sv-stats').innerHTML = '';
-  document.getElementById('sv-behind-wrap').style.display = 'none';
-  document.getElementById('sv-ontrack-wrap').style.display = 'none';
+  document.getElementById('sv-advisers-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
 
   // Populate supervisor sidebar on first load
@@ -7684,7 +7670,8 @@ function loadSupervisorZone() {
           // "All Company" removed — use "Whole company" top-level link instead
         }
         supervisors.forEach(function(s) {
-          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="padding-left:24px;">' + escHtml(s.name) + '</a>';
+          var countBadge = s.count ? '<span style="margin-left:auto;background:rgba(255,255,255,0.22);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0;">' + s.count + '</span>' : '';
+          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="padding-left:24px;display:flex;align-items:center;gap:4px;">' + escHtml(s.name) + countBadge + '</a>';
         });
         sbWrap.innerHTML = sbHtml;
         sbWrap.style.display = 'block';
@@ -7732,7 +7719,7 @@ function renderSvDashboard(data) {
   }
 
   // Classify members
-  var behind = [], onTrack = [], supervisorCards = [];
+  var allAdvisers = [], supervisorCards = [];
   members.forEach(function(m) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
@@ -7761,20 +7748,16 @@ function renderSvDashboard(data) {
       if (pct < worstPct) worstPct = pct;
     });
     var obj = { m: m, cpd: cpd, visible: visible, worstPct: worstPct };
-    if (worstPct < 100) behind.push(obj); else onTrack.push(obj);
+    allAdvisers.push(obj);
   });
 
-  // Sort all groups alphabetically by first name
+  // Sort alphabetically by first name
   function byFirst(a, b) { return (a.m.firstName || '').localeCompare(b.m.firstName || ''); }
-  behind.sort(byFirst);
-  onTrack.sort(byFirst);
+  allAdvisers.sort(byFirst);
   supervisorCards.sort(byFirst);
 
   // Supervisor sub-totals (needed for sidebar + stats bar)
-  var svBehind  = supervisorCards.filter(function(s){ return s.visible.length > 0 && s.worstPct < 100; }).length;
-  var svOnTrack = supervisorCards.filter(function(s){ return s.visible.length === 0 || s.worstPct >= 100; }).length;
-  var totalBehind  = behind.length  + svBehind;
-  var totalOnTrack = onTrack.length + svOnTrack;
+  var totalOnTrack = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
 
   // Update sidebar count
   var sbCount = document.getElementById('sv-sidebar-count');
@@ -7806,6 +7789,11 @@ function renderSvDashboard(data) {
       '<div style="display:flex;align-items:baseline;gap:5px;">' +
         '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalOnTrack + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">On Track</span>' +
+      '</div>' +
+      '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
+      '<div style="display:flex;align-items:center;gap:5px;">' +
+        '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
+        '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
       '</div>';
   }
 
@@ -7829,10 +7817,7 @@ function renderSvDashboard(data) {
       return '<div style="margin-bottom:10px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
           '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + t.label + ' CPD</span>' +
-          '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<span style="font-size:12px;color:#6b7c8f;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</span>' +
-            '<span style="background:' + status.bg + ';color:' + status.tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + status.label + '</span>' +
-          '</div>' +
+          '<span style="font-size:12px;color:#6b7c8f;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</span>' +
         '</div>' +
         '<div style="background:#f0f4f8;border-radius:4px;height:7px;overflow:hidden;">' +
           '<div style="background:' + (pct >= 100 ? '#22c55e' : t.color) + ';height:100%;width:' + pct + '%;border-radius:4px;"></div>' +
@@ -7907,20 +7892,15 @@ function renderSvDashboard(data) {
   var renderer = isCard ? buildCard : buildListRow;
 
   // Set grid layout
-  ['sv-behind-list','sv-ontrack-list','sv-supervisors-list'].forEach(function(id) {
+  ['sv-advisers-list','sv-supervisors-list'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.gridTemplateColumns = isCard ? 'repeat(3,1fr)' : '1fr';
   });
 
-  // Populate Behind
-  if (behind.length) {
-    document.getElementById('sv-behind-wrap').style.display = 'block';
-    document.getElementById('sv-behind-list').innerHTML = behind.map(renderer).join('');
-  }
-  // Populate On Track
-  if (onTrack.length) {
-    document.getElementById('sv-ontrack-wrap').style.display = 'block';
-    document.getElementById('sv-ontrack-list').innerHTML = onTrack.map(renderer).join('');
+  // Populate Advisers
+  if (allAdvisers.length) {
+    document.getElementById('sv-advisers-wrap').style.display = 'block';
+    document.getElementById('sv-advisers-list').innerHTML = allAdvisers.map(renderer).join('');
   }
   // Populate Supervisors
   if (supervisorCards.length) {

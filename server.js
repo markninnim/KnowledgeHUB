@@ -794,20 +794,28 @@ app.get('/api/supervisor/list', requireAuth, async (req, res) => {
   try {
     const supervisors = [];
     const seen = new Set();
+    const memberCount = {}; // email -> count of advisers
     let offset = '';
     do {
       const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
       const data = await atFetch(qs);
       for (const r of (data.records || [])) {
-        if (!r.fields[F_IS_SUPERVISOR]) continue;
         const u = recordToUser(r);
-        if (seen.has(u.email)) continue;
-        seen.add(u.email);
-        supervisors.push({ id: u.id, email: u.email, name: ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) });
+        if (r.fields[F_IS_SUPERVISOR]) {
+          if (!seen.has(u.email)) {
+            seen.add(u.email);
+            supervisors.push({ id: u.id, email: u.email, name: ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) });
+          }
+        } else {
+          // count this user under their supervisor
+          const supEmail = (u.supervisorEmail || '').toLowerCase();
+          if (supEmail) memberCount[supEmail] = (memberCount[supEmail] || 0) + 1;
+        }
       }
       offset = data.offset || '';
     } while (offset);
     supervisors.sort((a, b) => a.name.localeCompare(b.name));
+    supervisors.forEach(s => { s.count = memberCount[s.email.toLowerCase()] || 0; });
     res.json({ supervisors });
   } catch (err) {
     res.status(500).json({ error: err.message });
