@@ -1387,6 +1387,69 @@ app.post('/api/test/result', requireAuth, async (req, res) => {
   }
 });
 
+// ── Fitness & Properness submissions ─────────────────────────
+const FP_PATH = path.join(__dirname, 'fitness-properness.json');
+let _fpSubmissions = [];
+try { _fpSubmissions = JSON.parse(fs.readFileSync(FP_PATH, 'utf8')); } catch(_) {}
+
+app.post('/api/fitness-properness', requireAuth, async (req, res) => {
+  const { answers } = req.body;
+  if (!answers) return res.status(400).json({ error: 'Missing answers' });
+  const u = req.session.user;
+  const submission = {
+    id: crypto.randomUUID(),
+    email: u.email,
+    name: (u.firstName || '') + ' ' + (u.lastName || ''),
+    submittedAt: new Date().toISOString(),
+    answers
+  };
+  _fpSubmissions.push(submission);
+  try { fs.writeFileSync(FP_PATH, JSON.stringify(_fpSubmissions, null, 2)); } catch(e) {}
+  // Flag any disclosures that need attention
+  const a = answers;
+  const flagged = [];
+  if (a.q3 === 'yes') flagged.push('Negative change in financial position');
+  if (a.q4 === 'no')  flagged.push('Assets do NOT exceed liabilities');
+  if (a.q5 === 'yes') flagged.push('CCJs or Defaults listed');
+  if (a.q6 === 'yes') flagged.push('Disqualified from director role');
+  if (a.q7 === 'yes') flagged.push('Arrangements with creditors (incl. HMRC)');
+  if (a.q8 === 'yes') flagged.push('Criminal conviction or caution');
+  if (a.q9 === 'yes') flagged.push('Driving ban');
+  const alertBlock = flagged.length
+    ? '\n⚠️  REQUIRES ATTENTION:\n' + flagged.map(f => '  • ' + f).join('\n') + '\n'
+    : '\n✅  No financial disclosures flagged\n';
+  const detailLines = [
+    a.q3d && ('Financial change details: ' + a.q3d),
+    a.q4d && ('Assets/liabilities details: ' + a.q4d),
+    a.q5d && ('CCJ/Default details: ' + a.q5d),
+    a.q6d && ('Director disqualification details: ' + a.q6d),
+    a.q7d && ('Creditor arrangement details: ' + a.q7d),
+    a.q8d && ('Criminal offence details: ' + a.q8d),
+    a.q9d && ('Driving ban details: ' + a.q9d),
+    a.q10 === 'yes' && a.q10d && ('Other business interests: ' + a.q10d),
+    a.q11 === 'yes' && a.q11d && ('Introducers: ' + a.q11d),
+  ].filter(Boolean).join('\n');
+  const complianceEmail = process.env.COMPLIANCE_EMAIL || 'compliance@financeplanning.co.uk';
+  try {
+    await _mailer.sendMail({
+      from: process.env.CM_FROM_EMAIL || 'noreply@knowledgehub.website',
+      to: complianceEmail,
+      subject: `Fitness & Properness Declaration — ${submission.name.trim()}`,
+      text: [
+        submission.name.trim() + ' (' + u.email + ') submitted their 2026 Fitness & Properness Questionnaire.',
+        'Submitted: ' + new Date(submission.submittedAt).toLocaleString('en-GB'),
+        alertBlock,
+        detailLines || 'No additional details provided.'
+      ].join('\n')
+    });
+  } catch(e) { /* email failure non-fatal */ }
+  res.json({ ok: true });
+});
+
+app.get('/api/fitness-properness', requireAdmin, (req, res) => {
+  res.json(_fpSubmissions);
+});
+
 // POST /api/cpd/video — auto-log a Learning Zone video (supports 50/50)
 app.post('/api/cpd/video', requireAuth, async (req, res) => {
   const { videoTitle, cpdType } = req.body;
