@@ -3630,6 +3630,22 @@ html { height: 100%; }
       </div>
     </div>
 
+    <!-- User search -->
+    <div id="admin-search-bar" style="padding:14px 28px;border-bottom:1px solid #e8ecf0;background:#fafbfc;">
+      <div style="position:relative;display:flex;align-items:center;gap:10px;">
+        <div style="position:relative;flex:1;">
+          <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="admin-user-search" type="text" placeholder="Search by name, email, role…" oninput="filterUsers()" style="width:100%;padding:9px 36px 9px 34px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#1a2a3a;transition:border-color .15s;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
+          <button id="admin-search-clear" onclick="clearUserSearch()" style="display:none;position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7c8f;font-size:16px;line-height:1;padding:2px 4px;">&#x2715;</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="filterByRole('supervisor')" id="filter-supervisor" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Supervisors</button>
+          <button onclick="filterByRole('admin')" id="filter-admin" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Admins</button>
+        </div>
+      </div>
+      <div id="admin-search-meta" style="display:none;margin-top:8px;font-size:12px;color:#6b7c8f;"></div>
+    </div>
+
     <!-- Feature toggles (admin only) -->
     <div id="admin-features-panel" style="display:none;padding:20px 28px;border-bottom:1px solid #e8ecf0;background:#f9fafc;">
       <div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
@@ -6782,6 +6798,15 @@ function closeAdminPanel() {
 }
 
 function loadAdminUsers() {
+  // Reset search state on each load
+  var searchEl = document.getElementById('admin-user-search');
+  if (searchEl) searchEl.value = '';
+  _userRoleFilter = null;
+  var meta = document.getElementById('admin-search-meta');
+  if (meta) meta.style.display = 'none';
+  var clearBtn = document.getElementById('admin-search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+
   document.getElementById('admin-user-list').innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;text-align:center;">Loading…</div>';
   fetch('/api/admin/users').then(r => r.json()).then(function(users) {
     _adminUsers = users;
@@ -6789,6 +6814,54 @@ function loadAdminUsers() {
   }).catch(function(e) {
     document.getElementById('admin-user-list').innerHTML = '<div style="color:#c00;font-size:13px;padding:20px 0;text-align:center;">Failed to load users.</div>';
   });
+}
+
+var _userRoleFilter = null;
+
+function filterUsers() {
+  var q = (document.getElementById('admin-user-search').value || '').trim().toLowerCase();
+  var clearBtn = document.getElementById('admin-search-clear');
+  var meta = document.getElementById('admin-search-meta');
+  if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+
+  var filtered = (_adminUsers || []).filter(function(u) {
+    if (_userRoleFilter === 'supervisor' && !u.isSupervisor) return false;
+    if (_userRoleFilter === 'admin' && !u.isAdmin) return false;
+    if (!q) return true;
+    var name = ((u.firstName || '') + ' ' + (u.lastName || '')).toLowerCase();
+    var email = (u.email || '').toLowerCase();
+    var title = (u.jobTitle || '').toLowerCase();
+    var sup = (u.supervisorEmail || '').toLowerCase();
+    return name.indexOf(q) !== -1 || email.indexOf(q) !== -1 || title.indexOf(q) !== -1 || sup.indexOf(q) !== -1;
+  });
+
+  renderUserList(filtered);
+
+  if (meta) {
+    if (q || _userRoleFilter) {
+      meta.style.display = '';
+      meta.textContent = filtered.length + ' of ' + (_adminUsers || []).length + ' users';
+    } else {
+      meta.style.display = 'none';
+    }
+  }
+}
+
+function clearUserSearch() {
+  document.getElementById('admin-user-search').value = '';
+  _userRoleFilter = null;
+  document.getElementById('filter-supervisor').style.cssText = 'background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
+  document.getElementById('filter-admin').style.cssText = 'background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
+  filterUsers();
+}
+
+function filterByRole(role) {
+  _userRoleFilter = (_userRoleFilter === role) ? null : role;
+  var activeStyle = 'background:#003768;color:#fff;border:1.5px solid #003768;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
+  var inactiveStyle = 'background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 12px;height:36px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;';
+  document.getElementById('filter-supervisor').style.cssText = (_userRoleFilter === 'supervisor') ? activeStyle : inactiveStyle;
+  document.getElementById('filter-admin').style.cssText = (_userRoleFilter === 'admin') ? activeStyle : inactiveStyle;
+  filterUsers();
 }
 
 function renderUserList(users) {
