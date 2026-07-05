@@ -7841,13 +7841,14 @@ function renderSvDashboard(data) {
 
     var cardBg = m.isSupervisor ? '#f0f2f5' : '#fff';
     var supLabel = m.isSupervisor ? '<span style="background:#6b7c8f;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
+    var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-left:6px;vertical-align:middle;flex-shrink:0;"></span>' : '';
     return '<div style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;">' +
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
-            '<div style="font-size:14px;font-weight:700;color:#1a2a3a;">' +
+            '<div style="font-size:14px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;">' +
               (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
-              supLabel +
+              supLabel + nonCasDot +
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
@@ -7877,8 +7878,9 @@ function renderSvDashboard(data) {
     var drillId = 'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_');
     return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:14px;">' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' +
+        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;gap:5px;">' +
           (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+          (!m.isSupervisor && !m.cas ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' : '') +
         '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
       '</div>' +
