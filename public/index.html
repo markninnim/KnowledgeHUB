@@ -9522,6 +9522,11 @@ function pzShowMainView(filterSup) {
     if (a==='Management') return -1; if (b==='Management') return 1;
     return a.localeCompare(b);
   });
+  // Company-wide rank by mortgage subs
+  var allBrokerNames = Object.keys(PZ_DATA).slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
+  var rankMap = {};
+  allBrokerNames.forEach(function(nm, i){ rankMap[nm] = i + 1; });
+
   var groups = filterSup ? [filterSup] : supNames;
   var mHtml = filterSup ? '' :
     '<h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 4px;">Performance Zone</h2>' +
@@ -9533,11 +9538,17 @@ function pzShowMainView(filterSup) {
     mHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:860px;margin-bottom:32px;">';
     for (var b = 0; b < bks.length; b++) {
       var n = bks[b]; var d = PZ_DATA[n] || {}; var ne = escHtml(n);
-      var lpStr = (d.lp !== null && d.lp !== undefined && d.ms) ? ' (' + d.lp + '%)' : '';
+      var lpPct = (d.ms > 0) ? Math.round((d.ps || 0) / d.ms * 100) : 0;
+      var lpStr = (d.ms > 0) ? ' (' + lpPct + '%)' : '';
+      var rank = rankMap[n];
       mHtml += '<div class="ov-card" onclick="pzOpenBroker(' + escHtml(JSON.stringify(n)) + ');">' +
-        '<div class="ov-card-title">' + ne + '</div>' +
-        '<div class="ov-card-sub">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+' · GI: '+(d.gs||0)+'</div>' +
-        '<div class="ov-card-btn">View stats →</div></div>';
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;">' +
+          '<span style="font-size:14px;font-weight:700;color:#003768;">' + ne + '</span>' +
+          (rank ? '<span style="font-size:11px;font-weight:700;color:#aab4be;white-space:nowrap;margin-left:6px;">#' + rank + '</span>' : '') +
+        '</div>' +
+        '<div style="font-size:12px;color:#6b7c8f;margin-bottom:2px;">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+'</div>' +
+        '<div style="font-size:12px;color:#6b7c8f;margin-bottom:14px;">GI: '+(d.gs||0)+'</div>' +
+        '<div class="ov-card-btn">Read more</div></div>';
     }
     mHtml += '</div>';
   }
