@@ -7758,6 +7758,7 @@ function renderSvDashboard(data) {
 
   // Supervisor sub-totals (needed for sidebar + stats bar)
   var totalOnTrack = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
+  var totalNonCas  = allAdvisers.filter(function(o){ return !o.m.cas; }).length;
 
   // Update sidebar count
   var sbCount = document.getElementById('sv-sidebar-count');
@@ -7793,6 +7794,7 @@ function renderSvDashboard(data) {
       '<div style="width:1px;height:18px;background:#d1d9e0;"></div>' +
       '<div style="display:flex;align-items:center;gap:5px;">' +
         '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
+        '<span style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + totalNonCas + '</span>' +
         '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Non-CAS</span>' +
       '</div>';
   }
