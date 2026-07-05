@@ -8149,7 +8149,9 @@ function renderSvDashboard(data) {
       nonCasAdvisers.forEach(function(o) {
         var n = [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email;
         var cardId = 'sv-card-' + o.m.email.replace(/[^a-z0-9]/gi, '_');
-        ncHtml += '<a href="#" onclick="openCasPath(' + JSON.stringify(o.m.email) + ',' + JSON.stringify(n) + ');return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
+        var safeEmail = o.m.email.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        var safeName  = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        ncHtml += '<a href="#" onclick="openCasPath(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="padding-left:24px;display:flex;align-items:center;gap:6px;">' +
           '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
           escHtml(n) + '</a>';
       });
