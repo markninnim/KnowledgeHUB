@@ -63,6 +63,8 @@ html { height: 100%; }
 .kd-acc-btn svg { transition:transform .2s; flex-shrink:0; }
 .kd-acc-btn.open svg { transform:rotate(180deg); }
 .kd-acc-body a { padding-left:30px; font-size:12.5px; }
+.kd-test-num { display:block; font-size:9px; font-weight:700; color:rgba(255,255,255,.35); letter-spacing:.08em; text-transform:uppercase; margin-bottom:1px; }
+.kd-test-line { display:block; line-height:1.35; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
@@ -238,11 +240,10 @@ html { height: 100%; }
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
     <div id="kd-induction" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)">1. Complaints &amp; Conduct Rules</a>
-      <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)">2. Consumer Duty &amp; Fin. Crime</a>
-      <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)">3. Vulnerable Clients &amp; Info Sec</a>
-      <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)">4. Record Keeping &amp; Sales</a>
-      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)">5. Fitness &amp; Properness</a>
+      <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Complaints</span><span class="kd-test-line">Conduct Rules</span></a>
+      <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)"><span class="kd-test-num">Test 2</span><span class="kd-test-line">Consumer Duty</span><span class="kd-test-line">Financial Crime</span></a>
+      <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)"><span class="kd-test-num">Test 3</span><span class="kd-test-line">Vulnerable Customers</span><span class="kd-test-line">Information Security</span></a>
+      <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)"><span class="kd-test-num">Test 4</span><span class="kd-test-line">Record Keeping</span><span class="kd-test-line">Sales Process</span></a>
     </div>
 
     <!-- Revalidation accordion (same tests) -->
@@ -251,11 +252,10 @@ html { height: 100%; }
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
     <div id="kd-revalidation" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-rv-ind-1" onclick="return ktNavLoad('ind-1',this)">1. Complaints &amp; Conduct Rules</a>
-      <a href="#" id="lv-nav-rv-ind-2" onclick="return ktNavLoad('ind-2',this)">2. Consumer Duty &amp; Fin. Crime</a>
-      <a href="#" id="lv-nav-rv-ind-3" onclick="return ktNavLoad('ind-3',this)">3. Vulnerable Clients &amp; Info Sec</a>
-      <a href="#" id="lv-nav-rv-ind-4" onclick="return ktNavLoad('ind-4',this)">4. Record Keeping &amp; Sales</a>
-      <a href="#" id="lv-nav-rv-fp" onclick="return showFpForm(this)">5. Fitness &amp; Properness</a>
+      <a href="#" id="lv-nav-rv-ind-1" onclick="return ktNavLoad('ind-1',this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Complaints</span><span class="kd-test-line">Conduct Rules</span></a>
+      <a href="#" id="lv-nav-rv-ind-2" onclick="return ktNavLoad('ind-2',this)"><span class="kd-test-num">Test 2</span><span class="kd-test-line">Consumer Duty</span><span class="kd-test-line">Financial Crime</span></a>
+      <a href="#" id="lv-nav-rv-ind-3" onclick="return ktNavLoad('ind-3',this)"><span class="kd-test-num">Test 3</span><span class="kd-test-line">Vulnerable Customers</span><span class="kd-test-line">Information Security</span></a>
+      <a href="#" id="lv-nav-rv-ind-4" onclick="return ktNavLoad('ind-4',this)"><span class="kd-test-num">Test 4</span><span class="kd-test-line">Record Keeping</span><span class="kd-test-line">Sales Process</span></a>
     </div>
 
     <!-- General accordion -->
@@ -275,6 +275,7 @@ html { height: 100%; }
       <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
       <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – PMI</a>
       <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
+      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)">Fitness &amp; Properness</a>
     </div>
   </div>
   <!-- Sales Process sidebar -->
@@ -11155,9 +11156,9 @@ function kdToggle(bodyId, btnId) {
 
 // Ensure the correct accordion panel is open for a given nav link id
 function kdEnsureOpen(navId) {
-  var induction  = ['lv-nav-ind-1','lv-nav-ind-2','lv-nav-ind-3','lv-nav-ind-4','lv-nav-fp'];
-  var revalidate = ['lv-nav-rv-ind-1','lv-nav-rv-ind-2','lv-nav-rv-ind-3','lv-nav-rv-ind-4','lv-nav-rv-fp'];
-  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8'];
+  var induction  = ['lv-nav-ind-1','lv-nav-ind-2','lv-nav-ind-3','lv-nav-ind-4'];
+  var revalidate = ['lv-nav-rv-ind-1','lv-nav-rv-ind-2','lv-nav-rv-ind-3','lv-nav-rv-ind-4'];
+  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8','lv-nav-fp'];
   var map = {};
   induction.forEach(function(id){ map[id]='kd-induction'; });
   revalidate.forEach(function(id){ map[id]='kd-revalidation'; });
