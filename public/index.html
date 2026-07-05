@@ -45,6 +45,12 @@ html { height: 100%; }
 .sv-adv-card { position:relative; overflow:hidden; cursor:pointer; }
 .sv-adv-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
 .sv-adv-card:hover::after { opacity:1; }
+.ms-card { position:relative; overflow:hidden; cursor:pointer; border-radius:10px; }
+.ms-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
+.ms-card:hover::after { opacity:1; }
+.nl-card-inner { position:relative; overflow:hidden; cursor:pointer; border-radius:10px 10px 0 0; }
+.nl-card-inner::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(0,55,104,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/40px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
+.nl-card-inner:hover::after { opacity:1; }
 .ov-card-title { font-size:14px; font-weight:700; color:#003768; margin-bottom:5px; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:0; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
@@ -1307,58 +1313,52 @@ html { height: 100%; }
         <div id="ms-state-idle">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;max-width:820px;margin-bottom:28px;">
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://www.mortgagestrategy.co.uk/','Mortgage Strategy')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:#e8f0fb;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#003768;flex-shrink:0;">MS</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">Mortgage Strategy</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">News &amp; analysis for mortgage professionals.</div>
-              <button onclick="msTtartReading('https://www.mortgagestrategy.co.uk/','Mortgage Strategy')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">News &amp; analysis for mortgage professionals.</div>
             </div>
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://theintermediary.co.uk/','The Intermediary')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#e65100;flex-shrink:0;">TI</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">The Intermediary</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">Broker-focused news on lending, regulation and housing.</div>
-              <button onclick="msTtartReading('https://theintermediary.co.uk/','The Intermediary')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">Broker-focused news on lending, regulation and housing.</div>
             </div>
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://www.ft.com/mortgages','FT Mortgages')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:#fff1f0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#c00;flex-shrink:0;">FT</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">Financial Times</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">Financial Times coverage of the mortgage market.</div>
-              <button onclick="msTtartReading('https://www.ft.com/mortgages','FT Mortgages')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">Financial Times coverage of the mortgage market.</div>
             </div>
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://www.bankofengland.co.uk/','Bank of England')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#1b5e20;flex-shrink:0;">BoE</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">Bank of England</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">Monetary policy, rates and financial stability publications.</div>
-              <button onclick="msTtartReading('https://www.bankofengland.co.uk/','Bank of England')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">Monetary policy, rates and financial stability publications.</div>
             </div>
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://www.theguardian.com/money/mortgages','The Guardian')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:#f3e5f5;display:flex;align-items:center;justify-content:circle;font-size:12px;font-weight:900;color:#4a148c;flex-shrink:0;align-items:center;justify-content:center;">GDN</div>
+                <div style="width:36px;height:36px;border-radius:8px;background:#f3e5f5;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#4a148c;flex-shrink:0;">GDN</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">The Guardian</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">Consumer mortgage news and rate analysis.</div>
-              <button onclick="msTtartReading('https://www.theguardian.com/money/mortgages','The Guardian')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">Consumer mortgage news and rate analysis.</div>
             </div>
 
-            <div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
+            <div class="ms-card" onclick="msTtartReading('https://www.gov.uk/government/news/chancellor-gets-banks-to-step-up-mortgage-support-for-customers','GOV.UK')" style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:36px;height:36px;border-radius:8px;background:#e8eaf6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#283593;flex-shrink:0;">GOV</div>
                 <div style="font-size:13px;font-weight:700;color:#003768;line-height:1.2;">GOV.UK</div>
               </div>
-              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;flex:1;">Government announcements on mortgage policy and regulation.</div>
-              <button onclick="msTtartReading('https://www.gov.uk/government/news/chancellor-gets-banks-to-step-up-mortgage-support-for-customers','GOV.UK')" style="background:#003768;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-start;">Start Reading</button>
+              <div style="font-size:12px;color:#6b7c8f;line-height:1.5;">Government announcements on mortgage policy and regulation.</div>
             </div>
 
           </div>
@@ -5922,10 +5922,8 @@ function renderNlCards(containerId, items) {
     var subject = encodeURIComponent('Finance Planning CPD Round-up – ' + n.label);
     var body    = encodeURIComponent('Hi,\n\nHere is the link to the ' + n.label + ' CPD Round-up newsletter:\n' + fullUrl + '\n\nOpening the newsletter logs 20 minutes CPD (10 Mortgage + 10 Protection).\n\nFinance Planning Mortgage & Protection');
     var mailto  = 'mailto:?subject=' + subject + '&body=' + body;
-    return '<div style="border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;background:#fff;" ' +
-      'onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" ' +
-      'onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
-        '<div onclick="openNewsletter(\'' + escAttr(url) + '\',\'' + escAttr(title) + '\',\'' + escAttr(n.label) + '\')" style="cursor:pointer;">' +
+    return '<div style="border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);background:#fff;">' +
+        '<div class="nl-card-inner" onclick="openNewsletter(\'' + escAttr(url) + '\',\'' + escAttr(title) + '\',\'' + escAttr(n.label) + '\')">' +
           '<div style="position:relative;padding-bottom:62%;background:#003768;overflow:hidden;">' +
             '<img src="/newsletters/cover.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;">' +
           '</div>' +
@@ -9342,13 +9340,10 @@ function ktShowLanding() {
     grid.innerHTML = '';
     KT_TESTS.filter(function(t){return t.group===group;}).forEach(function(test){
       var card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1.5px solid #e8ecf0;border-radius:10px;padding:18px 20px;cursor:pointer;transition:box-shadow .15s,border-color .15s;';
-      card.onmouseover = function(){card.style.borderColor='#003768';card.style.boxShadow='0 4px 14px rgba(0,55,104,.1)';};
-      card.onmouseout  = function(){card.style.borderColor='#e8ecf0';card.style.boxShadow='none';};
+      card.className = 'ov-card';
       card.onclick = function(){ktLoadTest(test.id);};
       card.innerHTML = '<div style="font-size:14px;font-weight:700;color:#003768;margin-bottom:6px;">'+test.title+'</div>'+
-        '<div style="font-size:12px;color:#6b7c8f;margin-bottom:14px;">20 questions · 75% passmark</div>'+
-        '<button style="background:#003768;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Start Test →</button>';
+        '<div style="font-size:12px;color:#6b7c8f;">20 questions · 75% passmark</div>';
       grid.appendChild(card);
     });
   });
