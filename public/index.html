@@ -5315,9 +5315,9 @@ function downloadBrokerLogoCanvas(btn) {
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
 
-        // White-fill the full "Broker Name" placeholder zone (x=618-2160, y=170-428)
+        // White-fill the "Broker Name" zone only — stop before M&P text at y=404
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(618, 170, 1542, 258);
+        ctx.fillRect(618, 170, 1542, 225);
 
         // Draw broker name in brand blue, auto-shrinking to fit
         ctx.fillStyle = 'rgb(0,55,104)';
@@ -5329,7 +5329,7 @@ function downloadBrokerLogoCanvas(btn) {
           if (ctx.measureText(name).width <= maxW) break;
           fontSize -= 4;
         }
-        ctx.fillText(name, 626, 200);
+        ctx.fillText(name, 622, 200);
 
         var link = document.createElement('a');
         link.download = 'FPG-Broker-Logo-' + safeName + '.png';
