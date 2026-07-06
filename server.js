@@ -1,3 +1,9 @@
+/**
+ * KnowledgeHUB — Finance Planning Group
+ * Designed & developed by SimFlex.ai
+ * © 2025–2026 SimFlex.ai. All rights reserved.
+ */
+
 require('dotenv').config();
 const express  = require('express');
 const session  = require('express-session');
