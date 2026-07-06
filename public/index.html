@@ -8448,14 +8448,12 @@ function renderSvDashboard(data) {
 
   // Classify members
   var allAdvisers = [], supervisorCards = [];
-  var _dbgAdminFiltered = [], _dbgSupervisorCards = [];
   members.forEach(function(m) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
-    if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) { _dbgAdminFiltered.push(m.email); return; }
+    if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
-      _dbgSupervisorCards.push(m.email);
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
         return (t.key === 'Mortgage' && m.sellsMortgages) ||
@@ -8483,11 +8481,6 @@ function renderSvDashboard(data) {
     allAdvisers.push(obj);
   });
 
-  // Debug: log classification breakdown to console
-  console.log('[SV Debug] members total:', members.length, '| allAdvisers:', allAdvisers.length, '| supervisorCards:', supervisorCards.length, '| adminFiltered:', _dbgAdminFiltered.length);
-  if (_dbgAdminFiltered.length) console.log('[SV Debug] Admin filtered:', _dbgAdminFiltered);
-  if (_dbgSupervisorCards.length) console.log('[SV Debug] Supervisor cards:', _dbgSupervisorCards);
-
   // Sort alphabetically by first name
   function byFirst(a, b) { return (a.m.firstName || '').localeCompare(b.m.firstName || ''); }
   allAdvisers.sort(byFirst);
@@ -8501,7 +8494,7 @@ function renderSvDashboard(data) {
 
   // Update sidebar count
   var sbCount = document.getElementById('sv-sidebar-count');
-  if (sbCount) sbCount.textContent = totalOnTrack + '/' + allAdvisers.length;
+  if (sbCount) sbCount.textContent = allAdvisers.length;
 
   // Update heading title
   var headingEl = document.getElementById('sv-heading');
