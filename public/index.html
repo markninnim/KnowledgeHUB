@@ -7462,14 +7462,14 @@ function renderUserList(users) {
     var name = [u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
     var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
     var supBadge = u.isSupervisor ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
-    var casBadge = u.cas ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">CAS</span>' : '<span style="background:#f5f7fa;color:#6b7c8f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Non-CAS</span>';
+    var casBadge = u.cas ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">CAS</span>' : '<span style="background:#fef2f2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Non-CAS</span>';
     var mktBadge = u.isMarketing ? '<span style="background:#e8740c;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
     var products = [];
-    if (u.sellsInvestments)   products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
-    if (u.sellsMortgages)     products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
-    if (u.sellsProtection)    products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
-    if (u.equityRelease)      products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
-    if (u.commercialMortgages)products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:4px;">Commercial Mortgages</span>');
+    if (u.sellsInvestments)   products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
+    if (u.sellsMortgages)     products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
+    if (u.sellsProtection)    products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
+    if (u.equityRelease)      products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
+    if (u.commercialMortgages)products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Commercial Mortgages</span>');
     // Derive job title from CPD flags if only one product
     var displayTitle = u.jobTitle || '';
     if (u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages) displayTitle = 'Mortgage Adviser';
