@@ -650,7 +650,7 @@ html { height: 100%; }
         <h3>Broker Branded Logo</h3>
         <p>Your personalised FPG logo with your name — ready to use across your email signature, social profiles, and printed materials.</p><br>
         <span class="badge ready">Approved</span><br>
-        <a href="/api/download-broker-logo" class="btn" download>Download</a>
+        <button class="btn" onclick="downloadBrokerLogoCanvas(this)">Download</button>
       </div>
     </div>
   </div>
@@ -5296,6 +5296,62 @@ function loadTemplatesDates() {
 }
 
 // ── Broker Brand personaliser ─────────────────────────────────
+function downloadBrokerLogoCanvas(btn) {
+  var orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+
+  fetch('/api/me')
+    .then(function(r){ return r.json(); })
+    .then(function(me) {
+      var name = [me.firstName, me.lastName].filter(Boolean).join(' ') || me.email || 'Broker';
+      var safeName = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width  = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        // White-fill the "Broker Name" zone (matches original template)
+        ctx.fillStyle = 'rgba(255,255,255,1)';
+        ctx.fillRect(610, 220, 1052, 165);
+
+        // Draw name in brand blue, auto-shrinking font
+        ctx.fillStyle = 'rgb(0,55,104)';
+        var fontSize = 156;
+        var maxW = 1040;
+        while (fontSize >= 60) {
+          ctx.font = '800 ' + fontSize + 'px "Plus Jakarta Sans", "Arial Black", Arial, sans-serif';
+          if (ctx.measureText(name).width <= maxW) break;
+          fontSize -= 4;
+        }
+        // Vertically centre text at y=307
+        var m = ctx.measureText(name);
+        var textH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+        var textY = 307 + m.actualBoundingBoxAscent - textH / 2;
+        ctx.fillText(name, 627, textY);
+
+        var link = document.createElement('a');
+        link.download = 'FPG-Broker-Logo-' + safeName + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        if (btn) { btn.disabled = false; btn.textContent = orig; }
+      };
+      img.onerror = function() {
+        alert('Could not load logo template. Please try again.');
+        if (btn) { btn.disabled = false; btn.textContent = orig; }
+      };
+      img.src = '/view-asset/logos/individual%20broker%20branding/broker-branded.png';
+    })
+    .catch(function() {
+      alert('Could not load user details. Please refresh and try again.');
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    });
+}
+
 // ── DIP Certificate ───────────────────────────────────────────
 function openDipModal() {
   document.getElementById('dip-amount').value = '';
