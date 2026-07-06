@@ -7229,14 +7229,18 @@ function renderFeatureToggles() {
 function onFeatureToggle(input) {
   var key = input.dataset.feature;
   _features[key] = input.checked;
-  // Update toggle visuals
+  // Update toggle visuals immediately
   var span = input.nextElementSibling;
   var dot   = span && span.nextElementSibling;
   if (span) span.style.background = input.checked ? '#003768' : '#cbd5e1';
   if (dot)  dot.style.left = input.checked ? '19px' : '3px';
+  // Auto-save on every change
+  saveFeatures();
 }
 
 function saveFeatures() {
+  var saved = document.getElementById('admin-features-saved');
+  if (saved) { saved.style.display = 'inline'; saved.textContent = 'Saving…'; saved.style.color = '#9bafc0'; }
   fetch('/api/admin/features', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -7244,9 +7248,15 @@ function saveFeatures() {
   }).then(function(r){ return r.json(); }).then(function(d){
     if (d.ok) {
       applyFeatureFlags();
-      var saved = document.getElementById('admin-features-saved');
-      if (saved) { saved.style.display = 'inline'; setTimeout(function(){ saved.style.display='none'; }, 2000); }
+      if (saved) {
+        saved.style.display = 'inline';
+        saved.textContent = '✓ Saved';
+        saved.style.color = '#2e7d32';
+        setTimeout(function(){ saved.style.display='none'; }, 2000);
+      }
     }
+  }).catch(function(){
+    if (saved) { saved.textContent = 'Error saving'; saved.style.color = '#c0392b'; }
   });
 }
 
