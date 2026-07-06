@@ -11604,24 +11604,35 @@ function payBackToList() {
 function payRenderSummary(m) {
   var validFiles=m.files.filter(function(f){return !f.error;});
   var rtfStmt=validFiles.find(function(f){return f.type==='rtf';});
-  var compositeMode=!!(rtfStmt&&validFiles.some(function(f){return f.type==='xlsx';}));
   var monthTotal=payMonthTotal(m);
+
+  var NUM_STYLE='font-size:16px;font-weight:700;';
+
+  var items=[];
+
+  // Statement Date
+  if (rtfStmt&&rtfStmt.statementDate) items.push({label:'Statement Date',val:escHtml(rtfStmt.statementDate),color:'#fff'});
+  // BACS Date
+  if (rtfStmt&&rtfStmt.bacsDate)      items.push({label:'BACS Date',val:escHtml(rtfStmt.bacsDate),color:'#fcb034'});
+  // Initial Commission
+  if (rtfStmt&&rtfStmt.payments) {
+    var initP=(rtfStmt.payments||[]).find(function(p){return p.description==='Initial Commission';});
+    if (initP) items.push({label:'Initial Commission',val:'£'+Math.abs(initP.net!=null?initP.net:initP.gross||0).toFixed(2),color:'#fff'});
+    var renP=(rtfStmt.payments||[]).find(function(p){return p.description==='Renewal Commission';});
+    if (renP)  items.push({label:'Renewal Commission',val:'£'+Math.abs(renP.gross||0).toFixed(2),color:'#fff'});
+  }
+  // Total Pay
+  items.push({label:'Total Pay',val:(monthTotal<0?'−':'')+'£'+Math.abs(monthTotal).toFixed(2),color:'#fff'});
+
   var html='<div style="background:#003768;border-radius:14px;padding:22px 26px;margin-top:4px;">';
   html+='<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Summary</div>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px 20px;">';
-  // Total Pay
-  html+='<div><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Total Pay</div>';
-  html+='<div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px;">'+(monthTotal<0?'−':'')+'£'+Math.abs(monthTotal).toFixed(2)+'</div></div>';
-  if (rtfStmt) {
-    if (rtfStmt.totalGross!=null){html+='<div><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Gross</div><div style="font-size:20px;font-weight:700;color:#fff;">£'+rtfStmt.totalGross.toFixed(2)+'</div></div>';}
-    if (rtfStmt.bacsDate){html+='<div><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">BACS Date</div><div style="font-size:16px;font-weight:700;color:#fcb034;">'+escHtml(rtfStmt.bacsDate)+'</div></div>';}
-    if (rtfStmt.statementDate){html+='<div><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Statement</div><div style="font-size:14px;font-weight:600;color:rgba(255,255,255,.8);">'+escHtml(rtfStmt.statementDate)+'</div></div>';}
-    if (compositeMode&&rtfStmt.payments){
-      (rtfStmt.payments||[]).filter(function(p){return p.net!=null&&p.net!==0;}).forEach(function(p){
-        html+='<div><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">'+escHtml(p.description)+'</div><div style="font-size:16px;font-weight:700;color:#fff;">£'+Math.abs(p.net).toFixed(2)+'</div></div>';
-      });
-    }
-  }
+  items.forEach(function(it){
+    html+='<div>';
+    html+='<div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">'+it.label+'</div>';
+    html+='<div style="'+NUM_STYLE+'color:'+it.color+';">'+it.val+'</div>';
+    html+='</div>';
+  });
   html+='</div></div>';
   return html;
 }
