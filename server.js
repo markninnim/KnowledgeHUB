@@ -265,18 +265,27 @@ async function atFetch(endpoint, options = {}) {
   return body;
 }
 
+function brokerWebsite(firstName, lastName, override) {
+  if (override) return override;
+  if (!firstName || !lastName) return '';
+  const slug = (firstName.trim() + '-' + lastName.trim()).toLowerCase().replace(/[^a-z0-9-]/g, '');
+  return `https://financeplanning.co.uk/${slug}`;
+}
+
 function recordToUser(record) {
   const f = record.fields;
+  const firstName = f[F_FIRST] || '';
+  const lastName  = f[F_LAST]  || '';
   return {
     id: record.id,
     email:     f[F_EMAIL]    || '',
     salutation:f[F_SAL]      || '',
-    firstName: f[F_FIRST]    || '',
-    lastName:  f[F_LAST]     || '',
+    firstName,
+    lastName,
     jobTitle:  f[F_TITLE]    || '',
     mobile:    f[F_MOBILE]   || '',
     landline:  f[F_LANDLINE] || '',
-    website:   f[F_WEBSITE]  || '',
+    website:   brokerWebsite(firstName, lastName, f[F_WEBSITE] || ''),
     isAdmin:          f[F_ADMIN]       || false,
     sellsMortgages:   f[F_MORTGAGES]        || false,
     sellsProtection:  f[F_PROTECTION]       || false,

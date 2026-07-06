@@ -4216,8 +4216,11 @@ html { height: 100%; }
             <input id="uf-landline" type="text" placeholder="0xxxx xxxxxx" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div style="grid-column:1/-1;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Website</label>
-            <input id="uf-website" type="text" placeholder="https://…" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">
+              Website
+              <button type="button" onclick="ufGenerateWebsite()" style="background:none;border:none;font-size:11px;font-weight:600;color:#2e99d5;cursor:pointer;padding:0;font-family:inherit;">Generate from name</button>
+            </label>
+            <input id="uf-website" type="text" placeholder="https://financeplanning.co.uk/firstname-lastname" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <!-- LICENCES -->
           <div style="grid-column:1/-1;margin-top:8px;">
@@ -8299,7 +8302,20 @@ function openBrokerProfile(email, name) {
       // Header meta
       var u = d.user || {};
       document.getElementById('bp-name').textContent = u.fullName || name || email;
-      document.getElementById('bp-meta').textContent = [u.jobTitle, u.email, u.mobile].filter(Boolean).join(' · ');
+      var metaParts = [u.jobTitle, u.email, u.mobile].filter(Boolean).join(' · ');
+      var metaEl = document.getElementById('bp-meta');
+      metaEl.textContent = metaParts;
+      if (u.website) {
+        var wsLink = document.createElement('a');
+        wsLink.href = u.website;
+        wsLink.target = '_blank';
+        wsLink.rel = 'noopener';
+        wsLink.textContent = u.website.replace(/^https?:\/\//, '');
+        wsLink.style.cssText = 'display:block;font-size:12px;color:#2e99d5;text-decoration:none;margin-top:3px;';
+        wsLink.onmouseover = function(){ this.style.textDecoration='underline'; };
+        wsLink.onmouseout  = function(){ this.style.textDecoration='none'; };
+        metaEl.parentNode.insertBefore(wsLink, metaEl.nextSibling);
+      }
 
       // ── CPD ──
       var cpdEl = document.getElementById('bp-cpd');
@@ -10031,6 +10047,14 @@ function saveCpdEntry() {
       _cpdLoaded = false;
       loadCpd();
     }).catch(function() { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
+}
+
+function ufGenerateWebsite() {
+  var first = (document.getElementById('uf-firstname').value || '').trim().toLowerCase();
+  var last  = (document.getElementById('uf-lastname').value  || '').trim().toLowerCase();
+  if (!first || !last) { alert('Enter first and last name first.'); return; }
+  var slug = (first + '-' + last).replace(/[^a-z0-9-]/g, '');
+  document.getElementById('uf-website').value = 'https://financeplanning.co.uk/' + slug;
 }
 
 function deleteCpdEntry(id) {
