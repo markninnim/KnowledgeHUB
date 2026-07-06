@@ -8,7 +8,8 @@ const crypto   = require('crypto');
 const bcrypt   = require('bcryptjs');
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBezierCurve, closePath, clip, endPath } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
-const QRCode  = require('qrcode');
+const QRCode    = require('qrcode');
+const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
 // ── Campaign Monitor SMTP transporter ────────────────────────
@@ -50,6 +51,7 @@ const F_CO_SUPERVISES  = 'fld2fG2C8sK9PQ3o2'; // "Co-supervises Email" — share
 const F_AVATAR         = 'fldiQ06FtP4BehJU7';
 const F_CAS                = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser Status (checkbox)
 const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
+const F_TOTP               = 'fldpgD672Gikqqnj0'; // TOTP 2FA secret
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -164,6 +166,64 @@ function auditLog(action, details, req) {
     ...details
   });
   try { fs.appendFileSync(AUDIT_LOG_PATH, entry + '\n'); } catch(_) {}
+}
+
+// ── TOTP device trust cookie ──────────────────────────────────────
+const TRUST_COOKIE  = 'fpg_trust';
+const TRUST_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
+
+function parseCookies(req) {
+  const cookies = {};
+  (req.headers.cookie || '').split(';').forEach(c => {
+    const eq = c.indexOf('=');
+    if (eq > 0) cookies[c.slice(0, eq).trim()] = c.slice(eq + 1).trim();
+  });
+  return cookies;
+}
+
+function signTrustToken(email) {
+  const ts   = Date.now().toString();
+  const data = email.toLowerCase() + '|' + ts;
+  const sig  = crypto.createHmac('sha256', SECRET).update(data).digest('hex');
+  return Buffer.from(data + '|' + sig).toString('base64url');
+}
+
+function verifyTrustToken(req, email) {
+  const val = parseCookies(req)[TRUST_COOKIE];
+  if (!val) return false;
+  try {
+    const decoded  = Buffer.from(val, 'base64url').toString('utf8');
+    const lastPipe = decoded.lastIndexOf('|');
+    const data     = decoded.slice(0, lastPipe);
+    const sig      = decoded.slice(lastPipe + 1);
+    const [em, ts] = data.split('|');
+    if ((em || '').toLowerCase() !== email.toLowerCase()) return false;
+    const age = Date.now() - parseInt(ts);
+    if (isNaN(age) || age < 0 || age > TRUST_MAX_AGE) return false;
+    const expected = crypto.createHmac('sha256', SECRET).update(data).digest('hex');
+    if (sig.length !== expected.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'));
+  } catch(_) { return false; }
+}
+
+// ── Login finalisation helpers ────────────────────────────────────
+// Sets session state after successful 2FA — no HTTP response
+function finalizeLogin(req, email, user) {
+  req.session.authenticated = true;
+  req.session.user           = user;
+  req.session.loginTime      = Date.now();
+  delete req.session.pendingTotp;
+}
+
+// For browser-redirect flows (trusted device skip, or API endpoints)
+function completeLoginRedirect(req, res, email, user) {
+  finalizeLogin(req, email, user);
+  auditLog('login_complete', { email }, req);
+  if (_forceReset[email]) {
+    const token = createResetToken(email);
+    return res.redirect('/reset-password?token=' + token + '&forced=1');
+  }
+  res.redirect('/');
 }
 
 // ── Asset dates manifest (persists upload dates across deploys) ──
@@ -302,6 +362,7 @@ app.use('/api/', (req, res, next) => {
 function requireAuth(req, res, next) {
   if (!req.session.authenticated) {
     if (req.originalUrl.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.session.pendingTotp) return res.redirect('/2fa');
     return res.redirect('/login');
   }
   // Reject sessions created before the user's last password change
@@ -511,16 +572,24 @@ app.post('/login', async (req, res) => {
         : res.redirect('/login?error=1&left=' + ls.attemptsLeft);
     }
     clearLoginAttempts(emailLower);
-    req.session.authenticated = true;
-    req.session.user = recordToUser(record);
-    req.session.loginTime = Date.now();
-    auditLog('login_success', { email: emailLower }, req);
-    // Force-reset: redirect to password reset page immediately
-    if (_forceReset[emailLower]) {
-      const token = createResetToken(emailLower);
-      return res.redirect('/reset-password?token=' + token + '&forced=1');
+    auditLog('login_password_ok', { email: emailLower }, req);
+    // Store pending state for the 2FA step
+    req.session.pendingTotp = {
+      email:     emailLower,
+      userId:    record.id,
+      user:      recordToUser(record),
+      loginTime: Date.now()
+    };
+    const totpSecret = record.fields[F_TOTP];
+    if (!totpSecret) {
+      // No 2FA configured yet — must set up before accessing the app
+      return res.redirect('/2fa-setup');
     }
-    res.redirect('/');
+    // Has 2FA — check for a trusted device cookie (skip prompt)
+    if (verifyTrustToken(req, emailLower)) {
+      return completeLoginRedirect(req, res, emailLower, req.session.pendingTotp.user);
+    }
+    res.redirect('/2fa');
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/login?error=1');
@@ -607,7 +676,21 @@ app.get('/logout', (req, res) => {
   const email = req.session.user && req.session.user.email ? req.session.user.email.toLowerCase() : null;
   if (email) auditLog('logout', { email }, req);
   req.session.destroy();
+  res.clearCookie(TRUST_COOKIE);
   res.redirect('/login');
+});
+
+// ── 2FA pages ─────────────────────────────────────────────────────
+app.get('/2fa', (req, res) => {
+  if (req.session.authenticated) return res.redirect('/');
+  if (!req.session.pendingTotp)  return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public/2fa.html'));
+});
+
+app.get('/2fa-setup', (req, res) => {
+  if (req.session.authenticated) return res.redirect('/');
+  if (!req.session.pendingTotp)  return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public/2fa-setup.html'));
 });
 
 // ── Change password (self-service, requires current password) ─────
@@ -730,6 +813,7 @@ app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
         const u = recordToUser(r);
         u.hasPassword = !!r.fields[F_PASSWORD];
         u._forceReset = !!_forceReset[(u.email || '').toLowerCase()];
+        u.hasTOTP     = !!r.fields[F_TOTP];
         users.push(u);
       }
       offset = data.offset || '';
@@ -966,6 +1050,147 @@ app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
   } catch(_) {
     res.json([]);
   }
+});
+
+// ── 2FA: get QR code for first-time setup (pendingTotp) ─────────
+app.get('/api/2fa/setup-qr', async (req, res) => {
+  if (!req.session.pendingTotp) return res.status(401).json({ error: 'No pending authentication' });
+  const email = req.session.pendingTotp.email;
+  const secret = speakeasy.generateSecret({ length: 20 });
+  const otpUrl  = speakeasy.otpauthURL({
+    secret:   secret.base32,
+    label:    encodeURIComponent(email),
+    issuer:   'FPG Knowledge Hub',
+    encoding: 'base32'
+  });
+  req.session.pendingTotp.setupSecret = secret.base32; // held until verified
+  try {
+    const qrDataUrl = await QRCode.toDataURL(otpUrl);
+    res.json({ qrDataUrl });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── 2FA: verify first-time setup code (pendingTotp) ─────────────
+app.post('/api/2fa/setup-verify', async (req, res) => {
+  if (!req.session.pendingTotp) return res.status(401).json({ error: 'No pending authentication' });
+  const elapsed = Date.now() - (req.session.pendingTotp.loginTime || 0);
+  if (elapsed > 10 * 60 * 1000) {
+    delete req.session.pendingTotp;
+    return res.status(401).json({ error: 'Session timed out — please sign in again' });
+  }
+  const { code } = req.body;
+  const setupSecret = req.session.pendingTotp.setupSecret;
+  if (!setupSecret) return res.status(400).json({ error: 'No setup in progress — refresh the page' });
+  const valid = speakeasy.totp.verify({
+    secret: setupSecret, encoding: 'base32',
+    token:  String(code || '').replace(/\s/g, ''), window: 1
+  });
+  if (!valid) return res.status(400).json({ error: 'Invalid code — try again' });
+  const { email, userId, user } = req.session.pendingTotp;
+  try {
+    await atFetch(`/${userId}`, {
+      method: 'PATCH',
+      body:   JSON.stringify({ fields: { [F_TOTP]: setupSecret }, returnFieldsByFieldId: true })
+    });
+  } catch(err) {
+    return res.status(500).json({ error: 'Could not save 2FA — please try again' });
+  }
+  auditLog('2fa_setup_complete', { email }, req);
+  finalizeLogin(req, email, user);
+  if (_forceReset[email]) {
+    const token = createResetToken(email);
+    return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
+  }
+  res.json({ ok: true, redirect: '/' });
+});
+
+// ── 2FA: verify TOTP code during login (pendingTotp) ────────────
+app.post('/api/2fa/verify', async (req, res) => {
+  if (!req.session.pendingTotp) return res.status(401).json({ error: 'No pending authentication' });
+  const elapsed = Date.now() - (req.session.pendingTotp.loginTime || 0);
+  if (elapsed > 10 * 60 * 1000) {
+    delete req.session.pendingTotp;
+    return res.status(401).json({ error: 'Session timed out — please sign in again' });
+  }
+  const { code, trustDevice } = req.body;
+  const { email, userId, user } = req.session.pendingTotp;
+  let totpSecret;
+  try {
+    const record = await atFetch(`/${userId}?returnFieldsByFieldId=true`);
+    totpSecret = record.fields[F_TOTP];
+  } catch(err) {
+    return res.status(500).json({ error: 'Verification failed — please try again' });
+  }
+  if (!totpSecret) return res.status(400).json({ error: 'No 2FA configured', redirect: '/2fa-setup' });
+  const valid = speakeasy.totp.verify({
+    secret: totpSecret, encoding: 'base32',
+    token:  String(code || '').replace(/\s/g, ''), window: 1
+  });
+  if (!valid) return res.status(400).json({ error: 'Invalid code — try again' });
+  if (trustDevice) {
+    res.cookie(TRUST_COOKIE, signTrustToken(email), {
+      maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, secure: isProd, sameSite: 'strict'
+    });
+  }
+  auditLog('login_2fa_ok', { email }, req);
+  finalizeLogin(req, email, user);
+  if (_forceReset[email]) {
+    const token = createResetToken(email);
+    return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
+  }
+  res.json({ ok: true, redirect: '/' });
+});
+
+// ── 2FA: get new QR code for account modal (authenticated) ───────
+app.get('/api/2fa/new-secret', requireAuth, async (req, res) => {
+  try {
+    const email  = (req.session.user && req.session.user.email) || '';
+    const secret = speakeasy.generateSecret({ length: 20 });
+    const otpUrl = speakeasy.otpauthURL({
+      secret:   secret.base32,
+      label:    encodeURIComponent(email),
+      issuer:   'FPG Knowledge Hub',
+      encoding: 'base32'
+    });
+    req.session.totpNewSecret = secret.base32;
+    const qrDataUrl = await QRCode.toDataURL(otpUrl);
+    res.json({ qrDataUrl });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── 2FA: confirm and save new secret from account modal ──────────
+app.post('/api/2fa/confirm', requireAuth, async (req, res) => {
+  const newSecret = req.session.totpNewSecret;
+  if (!newSecret) return res.status(400).json({ error: 'No setup in progress — click "New device" again' });
+  const { code } = req.body;
+  const valid = speakeasy.totp.verify({
+    secret: newSecret, encoding: 'base32',
+    token:  String(code || '').replace(/\s/g, ''), window: 1
+  });
+  if (!valid) return res.status(400).json({ error: 'Invalid code — try again' });
+  try {
+    await atFetch(`/${req.session.user.id}`, {
+      method: 'PATCH',
+      body:   JSON.stringify({ fields: { [F_TOTP]: newSecret }, returnFieldsByFieldId: true })
+    });
+    delete req.session.totpNewSecret;
+    auditLog('2fa_regenerated', { email: (req.session.user.email || '').toLowerCase() }, req);
+    res.json({ ok: true });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Admin: clear a user's 2FA secret (forces re-setup) ──────────
+app.delete('/api/admin/2fa/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await atFetch(`/${userId}`, {
+      method: 'PATCH',
+      body:   JSON.stringify({ fields: { [F_TOTP]: '' }, returnFieldsByFieldId: true })
+    });
+    const actingUser = req.session.originalUser || req.session.user;
+    auditLog('admin_clear_2fa', { userId, by: (actingUser.email || '') }, req);
+    res.json({ ok: true });
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Admin: impersonate a user ─────────────────────────────────

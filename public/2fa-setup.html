@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPG Knowledge Hub — Set Up Two-Factor Authentication</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --blue:#003768; --orange:#fcb034; --accent:#2e99d5; --grey:#6b7c8f; --light:#f5f7fa; --border:#e8ecf0; --dark:#1a2a3a; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #f5f7fa; }
+    .page-wrap { position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px; }
+    .card { background:#fff;border-radius:12px;padding:48px 44px 40px;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.12);position:relative; }
+    .logo-area { text-align:center;margin-bottom:28px; }
+    h1 { font-size:22px;font-weight:700;color:var(--dark);margin-bottom:6px; }
+    .subtitle { font-size:14px;color:var(--grey);margin-bottom:24px;line-height:1.5; }
+    .step { display:flex;gap:14px;margin-bottom:20px; }
+    .step-num { flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px; }
+    .step-body { flex:1; }
+    .step-title { font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px; }
+    .step-desc { font-size:13px;color:var(--grey);line-height:1.5; }
+    .qr-wrap { display:flex;justify-content:center;margin:16px 0; }
+    .qr-wrap img { width:168px;height:168px;border:2px solid var(--border);border-radius:10px; }
+    .qr-loading { width:168px;height:168px;border:2px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--grey);font-size:13px; }
+    .divider { border:none;border-top:1px solid var(--border);margin:24px 0; }
+    label { display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px; }
+    input[type="text"] { width:100%;padding:14px;border:1.5px solid var(--border);border-radius:8px;font-size:22px;color:var(--dark);background:var(--light);outline:none;font-family:monospace;text-align:center;letter-spacing:6px;transition:border-color .15s; }
+    input[type="text"]:focus { border-color:var(--accent);background:#fff; }
+    .input-wrap { margin-bottom:20px; }
+    .btn { width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s; }
+    .btn:hover { background:#004a8a; }
+    .btn:disabled { background:#9aafbf;cursor:not-allowed; }
+    .msg { border-radius:7px;padding:10px 14px;font-size:13px;margin-bottom:18px; }
+    .msg.success { background:#f0fff4;border:1px solid #9ae6b4;color:#276749; }
+    .msg.error   { background:#fff0f0;border:1px solid #ffcccc;color:#c00; }
+    .badge { display:inline-flex;align-items:center;gap:5px;background:#fff8e6;border:1px solid #fce08a;color:#7a4f00;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-bottom:16px; }
+    .badge svg { flex-shrink:0; }
+    .back { text-align:center;margin-top:18px; }
+    .back a { font-size:13px;color:var(--grey);text-decoration:none; }
+    .back a:hover { color:var(--blue); }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<svg style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 1445.242188 1080 L 1920 1080 L 1920 605.242188 Z" fill="#fcb034"/>
+  <path d="M 966.332031 1080 L 1919.847656 1080 L 1443.089844 603.242188 Z" fill="#003768"/>
+</svg>
+
+<div class="page-wrap">
+  <div class="card">
+    <div class="logo-area">
+      <img src="/public-logo" alt="Finance Planning Group" style="height:52px;object-fit:contain;margin-bottom:6px;">
+      <div style="font-size:11px;color:var(--grey);letter-spacing:.5px;text-transform:uppercase;margin-top:4px;">Knowledge Hub</div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px;">
+      <div class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        One-time setup required
+      </div>
+      <h1>Secure your account</h1>
+      <p class="subtitle">Two-factor authentication is required. Set it up now — it only takes a minute.</p>
+    </div>
+
+    <div id="msg" class="msg" style="display:none;"></div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Install an authenticator app</div>
+        <div class="step-desc">Download <strong>Google Authenticator</strong> or <strong>Authy</strong> on your phone if you don't have one already.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Scan this QR code</div>
+        <div class="step-desc">Open the authenticator app and scan the code below.</div>
+        <div class="qr-wrap">
+          <div id="qr-loading" class="qr-loading">Loading…</div>
+          <img id="qr-img" src="" alt="QR Code" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Enter the 6-digit code</div>
+        <div class="step-desc">Type the code shown in your app to confirm the setup.</div>
+      </div>
+    </div>
+
+    <div class="input-wrap" style="margin-top:8px;">
+      <label for="code">Verification code</label>
+      <input type="text" id="code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off">
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="confirmSetup()">Activate 2FA</button>
+
+    <div class="back"><a href="/logout">← Use a different account</a></div>
+  </div>
+</div>
+
+<script>
+  var codeInput  = document.getElementById('code');
+  var msgEl      = document.getElementById('msg');
+  var btn        = document.getElementById('submit-btn');
+  var qrImg      = document.getElementById('qr-img');
+  var qrLoading  = document.getElementById('qr-loading');
+
+  // Load QR code
+  fetch('/api/2fa/setup-qr')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.qrDataUrl) {
+        qrImg.src = d.qrDataUrl;
+        qrImg.style.display = 'block';
+        qrLoading.style.display = 'none';
+      } else {
+        qrLoading.textContent = 'Failed to load — refresh the page.';
+      }
+    })
+    .catch(function() {
+      qrLoading.textContent = 'Failed to load — refresh the page.';
+    });
+
+  // Auto-submit when 6 digits entered
+  codeInput.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    if (this.value.length === 6) confirmSetup();
+  });
+
+  codeInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') confirmSetup();
+  });
+
+  async function confirmSetup() {
+    var code = codeInput.value.trim();
+    if (code.length !== 6) {
+      showMsg('error', 'Please enter the full 6-digit code from your app.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Activating…';
+    msgEl.style.display = 'none';
+    try {
+      var r = await fetch('/api/2fa/setup-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      var data = await r.json();
+      if (r.ok && data.ok) {
+        showMsg('success', '2FA activated! Taking you in…');
+        setTimeout(function() { location.href = data.redirect || '/'; }, 1000);
+      } else {
+        showMsg('error', data.error || 'Verification failed — please try again.');
+        codeInput.value = '';
+        codeInput.focus();
+        btn.disabled = false;
+        btn.textContent = 'Activate 2FA';
+      }
+    } catch(err) {
+      showMsg('error', 'Something went wrong — please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Activate 2FA';
+    }
+  }
+
+  function showMsg(type, text) {
+    msgEl.className = 'msg ' + type;
+    msgEl.textContent = text;
+    msgEl.style.display = 'block';
+  }
+</script>
+</body>
+</html>

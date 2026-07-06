@@ -4007,6 +4007,30 @@ html { height: 100%; }
       <div id="acc-success" style="display:none;background:#f0fff4;border:1px solid #bbf7d0;color:#166534;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px;">✓ Details saved successfully</div>
       <button onclick="saveAccountDetails()" style="width:100%;background:#003768;color:#fff;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Save Changes</button>
     </div>
+    <!-- 2FA section -->
+    <div style="padding:16px 28px 20px;border-top:1px solid #f0f2f5;">
+      <div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Two-Factor Authentication</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Authenticator app</div>
+          <div id="acc-2fa-status" style="font-size:12px;color:#16a34a;margin-top:2px;">Active</div>
+        </div>
+        <button onclick="show2FASetup()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">New device</button>
+      </div>
+      <div id="acc-2fa-setup" style="display:none;background:#f8fafc;border:1.5px solid #e8ecf0;border-radius:10px;padding:14px;">
+        <div style="font-size:12px;color:#6b7c8f;margin-bottom:10px;line-height:1.5;">Scan with <strong>Google Authenticator</strong> or <strong>Authy</strong>, then enter the code to confirm.</div>
+        <div style="display:flex;justify-content:center;margin-bottom:10px;">
+          <div id="acc-2fa-qr-loading" style="width:140px;height:140px;border:1.5px solid #e8ecf0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#6b7c8f;">Loading…</div>
+          <img id="acc-2fa-qr" src="" style="width:140px;height:140px;border:1.5px solid #e8ecf0;border-radius:8px;display:none;">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input id="acc-2fa-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="flex:1;padding:9px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:18px;font-family:monospace;outline:none;text-align:center;letter-spacing:4px;background:#fff;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+          <button onclick="confirm2FASetup()" style="background:#003768;color:#fff;border:none;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Verify</button>
+        </div>
+        <div id="acc-2fa-error" style="display:none;color:#c00;font-size:12px;margin-top:8px;"></div>
+        <div id="acc-2fa-ok" style="display:none;color:#16a34a;font-size:12px;margin-top:8px;">✓ Authenticator updated successfully.</div>
+      </div>
+    </div>
     <!-- Sign out footer -->
     <div style="padding:16px 28px;border-top:1px solid #f0f2f5;">
       <a href="/logout" style="display:flex;align-items:center;gap:8px;color:#ef4444;font-size:13px;font-weight:600;text-decoration:none;padding:10px 14px;border-radius:8px;border:1.5px solid #fee2e2;background:#fff5f5;transition:background .15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff5f5'">
@@ -7455,16 +7479,18 @@ function renderUserList(users) {
     if (canManageUsers) {
       // Supervisors cannot edit/delete admin users
       var canEditThis = isAdmin || !u.isAdmin;
-      var frBadge = u._forceReset ? '<span style="background:#fff3cd;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Reset Required</span>' : '';
+      var frBadge   = u._forceReset ? '<span style="background:#fff3cd;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Reset Required</span>' : '';
+      var totpBadge = u.hasTOTP ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">2FA</span>' : '<span style="background:#fef2f2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">No 2FA</span>';
       actionBtns =
         '<button onclick="impersonateUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100px;text-align:center;">View As</button>' +
         (canEditThis && isAdmin ? '<button onclick="adminForceReset(\'' + escHtml(u.email).replace(/'/g,"\\'") + '\')" style="background:#fff3cd;color:#92400e;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:82px;text-align:center;">' + (u._forceReset ? '✓ Forced' : 'Force Reset') + '</button>' : '') +
+        (canEditThis && isAdmin && u.hasTOTP ? '<button onclick="adminClear2FA(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fef2f2;color:#b91c1c;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:74px;text-align:center;">Clear 2FA</button>' : '') +
         (canEditThis ? '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:52px;text-align:center;">Edit</button>' : '') +
         (canEditThis ? '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:62px;text-align:center;">Delete</button>' : '');
     }
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + products.join('') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + (typeof totpBadge !== 'undefined' ? totpBadge : '') + products.join('') + '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (displayTitle ? ' · ' + escHtml(displayTitle) : '') + '</div>' +
         supInfo +
       '</div>' +
@@ -7704,6 +7730,56 @@ function adminForceReset(email) {
       .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
       .catch(function() { alert('Network error'); });
   }
+}
+
+function adminClear2FA(userId, name) {
+  if (!confirm('Clear 2FA for "' + name + '"?\n\nThey will be required to set up their authenticator again on next login.')) return;
+  fetch('/api/admin/2fa/' + userId, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed to clear 2FA'); })
+    .catch(function() { alert('Network error'); });
+}
+
+function show2FASetup() {
+  var setupEl = document.getElementById('acc-2fa-setup');
+  if (setupEl.style.display !== 'none') { setupEl.style.display = 'none'; return; }
+  document.getElementById('acc-2fa-error').style.display = 'none';
+  document.getElementById('acc-2fa-ok').style.display = 'none';
+  document.getElementById('acc-2fa-code').value = '';
+  document.getElementById('acc-2fa-qr').style.display = 'none';
+  document.getElementById('acc-2fa-qr-loading').style.display = 'flex';
+  document.getElementById('acc-2fa-qr-loading').textContent = 'Loading…';
+  setupEl.style.display = 'block';
+  fetch('/api/2fa/new-secret')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.qrDataUrl) {
+        document.getElementById('acc-2fa-qr').src = d.qrDataUrl;
+        document.getElementById('acc-2fa-qr').style.display = 'block';
+        document.getElementById('acc-2fa-qr-loading').style.display = 'none';
+      } else {
+        document.getElementById('acc-2fa-qr-loading').textContent = 'Failed to load — try again.';
+      }
+    })
+    .catch(function() {
+      document.getElementById('acc-2fa-qr-loading').textContent = 'Failed to load — try again.';
+    });
+}
+
+function confirm2FASetup() {
+  var code   = document.getElementById('acc-2fa-code').value.trim();
+  var errEl  = document.getElementById('acc-2fa-error');
+  var okEl   = document.getElementById('acc-2fa-ok');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+  if (code.length !== 6) { errEl.textContent = 'Enter the 6-digit code.'; errEl.style.display = 'block'; return; }
+  fetch('/api/2fa/confirm', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ code: code }) })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      if (!res.ok) { errEl.textContent = res.data.error || 'Invalid code.'; errEl.style.display = 'block'; return; }
+      document.getElementById('acc-2fa-setup').style.display = 'none';
+      okEl.style.display = 'block';
+    });
 }
 
 function toggleAuditLog() {
