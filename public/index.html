@@ -11582,12 +11582,33 @@ function payOpenStatement(mk) {
   html+='<button onclick="payBackToList()" style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #d0dce8;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;flex-shrink:0;">← Statements</button>';
   html+='<div style="font-size:20px;font-weight:800;color:#003768;">'+escHtml(label)+'</div>';
   html+='</div>';
-  // Detail card
+  // Detail card (table stops after last commission row)
   html+='<div style="background:#fff;border:1px solid #e8ecf0;border-radius:14px;overflow:hidden;margin-bottom:16px;">';
   html+=payRenderMonthBody(m,_PAY_MONTHS);
   html+='</div>';
-  // Summary
-  html+=payRenderSummary(m);
+  // Standalone Total Pay box
+  var _rtf=m.files.find(function(f){return !f.error&&f.type==='rtf';});
+  var _tot=payMonthTotal(m);
+  html+='<div style="background:#003768;border-radius:14px;padding:20px 28px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">';
+  html+='<div><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Total Pay</div>';
+  html+='<div style="font-size:12px;color:rgba(255,255,255,.45);">net payments − adjustments</div></div>';
+  html+='<div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px;">'+(_tot<0?'−':'')+'£'+Math.abs(_tot).toFixed(2)+'</div>';
+  html+='</div>';
+  // Broker details + downloads
+  if (_rtf) {
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:0 6px 24px;">';
+    html+='<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+    if (_rtf.brokerName)    html+='<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(_rtf.brokerName)+'</strong></span>';
+    if (_rtf.statementDate) html+='<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(_rtf.statementDate)+'</strong></span>';
+    if (_rtf.bacsDate)      html+='<span style="font-size:12px;color:#6b7c8f;">BACS: <strong style="color:#003768;">'+escHtml(_rtf.bacsDate)+'</strong></span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    m.files.filter(function(f){return !f.error&&f.path;}).forEach(function(f){
+      var fn=f.filename||f.path.split('/').pop();
+      html+='<a href="/api/pay/file/'+f.path.split('/').map(encodeURIComponent).join('/')+'" download style="font-size:11px;font-weight:600;color:#003768;text-decoration:none;padding:4px 10px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:4px;"><span>↓</span> '+escHtml(fn)+'</a>';
+    });
+    html+='</div></div>';
+  }
   var detEl=document.getElementById('pay-detail');
   detEl.innerHTML=html;
   detEl.style.display='block';
@@ -11721,16 +11742,6 @@ function payRenderMonthBody(m, allMonths) {
           html += '</tbody>';
         });
 
-        // Payments totals in final tbody
-        html += '<tbody>';
-        html += '<tr style="background:#f2f6fa;border-top:2px solid #d5e0ec;">';
-        html += '<td style="padding:10px 22px;font-weight:700;color:#003768;font-size:12px;">Total Payments</td>';
-        html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#2c4a6e;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalGross!=null?'£'+rtfStmt.totalGross.toFixed(2):'')+'</td>';
-        html += '<td></td>';
-        html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(rtfStmt.totalNet!=null?'£'+rtfStmt.totalNet.toFixed(2):'')+'</td>';
-        html += '</tr>';
-        html += '</tbody>';
-
         // Adjustments (carryover etc.) — accordion, same pattern as payment rows
         var adjs = (rtfStmt.adjustments||[]).filter(function(a){ return a.gross !== 0 && a.gross != null; });
         if (adjs.length) {
@@ -11769,28 +11780,7 @@ function payRenderMonthBody(m, allMonths) {
           });
         }
 
-        // Total Pay — prominent dark row
-        html += '<tbody>';
-        html += '<tr style="background:#003768;border-top:2px solid #002850;">';
-        html += '<td style="padding:14px 22px;font-weight:800;color:#fff;font-size:14px;">Total Pay <span style="font-size:11px;font-weight:400;opacity:.65;">net payments − adjustments</span></td>';
-        html += '<td></td><td></td>';
-        html += '<td style="padding:14px 22px;text-align:right;font-size:22px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.5px;">£'+monthTotal.toFixed(2)+'</td>';
-        html += '</tr>';
-        html += '</tbody></table></div>';
-
-        // Footer: broker/dates + download buttons for all files
-        // (payToggleCat is defined below renderPayStatements)
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#fafbfc;border-top:1px solid #f0f4f8;flex-wrap:wrap;gap:8px;">';
-        html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
-        if (rtfStmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(rtfStmt.brokerName)+'</strong></span>';
-        if (rtfStmt.statementDate) html += '<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(rtfStmt.statementDate)+'</strong></span>';
-        if (rtfStmt.bacsDate) html += '<span style="font-size:12px;color:#6b7c8f;">BACS: <strong style="color:#003768;">'+escHtml(rtfStmt.bacsDate)+'</strong></span>';
-        html += '</div>';
-        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-        validFiles.forEach(function(f) {
-          if (f.path) { var fn=f.filename||f.path.split('/').pop(); html += '<a href="/api/pay/file/'+f.path.split('/').map(encodeURIComponent).join('/')+'" download style="font-size:11px;font-weight:600;color:#003768;text-decoration:none;padding:4px 10px;border:1.5px solid #d0dce8;border-radius:7px;background:#fff;display:inline-flex;align-items:center;gap:4px;"><span>↓</span> '+escHtml(fn)+'</a>'; }
-        });
-        html += '</div></div>';
+        html += '</table></div>';
 
       } else {
         // ── ORIGINAL MODE: show each file separately ──
