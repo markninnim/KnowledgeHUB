@@ -11704,7 +11704,7 @@ function payRenderMonthBody(m, allMonths) {
               var prevMonIdx = m.month === 0 ? 11 : m.month - 1;
               var prevYr     = m.month === 0 ? m.year - 1 : m.year;
               var prevLabel  = (MONTH_NAMES[prevMonIdx]||'') + ' ' + prevYr;
-              var prevM      = months.find(function(pm){ return pm.month === prevMonIdx && pm.year === prevYr; });
+              var prevM      = allMonths.find(function(pm){ return pm.month === prevMonIdx && pm.year === prevYr; });
               html += '<span style="color:#c0d4e8;margin-right:5px;">&#8627;</span>Debit originated in <strong>'+escHtml(prevLabel)+'</strong> and carried forward — offset against this month\'s net pay.';
               if (prevM) {
                 html += ' <button onclick="payOpenStatement('+prevM.key+')" style="margin-left:10px;font-size:11px;font-weight:600;color:#003768;background:#e8f0fa;border:1px solid #b8cfe8;border-radius:6px;padding:2px 9px;cursor:pointer;">View '+escHtml(prevLabel)+' ↗</button>';
