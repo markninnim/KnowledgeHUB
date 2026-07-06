@@ -1211,43 +1211,48 @@ html { height: 100%; }
       </div>
 
       <!-- Add entry form -->
+      <datalist id="cpdf-activity-list">
+        <option value="Watched webinar">
+        <option value="Attended BDM meeting">
+        <option value="Read documentation">
+        <option value="Attended sales meeting">
+        <option value="Completed online training">
+        <option value="Read industry article">
+        <option value="Attended team meeting">
+      </datalist>
+
       <div id="cpd-form" style="display:none;background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
-        <h3 style="color:#003768;font-size:15px;margin:0 0 18px;">Add CPD Entry</h3>
+        <h3 id="cpd-form-title" style="color:#003768;font-size:15px;margin:0 0 18px;">Add CPD Entry</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Activity *</label>
-            <select id="cpdf-activity" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
-              <option value="">Select activity…</option>
-              <option value="Watched webinar">Watched webinar</option>
-              <option value="Attended BDM meeting">Attended BDM meeting</option>
-              <option value="Read documentation">Read documentation</option>
-              <option value="Attended sales meeting">Attended sales meeting</option>
-            </select>
+          <div style="grid-column:1/-1;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Activity *</label>
+            <input id="cpdf-activity" list="cpdf-activity-list" placeholder="Select or type an activity…" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div style="grid-column:1/-1;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">What did you learn?</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">What did you learn?</label>
             <textarea id="cpdf-learned" rows="3" placeholder="Briefly describe the key things you took away from this activity…" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'"></textarea>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Date *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Date *</label>
             <input id="cpdf-date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Duration (minutes) *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Duration (minutes) *</label>
             <input id="cpdf-minutes" type="number" min="1" placeholder="60" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Category</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Category</label>
             <select id="cpdf-category" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
               <option value="Lender Update">Lender Update</option>
               <option value="Insurer Update">Insurer Update</option>
               <option value="Compliance">Compliance</option>
               <option value="Technical Knowledge">Technical Knowledge</option>
+              <option value="Financial News">Financial News</option>
               <option value="Other">Other</option>
             </select>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">CPD Type</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">CPD Type</label>
             <select id="cpdf-cpdtype" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
               <option value="Mortgage">Mortgage (15hr target)</option>
               <option value="Protection">Protection (15hr target)</option>
@@ -9716,6 +9721,7 @@ function showCpdSection(e) {
 var _cpdAllEntries = [];
 var _cpdPeriod = 'month';
 var _cpdTargets = { Mortgage: 900, Protection: 900 };
+var _cpdEditingId = null;
 
 function _periodTarget(annualTarget, period) {
   if (period === 'month')   return Math.round(annualTarget / 12);
@@ -9935,7 +9941,10 @@ function renderCpdEntries(entries) {
       '<td style="padding:11px 16px;"><span style="background:' + bg + ';color:' + tc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:#003768;text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
-      '<td style="padding:11px 16px;text-align:right;" onclick="event.stopPropagation()"><button onclick="deleteCpdEntry(\'' + e.id + '\')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color=\'#c00\'" onmouseout="this.style.color=\'#d1d5db\'">&#x2715;</button></td>' +
+      '<td style="padding:11px 16px;text-align:right;white-space:nowrap;" onclick="event.stopPropagation()">' +
+        '<button onclick="openCpdFormEdit(' + i + ')" style="background:none;border:none;color:#b0bec5;cursor:pointer;font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px;font-family:inherit;" onmouseover="this.style.color=\'#003768\'" onmouseout="this.style.color=\'#b0bec5\'">Edit</button>' +
+        '<button onclick="deleteCpdEntry(\'' + e.id + '\')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color=\'#c00\'" onmouseout="this.style.color=\'#d1d5db\'">&#x2715;</button>' +
+      '</td>' +
     '</tr>' + learnedRow;
   }).join('');
   el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
@@ -9962,12 +9971,14 @@ function toggleCpdRow(i) {
 }
 
 function openCpdForm() {
+  _cpdEditingId = null;
+  document.getElementById('cpd-form-title').textContent = 'Add CPD Entry';
   document.getElementById('cpdf-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('cpdf-minutes').value = '60';
   document.getElementById('cpdf-activity').value = '';
   document.getElementById('cpdf-learned').value = '';
+  document.getElementById('cpdf-category').value = 'Technical Knowledge';
   document.getElementById('cpd-form-error').style.display = 'none';
-  // Pre-select CPD type: default Mortgage unless user only sells Protection
   var user = _currentUser || {};
   var defaultType = (!user.sellsProtection || user.sellsMortgages || (!user.sellsMortgages && !user.sellsProtection)) ? 'Mortgage' : 'Protection';
   document.getElementById('cpdf-cpdtype').value = defaultType;
@@ -9975,7 +9986,24 @@ function openCpdForm() {
   document.getElementById('cpdf-activity').focus();
 }
 
+function openCpdFormEdit(idx) {
+  var e = _cpdAllEntries[idx];
+  if (!e) return;
+  _cpdEditingId = e.id;
+  document.getElementById('cpd-form-title').textContent = 'Edit CPD Entry';
+  document.getElementById('cpdf-activity').value = e.activity || '';
+  document.getElementById('cpdf-date').value     = e.date     || '';
+  document.getElementById('cpdf-minutes').value  = e.minutes  || 60;
+  document.getElementById('cpdf-category').value = e.category || 'Other';
+  document.getElementById('cpdf-cpdtype').value  = e.cpdType  || 'Mortgage';
+  document.getElementById('cpdf-learned').value  = e.learned  || '';
+  document.getElementById('cpd-form-error').style.display = 'none';
+  document.getElementById('cpd-form').style.display = 'block';
+  document.getElementById('cpd-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function closeCpdForm() {
+  _cpdEditingId = null;
   document.getElementById('cpd-form').style.display = 'none';
 }
 
@@ -9988,11 +10016,12 @@ function saveCpdEntry() {
   var category = document.getElementById('cpdf-category').value;
   var cpdType  = document.getElementById('cpdf-cpdtype').value;
   var learned  = document.getElementById('cpdf-learned').value.trim();
-  if (!activity) { errEl.textContent = 'Please select an activity.'; errEl.style.display = 'block'; return; }
+  if (!activity) { errEl.textContent = 'Please enter an activity.'; errEl.style.display = 'block'; return; }
   if (!date)     { errEl.textContent = 'Date is required.';          errEl.style.display = 'block'; return; }
   if (!minutes || minutes < 1) { errEl.textContent = 'Duration must be at least 1 minute.'; errEl.style.display = 'block'; return; }
-  fetch('/api/cpd', {
-    method: 'POST',
+  var isEdit = !!_cpdEditingId;
+  fetch(isEdit ? '/api/cpd/' + _cpdEditingId : '/api/cpd', {
+    method: isEdit ? 'PATCH' : 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category, cpdType, learned })
   }).then(function(r) { return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })

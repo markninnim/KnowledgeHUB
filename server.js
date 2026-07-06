@@ -1955,6 +1955,30 @@ app.delete('/api/cpd/:id', requireAuth, async (req, res) => {
   }
 });
 
+// PATCH /api/cpd/:id — edit own entry
+app.patch('/api/cpd/:id', requireAuth, async (req, res) => {
+  const email = req.session.user.email;
+  try {
+    const record = await cpdFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    if (record.fields[CPD_EMAIL] !== email) return res.status(403).json({ error: 'Forbidden' });
+    const { activity, date, minutes, category, cpdType, learned } = req.body;
+    const fields = {};
+    if (activity  !== undefined) fields[CPD_ACTIVITY] = activity;
+    if (date      !== undefined) fields[CPD_DATE]     = date;
+    if (minutes   !== undefined) fields[CPD_MINUTES]  = parseInt(minutes, 10);
+    if (category  !== undefined) fields[CPD_CATEGORY] = category;
+    if (cpdType   !== undefined) fields[CPD_TYPE]     = cpdType;
+    if (learned   !== undefined) fields[CPD_LEARNED]  = learned;
+    const updated = await cpdFetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
+    });
+    res.json(cpdRecordToEntry(updated));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/cpd/pdf — download CPD report as PDF
 app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
   const email  = req.session.user.email;
