@@ -5310,29 +5310,27 @@ function downloadBrokerLogoCanvas(btn) {
       img.crossOrigin = 'anonymous';
       img.onload = function() {
         var canvas = document.createElement('canvas');
-        canvas.width  = img.naturalWidth;
-        canvas.height = img.naturalHeight;
+        canvas.width  = img.naturalWidth;   // 2262
+        canvas.height = img.naturalHeight;  // 1029
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
 
-        // White-fill the "Broker Name" zone (matches original template)
-        ctx.fillStyle = 'rgba(255,255,255,1)';
-        ctx.fillRect(610, 220, 1052, 165);
+        // White-fill the full "Broker Name" placeholder zone (x=618-2160, y=170-428)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(618, 170, 1542, 258);
 
-        // Draw name in brand blue, auto-shrinking font
+        // Draw broker name in brand blue, auto-shrinking to fit
         ctx.fillStyle = 'rgb(0,55,104)';
-        var fontSize = 156;
-        var maxW = 1040;
+        ctx.textBaseline = 'middle';
+        var fontSize = 200;
+        var maxW = 1520;
         while (fontSize >= 60) {
           ctx.font = '800 ' + fontSize + 'px "Plus Jakarta Sans", "Arial Black", Arial, sans-serif';
           if (ctx.measureText(name).width <= maxW) break;
           fontSize -= 4;
         }
-        // Vertically centre text at y=307
-        var m = ctx.measureText(name);
-        var textH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-        var textY = 307 + m.actualBoundingBoxAscent - textH / 2;
-        ctx.fillText(name, 627, textY);
+        // Centre name vertically in the fill zone (zone centre y = 299)
+        ctx.fillText(name, 626, 299);
 
         var link = document.createElement('a');
         link.download = 'FPG-Broker-Logo-' + safeName + '.png';
