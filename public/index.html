@@ -9857,8 +9857,9 @@ function pzShowMainView(filterSup) {
     if (a==='Management') return -1; if (b==='Management') return 1;
     return a.localeCompare(b);
   });
-  // Company-wide rank by mortgage subs
-  var allBrokerNames = Object.keys(PZ_DATA).slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
+  // Company-wide rank by mortgage subs — only among active advisers (those in the supervisor map)
+  var activeNames = Object.keys(PZ_GROUPS).reduce(function(arr, sup){ return arr.concat(PZ_GROUPS[sup]); }, []);
+  var allBrokerNames = activeNames.slice().sort(function(a,b){ return ((PZ_DATA[b]||{}).ms||0)-((PZ_DATA[a]||{}).ms||0); });
   var rankMap = {};
   allBrokerNames.forEach(function(nm, i){ rankMap[nm] = i + 1; });
 
