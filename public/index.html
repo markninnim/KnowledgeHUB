@@ -10764,9 +10764,7 @@ function miRender(panel, d, filename) {
   var s25 = d.subs2025 || {}, s26 = d.subs2026 || {}, c = d.comp || {};
   var lifeMgStr = d.lifeMg != null ? (d.lifeMg * 100).toFixed(1) + '%' : null;
 
-  var h = '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;">';
-  h += '<h2 style="font-size:17px;font-weight:800;color:#003768;margin:0;">MI Dashboard</h2>';
-  h += '<span style="font-size:11px;color:#8a9bb0;">' + escHtml(filename) + '</span></div>';
+  var h = '';
 
   // Two-column grid: Submissions | Completions
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
