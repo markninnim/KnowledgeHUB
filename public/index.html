@@ -3775,7 +3775,7 @@ html { height: 100%; }
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
         <div>
           <div style="font-size:22px;font-weight:800;color:#003768;letter-spacing:-.3px;">Commission Statements</div>
-          <div style="font-size:13px;color:#9bafc0;margin-top:3px;">Protection trail · provider panel</div>
+          <div style="font-size:13px;color:#9bafc0;margin-top:3px;">Your online commission statement — use the download links below to save a detailed copy</div>
         </div>
       </div>
       <!-- States -->
@@ -11577,10 +11577,9 @@ function payOpenStatement(mk) {
   var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var label=(MONTH_NAMES[m.month]||'')+' '+m.year;
   var html='';
-  // Back + title
-  html+='<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">';
-  html+='<button onclick="payBackToList()" style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #d0dce8;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;flex-shrink:0;">← Statements</button>';
-  html+='<div style="font-size:20px;font-weight:800;color:#003768;">'+escHtml(label)+'</div>';
+  // Title
+  html+='<div style="margin-bottom:20px;">';
+  html+='<div style="font-size:20px;font-weight:800;color:#003768;margin-bottom:4px;">'+escHtml(label)+'</div>';
   html+='</div>';
   // Detail card (table stops after last commission row)
   html+='<div style="background:#fff;border:1px solid #e8ecf0;border-radius:14px;overflow:hidden;margin-bottom:16px;">';
