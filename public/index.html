@@ -777,7 +777,7 @@ html { height: 100%; }
         <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Deep personalisation is very powerful. Personalise this brochure with your client's name strategically printed throughout — your name and photo are added automatically. Simply enter their name and hit download.</p>
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
-          <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
+          <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #e8ecf0;border-radius:6px;font-size:12px;color:#1a2a3a;font-family:inherit;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
           <button id="pb-download-btn" onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;border:none;cursor:pointer;text-align:center;">&#8659; Download</button>
         </div>
       </div>
@@ -1996,7 +1996,7 @@ html { height: 100%; }
         </div>
         <div style="position:relative;flex-shrink:0;">
           <input id="mas-search" type="text" placeholder="Search standards..." oninput="masSearch(this.value)"
-            style="padding:8px 12px 8px 36px;border:1.5px solid #d1d9e0;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
+            style="padding:8px 12px 8px 36px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <button id="mas-share-btn" onclick="openShareModal('mas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:#003768;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
@@ -2838,7 +2838,7 @@ html { height: 100%; }
         </div>
         <div style="position:relative;flex-shrink:0;">
           <input id="pas-search" type="text" placeholder="Search standards..." oninput="pasSearch(this.value)"
-            style="padding:8px 12px 8px 36px;border:1.5px solid #d1d9e0;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
+            style="padding:8px 12px 8px 36px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <button id="pas-share-btn" onclick="openShareModal('pas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:#003768;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
@@ -3801,7 +3801,7 @@ html { height: 100%; }
       <select id="sv-transfer-select" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;margin-bottom:20px;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'"></select>
       <div id="sv-transfer-error" style="display:none;background:#fef2f2;color:#991b1b;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button onclick="closeSvTransfer()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #e8ecf0;background:#fff;color:#1a2a3a;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        <button onclick="closeSvTransfer()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;color:#6b7c8f;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
         <button onclick="confirmSvTransfer()" style="padding:9px 18px;border-radius:8px;border:none;background:#003768;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Transfer</button>
       </div>
     </div>
@@ -3993,7 +3993,7 @@ html { height: 100%; }
       <div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">Personal Details</div>
       <div style="display:grid;grid-template-columns:90px 1fr;gap:10px;margin-bottom:10px;">
         <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Salutation</label>
+          <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Salutation</label>
           <select id="acc-sal" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;background:#fff;">
             <option value="">—</option>
             <option value="Mr">Mr</option>
@@ -4003,42 +4003,42 @@ html { height: 100%; }
           </select>
         </div>
         <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">First Name</label>
+          <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">First Name</label>
           <input id="acc-first" type="text" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
         </div>
       </div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Last Name</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Last Name</label>
         <input id="acc-last" type="text" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Job Title</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Job Title</label>
         <input id="acc-jobtitle" type="text" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Mobile</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Mobile</label>
         <input id="acc-mobile" type="tel" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Landline</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Landline</label>
         <input id="acc-landline" type="tel" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:20px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Website</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Website</label>
         <input id="acc-website" type="url" placeholder="https://…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
 
       <div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-top:16px;border-top:1px solid #f0f2f5;">Change Password</div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Current Password</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Current Password</label>
         <input id="acc-current-password" type="password" placeholder="Your current password…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">New Password <span style="font-weight:400;">(min 12 characters)</span></label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">New Password <span style="font-weight:400;">(min 12 characters)</span></label>
         <input id="acc-password" type="password" placeholder="New password…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:20px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Confirm New Password</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#003768;margin-bottom:4px;">Confirm New Password</label>
         <input id="acc-password2" type="password" placeholder="Confirm…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
 
@@ -4091,15 +4091,15 @@ html { height: 100%; }
       <div style="font-size:13px;color:#6b7c8f;line-height:1.5;">Your administrator requires you to set a new password before continuing. Please choose a strong password (minimum 12 characters).</div>
     </div>
     <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Current Password</label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Current Password</label>
       <input id="fr-current" type="password" placeholder="Your current password" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     </div>
     <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">New Password</label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">New Password</label>
       <input id="fr-new" type="password" placeholder="Min 12 characters" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     </div>
     <div style="margin-bottom:18px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Confirm New Password</label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Confirm New Password</label>
       <input id="fr-confirm" type="password" placeholder="Confirm password" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     </div>
     <div id="fr-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:14px;"></div>
@@ -4186,38 +4186,38 @@ html { height: 100%; }
         <h3 id="user-form-title" style="color:#003768;font-size:15px;margin:0 0 20px;">Add New User</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div style="grid-column:1/-1;">
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Email Address *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Email Address *</label>
             <input id="uf-email" type="email" placeholder="email@example.com" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Password <span id="uf-pw-hint" style="font-weight:400;color:#6b7c8f;">(required for new user)</span></label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Password <span id="uf-pw-hint" style="font-weight:400;color:#6b7c8f;">(required for new user)</span></label>
             <input id="uf-password" type="password" placeholder="Set password" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Salutation</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Salutation</label>
             <select id="uf-salutation" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
               <option value="">—</option>
               <option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option>
             </select>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">First Name</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">First Name</label>
             <input id="uf-firstname" type="text" placeholder="First name" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Last Name</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Last Name</label>
             <input id="uf-lastname" type="text" placeholder="Last name" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Job Title</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Job Title</label>
             <input id="uf-jobtitle" type="text" placeholder="e.g. Financial Adviser" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Mobile</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Mobile</label>
             <input id="uf-mobile" type="text" placeholder="07xxx xxxxxx" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Landline</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Landline</label>
             <input id="uf-landline" type="text" placeholder="0xxxx xxxxxx" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div style="grid-column:1/-1;">
@@ -4274,7 +4274,7 @@ html { height: 100%; }
               <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Supervision</span>
               <div style="flex:1;height:1px;background:#e8ecf0;"></div>
             </div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Supervisor <span style="font-weight:400;color:#6b7c8f;">— leave blank if none</span></label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Supervisor <span style="font-weight:400;color:#6b7c8f;">— leave blank if none</span></label>
             <select id="uf-supervisoremail" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#1a2a3a;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
               <option value="">— No supervisor —</option>
             </select>
@@ -4337,19 +4337,19 @@ html { height: 100%; }
         <h4 id="lv-form-title" style="color:#003768;font-size:14px;margin:0 0 14px;">Add Video</h4>
         <div style="display:grid;gap:12px;">
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Title *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Title *</label>
             <input id="lvf-title" type="text" placeholder="e.g. Introduction to Protection" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Description</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Description</label>
             <input id="lvf-desc" type="text" placeholder="Short description (optional)" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">YouTube or Vimeo URL *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">YouTube or Vimeo URL *</label>
             <input id="lvf-url" type="url" placeholder="https://www.youtube.com/watch?v=…" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">CPD Type</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">CPD Type</label>
             <select id="lvf-cpdtype" style="width:100%;padding:8px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
               <option value="Mortgage">Mortgage</option>
               <option value="Protection">Protection</option>
@@ -4360,7 +4360,7 @@ html { height: 100%; }
         <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button onclick="saveLvVideo()" style="background:#003768;color:#fff;border:none;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Video</button>
-          <button onclick="cancelLvForm()" style="background:#e8ecf0;color:#6b7c8f;border:none;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="cancelLvForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
     </div>
@@ -4374,7 +4374,7 @@ html { height: 100%; }
       <button onclick="closeBrokerBrandModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;">&#x2715;</button>
     </div>
     <p style="font-size:13px;color:#6b7c8f;margin:0 0 20px;line-height:1.6;">Enter your name to replace "Broker Name" on the logo. Your personalised version will download as a PNG ready to use.</p>
-    <label style="display:block;font-size:13px;font-weight:600;color:#1a2a3a;margin-bottom:6px;">Your Name</label>
+    <label style="display:block;font-size:13px;font-weight:600;color:#003768;margin-bottom:6px;">Your Name</label>
     <input id="broker-name-input" type="text" placeholder="e.g. Mark Ninnim" style="width:100%;padding:10px 14px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:24px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     <button onclick="generateBrokerBrand()" style="display:block;width:100%;background:#003768;color:#fff;padding:11px 14px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Download My Logo</button>
   </div>
@@ -4416,11 +4416,11 @@ html { height: 100%; }
     </div>
     <div style="padding:22px 22px 20px;">
       <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:6px;">Maximum Loan Amount</label>
+        <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:6px;">Maximum Loan Amount</label>
         <input id="dip-amount" type="text" placeholder="e.g. 350000 or £350,000" style="width:100%;padding:10px 12px;border:1.5px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#1a2a3a;outline:none;box-sizing:border-box;" oninput="clearDipError()">
       </div>
       <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:6px;">Applicant Name(s)</label>
+        <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:6px;">Applicant Name(s)</label>
         <textarea id="dip-names" rows="3" placeholder="e.g. Mr John Smith&#10;Mrs Jane Smith" style="width:100%;padding:10px 12px;border:1.5px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#1a2a3a;outline:none;resize:vertical;box-sizing:border-box;" oninput="clearDipError()"></textarea>
       </div>
       <div style="background:#f0f4f8;border-radius:6px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#4a5a6a;line-height:1.5;">
@@ -4428,7 +4428,7 @@ html { height: 100%; }
       </div>
       <div id="dip-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:14px;"></div>
       <div style="display:flex;gap:10px;">
-        <button onclick="closeDipModal()" style="flex:1;padding:10px;background:#f0f4f8;color:#4a5a6a;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+        <button onclick="closeDipModal()" style="flex:1;padding:10px;background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
         <button id="dip-btn" onclick="generateDip()" style="flex:2;padding:10px;background:#003768;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Generate &amp; Download PDF</button>
       </div>
     </div>
@@ -4460,7 +4460,7 @@ html { height: 100%; }
     <!-- Search advisers -->
     <div style="padding:14px 24px 8px;">
       <input id="share-adviser-search" type="text" placeholder="Search advisers…" oninput="filterShareAdvisers(this.value)"
-        style="width:100%;padding:8px 12px;border:1.5px solid #d1d9e0;border-radius:7px;font-size:13px;box-sizing:border-box;outline:none;">
+        style="width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;box-sizing:border-box;outline:none;">
     </div>
     <!-- Adviser list -->
     <div id="share-adviser-list" style="flex:1;overflow-y:auto;padding:4px 24px 12px;">
@@ -4470,7 +4470,7 @@ html { height: 100%; }
     <div style="padding:14px 24px;border-top:1px solid #e8ecf0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <div id="share-selected-count" style="font-size:12px;color:#6b7c8f;">No advisers selected</div>
       <div style="display:flex;gap:8px;">
-        <button onclick="closeShareModal()" style="padding:8px 16px;border:1.5px solid #d1d9e0;border-radius:7px;font-size:13px;background:#fff;color:#3a4a5a;cursor:pointer;">Cancel</button>
+        <button onclick="closeShareModal()" style="padding:8px 16px;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;background:#fff;color:#6b7c8f;cursor:pointer;font-family:inherit;">Cancel</button>
         <button id="share-send-btn" onclick="sendShareEmail()" style="padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;background:#003768;color:#fff;cursor:pointer;">Send Email</button>
       </div>
     </div>
@@ -11084,21 +11084,21 @@ function pzFmt(n) {
     <p id="share-post-name" style="margin:0 0 20px;font-size:13px;color:#6b7c8f;"></p>
 
     <div style="margin-bottom:14px;">
-      <label style="display:block;font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:5px;">Recipient Email Address</label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Recipient Email Address</label>
       <input id="share-to-email" type="email" placeholder="colleague@example.com"
         style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;"
         onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     </div>
 
     <div style="margin-bottom:20px;">
-      <label style="display:block;font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:5px;">Post Copy (editable before sending)</label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Post Copy (editable before sending)</label>
       <textarea id="share-post-copy" rows="6"
         style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:vertical;outline:none;line-height:1.5;"
         onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'"></textarea>
     </div>
 
     <div id="share-image-preview" style="margin-bottom:16px;display:none;">
-      <label style="display:block;font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:6px;">Attachments <span id="share-attach-count" style="font-weight:400;color:#6b7c8f;"></span></label>
+      <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:6px;">Attachments <span id="share-attach-count" style="font-weight:400;color:#6b7c8f;"></span></label>
       <div id="share-thumbs" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
 
