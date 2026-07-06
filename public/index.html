@@ -3412,41 +3412,22 @@ html { height: 100%; }
   <!-- ── Selling Zone tab ──────────────────────────────────── -->
   <div id="tab-selling-zone" class="tab-pane">
 
-    <!-- Purchase Mortgage -->
-    <div id="opp-page-purchase" class="opp-page">
-      <div class="coming-soon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <h2>Purchase Mortgage</h2>
-        <p>Guidance, tools and resources for purchase mortgage cases will appear here. This section is coming soon.</p>
-      </div>
+    <!-- Card detail panel (shown when a card is clicked) -->
+    <div id="opp-card-detail" style="display:none;">
+      <div id="opp-card-detail-content"></div>
     </div>
+
+    <!-- Purchase Mortgage -->
+    <div id="opp-page-purchase" class="opp-page"></div>
 
     <!-- Remortgage -->
-    <div id="opp-page-remortgage" class="opp-page" style="display:none;">
-      <div class="coming-soon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        <h2>Remortgage</h2>
-        <p>Guidance, tools and resources for remortgage cases will appear here. This section is coming soon.</p>
-      </div>
-    </div>
+    <div id="opp-page-remortgage" class="opp-page" style="display:none;"></div>
 
     <!-- Lifetime Mortgage -->
-    <div id="opp-page-lifetime" class="opp-page" style="display:none;">
-      <div class="coming-soon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <h2>Lifetime Mortgage</h2>
-        <p>Guidance, tools and resources for lifetime mortgage cases will appear here. This section is coming soon.</p>
-      </div>
-    </div>
+    <div id="opp-page-lifetime" class="opp-page" style="display:none;"></div>
 
     <!-- FTB Mortgage -->
-    <div id="opp-page-ftb" class="opp-page" style="display:none;">
-      <div class="coming-soon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <h2>FTB Mortgage</h2>
-        <p>Guidance, tools and resources for first-time buyer cases will appear here. This section is coming soon.</p>
-      </div>
-    </div>
+    <div id="opp-page-ftb" class="opp-page" style="display:none;"></div>
 
   </div>
 
@@ -8379,8 +8360,10 @@ function filterBpActivity() {
     : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">No activity in this date range.</td></tr>';
 }
 
-// ── Opportunities page data ──────────────────────────────────
+// ── Opportunities ──────────────────────────────────────────
 var _OPP_INIT = false;
+var _OPP_CURRENT_PAGE = 'purchase';
+
 var OPP_TITLES = {
   purchase:   'Purchase Mortgage',
   remortgage: 'Remortgage',
@@ -8388,93 +8371,558 @@ var OPP_TITLES = {
   ftb:        'First-Time Buyer Mortgage'
 };
 
-var OPP_SECTIONS = [
-  {
-    label: 'The Mortgage',
-    cards: [
-      { title: 'Residential Mortgage',
-        desc: 'The cornerstone of every case. Finding the right mortgage — rate, term, lender and structure — that genuinely fits your client\'s circumstances and long-term goals.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' }
+var OPP_SUBTITLES = {
+  purchase:   'A purchase case is far more than a mortgage. Your client is making one of the biggest financial commitments of their life — and they are relying on your expertise to guide them through every part of it. From the day the offer is accepted there are products and services that protect their home, their income and their family. Every recommendation you make deepens the relationship, adds genuine value, and generates income for you and the business.',
+  remortgage: 'Remortgage clients are often focused purely on rate — but this is your opportunity to lift the conversation. A lot can change between fixed rate periods: income, family size, health, employment status. Use this touchpoint to review protection, check insurance is still adequate, and ensure estate planning reflects their current situation. A thorough remortgage review builds loyalty and uncovers needs that have been sitting unmet.',
+  lifetime:   'Lifetime mortgage clients are in a different financial chapter, with different priorities and pressures. They may want to release equity for home improvements, to help family, or to improve quality of life. This is a moment to think holistically about their estate, their care needs, their dependants and their legacy. Every product you introduce should be framed around their long-term security and wellbeing.',
+  ftb:        'First-time buyers are making the biggest financial decision of their lives — often without any frame of reference for what they actually need. They are relying on your expertise more than they realise. This is your opportunity to build a client for life: go beyond the mortgage, ensure they leave the process properly protected and legally prepared, and give them the confidence that everything is in place.'
+};
+
+var OPP_ICONS = {
+  residential: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  life:        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  ci:          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  ip:          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  fib:         '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  asu:         '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
+  childrens:   '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M8 14s1 1 4 1 4-1 4-1"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>',
+  buildings:   '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>',
+  pmi:         '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>',
+  wills:       '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  poa:         '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  conveyancing:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+  survey:      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/></svg>',
+  removals:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+  reviews:     '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+};
+
+var OPP_CARDS = {
+  residential: { title: 'Residential Mortgage',           desc: 'The cornerstone of every case. Finding the right mortgage — rate, term, lender and structure — that genuinely fits your client\'s circumstances and long-term goals.' },
+  life:        { title: 'Life Cover',                     desc: 'Ensures the mortgage is repaid and the family is protected if the worst happens. One of the most important conversations you can have with a client.' },
+  ci:          { title: 'Critical Illness Cover',         desc: 'Pays a lump sum on diagnosis of a serious illness. Vital cover that brings financial breathing space at an already difficult time.' },
+  ip:          { title: 'Income Protection',              desc: 'Replaces a portion of income if your client cannot work through illness or injury. Often overlooked, but arguably the most important protection of all.' },
+  fib:         { title: 'Family Income Benefit',          desc: 'Provides a regular monthly income to the family rather than a lump sum — cost-effective and practical protection for dependants long term.' },
+  asu:         { title: 'Accident, Sickness & Unemployment', desc: 'Short-term cover that protects mortgage payments if a client is off work unexpectedly. Also covers redundancy — something income protection does not.' },
+  childrens:   { title: "Children's Cover",               desc: 'Extends critical illness protection to children at minimal additional cost. Often included as an add-on — always worth asking about and explaining.' },
+  buildings:   { title: 'Buildings & Contents Insurance', desc: 'Required by most mortgage lenders at exchange. Making sure the cover is right for the new home from day one is part of a complete service.' },
+  pmi:         { title: 'Private Medical Insurance',      desc: 'Access to private healthcare with shorter waiting times and greater choice of consultant. Increasingly popular, particularly with self-employed clients.' },
+  wills:       { title: 'Will Writing',                   desc: 'A mortgage is often the moment clients first think seriously about their estate. A will ensures the home and assets reach exactly the right people.' },
+  poa:         { title: 'Power of Attorney',              desc: 'Protects clients and their families if they lose capacity to manage their affairs. Simple to arrange alongside a mortgage and far too often overlooked.' },
+  conveyancing:{ title: 'Conveyancing',                   desc: 'A smooth legal process is essential for any property transaction. Connecting clients with a trusted conveyancer is a valued part of the full service.' },
+  survey:      { title: 'Survey',                         desc: 'Helps clients understand exactly what they\'re buying before they commit. The right survey protects them from expensive surprises and builds trust.' },
+  removals:    { title: 'Removals',                       desc: 'A referral to a trusted removal company rounds off the client experience and keeps you front of mind long after completion day.' },
+  reviews:     { title: 'Reviews & Referrals',            desc: 'The most powerful source of new business. Ask every client to leave a Google review and refer a friend — the best time to ask is at offer stage.' }
+};
+
+var OPP_PAGE_SECTIONS = {
+  purchase:   ['mortgage','protection','insurance','health','legal','move','referrals'],
+  remortgage: ['mortgage','protection','insurance','health','legal','referrals'],
+  lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
+  ftb:        ['mortgage','protection','insurance','health','legal','move','referrals']
+};
+
+var OPP_SECTIONS_DEF = {
+  mortgage:   { label: 'The Mortgage',           cards: ['residential'] },
+  protection: { label: 'Protection',             cards: ['life','ci','ip','fib','asu','childrens'] },
+  insurance:  { label: 'Home Insurance',         cards: ['buildings'] },
+  health:     { label: 'Health',                 cards: ['pmi'] },
+  legal:      { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
+  move:       { label: 'The Move',               cards: ['survey','removals'] },
+  referrals:  { label: 'Referrals',              cards: ['reviews'] }
+};
+
+// ── Card detail content ──────────────────────────────────────
+var OPP_DETAIL = {
+  residential: {
+    overview: 'The mortgage is the foundation, but the way you approach it shapes the entire client relationship. Your role is not just to find the best rate — it\'s to structure a mortgage that genuinely fits your client\'s life, now and in the years ahead.',
+    sections: [
+      { heading: 'Getting the structure right', points: [
+        'Consider the right term — shorter terms mean higher payments but less total interest; longer terms free up cash flow for protection and savings',
+        'Weigh up repayment versus interest-only and the implications of each over the long term',
+        'Match the fix length to your client\'s plans — a 2-year fix for someone likely to move is very different from a 5-year fix for someone settling in',
+        'Think about offset mortgages for clients with savings — they can reduce interest while keeping full access to their money',
+        'For self-employed clients, understand which lenders use SA302s, accounts or accountant\'s certificates and which will give the best outcome'
+      ]},
+      { heading: 'Key lender considerations', points: [
+        'Know your client\'s credit profile before you source — soft-search tools can save wasted applications and credit footprint',
+        'For complex income (bonus, commission, overtime) match the lender to how they assess that income',
+        'Some lenders are more flexible on property type — flats above commercial, ex-local authority, short leaseholds',
+        'Think about portability if the client plans to move — some products allow the mortgage to move with them'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"What\'s most important to you — certainty of payments, or flexibility?"',
+        '"Are you planning any major changes in the next few years — family, career, moving?"',
+        '"Do you have savings sitting in a current account? We could potentially use those to reduce your interest cost."'
+      ]},
+      { heading: 'Common objections', items: [
+        { q: '"I just want the lowest rate."', a: 'Rate is important, but it\'s one part of the picture. A lower rate with high early repayment charges, no portability, or a lender that won\'t work with your income structure could cost you more overall. Let\'s find the best fit, not just the best headline number.' },
+        { q: '"My bank already gave me a quote."', a: 'That\'s a good starting point — but your bank can only offer their own products. I have access to the whole market, so we can see whether they\'re genuinely the best option or just the most convenient.' }
+      ]}
     ]
   },
-  {
-    label: 'Protection',
-    cards: [
-      { title: 'Life Cover',
-        desc: 'Ensures the mortgage is repaid and the family is protected if the worst happens. One of the most important conversations you can have with a client.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' },
-      { title: 'Critical Illness Cover',
-        desc: 'Pays a lump sum if your client is diagnosed with a serious illness. Vital protection that brings financial breathing space at an already difficult time.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' },
-      { title: 'Income Protection',
-        desc: 'Replaces a portion of your client\'s income if they\'re unable to work through illness or injury. Often overlooked, but arguably the most important protection of all.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"/></svg>' },
-      { title: 'Family Income Benefit',
-        desc: 'Provides a regular monthly income to a client\'s family rather than a lump sum — a cost-effective and practical way to protect dependants over the long term.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
+  life: {
+    overview: 'Life cover is often the first protection conversation, and the most natural one to have. If your client has a mortgage and a family, the need is clear. Your job is to ensure the cover is the right type, the right amount and properly structured.',
+    sections: [
+      { heading: 'Types of life cover', points: [
+        'Decreasing term: the sum assured reduces in line with a repayment mortgage — cheapest option, suitable for covering the outstanding balance',
+        'Level term: fixed lump sum throughout the term — better for clients wanting to leave more than just the mortgage paid off',
+        'Whole of life: no fixed term, builds a cash value — higher cost but useful for estate planning and IHT purposes',
+        'Joint vs dual life: joint pays on first death then stops; dual pays out twice — usually recommend dual for couples with separate needs and separate mortgages'
+      ]},
+      { heading: 'How much cover?', points: [
+        'At minimum: enough to clear the outstanding mortgage',
+        'Best practice: the mortgage, plus income replacement for 12–24 months, plus any other outstanding debts',
+        'For clients with children: consider their financial dependency and when that ends — not just when the mortgage ends'
+      ]},
+      { heading: 'Structuring the policy', points: [
+        'Always ask whether they want to write the policy in trust — keeps the payout outside the estate and avoids potential IHT on the proceeds',
+        'A policy in trust also speeds up the claim — no need to wait for probate, meaning the family gets paid faster',
+        'Consider indexation to prevent the real value of cover eroding with inflation over time'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If something happened to you tomorrow, what would happen to the mortgage — and who would have to deal with it?"',
+        '"Do you have any life cover already? It might be through work — but it\'s worth checking how much, and whether it follows you if you change jobs."',
+        '"Would your partner be able to keep the home on their income alone?"'
+      ]},
+      { heading: 'Common objections', items: [
+        { q: '"I\'ve got it through work."', a: 'That\'s a good start — but most employer schemes are 2x or 4x salary, which may not be enough to cover the mortgage. And if you leave that job, the cover disappears. Let\'s check what you have and make sure there\'s no gap.' },
+        { q: '"I\'m young and healthy — I don\'t need it yet."', a: 'That\'s actually the best time to get it. Premiums are based on your age and health at application — the longer you wait, the more expensive it becomes. Getting it now locks in a lower rate for the full term.' }
+      ]}
     ]
   },
-  {
-    label: 'Home Insurance',
-    cards: [
-      { title: 'Buildings & Contents Insurance',
-        desc: 'A legal requirement for most mortgage lenders and essential for your client\'s peace of mind. Make sure the cover is right for their new home from day one.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-      { title: 'Accident, Sickness & Unemployment',
-        desc: 'Short-term cover that protects mortgage payments if your client is off work unexpectedly. Quick to arrange and genuinely valuable, especially for employed clients.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' }
+  ci: {
+    overview: 'Critical illness cover is one of the most misunderstood and most valuable products in the market. A serious diagnosis doesn\'t just threaten your client\'s life — it threatens their income, their savings and their home. CI cover is what keeps those things intact when everything else is under pressure.',
+    sections: [
+      { heading: 'What it covers', points: [
+        'Pays a tax-free lump sum on diagnosis of a specified condition — most policies cover 40–60+ conditions',
+        'Core conditions across all main insurers: cancer, heart attack, stroke, multiple sclerosis, total permanent disability',
+        'Some policies include additional conditions and partial payments for less severe diagnoses — worth comparing definitions, not just premiums',
+        'Combined life and CI (Life or Earlier CI) is the most common structure — pays out on whichever happens first'
+      ]},
+      { heading: 'Standalone vs combined', points: [
+        'Combined life and CI is more affordable and simpler — good for straightforward mortgage protection',
+        'Standalone CI alongside a separate life policy gives more control over amounts — useful where different sums assured are needed',
+        'For clients with children, many policies include children\'s CI as a free add-on — always highlight this'
+      ]},
+      { heading: 'Policy definitions matter', points: [
+        'Not all CI policies are equal — a cheaper premium can mean narrower definitions of what qualifies as a valid claim',
+        'Look at full definitions for cancer (some exclude early-stage), heart attack (some require specific ECG changes) and stroke',
+        'ABI model definitions set a minimum standard but the best policies go further — know the differences before you recommend'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If you were diagnosed with cancer tomorrow and couldn\'t work for six months, how would you manage financially?"',
+        '"Did you know that statistically 1 in 2 people will get cancer at some point? CI cover means a diagnosis doesn\'t also become a financial crisis."',
+        '"Have you thought about what you\'d want to do with a lump sum — would clearing the mortgage be the priority?"'
+      ]},
+      { heading: 'Common objections', items: [
+        { q: '"It\'s too expensive."', a: 'CI can seem more expensive than life cover — but you\'re statistically far more likely to be seriously ill during a mortgage term than to die during it. It\'s the protection people are more likely to actually use.' },
+        { q: '"Insurance companies don\'t pay claims."', a: 'ABI data shows that across the industry, insurers pay over 90% of CI claims — and the best providers pay even higher. The key is making sure the policy definitions are right, which is exactly what I do.' }
+      ]}
     ]
   },
-  {
-    label: 'Health',
-    cards: [
-      { title: 'Private Medical Insurance',
-        desc: 'Access to private healthcare when it matters most — shorter waiting times and greater choice of consultant. Increasingly popular, particularly with self-employed clients.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/><circle cx="12" cy="12" r="10" stroke-dasharray="4 4"/></svg>' }
+  ip: {
+    overview: 'Income protection is arguably the most important protection product of all — and the one most often left out. Clients can survive without life cover if they stay healthy, and without CI cover if they avoid serious illness. But they cannot survive financially without income. Long-term IP replaces that income for as long as they are unable to work.',
+    sections: [
+      { heading: 'How it works', points: [
+        'Pays a monthly benefit — usually 50–70% of gross income — if the client cannot work due to illness or injury',
+        'The deferred period (the waiting time before the policy pays) is typically 1, 3, 6 or 12 months — the longer the wait, the lower the premium',
+        'Policies run until a set age (usually retirement age) or until the client returns to work, whichever comes first',
+        'Benefits are paid free of income tax, so a 60% replacement rate feels much closer to full take-home pay'
+      ]},
+      { heading: 'Definition of incapacity — this is critical', points: [
+        '"Own occupation": pays if the client cannot do their own specific job — the gold standard, particularly for professional occupations',
+        '"Any occupation": only pays if the client cannot do any work at all — far more restrictive, and much harder to claim on',
+        '"Suited occupation": falls somewhere between the two — pays if the client cannot do a job suited to their skills and experience',
+        'Always match the definition to the client\'s occupation and the importance of being able to do specifically their own role'
+      ]},
+      { heading: 'Matching deferred periods to circumstances', points: [
+        'Employed with sick pay: align the deferred period with when employer sick pay runs out (typically 3 or 6 months)',
+        'Self-employed with no sick pay: shorter deferred periods (4 or 8 weeks) are worth the extra cost',
+        'Significant savings: a longer deferred period reduces the premium while savings act as a short-term buffer'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If you couldn\'t work for 12 months, what would happen? Would your employer still pay you — and for how long?"',
+        '"Most people can survive a month or two on savings. But what about a year? Or three years?"',
+        '"State benefits are a safety net, not an income replacement. They\'re designed around survival, not maintaining a lifestyle."'
+      ]},
+      { heading: 'Common objections', items: [
+        { q: '"I\'ll just rely on savings."', a: 'That works short-term, but a serious illness can mean years off work. The average IP claim lasts 6–8 years. Savings don\'t stretch that far — IP does, for as long as needed.' },
+        { q: '"My employer has sick pay."', a: 'Great — how long does that last? Most employers pay full salary for a limited period, then statutory sick pay at around £116 a week, then nothing. IP takes over when employer cover runs out and carries on from there.' }
+      ]}
     ]
   },
-  {
-    label: 'Legal & Estate Planning',
-    cards: [
-      { title: 'Will Writing',
-        desc: 'A mortgage is often the moment clients first think seriously about their estate. A will ensures their home and assets go to exactly the right people.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' },
-      { title: 'Power of Attorney',
-        desc: 'Protects your client and their family if they ever lose capacity to manage their affairs. Simple to arrange alongside a mortgage and far too often overlooked.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
-      { title: 'Conveyancing',
-        desc: 'A smooth legal process is essential for any property transaction. Connecting clients with a trusted conveyancer is a practical and valued part of the full service.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>' }
+  fib: {
+    overview: 'Family income benefit is a simple, cost-effective alternative to a lump sum life policy. Instead of paying out a single sum on death, it pays a regular monthly income to the family for the rest of the policy term. For clients focused on replacing their monthly income rather than creating a lump sum, it is often the right solution.',
+    sections: [
+      { heading: 'How it works', points: [
+        'On death within the term, the policy pays a monthly (or annual) income until the policy end date',
+        'The total payout reduces over time — someone who dies in year 3 of a 25-year policy receives more than someone who dies in year 20',
+        'This mirrors how financial need actually works — a family with young children needs income support for longer',
+        'Premiums are typically lower than a level term policy for the same initial benefit amount'
+      ]},
+      { heading: 'When FIB is the right choice', points: [
+        'Clients focused on maintaining the family\'s monthly standard of living rather than creating a lump sum',
+        'Where one partner earns significantly more and the other would need to reduce hours or cover childcare on death',
+        'Clients who are concerned about managing a large lump sum wisely — a regular income removes that decision',
+        'FIB pairs well with a separate decreasing term to cover the mortgage — together they provide full coverage at a lower combined cost'
+      ]},
+      { heading: 'Trust and tax considerations', points: [
+        'Can be written in trust like any life policy — keeps the benefit outside the estate for IHT purposes',
+        'A discretionary trust avoids potential income tax complications for the beneficiaries on regular payments',
+        'Reassure clients that life insurance income paid from a trust is not subject to income tax'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If you weren\'t here, what would your family need each month to maintain their lifestyle?"',
+        '"Would a regular monthly income be more useful to your partner than a lump sum they\'d have to invest and manage?"',
+        '"We could cover the mortgage separately and the family income separately — often for less than one combined policy."'
+      ]}
     ]
   },
-  {
-    label: 'The Move',
-    cards: [
-      { title: 'Survey',
-        desc: 'Help clients understand exactly what they\'re buying before they commit. The right survey protects them from expensive surprises and builds trust in your advice.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="19" x2="11" y2="19"/></svg>' },
-      { title: 'Removals',
-        desc: 'The final piece of the puzzle. A referral to a trusted removal company rounds off your client\'s experience and keeps you front of mind long after completion day.',
-        icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' }
+  asu: {
+    overview: 'Accident, sickness and unemployment cover provides short-term protection for clients who become unable to work or lose their job through no fault of their own. While income protection covers long-term incapacity, ASU fills a different gap: the short term, and redundancy — something IP never covers.',
+    sections: [
+      { heading: 'What it covers', points: [
+        'Accident and sickness: pays a monthly benefit — typically 50–65% of gross income or a specified mortgage payment amount — if the client cannot work through illness or injury',
+        'Unemployment: pays the same benefit if the client is made redundant — the key differentiator from income protection',
+        'Most policies have a deferred period of 30–60 days before paying',
+        'Benefits are paid for a maximum of 12 or 24 months per claim'
+      ]},
+      { heading: 'Who it is most suited to', points: [
+        'Employed clients with limited sick pay and genuine exposure to redundancy risk',
+        'Clients in sectors with higher redundancy exposure — retail, hospitality, construction, financial services',
+        'Clients who cannot get standard income protection due to their occupation or health history — ASU underwriting is simpler',
+        'Clients who want meaningful short-term cover without the longer-term commitment of a full IP policy'
+      ]},
+      { heading: 'Pairing ASU with income protection', points: [
+        'The ideal setup: ASU for the first 12–24 months covering accident, sickness and redundancy; then IP taking over for long-term incapacity',
+        'This combination gives comprehensive cover for both short and long-term scenarios at a reasonable combined premium',
+        'Check the overlap: the deferred period on IP should align with when ASU ends, to avoid any gap in cover'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If your company made you redundant next month, how long could you cover your mortgage payments before it became a real problem?"',
+        '"Your income protection covers long-term illness — but it doesn\'t cover redundancy. ASU fills that gap."',
+        '"The underwriting is very straightforward and we can often get this in place quickly alongside the mortgage."'
+      ]}
+    ]
+  },
+  childrens: {
+    overview: 'Children\'s critical illness cover extends protection to a client\'s children — typically as an add-on to an adult CI policy. A serious diagnosis in a child has profound financial consequences: not just medically, but in terms of a parent\'s ability to work, travel and maintain their income. This cover is often far cheaper than clients expect and far more valuable than they realise.',
+    sections: [
+      { heading: 'How it works', points: [
+        'Usually added to a parent\'s own critical illness policy at a small additional premium — sometimes included free as standard',
+        'Pays a lump sum — typically 25–50% of the parent\'s CI sum assured up to a set maximum — on diagnosis of a covered condition',
+        'Children are usually covered from birth to age 18 or 21, including natural children, stepchildren and legally adopted children',
+        'Always check whether children\'s CI is included in the standard policy before adding it separately — some insurers include it at no extra cost'
+      ]},
+      { heading: 'Conditions typically covered', points: [
+        'Core conditions mirror adult CI: cancer, heart conditions, brain tumours, serious bacterial meningitis',
+        'Many policies also include child-specific conditions such as cerebral palsy, cystic fibrosis, Type 1 diabetes',
+        'Some policies provide enhanced cover for conditions like autism spectrum disorder or conditions detected at birth — check definitions carefully as they vary significantly between providers'
+      ]},
+      { heading: 'The financial reality', points: [
+        'A child\'s serious illness does not just create medical costs — it often means a parent taking extended leave from work to care for them',
+        'Hospital visits, home adaptations, specialist equipment, private therapies — costs accumulate quickly and over an extended period',
+        'The lump sum covers the immediate financial shock and allows the parent to focus entirely on the child\'s recovery without financial pressure'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Are you aware that your CI policy can include cover for your children? In some cases it\'s included at no extra cost."',
+        '"If your child was seriously ill and you needed to take extended time off to care for them, what would that mean financially?"',
+        '"The additional premium for children\'s cover is usually very small — I\'ll show you the difference when we look at the quote."'
+      ]}
+    ]
+  },
+  buildings: {
+    overview: 'Buildings and contents insurance is a mandatory requirement for any mortgage — most lenders require buildings cover to be in place at exchange. But beyond the legal requirement, it is a genuine client need and an opportunity to ensure they are properly covered from the moment they get the keys.',
+    sections: [
+      { heading: 'Buildings insurance', points: [
+        'Covers the structure of the property against damage — fire, flood, storm, subsidence, escape of water',
+        'The sum insured should reflect the rebuild cost, not the market value — these can be very different figures',
+        'Most mortgage lenders are on approved insurer panels — you can refer clients to a suitable insurer rather than letting them use the lender\'s own typically overpriced product',
+        'Ask about the property type: non-standard construction such as timber frame, thatched roofs or listed buildings needs specialist cover'
+      ]},
+      { heading: 'Contents insurance', points: [
+        'Often bundled with buildings — more cost-effective than separate policies and simpler to manage at claim time',
+        'Clients regularly underestimate the value of their contents — a useful exercise is to mentally walk through every room and list what they would need to replace',
+        'Check whether high-value items such as jewellery, electronics or bicycles need to be individually specified on the policy',
+        'Single article limits and accidental damage cover are commonly overlooked additions worth discussing'
+      ]},
+      { heading: 'Key questions to ask', points: [
+        'Is the property leasehold? Buildings cover may already be included in the service charge — they may only need contents',
+        'Does the client work from home? Standard policies often exclude business equipment or third-party liability arising from home working',
+        'Do they have a home alarm or approved locks? Discounts may apply and some policies require these to be in place',
+        'Are there any previous claims that need to be declared on the new policy?'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Most mortgage lenders require buildings insurance to be in place at exchange — let\'s make sure we sort this in good time."',
+        '"Your lender may offer their own insurance but you don\'t have to use it — and you can usually get better cover at a better price elsewhere."',
+        '"Have you thought about how much your belongings are actually worth? People regularly underinsure and get a nasty surprise at claim time."'
+      ]}
+    ]
+  },
+  pmi: {
+    overview: 'Private medical insurance is one of the fastest-growing areas of financial protection. As NHS waiting times continue to lengthen, more clients are recognising the value of fast access to specialist diagnosis and treatment. The mortgage conversation is an ideal time to introduce it — especially for self-employed clients for whom time off is directly linked to lost income.',
+    sections: [
+      { heading: 'What PMI provides', points: [
+        'Access to private hospitals and consultants for diagnosis and treatment of acute (curable) conditions',
+        'Faster referrals — bypassing NHS waiting lists that can run to months or years for specialist appointments or procedures',
+        'Choice of hospital, consultant and in many cases timing of procedures — particularly valuable for surgery',
+        'Most policies cover inpatient treatment; outpatient cover including consultations and diagnostic scans can be added at additional cost'
+      ]},
+      { heading: 'What it does not cover', points: [
+        'Chronic conditions that are pre-existing at the time of application — a critical point to explain clearly at outset',
+        'Emergency A&E treatment — this remains on the NHS regardless of the policy',
+        'Cosmetic or elective procedures that are not medically necessary',
+        'Some policies exclude or limit mental health treatment — worth checking where this matters to the client'
+      ]},
+      { heading: 'Who benefits most', points: [
+        'Self-employed clients: fast diagnosis and treatment means less time off work and less lost income',
+        'Families with young children: rapid access to paediatric specialists for diagnostic appointments',
+        'Clients approaching middle age: the likelihood of needing specialist treatment increases, and premiums are still manageable',
+        'Business owners: PMI can be provided through a company as a business expense and a valuable staff benefit'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Are you aware of current NHS waiting times for specialist referrals? For some conditions it\'s over a year — PMI gets you seen within days."',
+        '"If you were diagnosed with something that needed investigation, would you want to control the timing and who treats you?"',
+        '"For self-employed clients, being on a waiting list for six months can cost far more in lost work than the annual insurance premium."'
+      ]}
+    ]
+  },
+  wills: {
+    overview: 'A mortgage is one of the most significant triggers for writing a will — and yet most people never get around to it. Without a will, the law determines what happens to the estate, and it often does not reflect what your client would actually want. The property your client is about to buy may be the most valuable asset they will ever own. Make sure it goes to the right people.',
+    sections: [
+      { heading: 'Why a will is urgent for property owners', points: [
+        'Without a will, intestacy rules apply — and these can produce results the client would never have chosen, especially for unmarried couples',
+        'Unmarried partners have no automatic right to inherit under intestacy — the property could pass to parents or siblings rather than to the partner who lives there',
+        'Even for married clients, intestacy rules may not reflect their wishes, particularly where there are children from previous relationships',
+        'A will can ensure the property passes directly to a surviving partner, reducing the time and cost of probate significantly'
+      ]},
+      { heading: 'Key considerations for property owners', points: [
+        'How is the property held? Joint tenants means it passes automatically on death; tenants in common means each share is dealt with through the will separately',
+        'Clients purchasing together but not married should consider both a will and the basis of ownership as separate but related decisions',
+        'A trust within a will — a life interest trust or property protection trust — can protect the surviving partner\'s right to remain in the home while protecting the deceased\'s share for children from a previous relationship',
+        'Executors should be chosen carefully as they handle the practical administration of the estate at what is always a difficult time'
+      ]},
+      { heading: 'Inheritance tax considerations', points: [
+        'Estates over £325,000 (or up to £500,000 if the residence nil rate band applies) may face IHT at 40% on the excess',
+        'Married couples and civil partners can transfer their unused nil rate band to the surviving partner, effectively doubling the threshold',
+        'Lifetime gifting, trusts and charitable bequests can all reduce the eventual IHT liability — a will is the foundation for all of this planning'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"You\'re about to own a property — do you have a will that covers what should happen to it?"',
+        '"If you\'re buying together and you\'re not married, without a will your partner may not automatically inherit your share."',
+        '"Writing a will is something most people put off and then wish they\'d done sooner. It doesn\'t take long and it gives real peace of mind."'
+      ]}
+    ]
+  },
+  poa: {
+    overview: 'A Lasting Power of Attorney allows a client to appoint someone they trust to manage their affairs if they lose the mental capacity to do so themselves. Without one, even a spouse or adult child has no legal authority to access bank accounts, sell the property or make financial decisions on the person\'s behalf. It is one of the most overlooked but most important documents a family can hold.',
+    sections: [
+      { heading: 'Two types of LPA', points: [
+        'Property and Financial Affairs LPA: covers decisions about money, property, investments and financial matters. Can be used immediately with the person\'s permission, or only once they lose capacity',
+        'Health and Welfare LPA: covers decisions about medical treatment, care arrangements and daily welfare. Can only be used when the person has actually lost capacity',
+        'Both are recommended — doing them together at the same time saves cost and is far simpler than returning to do the second one later'
+      ]},
+      { heading: 'Why it must be done before it is needed', points: [
+        'An LPA can only be created while the person has mental capacity — once they lose capacity, it is too late to make one',
+        'Without an LPA, the family would need to apply to the Court of Protection for a Deputyship — a process that takes months, costs significantly more and involves ongoing court oversight',
+        'Even where the family know exactly what the person would want, they have no legal authority to act without an LPA or Deputyship order'
+      ]},
+      { heading: 'Registration and timing', points: [
+        'LPAs must be registered with the Office of the Public Guardian before they can be used — this currently takes several months from submission',
+        'Registration costs £82 per LPA, reduced or waived for those on low income',
+        'The sooner it is done the better — there is no urgency until there suddenly is, and by that point it is often too late'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Have you thought about who would manage your finances if you were ever unable to — through illness or an accident?"',
+        '"A lot of people assume a spouse can automatically access accounts and make decisions. Without an LPA they actually cannot."',
+        '"It is the kind of thing you hope you never need — but if you do need it and you have not got it, the alternative is very stressful and very expensive for your family."'
+      ]}
+    ]
+  },
+  conveyancing: {
+    overview: 'Conveyancing is the legal process that transfers ownership of a property. It runs in parallel with the mortgage from the moment an offer is accepted. A smooth, well-managed legal process can be the difference between a completion that runs on time and one that collapses. Connecting clients with a reliable conveyancer is a practical and genuinely valued service.',
+    sections: [
+      { heading: 'What the conveyancer does', points: [
+        'Conducts searches — local authority, environmental, drainage, chancel repair — to identify any issues with the property or its location',
+        'Reviews the title deeds and flags any unusual covenants, rights of way, restrictions or disputes',
+        'Raises enquiries with the seller\'s solicitor and ensures all questions are answered satisfactorily before exchange of contracts',
+        'Manages the exchange and completion — ensuring funds are transferred correctly and the client gets the keys on time',
+        'Registers the new ownership and mortgage charge at the Land Registry after completion'
+      ]},
+      { heading: 'Timescales', points: [
+        'Average time from offer accepted to completion is 10–12 weeks, though complex cases or long chains can take longer',
+        'Delays most commonly come from slow searches, unanswered enquiries, chain issues and mortgage offer delays',
+        'A proactive, responsive conveyancer can significantly reduce delays and keep the client informed throughout — this is exactly why the right referral matters'
+      ]},
+      { heading: 'What to look for', points: [
+        'Both solicitors and licensed conveyancers are regulated and qualified — the distinction matters less than the firm\'s reputation and communication',
+        'Check that any recommended firm is on the mortgage lender\'s approved panel before making the introduction',
+        'Avoid firms that compete purely on price — cheaper often means slower, and less proactive communication at the worst moments'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Have you thought about who will handle the legal side? I can recommend someone I know will keep things moving and keep you informed."',
+        '"The legal process starts as soon as your offer is accepted — the sooner your conveyancer is instructed, the sooner the searches can go in."',
+        '"A good conveyancer chases the other side proactively. A slow one can hold up the whole chain — yours or everyone else\'s."'
+      ]}
+    ]
+  },
+  survey: {
+    overview: 'A mortgage valuation tells the lender the property is worth what the client is paying. It tells the client almost nothing about the actual condition of the building. Recommending the right survey is an honest and practical service — one that protects clients from buying a property with significant defects they were never aware of.',
+    sections: [
+      { heading: 'Three levels of survey', points: [
+        'RICS Level 1 (Condition Report): a brief traffic-light assessment of condition. Suitable only for modern, well-maintained, standard-construction properties — rarely recommended for anything else',
+        'RICS Level 2 (HomeBuyer Report): the most popular option. An inspection of all accessible parts of the property, highlighting defects, risks and maintenance recommendations. Suitable for most conventional homes',
+        'RICS Level 3 (Building Survey / Full Structural): a comprehensive inspection with detailed assessment of construction, materials and defects. Recommended for older, larger or unusual properties and any property where significant work is planned'
+      ]},
+      { heading: 'When to recommend a Level 3', points: [
+        'Properties over approximately 80–100 years old',
+        'Any property with visible signs of movement, damp, cracking or significant wear',
+        'Non-standard construction: timber frame, thatched roof, converted barn or farm building, listed property',
+        'Where the client plans a major renovation or extension — the survey informs the scope and can uncover issues that would affect planning'
+      ]},
+      { heading: 'The value of getting it done', points: [
+        'A survey can uncover issues that provide grounds for renegotiating the purchase price or requesting remedial work before exchange',
+        'Knowing about a defect in advance means the client can budget for it — rather than face an expensive surprise after moving in',
+        'The cost of a Level 2 or Level 3 survey is small relative to the cost of undetected structural or damp issues discovered after purchase'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Your lender will do a valuation — but that is for their benefit, not yours. It won\'t tell you much about the actual condition of the property."',
+        '"Given the age of the property I would usually recommend at least a Level 2 survey. Would you like me to arrange a quote?"',
+        '"A survey can actually save you money — it is not unusual for clients to negotiate a reduction based on what the surveyor flags."'
+      ]}
+    ]
+  },
+  removals: {
+    overview: 'Completion day is the most stressful day in the moving process. Your client has a fixed window to vacate one property and take possession of another, with a removal company, pets, children and years of belongings all in transit simultaneously. A reliable removal company makes that day manageable. A referral to someone you trust is a small but memorable part of a complete service.',
+    sections: [
+      { heading: 'Why the referral matters', points: [
+        'Many clients underestimate how much removals cost and leave the booking too late — prices increase significantly as the date approaches',
+        'Completion day delays are common — keys are not released until funds clear, which can be mid-afternoon. A good removal company knows how to manage this without charging the client extra',
+        'Clients remember the move vividly. A recommendation that works well reflects on you even long after the mortgage is forgotten'
+      ]},
+      { heading: 'What to look for', points: [
+        'BAR (British Association of Removers) membership indicates a professional, regulated firm with complaints procedures and appropriate insurance',
+        'Full liability insurance for goods both in transit and in storage',
+        'Experience with the specific type of move — a house-to-house move is very different from a flat move with no lift access and limited parking',
+        'Clear, itemised costs: packing service, furniture disassembly and reassembly, storage options if there is a gap between completions'
+      ]},
+      { heading: 'Timing', points: [
+        'Raise it when the offer is accepted — clients are starting to think about the practicalities of the move and will welcome the suggestion',
+        'Remind them again at exchange — the completion date is now fixed and the booking should be made immediately',
+        'Good firms get booked up quickly, particularly on Fridays and at month ends — encourage early booking'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"Have you thought about removals? It is worth booking early — good firms get busy quickly, especially on Fridays."',
+        '"I can pass on the details of someone I would recommend. They know how completion day works and will not panic if the keys are late."'
+      ]}
+    ]
+  },
+  reviews: {
+    overview: 'Referrals and reviews are the most powerful and cost-effective source of new business. A client who has just received great service is more likely than they will ever be again to recommend you to someone else. The key is simply to ask — at the right moment, in the right way — and to make it as easy as possible for them to say yes.',
+    sections: [
+      { heading: 'When to ask', points: [
+        'Offer stage: your client has just had their mortgage offer — they are delighted, grateful and at the peak of their satisfaction with you. This is the single best moment to ask for a Google review',
+        'Completion day: another high point — follow up within 48 hours while the experience is fresh and the excitement is real',
+        'After any positive interaction: a smooth rate switch, a helpful renewal call, a protection claim that paid out quickly — these are also excellent moments',
+        'Do not wait until the case has fully closed and the client has moved on — the emotional high has passed and the motivation to act fades quickly'
+      ]},
+      { heading: 'How to ask for a Google review', points: [
+        'Send a short, personal message — not a template — that mentions something specific about their case and why the review would help',
+        'Include a direct link to your Google Business review page so there are no barriers — no searching, no clicking around',
+        'Explain why it matters: "Reviews genuinely help other people in similar situations find someone they can trust to do a good job."',
+        'Follow up once if you do not hear back — most people genuinely intend to leave a review and simply forget'
+      ]},
+      { heading: 'Asking for referrals', points: [
+        '"Do you know anyone else who is buying, remortgaging or thinking about protection? I would love to help them the same way I have helped you."',
+        '"If anyone asks who your mortgage adviser is, please do pass on my details — referrals are how most of my clients find me."',
+        'Keep it natural and conversational — the ask should feel like a genuine expression of appreciation, not a sales script',
+        'Some advisers offer a referral gesture such as a gift card or charity donation in the client\'s name — always check your firm\'s compliance requirements first'
+      ]},
+      { heading: 'Building a referral culture over time', points: [
+        'Make the ask a consistent part of your process at offer stage — once it is routine, it stops feeling awkward',
+        'Stay in touch with past clients: an annual review call, a rate alert before their fix ends, a relevant news story — these interactions remind people you exist',
+        'Clients who feel genuinely looked after tell other people about it. Clients who feel forgotten do not.'
+      ]}
     ]
   }
-];
+};
+
+function oppDetailHtml(cardKey) {
+  var card = OPP_CARDS[cardKey];
+  var detail = OPP_DETAIL[cardKey];
+  if (!card || !detail) return '<p style="padding:32px;color:#6b7c8f;">No detail available.</p>';
+  var h = '<div style="max-width:780px;padding:32px 8px 60px;">';
+  h += '<button onclick="oppCloseCard()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:#003768;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:24px;padding:0;">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back' +
+    '</button>';
+  h += '<div style="margin-bottom:12px;">' + (OPP_ICONS[cardKey] || '') + '</div>';
+  h += '<h1 style="font-size:24px;font-weight:800;color:#003768;margin:0 0 12px;">' + escHtml(card.title) + '</h1>';
+  h += '<p style="font-size:14px;color:#374151;line-height:1.75;margin:0 0 32px;max-width:640px;">' + escHtml(detail.overview) + '</p>';
+  detail.sections.forEach(function(s) {
+    h += '<div style="margin-bottom:28px;">';
+    h += '<div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
+    if (s.points) {
+      h += '<ul style="margin:0;padding-left:18px;">';
+      s.points.forEach(function(p) {
+        h += '<li style="font-size:13px;color:#374151;line-height:1.75;margin-bottom:7px;">' + escHtml(p) + '</li>';
+      });
+      h += '</ul>';
+    }
+    if (s.items) {
+      s.items.forEach(function(item) {
+        h += '<div style="background:#f8fafc;border-left:3px solid #fcb034;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:10px;">';
+        h += '<div style="font-size:13px;font-weight:600;color:#003768;margin-bottom:5px;">' + escHtml(item.q) + '</div>';
+        h += '<div style="font-size:13px;color:#374151;line-height:1.7;">' + escHtml(item.a) + '</div>';
+        h += '</div>';
+      });
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function oppOpenCard(cardKey) {
+  var detail = document.getElementById('opp-card-detail');
+  var content = document.getElementById('opp-card-detail-content');
+  if (!detail || !content) return;
+  content.innerHTML = oppDetailHtml(cardKey);
+  document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
+  detail.style.display = 'block';
+  detail.scrollTop = 0;
+}
+
+function oppCloseCard() {
+  var detail = document.getElementById('opp-card-detail');
+  if (!detail || detail.style.display === 'none') return;
+  detail.style.display = 'none';
+  var current = document.getElementById('opp-page-' + _OPP_CURRENT_PAGE);
+  if (current) current.style.display = 'block';
+}
 
 function oppBuildPageHtml(pageKey) {
   var title = OPP_TITLES[pageKey] || pageKey;
+  var subtitle = OPP_SUBTITLES[pageKey] || '';
+  var sections = OPP_PAGE_SECTIONS[pageKey] || [];
   var html = '<div style="max-width:960px;padding:32px 8px 48px;">';
   html += '<h1 style="font-size:26px;font-weight:800;color:#003768;margin:0 0 10px;">' + escHtml(title) + ' — Sales Opportunities</h1>';
-  html += '<p style="font-size:14px;color:#374151;line-height:1.75;max-width:680px;margin:0 0 36px;">' +
-    'Every mortgage case presents far more than a lending opportunity. Your clients are making one of the biggest financial decisions of their lives — and they need guidance they can trust. From day one, there are products and services that can protect their home, their income and their family, while supporting them through every legal, practical and personal aspect of the move. Each recommendation you make deepens the client relationship, creates lasting value, and generates income for you and the business.' +
-  '</p>';
-  OPP_SECTIONS.forEach(function(section) {
-    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fcb034;margin-bottom:12px;">' + escHtml(section.label) + '</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:32px;">';
-    section.cards.forEach(function(card) {
-      html += '<div class="ov-card" style="cursor:default;">' +
-        '<div style="margin-bottom:10px;">' + card.icon + '</div>' +
+  html += '<p style="font-size:14px;color:#374151;line-height:1.75;max-width:680px;margin:0 0 36px;">' + escHtml(subtitle) + '</p>';
+  sections.forEach(function(sKey) {
+    var sec = OPP_SECTIONS_DEF[sKey];
+    if (!sec) return;
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fcb034;margin-bottom:12px;">' + escHtml(sec.label) + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px;">';
+    sec.cards.forEach(function(cKey) {
+      var card = OPP_CARDS[cKey];
+      if (!card) return;
+      var icon = OPP_ICONS[cKey] || '';
+      html += '<div class="ov-card" style="cursor:pointer;" onclick="oppOpenCard(\'' + cKey + '\')">' +
+        '<div style="margin-bottom:10px;">' + icon + '</div>' +
         '<div class="ov-card-title">' + escHtml(card.title) + '</div>' +
         '<div class="ov-card-sub" style="margin-top:4px;">' + escHtml(card.desc) + '</div>' +
+        '<div style="margin-top:10px;font-size:11px;font-weight:600;color:#003768;display:flex;align-items:center;gap:3px;">Learn more ' +
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
+        '</div>' +
         '</div>';
     });
     html += '</div>';
@@ -8493,7 +8941,9 @@ function oppInitPages() {
 }
 
 function oppShowPage(page, el) {
+  _OPP_CURRENT_PAGE = page;
   oppInitPages();
+  oppCloseCard();
   document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
   var target = document.getElementById('opp-page-' + page);
   if (target) target.style.display = 'block';
