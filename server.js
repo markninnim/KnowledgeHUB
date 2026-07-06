@@ -4004,6 +4004,33 @@ app.get('/api/pay/file/*', requireAuth, (req, res) => {
   fs.createReadStream(filePath).pipe(res);
 });
 
+// ── MI: list & serve MI Excel files ────────────────────────────
+app.get('/api/mi/files', requireAdminOrSupervisor, (req, res) => {
+  const miDir = path.join(__dirname, 'public/mi');
+  try {
+    const files = fs.readdirSync(miDir)
+      .filter(f => /\.xlsx$/i.test(f))
+      .map(f => {
+        const stat = fs.statSync(path.join(miDir, f));
+        return { name: f, modified: stat.mtime.toISOString() };
+      })
+      .sort((a, b) => new Date(b.modified) - new Date(a.modified));
+    res.json({ files });
+  } catch (err) {
+    res.json({ files: [] });
+  }
+});
+
+app.get('/api/mi/download/:filename', requireAdminOrSupervisor, (req, res) => {
+  const filename = path.basename(req.params.filename);
+  if (!/\.xlsx$/i.test(filename)) return res.status(400).json({ error: 'Invalid file' });
+  const filePath = path.join(__dirname, 'public/mi', filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  fs.createReadStream(filePath).pipe(res);
+});
+
 // ── Start ─────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`FPG Digital Asset Management Tool running on port ${PORT}`);

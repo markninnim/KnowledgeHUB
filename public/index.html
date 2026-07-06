@@ -3798,6 +3798,9 @@ html { height: 100%; }
 
   <!-- ── Performance Zone tab ──────────────────────────────── -->
   <div id="tab-performance-zone" class="tab-pane">
+    <div id="mi-panel" style="background:#f8fafc;border-bottom:1px solid #e8ecf0;padding:28px 40px;">
+      <div style="text-align:center;padding:32px 0;color:#8a9bb0;font-size:13px;">Loading MI data…</div>
+    </div>
     <div id="pz-main" style="padding:32px 40px;">
       <div style="text-align:center;padding:60px 0;color:#6b7c8f;">
         <div style="font-size:14px;">Loading brokers…</div>
@@ -5549,7 +5552,7 @@ function switchTab(tab) {
   if (tab === 'supervisor-zone')  { svInitDates(); loadSupervisorZone(); }
   if (tab === 'sales-process')    { showSpSection('sp-overview', document.getElementById('sp-nav-overview')); }
   if (tab !== 'sales-process')   { stopMasTimer(); stopPasTimer(); }
-  if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
+  if (tab === 'performance-zone') { pzInit(); miInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
   if (tab === 'selling-zone') { oppInitPages(); }
 }
@@ -10658,6 +10661,160 @@ function pzClick(el) {
 var PZ_SUP_MAP = null;
 var PZ_NON_CAS = {};
 var PZ_GROUPS = {};
+
+// ── MI Dashboard ──────────────────────────────────────────────
+var _miLoaded = false;
+function miInit() {
+  if (_miLoaded) return;
+  _miLoaded = true;
+  var panel = document.getElementById('mi-panel');
+  if (!panel) return;
+  fetch('/api/mi/files')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var files = d.files || [];
+      if (!files.length) { panel.innerHTML = '<div style="padding:32px;text-align:center;color:#8a9bb0;font-size:13px;">No MI files found.</div>'; return; }
+      var latest = files[0];
+      return fetch('/api/mi/download/' + encodeURIComponent(latest.name))
+        .then(function(r){ return r.arrayBuffer(); })
+        .then(function(buf){
+          var wb = XLSX.read(new Uint8Array(buf), {type:'array', raw:true});
+          var data = miParseWb(wb);
+          miRender(panel, data, latest.name);
+        });
+    })
+    .catch(function(){
+      var panel = document.getElementById('mi-panel');
+      if (panel) panel.innerHTML = '<div style="padding:32px;text-align:center;color:#e74c3c;font-size:13px;">Failed to load MI data.</div>';
+    });
+}
+
+function miParseWb(wb) {
+  var out = {};
+
+  // ─ Firm Level ─
+  var fl = wb.Sheets['Firm Level'];
+  if (fl) {
+    var rows = XLSX.utils.sheet_to_json(fl, {header:1, defval:null, raw:true});
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i]; if (!r) continue;
+      var a = r[0];
+      if ((a === 2025 || a === '2025') && r[2] != null && !out.subs2025)
+        out.subs2025 = {gi: r[1]||0, mortgage: r[2]||0, protection: r[3]||0, total: r[4]||0};
+      if ((a === 2026 || a === '2026') && r[2] != null && !out.subs2026)
+        out.subs2026 = {gi: r[1]||0, mortgage: r[2]||0, protection: r[3]||0, total: r[4]||0};
+      if (typeof a === 'string' && a.indexOf('Life to MG') === 0 && !out.lifeMg)
+        for (var j = 1; j < r.length; j++) { if (r[j] != null) { out.lifeMg = +r[j]; break; } }
+    }
+  }
+
+  // ─ Completions — three sections (Mortgage, Protection, GI), each has 2025 + 2026 row ─
+  var co = wb.Sheets['Completions'];
+  if (co) {
+    var rows = XLSX.utils.sheet_to_json(co, {header:1, defval:null, raw:true});
+    var pairs = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i]; if (!r || r.length < 2) continue;
+      var a = r[0];
+      if (a !== 2025 && a !== '2025' && a !== 2026 && a !== '2026') continue;
+      var tot = null;
+      for (var j = r.length - 1; j >= 1; j--) {
+        if (r[j] != null && typeof r[j] === 'number' && r[j] > 100) { tot = r[j]; break; }
+      }
+      if (tot !== null) pairs.push(tot);
+    }
+    out.comp = {
+      mortgage2025: pairs[0]||null, mortgage2026: pairs[1]||null,
+      prot2025:     pairs[2]||null, prot2026:     pairs[3]||null,
+      gi2025:       pairs[4]||null, gi2026:       pairs[5]||null
+    };
+  }
+
+  // ─ Provider Totals — 2026 YTD section (rows 7–27, 0-indexed) ─
+  var pt = wb.Sheets['Provider Totals'];
+  if (pt) {
+    var rows = XLSX.utils.sheet_to_json(pt, {header:1, defval:null, raw:true});
+    var provs = [];
+    for (var i = 7; i <= 27 && i < rows.length; i++) {
+      var r = rows[i];
+      if (!r || !r[0] || typeof r[0] !== 'string' || r[0] === 'Grand Total' || r[0] === '(blank)') continue;
+      var comm = null;
+      for (var j = r.length - 1; j >= 1; j--) {
+        if (r[j] != null && typeof r[j] === 'number' && r[j] > 0) { comm = r[j]; break; }
+      }
+      if (comm && comm > 0) provs.push({name: r[0], commission: comm});
+    }
+    provs.sort(function(a, b){ return b.commission - a.commission; });
+    out.providers2026 = provs.slice(0, 6);
+  }
+
+  return out;
+}
+
+function miRender(panel, d, filename) {
+  var fmt = function(n) { return n != null ? Math.round(+n).toLocaleString('en-GB') : '—'; };
+  var fmtM = function(n) {
+    if (n == null) return '—';
+    n = +n;
+    if (n >= 1e9) return '£' + (n/1e9).toFixed(2) + 'bn';
+    if (n >= 1e6) return '£' + (n/1e6).toFixed(2) + 'm';
+    if (n >= 1e3) return '£' + (n/1e3).toFixed(1) + 'k';
+    return '£' + Math.round(n).toLocaleString('en-GB');
+  };
+  var s25 = d.subs2025 || {}, s26 = d.subs2026 || {}, c = d.comp || {};
+  var lifeMgStr = d.lifeMg != null ? (d.lifeMg * 100).toFixed(1) + '%' : null;
+
+  var h = '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;">';
+  h += '<h2 style="font-size:17px;font-weight:800;color:#003768;margin:0;">MI Dashboard</h2>';
+  h += '<span style="font-size:11px;color:#8a9bb0;">' + escHtml(filename) + '</span></div>';
+
+  // Two-column grid: Submissions | Completions
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+
+  // — Submissions card —
+  h += '<div style="background:#fff;border-radius:10px;border:1px solid #e8ecf0;padding:20px;">';
+  h += '<div style="font-size:10px;font-weight:700;letter-spacing:.09em;color:#fcb034;margin-bottom:12px;">SUBMISSIONS</div>';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  h += '<thead><tr><th style="text-align:left;color:#8a9bb0;font-weight:600;font-size:11px;padding:0 0 8px;"></th>';
+  h += '<th style="text-align:right;color:#003768;font-weight:700;font-size:11px;padding:0 0 8px;">2025</th>';
+  h += '<th style="text-align:right;color:#003768;font-weight:700;font-size:11px;padding:0 12px 8px 0;">2026 YTD</th></tr></thead><tbody>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">Mortgage</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmt(s25.mortgage) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmt(s26.mortgage) + '</td></tr>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">Protection</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmt(s25.protection) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmt(s26.protection) + '</td></tr>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">GI</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmt(s25.gi) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmt(s26.gi) + '</td></tr>';
+  h += '<tr style="border-top:1px solid #e8ecf0;"><td style="padding:8px 0 0;font-weight:700;color:#003768;">Total</td><td style="text-align:right;font-weight:700;color:#003768;padding-top:8px;">' + fmt(s25.total) + '</td><td style="text-align:right;font-weight:700;color:#003768;padding:8px 12px 0 0;">' + fmt(s26.total) + '</td></tr>';
+  h += '</tbody></table>';
+  if (lifeMgStr) h += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e8ecf0;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7c8f;">Life to MG (2025)</span><span style="font-size:14px;font-weight:700;color:#fcb034;">' + escHtml(lifeMgStr) + '</span></div>';
+  h += '</div>';
+
+  // — Completions card —
+  h += '<div style="background:#fff;border-radius:10px;border:1px solid #e8ecf0;padding:20px;">';
+  h += '<div style="font-size:10px;font-weight:700;letter-spacing:.09em;color:#fcb034;margin-bottom:12px;">COMPLETIONS</div>';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  h += '<thead><tr><th style="text-align:left;color:#8a9bb0;font-weight:600;font-size:11px;padding:0 0 8px;"></th>';
+  h += '<th style="text-align:right;color:#003768;font-weight:700;font-size:11px;padding:0 0 8px;">2025</th>';
+  h += '<th style="text-align:right;color:#003768;font-weight:700;font-size:11px;padding:0 12px 8px 0;">2026 YTD</th></tr></thead><tbody>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">Mortgage Value</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmtM(c.mortgage2025) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmtM(c.mortgage2026) + '</td></tr>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">Prot. Commission</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmtM(c.prot2025) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmtM(c.prot2026) + '</td></tr>';
+  h += '<tr><td style="padding:4px 0;color:#6b7c8f;">GI Commission</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmtM(c.gi2025) + '</td><td style="text-align:right;font-weight:600;color:#003768;padding-right:12px;">' + fmtM(c.gi2026) + '</td></tr>';
+  h += '</tbody></table></div>';
+
+  h += '</div>'; // end grid
+
+  // — Provider Totals (2026 YTD) —
+  if (d.providers2026 && d.providers2026.length) {
+    h += '<div style="background:#fff;border-radius:10px;border:1px solid #e8ecf0;padding:20px;">';
+    h += '<div style="font-size:10px;font-weight:700;letter-spacing:.09em;color:#fcb034;margin-bottom:12px;">PROTECTION PROVIDERS — 2026 YTD</div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    h += '<thead><tr><th style="text-align:left;color:#8a9bb0;font-weight:600;font-size:11px;padding:0 0 8px;">Provider</th><th style="text-align:right;color:#8a9bb0;font-weight:600;font-size:11px;padding:0 0 8px;">Commission</th></tr></thead><tbody>';
+    for (var i = 0; i < d.providers2026.length; i++) {
+      var pv = d.providers2026[i];
+      h += '<tr><td style="padding:5px 0;color:#3a4a5a;">' + escHtml(pv.name) + '</td><td style="text-align:right;font-weight:600;color:#003768;">' + fmtM(pv.commission) + '</td></tr>';
+    }
+    h += '</tbody></table></div>';
+  }
+
+  panel.innerHTML = h;
+}
 
 function pzInit() {
   var list = document.getElementById('pz-supervisor-list');
