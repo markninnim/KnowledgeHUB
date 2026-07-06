@@ -11344,7 +11344,8 @@ function loadPayData() {
   if (_payLoaded) return;
   _payLoaded = true;
   document.getElementById('pay-loading').style.display = 'block';
-  document.getElementById('pay-content').style.display = 'none';
+  document.getElementById('pay-list').style.display   = 'none';
+  document.getElementById('pay-detail').style.display = 'none';
   document.getElementById('pay-no-data').style.display  = 'none';
   document.getElementById('pay-no-parser').style.display = 'none';
 
