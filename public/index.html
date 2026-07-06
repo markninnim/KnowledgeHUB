@@ -6672,10 +6672,21 @@ function loadHomeData() {
   // Greeting
   var greetEl = document.getElementById('home-greeting');
   if (greetEl) {
-    var h    = new Date().getHours();
-    var tod  = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
     var name = _currentUser ? (_currentUser.firstName || _currentUser.email || '') : '';
-    greetEl.textContent = tod + (name ? ', ' + name : '') + '.';
+    var tod;
+    var bday = _currentUser && _currentUser.birthday;
+    if (bday) {
+      var today = new Date();
+      var bd = new Date(bday);
+      if (bd.getMonth() === today.getMonth() && bd.getDate() === today.getDate()) {
+        tod = '🎂 Happy Birthday';
+      }
+    }
+    if (!tod) {
+      var h = new Date().getHours();
+      tod = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    }
+    greetEl.textContent = tod + (name ? ', ' + name : '') + '!';
   }
   if (_homeLoaded) return;
   _homeLoaded = true;

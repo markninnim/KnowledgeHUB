@@ -52,6 +52,7 @@ const F_AVATAR         = 'fldiQ06FtP4BehJU7';
 const F_CAS                = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser Status (checkbox)
 const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
 const F_TOTP               = 'fldpgD672Gikqqnj0'; // TOTP 2FA secret
+const F_BIRTHDAY           = 'fldUxRahlmboP7g4y'; // Birthday (date string)
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -286,6 +287,7 @@ function recordToUser(record) {
     isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
     cas:              f[F_CAS]              || false,
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
+    birthday:         f[F_BIRTHDAY]           || null,
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
