@@ -307,6 +307,7 @@ html { height: 100%; }
   <div id="sidebar-pay" style="display:none">
     <h2 style="margin-top: 8px;">Pay</h2>
     <a href="#" class="active" id="pay-sb-statements" onclick="return paySidebarSelect('statements',this)">Commission Statements</a>
+    <div id="pay-sb-years"></div>
   </div>
   <!-- Selling Zone sidebar -->
   <div id="sidebar-selling-zone" style="display:none">
@@ -11493,7 +11494,7 @@ function renderPayList(months) {
 
   sortedYears.forEach(function(yr) {
     var yg = byYear[yr];
-    html += '<div style="margin-bottom:32px;">';
+    html += '<div id="pay-year-'+yr+'" style="margin-bottom:32px;">';
     // Year header
     html += '<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #003768;">';
     html += '<div style="font-size:20px;font-weight:800;color:#003768;">'+escHtml(yr)+'</div>';
@@ -11529,6 +11530,43 @@ function renderPayList(months) {
   });
 
   document.getElementById('pay-list').innerHTML = html;
+  renderPaySidebarYears(sortedYears, byYear, MONTH_NAMES);
+}
+
+function renderPaySidebarYears(sortedYears, byYear, MONTH_NAMES) {
+  var cont = document.getElementById('pay-sb-years');
+  if (!cont) return;
+  if (!sortedYears || sortedYears.length === 0) { cont.innerHTML = ''; return; }
+  var html = '<div style="border-top:1px solid rgba(255,255,255,.15);margin:10px 0 6px;"></div>';
+  sortedYears.forEach(function(yr) {
+    var yg = byYear[yr];
+    html += '<a href="#" onclick="return payNavToYear(\''+yr+'\')" style="font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:8px 20px 5px;">'+
+      '<span>'+yr+'</span>'+
+      '<span style="font-weight:400;font-size:11px;opacity:.55;">£'+yg.total.toFixed(0)+'</span>'+
+    '</a>';
+    yg.months.forEach(function(m) {
+      var label = (MONTH_NAMES[m.month]||'') + ' ' + m.year;
+      html += '<a href="#" onclick="return payNavOpenStatement('+m.key+')" style="padding:5px 20px 5px 34px;font-size:12px;">'+label+'</a>';
+    });
+  });
+  cont.innerHTML = html;
+}
+
+function payNavToYear(yr) {
+  var listEl   = document.getElementById('pay-list');
+  var detailEl = document.getElementById('pay-detail');
+  if (detailEl && detailEl.style.display !== 'none') {
+    detailEl.style.display = 'none';
+    if (listEl) listEl.style.display = 'block';
+  }
+  var anchor = document.getElementById('pay-year-' + yr);
+  if (anchor) setTimeout(function(){ anchor.scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
+  return false;
+}
+
+function payNavOpenStatement(mk) {
+  payOpenStatement(mk);
+  return false;
 }
 
 // ── Pay: open single-statement detail view ────────────────────
