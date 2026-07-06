@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express  = require('express');
 const session  = require('express-session');
+const helmet   = require('helmet');
 const path     = require('path');
 const fs       = require('fs');
 const crypto   = require('crypto');
@@ -199,16 +200,73 @@ function recordToUser(record) {
   };
 }
 
+// ── Security warnings ────────────────────────────────────────
+if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET === 'dev-secret-change-me') {
+  console.error('⚠️  SESSION_SECRET is not set or is using the insecure default. Set a strong random value in Railway environment variables.');
+}
+
 // ── Middleware ───────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '2mb' }));
 app.set('trust proxy', 1);
+
+// ── Security headers (helmet) ────────────────────────────────
+// CSP disabled — app uses inline scripts; all other headers enabled
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ── Session ──────────────────────────────────────────────────
+const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
 app.use(session({
   secret: SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7, httpOnly: true } // 1 week
+  cookie: {
+    maxAge:   1000 * 60 * 60 * 24 * 7, // 1 week
+    httpOnly: true,                      // JS cannot read the cookie
+    secure:   isProd,                    // HTTPS only in production
+    sameSite: 'strict'                   // Blocks cross-site request forgery
+  }
 }));
+
+// ── Global API rate limiter ──────────────────────────────────
+// Max 120 API requests per IP per minute (resets each minute)
+const _apiRateMap = {};
+const API_RATE_LIMIT   = 120;
+const API_RATE_WINDOW  = 60 * 1000;
+app.use('/api/', (req, res, next) => {
+  const ip  = req.ip || 'unknown';
+  const now = Date.now();
+  if (!_apiRateMap[ip] || now - _apiRateMap[ip].windowStart > API_RATE_WINDOW) {
+    _apiRateMap[ip] = { count: 1, windowStart: now };
+  } else {
+    _apiRateMap[ip].count++;
+    if (_apiRateMap[ip].count > API_RATE_LIMIT) {
+      return res.status(429).json({ error: 'Too many requests — please slow down.' });
+    }
+  }
+  next();
+});
+
+// ── Origin check on mutating API requests ────────────────────
+// Rejects POST/PUT/PATCH/DELETE from foreign origins (belt-and-suspenders beyond sameSite)
+app.use('/api/', (req, res, next) => {
+  if (!['POST','PUT','PATCH','DELETE'].includes(req.method)) return next();
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      const host = new URL(origin).host;
+      if (host !== req.headers.host) {
+        return res.status(403).json({ error: 'Forbidden: cross-origin request' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Forbidden: invalid origin' });
+    }
+  }
+  next();
+});
 
 // ── Auth guards ──────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -3325,7 +3383,7 @@ app.get('/api/dip-certificate', requireAuth, async (req, res) => {
 });
 
 // ── Feature flags API ─────────────────────────────────────────
-app.get('/api/admin/features', (req, res) => {
+app.get('/api/admin/features', requireAuth, (req, res) => {
   res.json(_features);
 });
 
