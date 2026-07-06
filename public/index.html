@@ -9781,6 +9781,7 @@ function pzClick(el) {
 }
 
 var PZ_SUP_MAP = null;
+var PZ_NON_CAS = {};
 var PZ_GROUPS = {};
 
 function pzInit() {
@@ -9790,7 +9791,11 @@ function pzInit() {
   if (PZ_SUP_MAP) { pzRender(PZ_SUP_MAP); return; }
   fetch('/api/pz/supervisor-map')
     .then(function(r){ return r.json(); })
-    .then(function(map){
+    .then(function(d){
+      var map = d.map || d; // support old format (plain map) and new {map, nonCas}
+      var nonCasArr = d.nonCas || [];
+      PZ_NON_CAS = {};
+      nonCasArr.forEach(function(n){ PZ_NON_CAS[n] = true; });
       if (!map || map.error || Object.keys(map).length === 0) { PZ_SUP_MAP = null; pzRender(null); }
       else { PZ_SUP_MAP = map; pzRender(map); }
     })
@@ -9869,9 +9874,13 @@ function pzShowMainView(filterSup) {
       var lpPct = (d.ms > 0) ? Math.round((d.ps || 0) / d.ms * 100) : 0;
       var lpStr = (d.ms > 0) ? ' (' + lpPct + '%)' : '';
       var rank = rankMap[n];
+      var isNonCas = PZ_NON_CAS[n] || false;
       mHtml += '<div class="ov-card" onclick="pzOpenBroker(' + escHtml(JSON.stringify(n)) + ');">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;">' +
-          '<span style="font-size:14px;font-weight:700;color:#003768;">' + ne + '</span>' +
+          '<div style="display:flex;align-items:center;gap:5px;min-width:0;">' +
+            (isNonCas ? '<span style="flex-shrink:0;width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;"></span>' : '') +
+            '<span style="font-size:14px;font-weight:700;color:#003768;">' + ne + '</span>' +
+          '</div>' +
           (rank ? '<span style="font-size:14px;font-weight:700;color:#fcb034;white-space:nowrap;margin-left:6px;">#' + rank + '</span>' : '') +
         '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-bottom:2px;">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+'</div>' +

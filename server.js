@@ -805,6 +805,7 @@ app.get('/api/pz/supervisor-map', requireAuth, async (req, res) => {
     }
     // Build brokerName → supervisorName (advisers only — skip supervisors and pure admins)
     const map = {};
+    const nonCas = [];
     for (const u of allUsers) {
       const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
       if (!n) continue;
@@ -812,8 +813,9 @@ app.get('/api/pz/supervisor-map', requireAuth, async (req, res) => {
       if (u.isAdmin && !u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages && !u.pmi) continue;
       const supEmail = (u.supervisorEmail || '').toLowerCase();
       map[n] = supEmail ? (emailToName[supEmail] || 'Other') : 'Unassigned';
+      if (!u.cas) nonCas.push(n);
     }
-    res.json(map);
+    res.json({ map, nonCas });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
