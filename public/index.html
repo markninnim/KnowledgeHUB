@@ -311,7 +311,10 @@ html { height: 100%; }
   <!-- Selling Zone sidebar -->
   <div id="sidebar-selling-zone" style="display:none">
     <h2 style="margin-top: 8px;">Opportunities</h2>
-    <a href="#" class="active">Overview</a>
+    <a href="#" id="opp-nav-purchase" class="active" onclick="return oppShowPage('purchase',this)">Purchase Mortgage</a>
+    <a href="#" id="opp-nav-remortgage" onclick="return oppShowPage('remortgage',this)">Remortgage</a>
+    <a href="#" id="opp-nav-lifetime" onclick="return oppShowPage('lifetime',this)">Lifetime Mortgage</a>
+    <a href="#" id="opp-nav-ftb" onclick="return oppShowPage('ftb',this)">FTB Mortgage</a>
   </div>
   <!-- Performance Zone sidebar -->
   <div id="sidebar-performance-zone" style="display:none">
@@ -3408,11 +3411,43 @@ html { height: 100%; }
 
   <!-- ── Selling Zone tab ──────────────────────────────────── -->
   <div id="tab-selling-zone" class="tab-pane">
-    <div class="coming-soon">
-      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-      <h2>Opportunities</h2>
-      <p>Sales tools, objection handling, and performance resources will appear here. This section is coming soon.</p>
+
+    <!-- Purchase Mortgage -->
+    <div id="opp-page-purchase" class="opp-page">
+      <div class="coming-soon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <h2>Purchase Mortgage</h2>
+        <p>Guidance, tools and resources for purchase mortgage cases will appear here. This section is coming soon.</p>
+      </div>
     </div>
+
+    <!-- Remortgage -->
+    <div id="opp-page-remortgage" class="opp-page" style="display:none;">
+      <div class="coming-soon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <h2>Remortgage</h2>
+        <p>Guidance, tools and resources for remortgage cases will appear here. This section is coming soon.</p>
+      </div>
+    </div>
+
+    <!-- Lifetime Mortgage -->
+    <div id="opp-page-lifetime" class="opp-page" style="display:none;">
+      <div class="coming-soon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h2>Lifetime Mortgage</h2>
+        <p>Guidance, tools and resources for lifetime mortgage cases will appear here. This section is coming soon.</p>
+      </div>
+    </div>
+
+    <!-- FTB Mortgage -->
+    <div id="opp-page-ftb" class="opp-page" style="display:none;">
+      <div class="coming-soon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <h2>FTB Mortgage</h2>
+        <p>Guidance, tools and resources for first-time buyer cases will appear here. This section is coming soon.</p>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── Supervisor Zone tab ───────────────────────────────── -->
@@ -8341,6 +8376,15 @@ function filterBpActivity() {
         '</tr>';
       }).join('')
     : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">No activity in this date range.</td></tr>';
+}
+
+function oppShowPage(page, el) {
+  document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
+  var target = document.getElementById('opp-page-' + page);
+  if (target) target.style.display = 'block';
+  document.querySelectorAll('#sidebar-selling-zone a').forEach(function(a){ a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  return false;
 }
 
 function closeBrokerProfile() {
