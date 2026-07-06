@@ -11533,22 +11533,57 @@ function renderPayList(months) {
   renderPaySidebarYears(sortedYears, byYear, MONTH_NAMES);
 }
 
+function getPayTaxYear(month, year) {
+  // month is 0-indexed (0=Jan, 3=Apr)
+  // UK tax year: Apr–Mar
+  if (month >= 3) return year + '/' + String(year + 1).slice(-2);
+  return (year - 1) + '/' + String(year).slice(-2);
+}
+
 function renderPaySidebarYears(sortedYears, byYear, MONTH_NAMES) {
   var cont = document.getElementById('pay-sb-years');
   if (!cont) return;
   if (!sortedYears || sortedYears.length === 0) { cont.innerHTML = ''; return; }
-  var html = '<div style="border-top:1px solid rgba(255,255,255,.15);margin:10px 0 6px;"></div>';
+
+  // Build tax year groups from _PAY_MONTHS
+  var byTaxYear = {};
+  _PAY_MONTHS.forEach(function(m) {
+    var ty = getPayTaxYear(m.month, m.year);
+    if (!byTaxYear[ty]) byTaxYear[ty] = { key: ty, total: 0 };
+    byTaxYear[ty].total += payMonthTotal(m);
+  });
+  var sortedTaxYears = Object.keys(byTaxYear).sort(function(a, b) {
+    return parseInt(b.split('/')[0]) - parseInt(a.split('/')[0]);
+  });
+
+  var html = '<div style="border-top:1px solid rgba(255,255,255,.15);margin:10px 0 4px;"></div>';
+
+  // ── Tax Years ──
+  html += '<div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.32);padding:5px 20px 3px;text-transform:uppercase;">Tax Years</div>';
+  sortedTaxYears.forEach(function(ty) {
+    var tyg = byTaxYear[ty];
+    html += '<a href="#" onclick="return payOpenTaxYear(\''+ty+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:7px 20px 5px;font-weight:700;">'+
+      '<span>'+ty+'</span>'+
+      '<span style="font-weight:400;font-size:11px;opacity:.5;">£'+tyg.total.toFixed(0)+'</span>'+
+    '</a>';
+  });
+
+  html += '<div style="border-top:1px solid rgba(255,255,255,.1);margin:8px 0 4px;"></div>';
+
+  // ── Calendar Years / Months ──
+  html += '<div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.32);padding:5px 20px 3px;text-transform:uppercase;">By Month</div>';
   sortedYears.forEach(function(yr) {
     var yg = byYear[yr];
-    html += '<a href="#" onclick="return payNavToYear(\''+yr+'\')" style="font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:8px 20px 5px;">'+
+    html += '<a href="#" onclick="return payNavToYear(\''+yr+'\')" style="font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:7px 20px 5px;">'+
       '<span>'+yr+'</span>'+
-      '<span style="font-weight:400;font-size:11px;opacity:.55;">£'+yg.total.toFixed(0)+'</span>'+
+      '<span style="font-weight:400;font-size:11px;opacity:.5;">£'+yg.total.toFixed(0)+'</span>'+
     '</a>';
     yg.months.forEach(function(m) {
       var label = (MONTH_NAMES[m.month]||'') + ' ' + m.year;
       html += '<a href="#" onclick="return payNavOpenStatement('+m.key+')" style="padding:5px 20px 5px 34px;font-size:12px;">'+label+'</a>';
     });
   });
+
   cont.innerHTML = html;
 }
 
@@ -11567,6 +11602,89 @@ function payNavToYear(yr) {
 function payNavOpenStatement(mk) {
   payOpenStatement(mk);
   return false;
+}
+
+// ── Pay: tax year statement of earnings ───────────────────────
+function payOpenTaxYear(tyKey) {
+  var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var parts   = tyKey.split('/');
+  var startYr = parseInt(parts[0]);
+  var endYr   = startYr + 1;
+  var dateRange = '6 April '+startYr+' – 5 April '+endYr;
+
+  // Gather + sort months chronologically
+  var tyMonths = _PAY_MONTHS.filter(function(m){ return getPayTaxYear(m.month,m.year)===tyKey; })
+    .sort(function(a,b){ return (a.year*100+a.month)-(b.year*100+b.month); });
+
+  var grandTotal=0, grandInit=0, grandRen=0;
+
+  var html='';
+  // Title
+  html+='<div style="margin-bottom:20px;">';
+  html+='<div style="font-size:20px;font-weight:800;color:#003768;margin-bottom:4px;">Tax Year '+escHtml(tyKey)+'</div>';
+  html+='<div style="font-size:13px;color:#9bafc0;">Statement of Earnings · '+escHtml(dateRange)+'</div>';
+  html+='</div>';
+
+  // Table
+  html+='<div style="background:#fff;border:1px solid #e8ecf0;border-radius:14px;overflow:hidden;margin-bottom:16px;">';
+  html+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html+='<thead><tr style="background:#f7f9fc;">';
+  [['Month','left','22px'],['BACS Date','right','16px'],['Initial','right','16px'],['Renewal','right','16px'],['Total Pay','right','16px']].forEach(function(h){
+    html+='<th style="text-align:'+h[1]+';padding:10px '+h[2]+';font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;letter-spacing:.06em;">'+h[0]+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+
+  tyMonths.forEach(function(m){
+    var rtf=m.files.find(function(f){return !f.error&&f.type==='rtf';});
+    var mTotal=payMonthTotal(m);
+    var initAmt=0, renAmt=0, bacsDate='';
+    if(rtf){
+      bacsDate=rtf.bacsDate||'';
+      var ip=(rtf.payments||[]).find(function(p){return p.description==='Initial Commission';});
+      var rp=(rtf.payments||[]).find(function(p){return p.description==='Renewal Commission';});
+      if(ip) initAmt=Math.abs(ip.net!=null?ip.net:(ip.gross||0));
+      if(rp) renAmt=Math.abs(rp.gross||0);
+    }
+    grandTotal+=mTotal; grandInit+=initAmt; grandRen+=renAmt;
+    var label=(MONTH_NAMES[m.month]||'')+' '+m.year;
+    html+='<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" onclick="payNavOpenStatement('+m.key+')" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
+    html+='<td style="padding:11px 22px;font-weight:600;color:#1a2a3a;">'+escHtml(label)+'</td>';
+    html+='<td style="padding:11px 16px;text-align:right;color:#fcb034;font-weight:600;white-space:nowrap;">'+escHtml(bacsDate)+'</td>';
+    html+='<td style="padding:11px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">'+(initAmt?'£'+initAmt.toFixed(2):'—')+'</td>';
+    html+='<td style="padding:11px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">'+(renAmt?'£'+renAmt.toFixed(2):'—')+'</td>';
+    html+='<td style="padding:11px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">£'+mTotal.toFixed(2)+'</td>';
+    html+='</tr>';
+  });
+
+  // Totals row
+  html+='<tr style="background:#f2f6fa;border-top:2px solid #d5e0ec;">';
+  html+='<td style="padding:11px 22px;font-weight:700;color:#003768;font-size:12px;">'+tyMonths.length+' months</td>';
+  html+='<td></td>';
+  html+='<td style="padding:11px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">£'+grandInit.toFixed(2)+'</td>';
+  html+='<td style="padding:11px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">£'+grandRen.toFixed(2)+'</td>';
+  html+='<td style="padding:11px 16px;text-align:right;font-weight:800;color:#003768;font-size:15px;font-variant-numeric:tabular-nums;">£'+grandTotal.toFixed(2)+'</td>';
+  html+='</tr>';
+  html+='</tbody></table></div></div>';
+
+  // Total earnings box
+  html+='<div style="background:#003768;border-radius:14px;padding:20px 28px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">';
+  html+='<div><div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Total Earnings</div>';
+  html+='<div style="font-size:12px;color:rgba(255,255,255,.45);">Tax Year '+escHtml(tyKey)+' · '+escHtml(dateRange)+'</div></div>';
+  html+='<div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px;">£'+grandTotal.toFixed(2)+'</div>';
+  html+='</div>';
+
+  // Disclaimer
+  html+='<div style="font-size:12px;color:#9bafc0;padding:0 6px 24px;line-height:1.6;">';
+  html+='This is a summary of commission payments received during the '+escHtml(tyKey)+' tax year ('+escHtml(dateRange)+'). ';
+  html+='It is not a formal P60 or HMRC-issued document — please refer to your official payslips and P60 for tax return purposes. ';
+  html+='Click any row to view the full monthly statement.';
+  html+='</div>';
+
+  var detEl=document.getElementById('pay-detail');
+  detEl.innerHTML=html;
+  detEl.style.display='block';
+  document.getElementById('pay-list').style.display='none';
+  window.scrollTo(0,0);
 }
 
 // ── Pay: open single-statement detail view ────────────────────
