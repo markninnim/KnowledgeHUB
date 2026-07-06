@@ -9801,7 +9801,18 @@ function pzRender(map) {
   var allNames = Object.keys(PZ_DATA).sort();
   // Only include brokers who exist in Airtable (appear in the supervisor map)
   var names = map ? allNames.filter(function(n){ return n in map; }) : allNames;
-  if (map) console.log('[PZ debug] Removed (not in Airtable):', allNames.filter(function(n){ return !(n in map); }));
+
+  // Build full team counts from ALL advisers in the map (not just those with PZ data)
+  var mapGroupCounts = {};
+  var totalFromMap = 0;
+  if (map) {
+    Object.keys(map).forEach(function(n) {
+      var sup = map[n];
+      mapGroupCounts[sup] = (mapGroupCounts[sup] || 0) + 1;
+      totalFromMap++;
+    });
+  }
+
   PZ_GROUPS = {};
   for (var i = 0; i < names.length; i++) {
     var n = names[i];
@@ -9817,11 +9828,12 @@ function pzRender(map) {
   // ── Blue sidebar: supervisor list ──
   var supList = document.getElementById('pz-supervisor-list');
   if (supList) {
-    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">View All<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + names.length + '</span></a>';
+    var viewAllCount = totalFromMap || names.length;
+    var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">View All<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + viewAllCount + '</span></a>';
     sHtml += '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
     for (var s = 0; s < supNames.length; s++) {
       var sup = supNames[s];
-      var cnt = PZ_GROUPS[sup].length;
+      var cnt = mapGroupCounts[sup] || PZ_GROUPS[sup].length;
       sHtml += '<a href="javascript:void(0)" data-sup="' + escHtml(sup) + '" onclick="pzClickSup(this);return false;">' +
         escHtml(sup) +
         '<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + cnt + '</span></a>';

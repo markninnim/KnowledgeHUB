@@ -803,13 +803,15 @@ app.get('/api/pz/supervisor-map', requireAuth, async (req, res) => {
       const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
       if (u.email) emailToName[u.email.toLowerCase()] = n || u.email;
     }
-    // Build brokerName → supervisorName
+    // Build brokerName → supervisorName (advisers only — skip supervisors and pure admins)
     const map = {};
     for (const u of allUsers) {
       const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
       if (!n) continue;
+      if (u.isSupervisor) continue;
+      if (u.isAdmin && !u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages && !u.pmi) continue;
       const supEmail = (u.supervisorEmail || '').toLowerCase();
-      map[n] = supEmail ? (emailToName[supEmail] || 'Other') : 'Management';
+      map[n] = supEmail ? (emailToName[supEmail] || 'Other') : 'Unassigned';
     }
     res.json(map);
   } catch (err) {
