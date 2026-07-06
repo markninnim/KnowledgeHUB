@@ -6837,9 +6837,23 @@ function loadHomeData() {
       if (b.body) card.appendChild(bodyEl);
       return card;
     }
+    // Check if today is the logged-in user's birthday and prepend a card
+    var bdayCard = null;
+    if (_currentUser && _currentUser.birthday) {
+      var today = new Date(), bd = new Date(_currentUser.birthday);
+      if (bd.getMonth() === today.getMonth() && bd.getDate() === today.getDate()) {
+        bdayCard = document.createElement('div');
+        bdayCard.style.cssText = 'background:linear-gradient(135deg,#003768,#0056a3);border-radius:8px;padding:14px 16px;flex-shrink:0;';
+        var bName = _currentUser.firstName || 'you';
+        bdayCard.innerHTML = '<div style="font-size:20px;margin-bottom:4px;">🎂</div>' +
+          '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:4px;">Happy Birthday, ' + escHtml(bName) + '!</div>' +
+          '<div style="font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;">Wishing you a wonderful day from everyone at FPG.</div>';
+      }
+    }
     grid.innerHTML = '';
+    if (bdayCard) grid.appendChild(bdayCard);
     bulletins.forEach(function(b) { grid.appendChild(makeCard(b)); });
-    // Duplicate for seamless loop
+    // Duplicate for seamless loop (no birthday card in repeat)
     bulletins.forEach(function(b) { grid.appendChild(makeCard(b)); });
     // Pause on hover
     var paused = false;
