@@ -3991,11 +3991,15 @@ html { height: 100%; }
 
       <div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-top:16px;border-top:1px solid #f0f2f5;">Change Password</div>
       <div style="margin-bottom:10px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">New Password <span style="font-weight:400;">(leave blank to keep current)</span></label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Current Password</label>
+        <input id="acc-current-password" type="password" placeholder="Your current password…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">New Password <span style="font-weight:400;">(min 12 characters)</span></label>
         <input id="acc-password" type="password" placeholder="New password…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
       <div style="margin-bottom:20px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Confirm Password</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Confirm New Password</label>
         <input id="acc-password2" type="password" placeholder="Confirm…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
       </div>
 
@@ -4013,6 +4017,33 @@ html { height: 100%; }
   </div>
 </div>
 
+<!-- ── Force-Reset Password Modal ─────────────────────────── -->
+<div id="force-reset-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:36px 32px;width:100%;max-width:400px;margin:0 20px;box-shadow:0 16px 48px rgba(0,0,0,.3);">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="width:48px;height:48px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#003768;margin-bottom:6px;">Password Reset Required</div>
+      <div style="font-size:13px;color:#6b7c8f;line-height:1.5;">Your administrator requires you to set a new password before continuing. Please choose a strong password (minimum 12 characters).</div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Current Password</label>
+      <input id="fr-current" type="password" placeholder="Your current password" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">New Password</label>
+      <input id="fr-new" type="password" placeholder="Min 12 characters" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:5px;">Confirm New Password</label>
+      <input id="fr-confirm" type="password" placeholder="Confirm password" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+    </div>
+    <div id="fr-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:14px;"></div>
+    <button onclick="submitForceReset()" style="width:100%;background:#003768;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Set New Password</button>
+  </div>
+</div>
+
 <!-- ── Admin Panel ─────────────────────────────────────────── -->
 <div id="admin-modal" onclick="if(event.target===this)closeAdminPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:12px;width:100%;max-width:760px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
@@ -4025,6 +4056,7 @@ html { height: 100%; }
       <div style="display:flex;gap:8px;align-items:center;">
         <label id="admin-modal-import-csv" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import CSV</span><input type="file" accept=".csv" onchange="importCsv(this)" style="display:none;"></label>
         <label id="admin-modal-import-excel" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import Excel</span><input type="file" accept=".xlsx" onchange="importUsersExcel(this)" style="display:none;"></label>
+        <button id="admin-audit-btn" onclick="toggleAuditLog()" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">Audit Log</button>
         <button id="admin-modal-add-user" onclick="openUserForm()" style="background:#003768;color:#fff;border:1.5px solid #003768;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
       </div>
@@ -4039,6 +4071,15 @@ html { height: 100%; }
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;" id="admin-feature-toggles"></div>
       <button onclick="saveFeatures()" style="margin-top:14px;background:#003768;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Changes</button>
       <span id="admin-features-saved" style="display:none;margin-left:10px;font-size:12px;color:#2e7d32;font-weight:600;">✓ Saved</span>
+    </div>
+
+    <!-- Audit log panel (admin only) -->
+    <div id="admin-audit-panel" style="display:none;padding:20px 28px;border-bottom:1px solid #e8ecf0;background:#f9fafc;">
+      <div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Security Audit Log
+      </div>
+      <div id="admin-audit-list" style="max-height:260px;overflow-y:auto;font-size:12px;font-family:monospace;background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:8px 12px;color:#1a2a3a;">Loading…</div>
     </div>
 
     <!-- User search -->
@@ -6972,6 +7013,12 @@ var _currentUser = null;
     if (user && user.isAdmin) {
       var btn = document.getElementById('admin-btn');
       if (btn) btn.style.display = 'inline-flex';
+      var auditBtn = document.getElementById('admin-audit-btn');
+      if (auditBtn) auditBtn.style.display = '';
+    }
+    // Force-reset: show mandatory password change overlay
+    if (user && user._forceReset) {
+      document.getElementById('force-reset-overlay').style.display = 'flex';
     }
     if (user && user.isSupervisor && !user.isAdmin) {
       var svbtn = document.getElementById('supervisor-btn');
@@ -7063,6 +7110,7 @@ function openAccountModal() {
   document.getElementById('acc-mobile').value   = user.mobile     || '';
   document.getElementById('acc-landline').value = user.landline   || '';
   document.getElementById('acc-website').value  = user.website    || '';
+  document.getElementById('acc-current-password').value = '';
   document.getElementById('acc-password').value  = '';
   document.getElementById('acc-password2').value = '';
   document.getElementById('acc-error').style.display   = 'none';
@@ -7138,10 +7186,14 @@ function saveAccountDetails() {
   var errEl  = document.getElementById('acc-error');
   var okEl   = document.getElementById('acc-success');
   errEl.style.display = okEl.style.display = 'none';
+  var currentPw = document.getElementById('acc-current-password').value;
   var pw1 = document.getElementById('acc-password').value;
   var pw2 = document.getElementById('acc-password2').value;
+  if (pw1 && !currentPw) { errEl.textContent = 'Enter your current password to change it.'; errEl.style.display = 'block'; return; }
+  if (pw1 && pw1.length < 12) { errEl.textContent = 'New password must be at least 12 characters.'; errEl.style.display = 'block'; return; }
   if (pw1 && pw1 !== pw2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
-  var body = {
+
+  var profileBody = {
     salutation: document.getElementById('acc-sal').value,
     firstName:  document.getElementById('acc-first').value.trim(),
     lastName:   document.getElementById('acc-last').value.trim(),
@@ -7150,20 +7202,29 @@ function saveAccountDetails() {
     landline:   document.getElementById('acc-landline').value.trim(),
     website:    document.getElementById('acc-website').value.trim()
   };
-  if (pw1) body.password = pw1;
-  fetch('/api/profile', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+
+  // Save profile details first, then handle password separately
+  fetch('/api/profile', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(profileBody) })
     .then(function(r) { return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
     .then(function(res) {
       if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
       _currentUser = Object.assign(_currentUser || {}, res.data);
-      // Refresh header
       renderAccAvatar(_currentUser);
       document.getElementById('acc-full-name').textContent = ((res.data.salutation ? res.data.salutation+' ' : '') + res.data.firstName + ' ' + res.data.lastName).trim();
-      document.getElementById('acc-title').textContent     = res.data.jobTitle || '';
-      document.getElementById('acc-password').value = '';
-      document.getElementById('acc-password2').value = '';
-      okEl.style.display = 'block';
+      document.getElementById('acc-title').textContent = res.data.jobTitle || '';
       updateNavUser(res.data);
+      // Change password separately if provided
+      if (!pw1) { okEl.textContent = '✓ Details saved successfully'; okEl.style.display = 'block'; return; }
+      return fetch('/api/change-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ currentPassword: currentPw, newPassword: pw1 }) })
+        .then(function(r2) { return r2.json().then(function(d){ return {ok:r2.ok, data:d}; }); })
+        .then(function(res2) {
+          if (!res2.ok) { errEl.textContent = res2.data.error || 'Password change failed.'; errEl.style.display = 'block'; return; }
+          document.getElementById('acc-current-password').value = '';
+          document.getElementById('acc-password').value  = '';
+          document.getElementById('acc-password2').value = '';
+          okEl.textContent = '✓ Details and password saved';
+          okEl.style.display = 'block';
+        });
     })
     .catch(function() { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
 }
@@ -7296,6 +7357,8 @@ function openAdminPanel() {
 
 function closeAdminPanel() {
   document.getElementById('admin-modal').style.display = 'none';
+  var ap = document.getElementById('admin-audit-panel');
+  if (ap) ap.style.display = 'none';
   cancelUserForm();
 }
 
@@ -7392,14 +7455,16 @@ function renderUserList(users) {
     if (canManageUsers) {
       // Supervisors cannot edit/delete admin users
       var canEditThis = isAdmin || !u.isAdmin;
+      var frBadge = u._forceReset ? '<span style="background:#fff3cd;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Reset Required</span>' : '';
       actionBtns =
         '<button onclick="impersonateUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100px;text-align:center;">View As</button>' +
+        (canEditThis && isAdmin ? '<button onclick="adminForceReset(\'' + escHtml(u.email).replace(/'/g,"\\'") + '\')" style="background:#fff3cd;color:#92400e;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:82px;text-align:center;">' + (u._forceReset ? '✓ Forced' : 'Force Reset') + '</button>' : '') +
         (canEditThis ? '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:#003768;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:52px;text-align:center;">Edit</button>' : '') +
         (canEditThis ? '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:62px;text-align:center;">Delete</button>' : '');
     }
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + products.join('') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + products.join('') + '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (displayTitle ? ' · ' + escHtml(displayTitle) : '') + '</div>' +
         supInfo +
       '</div>' +
@@ -7622,6 +7687,66 @@ function deleteUser(id, name) {
   fetch('/api/admin/users/' + id, { method: 'DELETE' })
     .then(function() { loadAdminUsers(); })
     .catch(function() { alert('Failed to delete user.'); });
+}
+
+function adminForceReset(email) {
+  var isForced = (_adminUsers || []).some(function(u){ return (u.email || '').toLowerCase() === email.toLowerCase() && u._forceReset; });
+  if (isForced) {
+    // Clear it
+    fetch('/api/admin/force-reset/' + encodeURIComponent(email), { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
+      .catch(function() { alert('Network error'); });
+  } else {
+    if (!confirm('Force ' + email + ' to change their password on next login?')) return;
+    fetch('/api/admin/force-reset', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email: email }) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
+      .catch(function() { alert('Network error'); });
+  }
+}
+
+function toggleAuditLog() {
+  var panel = document.getElementById('admin-audit-panel');
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) loadAuditLog();
+}
+
+function loadAuditLog() {
+  var el = document.getElementById('admin-audit-list');
+  el.textContent = 'Loading…';
+  fetch('/api/admin/audit-log').then(function(r){ return r.json(); }).then(function(entries) {
+    if (!entries.length) { el.textContent = 'No entries yet.'; return; }
+    el.innerHTML = entries.map(function(e) {
+      var ts = e.t ? e.t.replace('T',' ').replace(/\.\d+Z$/,'') : '';
+      var action = (e.action || '').replace(/_/g,' ');
+      var detail = '';
+      if (e.email)        detail += ' · ' + escHtml(e.email);
+      if (e.targetEmail)  detail += ' → ' + escHtml(e.targetEmail);
+      if (e.admin)        detail += ' (by ' + escHtml(e.admin) + ')';
+      return '<div style="padding:4px 0;border-bottom:1px solid #f0f2f5;color:#1a2a3a;"><span style="color:#6b7c8f;">' + escHtml(ts) + '</span>  <span style="color:#003768;font-weight:700;">' + escHtml(action) + '</span>' + detail + ' <span style="color:#9aafbf;font-size:10px;">' + escHtml(e.ip||'') + '</span></div>';
+    }).join('');
+  }).catch(function(){ el.textContent = 'Failed to load.'; });
+}
+
+function submitForceReset() {
+  var errEl   = document.getElementById('fr-error');
+  errEl.style.display = 'none';
+  var current = document.getElementById('fr-current').value;
+  var newPw   = document.getElementById('fr-new').value;
+  var confirm = document.getElementById('fr-confirm').value;
+  if (!current) { errEl.textContent = 'Current password is required.'; errEl.style.display = 'block'; return; }
+  if (newPw.length < 12) { errEl.textContent = 'New password must be at least 12 characters.'; errEl.style.display = 'block'; return; }
+  if (newPw !== confirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  fetch('/api/change-password', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ currentPassword: current, newPassword: newPw }) })
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
+    .then(function(res) {
+      if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
+      document.getElementById('force-reset-overlay').style.display = 'none';
+      if (_currentUser) _currentUser._forceReset = false;
+    })
+    .catch(function(){ errEl.textContent = 'Network error.'; errEl.style.display = 'block'; });
 }
 
 // ── Supervisor Zone ───────────────────────────────────────────

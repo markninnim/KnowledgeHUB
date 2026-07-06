@@ -136,6 +136,36 @@ function consumeResetToken(token) {
   return rec.email;
 }
 
+// ── Session invalidation tracker ─────────────────────────────────
+// Maps email → timestamp of last password change.
+// requireAuth rejects sessions created before this timestamp.
+const _passwordChangedAt = {};
+function invalidateUserSessions(email) {
+  _passwordChangedAt[email.toLowerCase()] = Date.now();
+}
+
+// ── Force-reset flag ──────────────────────────────────────────────
+// Admin can mark a user as needing a password reset on next login.
+const FORCE_RESET_PATH = path.join(__dirname, 'force-reset.json');
+let _forceReset = {};
+try { _forceReset = JSON.parse(fs.readFileSync(FORCE_RESET_PATH, 'utf8')); } catch(_) {}
+function saveForceReset() {
+  try { fs.writeFileSync(FORCE_RESET_PATH, JSON.stringify(_forceReset, null, 2)); } catch(_) {}
+}
+
+// ── Audit log ─────────────────────────────────────────────────────
+// Appends one JSON line per event to audit.log.
+const AUDIT_LOG_PATH = path.join(__dirname, 'audit.log');
+function auditLog(action, details, req) {
+  const entry = JSON.stringify({
+    t:  new Date().toISOString(),
+    ip: req ? (req.ip || 'unknown') : 'system',
+    action,
+    ...details
+  });
+  try { fs.appendFileSync(AUDIT_LOG_PATH, entry + '\n'); } catch(_) {}
+}
+
 // ── Asset dates manifest (persists upload dates across deploys) ──
 const ASSET_DATES_PATH = path.join(__dirname, 'asset-dates.json');
 let _assetDates = {};
@@ -270,8 +300,19 @@ app.use('/api/', (req, res, next) => {
 
 // ── Auth guards ──────────────────────────────────────────────
 function requireAuth(req, res, next) {
-  if (req.session.authenticated) return next();
-  res.redirect('/login');
+  if (!req.session.authenticated) {
+    if (req.originalUrl.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+    return res.redirect('/login');
+  }
+  // Reject sessions created before the user's last password change
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  const changedAt = _passwordChangedAt[email];
+  if (changedAt && req.session.loginTime && req.session.loginTime < changedAt) {
+    req.session.destroy(() => {});
+    if (req.originalUrl.startsWith('/api/')) return res.status(401).json({ error: 'Session expired — please sign in again' });
+    return res.redirect('/login');
+  }
+  return next();
 }
 
 function requireAdmin(req, res, next) {
@@ -453,6 +494,7 @@ app.post('/login', async (req, res) => {
     const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
     if (!data.records || data.records.length === 0) {
       recordFailedLogin(emailLower);
+      auditLog('login_failed', { email: emailLower, reason: 'unknown_email' }, req);
       const ls = getLoginLockStatus(emailLower);
       return ls.locked
         ? res.redirect('/login?locked=1&mins=' + ls.minsLeft)
@@ -462,6 +504,7 @@ app.post('/login', async (req, res) => {
     const hash = record.fields[F_PASSWORD];
     if (!hash || !bcrypt.compareSync(password, hash)) {
       recordFailedLogin(emailLower);
+      auditLog('login_failed', { email: emailLower, reason: 'bad_password' }, req);
       const ls = getLoginLockStatus(emailLower);
       return ls.locked
         ? res.redirect('/login?locked=1&mins=' + ls.minsLeft)
@@ -470,6 +513,13 @@ app.post('/login', async (req, res) => {
     clearLoginAttempts(emailLower);
     req.session.authenticated = true;
     req.session.user = recordToUser(record);
+    req.session.loginTime = Date.now();
+    auditLog('login_success', { email: emailLower }, req);
+    // Force-reset: redirect to password reset page immediately
+    if (_forceReset[emailLower]) {
+      const token = createResetToken(emailLower);
+      return res.redirect('/reset-password?token=' + token + '&forced=1');
+    }
     res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
@@ -527,8 +577,8 @@ app.get('/reset-password', (req, res) => {
 
 app.post('/api/reset-password', async (req, res) => {
   const { token, password } = req.body;
-  if (!token || !password || password.length < 6) {
-    return res.status(400).json({ error: 'Token and password (min 6 chars) required' });
+  if (!token || !password || password.length < 12) {
+    return res.status(400).json({ error: 'Token and password (min 12 chars) required' });
   }
   const email = consumeResetToken(token);
   if (!email) return res.status(400).json({ error: 'Reset link has expired or is invalid' });
@@ -543,6 +593,9 @@ app.post('/api/reset-password', async (req, res) => {
       body: JSON.stringify({ fields: { [F_PASSWORD]: hash }, returnFieldsByFieldId: true })
     });
     clearLoginAttempts(email);
+    invalidateUserSessions(email);          // kill any active sessions
+    if (_forceReset[email]) { delete _forceReset[email]; saveForceReset(); }
+    auditLog('password_reset', { email }, req);
     res.json({ ok: true });
   } catch (err) {
     console.error('Reset password error:', err);
@@ -551,18 +604,65 @@ app.post('/api/reset-password', async (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
+  const email = req.session.user && req.session.user.email ? req.session.user.email.toLowerCase() : null;
+  if (email) auditLog('logout', { email }, req);
   req.session.destroy();
   res.redirect('/login');
 });
 
+// ── Change password (self-service, requires current password) ─────
+app.post('/api/change-password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new password required' });
+  }
+  if (newPassword.length < 12) {
+    return res.status(400).json({ error: 'New password must be at least 12 characters' });
+  }
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  try {
+    const formula = encodeURIComponent(`{Email}="${email}"`);
+    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+    if (!data.records || !data.records.length) return res.status(404).json({ error: 'Account not found' });
+    const record = data.records[0];
+    const hash = record.fields[F_PASSWORD];
+    if (!hash || !bcrypt.compareSync(currentPassword, hash)) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    await atFetch(`/${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_PASSWORD]: newHash }, returnFieldsByFieldId: true })
+    });
+    // Invalidate all other sessions, then refresh this session's loginTime
+    invalidateUserSessions(email);
+    req.session.loginTime = Date.now();
+    // Clear any force-reset flag
+    if (_forceReset[email]) { delete _forceReset[email]; saveForceReset(); }
+    auditLog('password_changed', { email }, req);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ error: 'Could not change password' });
+  }
+});
+
 // ── Current user ─────────────────────────────────────────────
 app.get('/api/me', requireAuth, (req, res) => {
-  res.json({ ...(req.session.user || {}), _impersonating: req.session.impersonating || false });
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  res.json({
+    ...(req.session.user || {}),
+    _impersonating: req.session.impersonating || false,
+    _forceReset: !!_forceReset[email]
+  });
 });
 
 // ── Profile: current user self-edit ──────────────────────────
 app.put('/api/profile', requireAuth, async (req, res) => {
   const { salutation, firstName, lastName, jobTitle, mobile, landline, website, password } = req.body;
+  if (password && password.length < 12) {
+    return res.status(400).json({ error: 'Password must be at least 12 characters' });
+  }
   const id = req.session.user.id;
   try {
     const fields = {
@@ -574,7 +674,13 @@ app.put('/api/profile', requireAuth, async (req, res) => {
       [F_LANDLINE]: landline   || '',
       [F_WEBSITE]:  website    || null
     };
-    if (password) fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
+    if (password) {
+      fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
+      const pwEmail = (req.session.user.email || '').toLowerCase();
+      invalidateUserSessions(pwEmail);
+      req.session.loginTime = Date.now(); // keep this session alive
+      auditLog('password_changed', { email: pwEmail, via: 'profile' }, req);
+    }
     const data = await atFetch(`/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true })
@@ -623,6 +729,7 @@ app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       for (const r of (data.records || [])) {
         const u = recordToUser(r);
         u.hasPassword = !!r.fields[F_PASSWORD];
+        u._forceReset = !!_forceReset[(u.email || '').toLowerCase()];
         users.push(u);
       }
       offset = data.offset || '';
@@ -637,6 +744,7 @@ app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
 app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
   const { email, password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
   // Supervisors cannot create admin users
   const actingUser = req.session.originalUser || req.session.user;
   if (!actingUser.isAdmin && (isAdmin === true || isAdmin === 'true')) {
@@ -679,6 +787,7 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true'
     };
     saveExtraProducts();
+    auditLog('admin_user_created', { targetEmail: normEmail, admin: (req.session.user || {}).email }, req);
     res.json(recordToUser(data.records[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -777,7 +886,13 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_SUPERVISOR_EMAIL]: supervisorEmail  || null,
       [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true'
     };
-    if (password) fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
+    if (password) {
+      if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
+      fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
+      // Invalidate active sessions for this user (email required for lookup)
+      if (email) invalidateUserSessions(email.trim().toLowerCase());
+      auditLog('admin_set_password', { targetEmail: email || id, admin: (req.session.user || {}).email }, req);
+    }
     const data = await atFetch(`/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true })
@@ -806,15 +921,50 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
 app.delete('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
   try {
     const actingUser = req.session.originalUser || req.session.user;
-    if (!actingUser.isAdmin) {
-      const targetRecord = await atFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    const targetRecord = await atFetch(`/${req.params.id}?returnFieldsByFieldId=true`).catch(() => null);
+    if (!actingUser.isAdmin && targetRecord) {
       const target = recordToUser(targetRecord);
       if (target.isAdmin) return res.status(403).json({ error: 'Supervisors cannot delete admin users' });
     }
+    const targetEmail = targetRecord ? recordToUser(targetRecord).email : req.params.id;
     await atFetch(`/${req.params.id}`, { method: 'DELETE' });
+    auditLog('admin_user_deleted', { targetEmail, admin: (actingUser || {}).email }, req);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: force-reset a user's password ─────────────────────────
+app.post('/api/admin/force-reset', requireAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const emailLower = email.trim().toLowerCase();
+  _forceReset[emailLower] = true;
+  saveForceReset();
+  auditLog('admin_force_reset_set', { targetEmail: emailLower, admin: (req.session.user || {}).email }, req);
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/force-reset/:email', requireAdmin, (req, res) => {
+  const emailLower = decodeURIComponent(req.params.email).trim().toLowerCase();
+  delete _forceReset[emailLower];
+  saveForceReset();
+  auditLog('admin_force_reset_cleared', { targetEmail: emailLower, admin: (req.session.user || {}).email }, req);
+  res.json({ ok: true });
+});
+
+// ── Admin: audit log ──────────────────────────────────────────────
+app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
+  try {
+    const raw = fs.readFileSync(AUDIT_LOG_PATH, 'utf8');
+    const lines = raw.trim().split('\n').filter(Boolean);
+    const entries = lines.slice(-500).reverse()
+      .map(l => { try { return JSON.parse(l); } catch(_) { return null; } })
+      .filter(Boolean);
+    res.json(entries);
+  } catch(_) {
+    res.json([]);
   }
 });
 
