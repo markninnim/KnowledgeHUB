@@ -225,12 +225,14 @@ html { height: 100%; }
   <!-- Compliance sidebar -->
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">REPORTING</span></div>
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">REPORTING</span></div>
     <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
     <a href="#" id="cr-nav-breach" onclick="return showCrForm('Breach', this)">Breach Report</a>
     <a href="#" id="cr-nav-conflict" onclick="return showCrForm('Conflict of Interest', this)">Conflict of Interest</a>
     <a href="#" id="cr-nav-gifts" onclick="return showCrForm('Gifts & Hospitality', this)">Gifts &amp; Hospitality</a>
+    <a href="#" id="cr-nav-selfsale" onclick="return showCrForm('Self Sale', this)">Self Sale</a>
+    <a href="#" id="cr-nav-whistle" onclick="return showCrForm('Whistleblowing', this)">Whistleblowing</a>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -1336,12 +1338,12 @@ html { height: 100%; }
             <textarea id="cr-action" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
           </div>
           <div id="cr-error" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:12px;"></div>
-          <button id="cr-submit" onclick="submitCrForm()" style="background:#003768;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
+          <button id="cr-submit" onclick="submitCrForm()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
         </div>
         <div id="cr-success" style="display:none;text-align:center;padding:24px 0;">
           <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:8px;">Report submitted</div>
           <div style="font-size:13px;color:#6b7c8f;margin-bottom:20px;">Your report has been logged and the Compliance team can now review it.</div>
-          <button onclick="resetCrForm()" style="background:#fff;color:#003768;border:1.5px solid #003768;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
+          <button onclick="resetCrForm()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
         </div>
       </div>
     </div>
@@ -9806,28 +9808,40 @@ function showCpdSection(e) {
 var _crType = 'Complaint';
 var CR_CONFIG = {
   'Complaint': {
-    subtitle: 'Notify Compliance of a client complaint. Report every complaint on the day it is received.',
+    subtitle: 'Notify Compliance of any expression of dissatisfaction from a client, whether made verbally or in writing. Every complaint must be reported on the day it is received, even where you believe it can be resolved informally — the Compliance team will guide you through the next steps and ensure FCA timescales are met.',
     incidentLabel: 'Date complaint received',
     detailsLabel: 'Nature of the complaint',
     show: { client: true, thirdparty: false, givenrec: false, action: true }
   },
   'Breach': {
-    subtitle: 'Report a rule breach, error or conduct issue. Early reporting protects you and the firm.',
+    subtitle: 'Report any breach of FCA rules, firm procedures or conduct standards — including errors, omissions and near misses. Early, honest reporting protects you, your clients and the firm, and allows issues to be put right quickly. Reporting a breach you have made yourself will always be viewed more favourably than one discovered later.',
     incidentLabel: 'Date of breach',
     detailsLabel: 'What happened',
     show: { client: true, thirdparty: false, givenrec: false, action: true }
   },
   'Conflict of Interest': {
-    subtitle: 'Declare any actual or potential conflict of interest to the Compliance Officer.',
+    subtitle: 'Declare any actual or potential conflict between your personal interests and those of a client or the firm — for example family connections, outside business interests, or personal relationships with providers or introducers. If in doubt, declare it: the Compliance Officer will confirm whether any action is needed.',
     incidentLabel: 'Date conflict arose',
     detailsLabel: 'Nature of the conflict',
     show: { client: false, thirdparty: true, givenrec: false, action: false }
   },
   'Gifts & Hospitality': {
-    subtitle: 'Declare gifts or hospitality given or received in connection with your role.',
+    subtitle: 'Declare all gifts and hospitality given or received in connection with your role, whatever the value. This keeps the firm’s register complete and demonstrates that business decisions are never influenced by inducements. Declarations are reviewed by Compliance and recorded centrally.',
     incidentLabel: 'Date given/received',
     detailsLabel: 'Description of gift or hospitality',
     show: { client: false, thirdparty: true, givenrec: true, action: false }
+  },
+  'Self Sale': {
+    subtitle: 'Notify Compliance before arranging a mortgage or protection product for yourself or a family member. The Self Sale policy applies to protection only — residential mortgages for yourself must be arranged direct with the lender on an execution-only basis. Compliance will confirm the correct route before you proceed.',
+    incidentLabel: 'Intended/actual sale date',
+    detailsLabel: 'Product and circumstances',
+    show: { client: false, thirdparty: false, givenrec: false, action: false }
+  },
+  'Whistleblowing': {
+    subtitle: 'Raise a concern about wrongdoing, malpractice or risk within the firm. Finance Planning endorses the Public Interest Disclosure Act (1998) and you may freely make any relevant notification to the Compliance Officer. All disclosures are treated seriously and in the strictest confidence, and you will never be disadvantaged for raising a concern in good faith.',
+    incidentLabel: 'Date of concern',
+    detailsLabel: 'Your concern',
+    show: { client: false, thirdparty: false, givenrec: false, action: false }
   }
 };
 

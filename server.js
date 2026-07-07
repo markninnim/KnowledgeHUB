@@ -1942,7 +1942,7 @@ const CR_VALUE      = 'fldjZTajLEasDx1lf';
 const CR_DETAILS    = 'fldLdvEJUnmQ7DBY9';
 const CR_ACTION     = 'fld1ap3YFBgR4FThG';
 const CR_STATUS     = 'fldEM5lsh19rbLB2k';
-const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality'];
+const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing'];
 
 async function crFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${CR_TABLE}${endpoint}`;
@@ -1975,7 +1975,7 @@ app.post('/api/compliance-report', requireAuth, async (req, res) => {
     if (givenReceived) fields[CR_GIVENREC]   = givenReceived;
     if (value !== undefined && value !== null && value !== '') fields[CR_VALUE] = parseFloat(value) || 0;
     if (actionTaken)   fields[CR_ACTION]     = actionTaken;
-    await crFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields }] }) });
+    await crFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields }], typecast: true }) });
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
