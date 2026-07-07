@@ -13,7 +13,7 @@ FPG Brand Hub / KnowledgeHUB. Node + Express + vanilla HTML/CSS/JS (single-page 
 
 ## Naming
 
-- Product is **KnowledgeHUB** (not Knowledge Hub / FPG Knowledge Hub / DAM).
+- Product is **KnowledgeHUB™** (`KnowledgeHUB&#8482;` in user-facing text; not Knowledge Hub / FPG Knowledge Hub / DAM).
 - CPD feature is **AutoCPD™** (`AutoCPD&#8482;`).
 - "Learning Zone" renamed to **Learning** in UI copy only — internal `source: 'Learning Zone'` data values must NOT be renamed (matched against Airtable history and icon logic).
 
