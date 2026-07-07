@@ -225,7 +225,7 @@ html { height: 100%; }
   <!-- Compliance sidebar -->
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
-    <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">CPD Log</a>
+    <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -1180,7 +1180,7 @@ html { height: 100%; }
       <!-- Header -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:20px;">
         <div>
-          <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">CPD Log</h2>
+          <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">AutoCPD&#8482;</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;">Track your continuing professional development. Learning Zone videos are logged automatically.</p>
         </div>
         <button onclick="openCpdForm()" style="flex-shrink:0;background:#003768;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Entry</button>
@@ -9929,16 +9929,16 @@ function renderCpdEntries(entries) {
     el.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">No entries yet. Watch a Learning Zone video or add one manually.</div>';
     return;
   }
-  // Category: all uniform light blue
-  var CAT_BG = '#dbeafe'; var CAT_TC = '#1d4ed8';
-  // Type: blue-family variations
-  var typeColors = { 'Mortgage':'#bfdbfe', 'Protection':'#dbeafe', 'Investment':'#eff6ff' };
-  var typeText   = { 'Mortgage':'#1e40af', 'Protection':'#1d4ed8', 'Investment':'#3b82f6' };
+  // Category: all standard navy pill
+  var CAT_BG = '#003768'; var CAT_TC = '#ffffff';
+  // Type: two shades of standard navy
+  var typeColors = { 'Mortgage':'#003768', 'Protection':'#0a5c99', 'Investment':'#0a5c99' };
+  var typeText   = { 'Mortgage':'#ffffff',  'Protection':'#ffffff',  'Investment':'#ffffff'  };
   var rows = entries.map(function(e, i) {
     var d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
     var tbg = typeColors[e.cpdType] || '#dbeafe';
     var ttc = typeText[e.cpdType]   || '#1d4ed8';
-    var typeTag = e.cpdType ? '<span style="background:' + tbg + ';color:' + ttc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.cpdType) + '</span>' : '—';
+    var typeTag = e.cpdType ? '<span style="background:' + tbg + ';color:' + ttc + ';font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.cpdType) + '</span>' : '—';
     var srcIcon = e.source === 'Learning Zone'
       ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
       : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
@@ -9946,7 +9946,7 @@ function renderCpdEntries(entries) {
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity) + '</td>' +
       '<td style="padding:11px 16px;">' + typeTag + '</td>' +
-      '<td style="padding:11px 16px;"><span style="background:' + CAT_BG + ';color:' + CAT_TC + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
+      '<td style="padding:11px 16px;"><span style="background:' + CAT_BG + ';color:' + CAT_TC + ';font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:#003768;text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
       '<td style="padding:11px 16px;text-align:right;white-space:nowrap;" onclick="event.stopPropagation()">' +
