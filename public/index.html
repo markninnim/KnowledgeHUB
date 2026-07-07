@@ -5215,7 +5215,7 @@ function renderFeaturedPosts(posts) {
   grid.innerHTML = '';
   if (addBtn) addBtn.style.display = posts.length >= 4 ? 'none' : 'flex';
   if (!posts.length) {
-    grid.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:12px 0;">No featured posts yet. Click Add New to get started.</div>';
+    grid.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:12px 0;">No featured posts yet. Click <strong>+ Add New</strong> to get started.</div>';
     return;
   }
   posts.forEach(function(post) {
@@ -7582,7 +7582,7 @@ function renderUserList(users) {
   var canManageUsers = _isActingSupervisor(); // admins + supervisors
   var isAdmin = _isActingAdmin();
   if (!users || users.length === 0) {
-    el.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No users yet. Click "+ Add User" to get started.</div>';
+    el.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No users yet. Click <strong>+ Add User</strong> to get started.</div>';
     return;
   }
   // Sort alphabetically by first name

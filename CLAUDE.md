@@ -9,6 +9,7 @@ FPG Brand Hub / KnowledgeHUB. Node + Express + vanilla HTML/CSS/JS (single-page 
 - **Sidebar section headers:** orange caps — `font-size:10px; font-weight:700; letter-spacing:.08em; color:#fcb034;` (e.g. REPORTING, READING, KNOWLEDGE TESTS).
 - **Core colours:** navy `#003768`, orange `#fcb034`, muted text `#6b7c8f`, borders `#e8ecf0`, page text `#1a2a3a`.
 - Subtitle/intro text under page titles: max-width matching the form/card below it (typically 640px), `line-height:1.6`.
+- **Referencing buttons/actions in body text:** sentence-case grey text with the button name in `<strong>` using the button's exact capitalisation, no quotes — e.g. "Click <strong>Stop &amp; Log CPD</strong> when you're done."
 
 ## Naming
 
