@@ -6892,7 +6892,8 @@ function loadHomeData() {
     grid.innerHTML = '';
     if (bdayCard) grid.appendChild(bdayCard);
     bulletins.forEach(function(b) { grid.appendChild(makeCard(b)); });
-    // Duplicate for seamless loop (no birthday card in repeat)
+    // Duplicate for seamless loop (include birthday card so it repeats on every cycle)
+    if (bdayCard) grid.appendChild(bdayCard.cloneNode(true));
     bulletins.forEach(function(b) { grid.appendChild(makeCard(b)); });
     // Pause on hover
     var paused = false;
@@ -6900,7 +6901,7 @@ function loadHomeData() {
     wrap.addEventListener('mouseleave', function() { paused = false; });
     // Slow auto-scroll
     var pos = 0;
-    var speed = 0.4; // px per frame
+    var speed = 0.25; // px per frame
     function tick() {
       if (!paused) {
         pos += speed;
