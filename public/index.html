@@ -1181,7 +1181,7 @@ html { height: 100%; }
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:20px;">
         <div>
           <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">AutoCPD&#8482;</h2>
-          <p style="color:#6b7c8f;font-size:13.5px;margin:0;">Track your continuing professional development. Learning Zone videos are logged automatically.</p>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;">Stop logging, start learning. AutoCPD&#8482; captures your Learning activity automatically, lets you add your own entries, and gives you a downloadable record on demand.</p>
         </div>
         <button onclick="openCpdForm()" style="flex-shrink:0;background:#003768;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Entry</button>
       </div>
@@ -4325,7 +4325,7 @@ html { height: 100%; }
     <div style="border-top:2px solid #e8ecf0;margin:0 28px;padding:24px 0 0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
-          <h3 style="color:#003768;font-size:15px;margin:0 0 2px;">Learning Zone Videos</h3>
+          <h3 style="color:#003768;font-size:15px;margin:0 0 2px;">Learning Videos</h3>
           <p style="color:#6b7c8f;font-size:12px;margin:0;">Newest 8 are featured — older ones go to archive automatically.</p>
         </div>
         <button onclick="openLvForm()" style="background:#003768;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Video</button>
@@ -6575,7 +6575,7 @@ var _lvCurrentCpdType = 'Mortgage';
 var _lvSplit = false;
 
 function openLvPlayer(url, title, desc, cpdType) {
-  _lvCurrentTitle   = title   || 'Learning Zone video';
+  _lvCurrentTitle   = title   || 'Learning video';
   _lvCurrentCpdType = cpdType || 'Mortgage';
   var embedUrl = getEmbedUrl(url);
   document.getElementById('lv-iframe').src = _lvSplit ? '' : embedUrl;
@@ -9926,7 +9926,7 @@ function renderCpdEntries(entries) {
   var el = document.getElementById('cpd-entries');
   document.getElementById('cpd-entry-count').textContent = entries.length + ' entr' + (entries.length === 1 ? 'y' : 'ies');
   if (!entries.length) {
-    el.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">No entries yet. Watch a Learning Zone video or add one manually.</div>';
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">No entries yet. Watch a Learning video or add one manually.</div>';
     return;
   }
   // Category: standard label — light blue bg, dark navy text

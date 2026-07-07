@@ -1934,7 +1934,7 @@ app.post('/api/cpd/video', requireAuth, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const makeRecord = (type, mins) => ({ fields: {
-      [CPD_ACTIVITY]: videoTitle || 'Learning Zone video',
+      [CPD_ACTIVITY]: videoTitle || 'Learning video',
       [CPD_EMAIL]:    req.session.user.email,
       [CPD_DATE]:     today,
       [CPD_MINUTES]:  mins,
