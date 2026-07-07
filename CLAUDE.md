@@ -4,7 +4,7 @@ FPG Brand Hub / KnowledgeHUB. Node + Express + vanilla HTML/CSS/JS (single-page 
 
 ## Brand rules (always apply)
 
-- **Buttons (all forms):** transparent background, `1.5px solid #003768` border, `#003768` text, border-radius 8px, font-weight 600–700. Hover: fill `#003768`, white text. No grey (`#d1d5db`) borders, no solid navy default state.
+- **Buttons (all forms):** transparent background, `1.5px solid #d1d5db` grey border, `#6b7c8f` grey text, border-radius 8px, font-weight 600–700. Hover: border and text turn navy `#003768`. No solid navy default state.
 - **Standard label/pill:** background `#dbeafe` (light blue), text `#003768` (dark navy), border-radius 20px (10px for tiny badges). Applies to category/type/product labels. Exceptions: CAS (green `#dcfce7`/`#166534`), Non-CAS (red `#fef2f2`/`#b91c1c`), status indicators (e.g. amber "On track").
 - **Sidebar section headers:** orange caps — `font-size:10px; font-weight:700; letter-spacing:.08em; color:#fcb034;` (e.g. REPORTING, READING, KNOWLEDGE TESTS).
 - **Core colours:** navy `#003768`, orange `#fcb034`, muted text `#6b7c8f`, borders `#e8ecf0`, page text `#1a2a3a`.

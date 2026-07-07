@@ -88,8 +88,8 @@ html { height: 100%; }
 .badge { display: inline-block; background: #f5f7fa; color: #6b7c8f; font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
 .badge.ready { background: rgba(0,119,68,.1); color: #007744; }
 .badge.expired { background: rgba(204,0,0,.1); color: #cc0000; }
-.btn { display: inline-block; background: transparent; color: #003768; border: 1.5px solid #003768; padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 700; margin-top: 8px; }
-.btn:hover { background:#003768; color:#fff; }
+.btn { display: inline-block; background: transparent; color: #6b7c8f; border: 1.5px solid #d1d5db; padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 700; margin-top: 8px; }
+.btn:hover { border-color:#003768; color:#003768; }
 .btn.off { background: #f5f7fa; color: #ccc; border-color:#e8ecf0; pointer-events: none; }
 .btn-view { display: none !important; }
 .home-ql-btn { background:#fff;border:1.5px solid #e8ecf0;border-radius:10px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:#003768;font-family:inherit;transition:border-color .15s,box-shadow .15s;text-align:center;line-height:1.3; }
@@ -757,7 +757,7 @@ html { height: 100%; }
     <div id="featured-social-wrap" style="display:none;margin-bottom:32px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:1px;">Featured Posts</div>
-        <button id="featured-add-btn" onclick="openMarketingUpload()" style="display:flex;align-items:center;gap:7px;background:transparent;color:#003768;border:1.5px solid #003768;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <button id="featured-add-btn" onclick="openMarketingUpload()" style="display:flex;align-items:center;gap:7px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New
         </button>
       </div>
@@ -1161,7 +1161,7 @@ html { height: 100%; }
         <span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Moving-Card.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="display:flex;gap:6px;margin-top:8px;">
           <a href="/download-asset/marketing/FPG-Moving-Card.pdf" style="flex:1;text-align:center;display:block;background:#003768;color:#fff;padding:7px 8px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;box-sizing:border-box;">Download</a>
-          <button onclick="openPriceModal('Moving Card',[{qty:30,total:40.40},{qty:50,total:47.00},{qty:75,total:55.19},{qty:100,total:63.66},{qty:200,total:94.20},{qty:500,total:166.49}])" style="flex:1;background:transparent;color:#003768;border:1.5px solid #003768;padding:7px 8px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-sizing:border-box;">Pricing</button>
+          <button onclick="openPriceModal('Moving Card',[{qty:30,total:40.40},{qty:50,total:47.00},{qty:75,total:55.19},{qty:100,total:63.66},{qty:200,total:94.20},{qty:500,total:166.49}])" style="flex:1;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:7px 8px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-sizing:border-box;">Pricing</button>
         </div>
         <button onclick="openMcModal()" style="display:block;width:100%;margin-top:6px;background:#003768;color:#fff;padding:7px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-sizing:border-box;">Personalise My Card</button>
       </div>
@@ -1190,7 +1190,7 @@ html { height: 100%; }
           <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">AutoCPD&#8482;</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;">Stop logging, start learning. AutoCPD&#8482; captures your Learning activity automatically, lets you add your own entries, and gives you a downloadable record on demand.</p>
         </div>
-        <button onclick="openCpdForm()" style="flex-shrink:0;background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Entry</button>
+        <button onclick="openCpdForm()" style="flex-shrink:0;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Entry</button>
       </div>
 
       <!-- Progress + Pie row -->
@@ -1273,7 +1273,7 @@ html { height: 100%; }
         </div>
         <div id="cpd-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:12px;"></div>
         <div style="display:flex;gap:10px;margin-top:16px;">
-          <button onclick="saveCpdEntry()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save Entry</button>
+          <button onclick="saveCpdEntry()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save Entry</button>
           <button onclick="closeCpdForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
@@ -1338,12 +1338,12 @@ html { height: 100%; }
             <textarea id="cr-action" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
           </div>
           <div id="cr-error" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:12px;"></div>
-          <button id="cr-submit" onclick="submitCrForm()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
+          <button id="cr-submit" onclick="submitCrForm()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
         </div>
         <div id="cr-success" style="display:none;text-align:center;padding:24px 0;">
           <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:8px;">Report submitted</div>
           <div style="font-size:13px;color:#6b7c8f;margin-bottom:20px;">Your report has been logged and the Compliance team can now review it.</div>
-          <button onclick="resetCrForm()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
+          <button onclick="resetCrForm()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
         </div>
       </div>
     </div>
@@ -1532,7 +1532,7 @@ html { height: 100%; }
             <div id="ms-timer-display" style="font-size:56px;font-weight:900;color:#003768;line-height:1;margin-bottom:4px;">00:00</div>
             <div style="font-size:12px;color:#6b7c8f;margin-bottom:20px;">Article is open in another tab</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button onclick="msStopAndLog()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Stop &amp; Log CPD</button>
+              <button onclick="msStopAndLog()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Stop &amp; Log CPD</button>
               <button onclick="msCancel()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
             </div>
           </div>
@@ -1561,7 +1561,7 @@ html { height: 100%; }
           </div>
           <!-- Upload button: supervisors/admins only -->
           <div id="nl-upload-wrap" style="display:none;flex-shrink:0;">
-            <button onclick="nlToggleUpload()" style="display:flex;align-items:center;gap:7px;background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+            <button onclick="nlToggleUpload()" style="display:flex;align-items:center;gap:7px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Upload Newsletter
             </button>
@@ -1587,7 +1587,7 @@ html { height: 100%; }
               </div>
               <div id="nl-up-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
               <div style="display:flex;gap:8px;">
-                <button onclick="nlUpload()" style="flex:1;background:transparent;color:#003768;border:1.5px solid #003768;padding:9px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Upload</button>
+                <button onclick="nlUpload()" style="flex:1;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Upload</button>
                 <button onclick="nlToggleUpload()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
               </div>
             </div>
@@ -1648,7 +1648,7 @@ html { height: 100%; }
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
           <button id="kt-prev-btn" onclick="ktNav(-1)" style="background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">← Previous</button>
           <span id="kt-answered-count" style="font-size:12px;color:#6b7c8f;"></span>
-          <button id="kt-next-btn" onclick="ktNav(1)" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Next →</button>
+          <button id="kt-next-btn" onclick="ktNav(1)" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Next →</button>
         </div>
       </div>
 
@@ -1662,7 +1662,7 @@ html { height: 100%; }
           <p style="font-size:13px;color:#6b7c8f;margin:0 0 16px;">Check all questions are answered before submitting.</p>
           <div id="kt-review-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;"></div>
         </div>
-        <button onclick="ktSubmit()" id="kt-submit-btn" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;">Submit Test</button>
+        <button onclick="ktSubmit()" id="kt-submit-btn" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;">Submit Test</button>
       </div>
 
       <!-- Results screen -->
@@ -1823,7 +1823,7 @@ html { height: 100%; }
 
         <div id="fp-error" style="display:none;background:#fff3f3;border:1px solid #f5c6c6;border-radius:8px;padding:12px 16px;font-size:13px;color:#c0392b;margin-bottom:16px;"></div>
 
-        <button id="fp-submit-btn" onclick="fpSubmit()" style="width:100%;background:transparent;color:#003768;border:1.5px solid #003768;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;">Submit Declaration</button>
+        <button id="fp-submit-btn" onclick="fpSubmit()" style="width:100%;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;">Submit Declaration</button>
 
         <!-- Success state (hidden until submitted) -->
         <div id="fp-success" style="display:none;text-align:center;padding:40px 20px;">
@@ -1832,7 +1832,7 @@ html { height: 100%; }
           </div>
           <div style="font-size:18px;font-weight:800;color:#003768;margin-bottom:8px;">Declaration Submitted</div>
           <div style="font-size:13px;color:#6b7c8f;line-height:1.6;max-width:400px;margin:0 auto 24px;">Your Fitness &amp; Properness Questionnaire has been received. Our Compliance team has been notified.</div>
-          <button onclick="fpBack()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Back to Tests</button>
+          <button onclick="fpBack()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Back to Tests</button>
         </div>
       </div>
     </div>
@@ -2063,7 +2063,7 @@ html { height: 100%; }
             style="padding:8px 12px 8px 36px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <button id="mas-share-btn" onclick="openShareModal('mas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#003768;border:1.5px solid #003768;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
+        <button id="mas-share-btn" onclick="openShareModal('mas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Share Section
         </button>
@@ -2905,7 +2905,7 @@ html { height: 100%; }
             style="padding:8px 12px 8px 36px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <button id="pas-share-btn" onclick="openShareModal('pas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#003768;border:1.5px solid #003768;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
+        <button id="pas-share-btn" onclick="openShareModal('pas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Share Section
         </button>
@@ -3648,7 +3648,7 @@ html { height: 100%; }
           <textarea id="cas-entry-notes" rows="3" placeholder="Observations, feedback, outcomes…" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
         </div>
         <div style="display:flex;gap:8px;">
-          <button onclick="submitCasEntry()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>
+          <button onclick="submitCasEntry()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>
           <button onclick="document.getElementById('cas-entry-form').style.display='none'" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
           <span id="cas-entry-saving" style="display:none;font-size:12px;color:#6b7c8f;align-self:center;">Saving…</span>
         </div>
@@ -3942,7 +3942,7 @@ html { height: 100%; }
     <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Email</label><input id="bc-email" type="email" placeholder="e.g. mark.ninnim@financeplanning.co.uk" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     <div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Mobile</label><input id="bc-phone" type="text" placeholder="e.g. 07525 932 299" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Your Personal Web Page <span style="font-weight:400;color:#6b7c8f;">(optional)</span></label><input id="bc-url" type="url" placeholder="e.g. https://financeplanning.co.uk/mark-ninnim" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
-    <button onclick="generateCard()" style="width:100%;padding:12px;background:transparent;color:#003768;border:1.5px solid #003768;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Card PDF</button>
+    <button onclick="generateCard()" style="width:100%;padding:12px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Card PDF</button>
     <div id="bc-msg" style="margin-top:12px;font-size:12px;color:#6b7c8f;text-align:center;display:none;"></div>
   </div>
 </div>
@@ -4108,7 +4108,7 @@ html { height: 100%; }
 
       <div id="acc-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px;"></div>
       <div id="acc-success" style="display:none;background:#f0fff4;border:1px solid #bbf7d0;color:#166534;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px;">✓ Details saved successfully</div>
-      <button onclick="saveAccountDetails()" style="width:100%;background:transparent;color:#003768;border:1.5px solid #003768;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Save Changes</button>
+      <button onclick="saveAccountDetails()" style="width:100%;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Save Changes</button>
     </div>
     <!-- 2FA section -->
     <div style="padding:16px 28px 20px;border-top:1px solid #f0f2f5;">
@@ -4128,7 +4128,7 @@ html { height: 100%; }
         </div>
         <div style="display:flex;gap:8px;">
           <input id="acc-2fa-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="flex:1;padding:9px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:18px;font-family:monospace;outline:none;text-align:center;letter-spacing:4px;background:#fff;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
-          <button onclick="confirm2FASetup()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Verify</button>
+          <button onclick="confirm2FASetup()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Verify</button>
         </div>
         <div id="acc-2fa-error" style="display:none;color:#c00;font-size:12px;margin-top:8px;"></div>
         <div id="acc-2fa-ok" style="display:none;color:#16a34a;font-size:12px;margin-top:8px;">✓ Authenticator updated successfully.</div>
@@ -4167,7 +4167,7 @@ html { height: 100%; }
       <input id="fr-confirm" type="password" placeholder="Confirm password" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
     </div>
     <div id="fr-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:14px;"></div>
-    <button onclick="submitForceReset()" style="width:100%;background:transparent;color:#003768;border:1.5px solid #003768;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Set New Password</button>
+    <button onclick="submitForceReset()" style="width:100%;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Set New Password</button>
   </div>
 </div>
 
@@ -4196,7 +4196,7 @@ html { height: 100%; }
         Feature Rollout Controls
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;" id="admin-feature-toggles"></div>
-      <button onclick="saveFeatures()" style="margin-top:14px;background:transparent;color:#003768;border:1.5px solid #003768;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Changes</button>
+      <button onclick="saveFeatures()" style="margin-top:14px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Changes</button>
       <span id="admin-features-saved" style="display:none;margin-left:10px;font-size:12px;color:#2e7d32;font-weight:600;">✓ Saved</span>
     </div>
 
@@ -4226,7 +4226,7 @@ html { height: 100%; }
           <span id="import-count" style="font-size:13px;color:#6b7c8f;margin-left:8px;"></span>
         </div>
         <div style="display:flex;gap:8px;">
-          <button onclick="confirmImport()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Import All</button>
+          <button onclick="confirmImport()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Import All</button>
           <button onclick="cancelImport()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
@@ -4379,7 +4379,7 @@ html { height: 100%; }
         </div>
         <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
         <div style="display:flex;gap:10px;margin-top:20px;">
-          <button onclick="saveUser()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save User</button>
+          <button onclick="saveUser()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Save User</button>
           <button onclick="cancelUserForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
@@ -4392,7 +4392,7 @@ html { height: 100%; }
           <h3 style="color:#003768;font-size:15px;margin:0 0 2px;">Learning Videos</h3>
           <p style="color:#6b7c8f;font-size:12px;margin:0;">Newest 8 are featured — older ones go to archive automatically.</p>
         </div>
-        <button onclick="openLvForm()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Video</button>
+        <button onclick="openLvForm()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Video</button>
       </div>
       <div id="admin-lv-list" style="margin-bottom:4px;">
         <div style="color:#6b7c8f;font-size:13px;padding:12px 0;text-align:center;">Loading…</div>
@@ -4423,7 +4423,7 @@ html { height: 100%; }
         </div>
         <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
         <div style="display:flex;gap:8px;margin-top:14px;">
-          <button onclick="saveLvVideo()" style="background:transparent;color:#003768;border:1.5px solid #003768;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Video</button>
+          <button onclick="saveLvVideo()" style="background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Video</button>
           <button onclick="cancelLvForm()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
@@ -4463,7 +4463,7 @@ html { height: 100%; }
       <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Landline <span style="font-weight:400;color:#6b7c8f;">(optional)</span></label><input id="mc-landline" type="text" placeholder="e.g. 01444 449400" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
     </div>
     <div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Personal Website <span style="font-weight:400;color:#6b7c8f;">(optional)</span></label><input id="mc-url" type="url" placeholder="e.g. https://financeplanning.co.uk/broker-name" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;"></div>
-    <button onclick="generateMovingCard()" style="width:100%;padding:12px;background:transparent;color:#003768;border:1.5px solid #003768;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Moving Card PDF</button>
+    <button onclick="generateMovingCard()" style="width:100%;padding:12px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Download My Moving Card PDF</button>
     <div id="mc-msg" style="margin-top:12px;font-size:12px;color:#6b7c8f;text-align:center;display:none;"></div>
   </div>
 </div>
@@ -4493,7 +4493,7 @@ html { height: 100%; }
       <div id="dip-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:14px;"></div>
       <div style="display:flex;gap:10px;">
         <button onclick="closeDipModal()" style="flex:1;padding:10px;background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
-        <button id="dip-btn" onclick="generateDip()" style="flex:2;padding:10px;background:transparent;color:#003768;border:1.5px solid #003768;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Generate &amp; Download PDF</button>
+        <button id="dip-btn" onclick="generateDip()" style="flex:2;padding:10px;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Generate &amp; Download PDF</button>
       </div>
     </div>
   </div>
@@ -10908,7 +10908,7 @@ function ktSubmit() {
     (wrongItems?'<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#1a2a3a;margin-bottom:10px;">Questions to review ('+(total-score)+'):</div>'+wrongItems+'</div>':'<div style="text-align:center;padding:12px;font-size:14px;color:#16a34a;font-weight:600;">Perfect score! All 20 correct.</div>')+
     '<div style="display:flex;gap:12px;margin-top:16px;">'+
       '<button onclick="ktLoadTest(\''+_kt.id+'\')" style="flex:1;background:#f5f7fa;color:#003768;border:1.5px solid #e8ecf0;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Retake Test</button>'+
-      '<button onclick="ktShowLanding()" style="flex:1;background:transparent;color:#003768;border:1.5px solid #003768;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">All Tests</button>'+
+      '<button onclick="ktShowLanding()" style="flex:1;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">All Tests</button>'+
     '</div>';
   fetch('/api/test/result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testName:test.title,score:score,total:total,passed:passed,cpdType:test.cpdType})}).then(function(r){return r.json();}).then(function(d){
     if(d.ok && passed){var t=document.getElementById('toast');if(t){t.textContent='✓ 30 min '+test.cpdType+' CPD logged';t.style.opacity=1;setTimeout(function(){t.style.opacity=0;},4000);}}
@@ -11231,7 +11231,7 @@ function pzFmt(n) {
     </div>
     <div id="mku-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
     <div style="display:flex;gap:8px;">
-      <button onclick="saveFeaturedPost()" style="flex:1;background:transparent;color:#003768;border:1.5px solid #003768;padding:10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Post</button>
+      <button onclick="saveFeaturedPost()" style="flex:1;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Post</button>
       <button onclick="closeMarketingUpload()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
     </div>
   </div>
@@ -11265,7 +11265,7 @@ function pzFmt(n) {
 
     <p id="share-status" style="margin:0 0 12px;font-size:13px;min-height:18px;"></p>
     <div style="display:flex;gap:10px;">
-      <button onclick="sendShareEmail()" style="flex:1;background:transparent;color:#003768;border:1.5px solid #003768;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Send Email</button>
+      <button onclick="sendShareEmail()" style="flex:1;background:transparent;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Send Email</button>
       <button onclick="closeShareModal()" style="background:#fff;color:#6b7c8f;border:1.5px solid #d1d5db;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
     </div>
   </div>
