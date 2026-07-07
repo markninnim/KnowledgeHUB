@@ -3567,6 +3567,28 @@ app.get('/api/news-bulletins', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/news-bulletin — add a story (supervisor/admin only)
+app.post('/api/news-bulletin', requireAuth, async (req, res) => {
+  if (!req.session.user.isSupervisor && !req.session.user.isAdmin) {
+    return res.status(403).json({ error: 'Supervisors and admins only' });
+  }
+  const { title, body } = req.body;
+  if (!title) return res.status(400).json({ error: 'Headline is required' });
+  try {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${NEWS_TBL}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields: { [NEWS_TITLE]: title, [NEWS_BODY]: body || '' } }] })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || `Airtable ${r.status}`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/share/advisers — all advisers (supervisors only)
 app.get('/api/share/advisers', requireAuth, async (req, res) => {
   if (!req.session.user.isSupervisor && !req.session.user.isAdmin) {
