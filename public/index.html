@@ -10791,8 +10791,8 @@ function ktNavLoad(id, el) {
   document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
   if(el) el.classList.add('active');
   if(el) kdEnsureOpen(el.id);
-  // Ensure the knowledge-tests section is visible
-  ['weekly-recordings','induction-recordings','revalidation-recordings','monthly-newsletters','knowledge-tests'].forEach(function(s){
+  // Ensure the knowledge-tests section is visible (hide all other Learning sections)
+  ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests','lv-cas-path-section'].forEach(function(s){
     var d=document.getElementById(s);if(d) d.style.display=s==='knowledge-tests'?'':'none';
   });
   ktLoadTest(id);
