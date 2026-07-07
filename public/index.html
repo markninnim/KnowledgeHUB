@@ -9929,43 +9929,31 @@ function renderCpdEntries(entries) {
     el.innerHTML = '<div style="padding:40px;text-align:center;color:#6b7c8f;font-size:13px;">No entries yet. Watch a Learning Zone video or add one manually.</div>';
     return;
   }
-  var catColors = { 'Lender Update':'#dbeafe', 'Insurer Update':'#fef9c3', 'Compliance':'#dcfce7', 'Technical Knowledge':'#ede9fe', 'Financial News':'#fce7f3', 'Other':'#f1f5f9' };
-  var catText   = { 'Lender Update':'#1d4ed8', 'Insurer Update':'#854d0e', 'Compliance':'#166534', 'Technical Knowledge':'#6b21a8', 'Financial News':'#9d174d', 'Other':'#475569' };
-  var typeColors = { 'Investment':'#ede9fe', 'Mortgage':'#dbeafe', 'Protection':'#fef9c3' };
-  var typeText   = { 'Investment':'#6b21a8', 'Mortgage':'#1d4ed8', 'Protection':'#854d0e' };
+  // Category: all uniform light blue
+  var CAT_BG = '#dbeafe'; var CAT_TC = '#1d4ed8';
+  // Type: blue-family variations
+  var typeColors = { 'Mortgage':'#bfdbfe', 'Protection':'#dbeafe', 'Investment':'#eff6ff' };
+  var typeText   = { 'Mortgage':'#1e40af', 'Protection':'#1d4ed8', 'Investment':'#3b82f6' };
   var rows = entries.map(function(e, i) {
     var d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
-    var bg = catColors[e.category] || '#f1f5f9';
-    var tc = catText[e.category]   || '#475569';
-    var tbg = typeColors[e.cpdType] || '#f1f5f9';
-    var ttc = typeText[e.cpdType]   || '#475569';
+    var tbg = typeColors[e.cpdType] || '#dbeafe';
+    var ttc = typeText[e.cpdType]   || '#1d4ed8';
     var typeTag = e.cpdType ? '<span style="background:' + tbg + ';color:' + ttc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.cpdType) + '</span>' : '—';
     var srcIcon = e.source === 'Learning Zone'
       ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
       : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-    var learnedRow = e.learned
-      ? '<tr id="cpd-expand-' + i + '" style="display:none;background:#f7fafc;border-bottom:1px solid #e8ecf0;">' +
-          '<td colspan="7" style="padding:10px 20px 14px 20px;">' +
-            '<div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">What I Learned</div>' +
-            '<div style="font-size:13px;color:#1a2a3a;line-height:1.6;white-space:pre-wrap;">' + escHtml(e.learned) + '</div>' +
-          '</td>' +
-        '</tr>'
-      : '';
-    var chevron = e.learned
-      ? '<svg id="cpd-chev-' + i + '" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" style="vertical-align:middle;margin-right:4px;transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>'
-      : '';
-    return '<tr onclick="toggleCpdRow(' + i + ')" style="border-bottom:1px solid #f0f2f5;cursor:' + (e.learned ? 'pointer' : 'default') + ';" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'\'">' +
+    return '<tr onclick="openCpdFormEdit(' + i + ')" style="border-bottom:1px solid #f0f2f5;cursor:pointer;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'\'">' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
-      '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + chevron + escHtml(e.activity) + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity) + '</td>' +
       '<td style="padding:11px 16px;">' + typeTag + '</td>' +
-      '<td style="padding:11px 16px;"><span style="background:' + bg + ';color:' + tc + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
+      '<td style="padding:11px 16px;"><span style="background:' + CAT_BG + ';color:' + CAT_TC + ';font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:#003768;text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
       '<td style="padding:11px 16px;text-align:right;white-space:nowrap;" onclick="event.stopPropagation()">' +
         '<button onclick="openCpdFormEdit(' + i + ')" style="background:none;border:none;color:#b0bec5;cursor:pointer;font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px;font-family:inherit;" onmouseover="this.style.color=\'#003768\'" onmouseout="this.style.color=\'#b0bec5\'">Edit</button>' +
         '<button onclick="deleteCpdEntry(\'' + e.id + '\')" style="background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color=\'#c00\'" onmouseout="this.style.color=\'#d1d5db\'">&#x2715;</button>' +
       '</td>' +
-    '</tr>' + learnedRow;
+    '</tr>';
   }).join('');
   el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
     '<thead><tr style="background:#f9fafc;">' +
