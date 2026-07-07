@@ -9575,6 +9575,15 @@ function renderSvDashboard(data) {
       '</div>';
   }
 
+  function _svBirthdayCake(m) {
+    if (!m || !m.birthday) return '';
+    var today = new Date(), bd = new Date(m.birthday);
+    if (bd.getMonth() === today.getMonth() && bd.getDate() === today.getDate()) {
+      return '<span title="Birthday today!" style="margin-left:5px;flex-shrink:0;">🎂</span>';
+    }
+    return '';
+  }
+
   function buildCard(obj) {
     var m = obj.m, cpd = obj.cpd, visible = obj.visible, worstPct = obj.worstPct;
     var name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
@@ -9617,7 +9626,7 @@ function renderSvDashboard(data) {
           '<div>' +
             '<div style="font-size:14px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;">' +
               (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
-              supLabel + nonCasDot +
+              _svBirthdayCake(m) + supLabel + nonCasDot +
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
           '</div>' +
@@ -9649,6 +9658,7 @@ function renderSvDashboard(data) {
       '<div style="flex:1;min-width:0;">' +
         '<div style="font-size:13px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;gap:5px;">' +
           (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1.5px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+          _svBirthdayCake(m) +
           (!m.isSupervisor && !m.cas ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' : '') +
         '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
