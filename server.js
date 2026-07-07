@@ -1928,6 +1928,91 @@ app.get('/api/fitness-properness', requireAdmin, (req, res) => {
   res.json(_fpSubmissions);
 });
 
+// ── Compliance Reports (Complaint / Breach / Conflict / Gifts) ──
+const CR_TABLE      = 'tblG1vsuA3GZb38nk';
+const CR_SUMMARY    = 'fldVwxMebgq3ufeiY';
+const CR_TYPE       = 'fldOnKwlCcCpXNi7G';
+const CR_EMAIL      = 'fld0bFdhT8GFp9bKQ';
+const CR_SUBMITTED  = 'fldXGbAQHfB9ldtGB';
+const CR_INCIDENT   = 'fldqWcSKJTbgYBn6i';
+const CR_CLIENT     = 'fldJCjbP7ttqiIxzW';
+const CR_THIRDPARTY = 'fldyv0cElV38kVUfm';
+const CR_GIVENREC   = 'fldAlXPlmKwuHfc6S';
+const CR_VALUE      = 'fldjZTajLEasDx1lf';
+const CR_DETAILS    = 'fldLdvEJUnmQ7DBY9';
+const CR_ACTION     = 'fld1ap3YFBgR4FThG';
+const CR_STATUS     = 'fldEM5lsh19rbLB2k';
+const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality'];
+
+async function crFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${CR_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...(options.headers || {}) }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+// POST /api/compliance-report — submit a compliance reporting form
+app.post('/api/compliance-report', requireAuth, async (req, res) => {
+  const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken } = req.body;
+  if (!CR_TYPES.includes(type)) return res.status(400).json({ error: 'Invalid report type' });
+  if (!summary || !details)     return res.status(400).json({ error: 'Summary and details are required' });
+  try {
+    const fields = {
+      [CR_SUMMARY]:   summary,
+      [CR_TYPE]:      type,
+      [CR_EMAIL]:     req.session.user.email,
+      [CR_SUBMITTED]: new Date().toISOString().split('T')[0],
+      [CR_DETAILS]:   details,
+      [CR_STATUS]:    'New'
+    };
+    if (incidentDate)  fields[CR_INCIDENT]   = incidentDate;
+    if (clientName)    fields[CR_CLIENT]     = clientName;
+    if (thirdParty)    fields[CR_THIRDPARTY] = thirdParty;
+    if (givenReceived) fields[CR_GIVENREC]   = givenReceived;
+    if (value !== undefined && value !== null && value !== '') fields[CR_VALUE] = parseFloat(value) || 0;
+    if (actionTaken)   fields[CR_ACTION]     = actionTaken;
+    await crFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields }] }) });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/compliance-reports — admin: list all submissions
+app.get('/api/compliance-reports', requireAdmin, async (req, res) => {
+  try {
+    let records = [], offset;
+    do {
+      const params = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) params.set('offset', offset);
+      const data = await crFetch('?' + params.toString());
+      records = records.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    res.json(records.map(r => ({
+      id:            r.id,
+      summary:       r.fields[CR_SUMMARY]    || '',
+      type:          r.fields[CR_TYPE]       || '',
+      email:         r.fields[CR_EMAIL]      || '',
+      dateSubmitted: r.fields[CR_SUBMITTED]  || '',
+      incidentDate:  r.fields[CR_INCIDENT]   || '',
+      clientName:    r.fields[CR_CLIENT]     || '',
+      thirdParty:    r.fields[CR_THIRDPARTY] || '',
+      givenReceived: r.fields[CR_GIVENREC]   || '',
+      value:         r.fields[CR_VALUE],
+      details:       r.fields[CR_DETAILS]    || '',
+      actionTaken:   r.fields[CR_ACTION]     || '',
+      status:        r.fields[CR_STATUS]     || 'New'
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/cpd/video — auto-log a Learning Zone video (supports 50/50)
 app.post('/api/cpd/video', requireAuth, async (req, res) => {
   const { videoTitle, cpdType } = req.body;

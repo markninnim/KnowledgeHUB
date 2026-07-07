@@ -227,6 +227,10 @@ html { height: 100%; }
     <h2 style="margin-top: 8px;">Compliance</h2>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">REPORTING</span></div>
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
+    <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
+    <a href="#" id="cr-nav-breach" onclick="return showCrForm('Breach', this)">Breach Report</a>
+    <a href="#" id="cr-nav-conflict" onclick="return showCrForm('Conflict of Interest', this)">Conflict of Interest</a>
+    <a href="#" id="cr-nav-gifts" onclick="return showCrForm('Gifts & Hospitality', this)">Gifts &amp; Hospitality</a>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -1283,6 +1287,63 @@ html { height: 100%; }
         </div>
       </div>
 
+    </div>
+
+    <!-- Compliance reporting form (shared by all four report types) -->
+    <div id="section-cr" style="display:none;padding:32px;">
+      <div style="margin-bottom:28px;">
+        <h2 id="cr-title" style="color:#003768;font-size:20px;margin:0 0 4px;">Complaint Notification</h2>
+        <p id="cr-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;"></p>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.07);max-width:640px;">
+        <div id="cr-form">
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Summary <span style="color:#ef4444;">*</span></label>
+            <input id="cr-summary" type="text" placeholder="One-line summary" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div id="cr-row-incident" style="margin-bottom:14px;">
+            <label id="cr-incident-label" style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Date of incident</label>
+            <input id="cr-incident" type="date" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div id="cr-row-client" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Client name</label>
+            <input id="cr-client" type="text" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div id="cr-row-thirdparty" style="margin-bottom:14px;">
+            <label id="cr-thirdparty-label" style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Third party involved</label>
+            <input id="cr-thirdparty" type="text" placeholder="Firm or person" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div id="cr-row-givenrec" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Given or received</label>
+              <select id="cr-givenrec" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+                <option value="Received">Received</option>
+                <option value="Given">Given</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Approx. value (&pound;)</label>
+              <input id="cr-value" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label id="cr-details-label" style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Details <span style="color:#ef4444;">*</span></label>
+            <textarea id="cr-details" rows="5" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+          <div id="cr-row-action" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Action already taken (if any)</label>
+            <textarea id="cr-action" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+          <div id="cr-error" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:12px;"></div>
+          <button id="cr-submit" onclick="submitCrForm()" style="background:#003768;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
+        </div>
+        <div id="cr-success" style="display:none;text-align:center;padding:24px 0;">
+          <div style="font-size:15px;font-weight:700;color:#003768;margin-bottom:8px;">Report submitted</div>
+          <div style="font-size:13px;color:#6b7c8f;margin-bottom:20px;">Your report has been logged and the Compliance team can now review it.</div>
+          <button onclick="resetCrForm()" style="background:#fff;color:#003768;border:1.5px solid #003768;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -9736,7 +9797,105 @@ var _cpdLoaded = false;
 
 function showCpdSection(e) {
   if (e) e.preventDefault();
+  document.getElementById('section-cr').style.display  = 'none';
+  document.getElementById('section-cpd').style.display = '';
   if (!_cpdLoaded) loadCpd();
+}
+
+// ── Compliance reporting forms ────────────────────────────────
+var _crType = 'Complaint';
+var CR_CONFIG = {
+  'Complaint': {
+    subtitle: 'Notify Compliance of a client complaint. Report every complaint on the day it is received.',
+    incidentLabel: 'Date complaint received',
+    detailsLabel: 'Nature of the complaint',
+    show: { client: true, thirdparty: false, givenrec: false, action: true }
+  },
+  'Breach': {
+    subtitle: 'Report a rule breach, error or conduct issue. Early reporting protects you and the firm.',
+    incidentLabel: 'Date of breach',
+    detailsLabel: 'What happened',
+    show: { client: true, thirdparty: false, givenrec: false, action: true }
+  },
+  'Conflict of Interest': {
+    subtitle: 'Declare any actual or potential conflict of interest to the Compliance Officer.',
+    incidentLabel: 'Date conflict arose',
+    detailsLabel: 'Nature of the conflict',
+    show: { client: false, thirdparty: true, givenrec: false, action: false }
+  },
+  'Gifts & Hospitality': {
+    subtitle: 'Declare gifts or hospitality given or received in connection with your role.',
+    incidentLabel: 'Date given/received',
+    detailsLabel: 'Description of gift or hospitality',
+    show: { client: false, thirdparty: true, givenrec: true, action: false }
+  }
+};
+
+function showCrForm(type, el) {
+  _crType = type;
+  var cfg = CR_CONFIG[type];
+  document.getElementById('section-cpd').style.display = 'none';
+  document.getElementById('section-cr').style.display  = '';
+  document.getElementById('cr-title').textContent    = type === 'Complaint' ? 'Complaint Notification' : type === 'Breach' ? 'Breach Report' : type;
+  document.getElementById('cr-subtitle').textContent = cfg.subtitle;
+  document.getElementById('cr-incident-label').textContent = cfg.incidentLabel;
+  document.getElementById('cr-details-label').innerHTML = cfg.detailsLabel + ' <span style="color:#ef4444;">*</span>';
+  document.getElementById('cr-row-client').style.display     = cfg.show.client     ? '' : 'none';
+  document.getElementById('cr-row-thirdparty').style.display = cfg.show.thirdparty ? '' : 'none';
+  document.getElementById('cr-row-givenrec').style.display   = cfg.show.givenrec   ? 'flex' : 'none';
+  document.getElementById('cr-row-action').style.display     = cfg.show.action     ? '' : 'none';
+  resetCrForm();
+  return false;
+}
+
+function resetCrForm() {
+  ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('cr-error').style.display   = 'none';
+  document.getElementById('cr-form').style.display    = '';
+  document.getElementById('cr-success').style.display = 'none';
+}
+
+function submitCrForm() {
+  var summary = document.getElementById('cr-summary').value.trim();
+  var details = document.getElementById('cr-details').value.trim();
+  var errEl = document.getElementById('cr-error');
+  if (!summary || !details) {
+    errEl.textContent = 'Please complete the required fields.';
+    errEl.style.display = '';
+    return;
+  }
+  var cfg = CR_CONFIG[_crType];
+  var body = {
+    type: _crType,
+    summary: summary,
+    details: details,
+    incidentDate: document.getElementById('cr-incident').value || null,
+    clientName:   cfg.show.client     ? document.getElementById('cr-client').value.trim()     : null,
+    thirdParty:   cfg.show.thirdparty ? document.getElementById('cr-thirdparty').value.trim() : null,
+    givenReceived:cfg.show.givenrec   ? document.getElementById('cr-givenrec').value          : null,
+    value:        cfg.show.givenrec   ? document.getElementById('cr-value').value             : null,
+    actionTaken:  cfg.show.action     ? document.getElementById('cr-action').value.trim()     : null
+  };
+  var btn = document.getElementById('cr-submit');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  fetch('/api/compliance-report', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  }).then(function(r){ return r.json(); }).then(function(res){
+    btn.disabled = false; btn.textContent = 'Submit Report';
+    if (res.ok) {
+      document.getElementById('cr-form').style.display    = 'none';
+      document.getElementById('cr-success').style.display = '';
+    } else {
+      errEl.textContent = res.error || 'Something went wrong. Please try again.';
+      errEl.style.display = '';
+    }
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = 'Submit Report';
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.style.display = '';
+  });
 }
 
 var _cpdAllEntries = [];
