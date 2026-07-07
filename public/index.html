@@ -7526,16 +7526,16 @@ function renderUserList(users) {
   });
   var rows = sorted.map(function(u) {
     var name = [u.firstName, u.lastName].filter(Boolean).join(' ') || '—';
-    var badge = u.isAdmin ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
-    var supBadge = u.isSupervisor ? '<span style="background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
+    var badge = u.isAdmin ? '<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Admin</span>' : '';
+    var supBadge = u.isSupervisor ? '<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var casBadge = u.cas ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">CAS</span>' : '<span style="background:#fef2f2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Non-CAS</span>';
-    var mktBadge = u.isMarketing ? '<span style="background:#e8740c;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
+    var mktBadge = u.isMarketing ? '<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
     var products = [];
-    if (u.sellsInvestments)   products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
-    if (u.sellsMortgages)     products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
-    if (u.sellsProtection)    products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
-    if (u.equityRelease)      products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
-    if (u.commercialMortgages)products.push('<span style="background:#f5f7fa;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Commercial Mortgages</span>');
+    if (u.sellsInvestments)   products.push('<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
+    if (u.sellsMortgages)     products.push('<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
+    if (u.sellsProtection)    products.push('<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
+    if (u.equityRelease)      products.push('<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
+    if (u.commercialMortgages)products.push('<span style="background:#dbeafe;color:#003768;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Commercial Mortgages</span>');
     // Derive job title from CPD flags if only one product
     var displayTitle = u.jobTitle || '';
     if (u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages) displayTitle = 'Mortgage Adviser';
@@ -9657,12 +9657,12 @@ function svDrillDown(email, drillId) {
         return;
       }
       var rows = entries.map(function(e) {
-        var typeColor = e.cpdType === 'Protection' ? '#854d0e' : '#1d4ed8';
-        var typeBg    = e.cpdType === 'Protection' ? '#fef9c3' : '#dbeafe';
+        var typeColor = '#003768';
+        var typeBg    = '#dbeafe';
         return '<tr style="border-bottom:1px solid #f0f2f5;">' +
           '<td style="padding:9px 12px;font-size:12px;color:#6b7c8f;white-space:nowrap;">' + escHtml(e.date) + '</td>' +
           '<td style="padding:9px 12px;font-size:12px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity || e.videoTitle || '—') + '</td>' +
-          '<td style="padding:9px 12px;"><span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">' + escHtml(e.cpdType||'—') + '</span></td>' +
+          '<td style="padding:9px 12px;"><span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">' + escHtml(e.cpdType||'—') + '</span></td>' +
           '<td style="padding:9px 12px;font-size:12px;color:#003768;font-weight:700;text-align:right;">' + fmtMins(e.minutes) + '</td>' +
         '</tr>';
       }).join('');
@@ -9931,13 +9931,13 @@ function renderCpdEntries(entries) {
   }
   // Category: standard label — light blue bg, dark navy text
   var CAT_BG = '#dbeafe'; var CAT_TC = '#003768';
-  // Type: two shades of standard navy
-  var typeColors = { 'Mortgage':'#003768', 'Protection':'#0a5c99', 'Investment':'#0a5c99' };
-  var typeText   = { 'Mortgage':'#ffffff',  'Protection':'#ffffff',  'Investment':'#ffffff'  };
+  // Type: standard label — light blue bg, dark navy text
+  var typeColors = { 'Mortgage':'#dbeafe', 'Protection':'#dbeafe', 'Investment':'#dbeafe' };
+  var typeText   = { 'Mortgage':'#003768', 'Protection':'#003768', 'Investment':'#003768' };
   var rows = entries.map(function(e, i) {
     var d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
     var tbg = typeColors[e.cpdType] || '#dbeafe';
-    var ttc = typeText[e.cpdType]   || '#1d4ed8';
+    var ttc = typeText[e.cpdType]   || '#003768';
     var typeTag = e.cpdType ? '<span style="background:' + tbg + ';color:' + ttc + ';font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.cpdType) + '</span>' : '—';
     var srcIcon = e.source === 'Learning Zone'
       ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
