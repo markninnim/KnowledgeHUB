@@ -2244,7 +2244,7 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
     entries.forEach((e, i) => {
       // Pre-calculate learned lines
       const learnedLines = e.learned ? wrapText(e.learned, fontMed, 7, learnedMaxW) : [];
-      const entryH = 17 + (learnedLines.length > 0 ? 9 + learnedLines.length * learnedLineH : 0);
+      const entryH = learnedLines.length > 0 ? (15 + learnedLines.length * learnedLineH) : 17;
 
       // New page if needed
       if (y - entryH < 50) {
