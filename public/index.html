@@ -4580,7 +4580,6 @@ function show(id, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   var _activeEl = document.getElementById(id);
   _activeEl.classList.add('active');
-  slideIn(_activeEl);
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
   window.location.hash = id;
