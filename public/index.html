@@ -61,7 +61,7 @@ html { height: 100%; }
 .vc-card:hover::after { opacity:1; }
 .ov-card-title { font-size:14px; font-weight:700; color:#003768; margin-bottom:5px; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:0; }
-.fp-yn-btn { padding:7px 22px; border-radius:7px; border:1px solid #e8ecf0; background:#fff; color:#1a2a3a; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .12s; }
+.fp-yn-btn { padding:7px 22px; border-radius:7px; border:1px solid #e8ecf0; background:#fff; color:#6b7c8f; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .12s; }
 .fp-yn-btn:hover { border-color:#003768; color:#003768; }
 .kd-acc-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 18px; border:none; background:none; cursor:pointer; color:rgba(255,255,255,.7); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-family:inherit; text-align:left; margin:12px 0 2px; }
 .kd-acc-btn:hover { color:#fff; }
@@ -155,7 +155,7 @@ html { height: 100%; }
 #mas-nav a:hover, #pas-nav a:hover { background:#f5f7fa; color:#003768; }
 #mas-nav a.active, #pas-nav a.active { background:#eef3f8; color:#003768; font-weight:700; border-left-color:#003768; }
 .mas-section-title { font-size:18px; font-weight:800; color:#003768; margin:0 0 16px; padding-bottom:10px; border-bottom:2px solid #e8ecf0; }
-.mas-h4 { font-size:14px; font-weight:700; color:#1a2a3a; margin:20px 0 6px; display:flex; align-items:baseline; gap:8px; }
+.mas-h4 { font-size:14px; font-weight:700; color:#6b7c8f; margin:20px 0 6px; display:flex; align-items:baseline; gap:8px; }
 .mas-h5 { font-size:13px; font-weight:700; color:#2c3e50; margin:16px 0 4px; }
 .mas-num { background:#003768; color:#fff; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; white-space:nowrap; }
 #mas-content-area p, #pas-content-area p { font-size:13px; color:#2c3e50; line-height:1.7; margin:0 0 10px; }
@@ -189,7 +189,7 @@ html { height: 100%; }
     <button id="admin-btn" onclick="openAdminPanel()" style="display:none;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Admin
     </button>
-    <button id="account-btn" onclick="openAccountModal()" style="display:flex;align-items:center;gap:7px;background:none;border:1px solid #e8ecf0;padding:5px 13px 5px 8px;border-radius:20px;cursor:pointer;font-family:inherit;color:#1a2a3a;transition:background .15s;box-sizing:border-box;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'">
+    <button id="account-btn" onclick="openAccountModal()" style="display:flex;align-items:center;gap:7px;background:none;border:1px solid #e8ecf0;padding:5px 13px 5px 8px;border-radius:20px;cursor:pointer;font-family:inherit;color:#6b7c8f;transition:background .15s;box-sizing:border-box;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'">
       <span id="nav-user-avatar" style="width:26px;height:26px;border-radius:50%;background:#003768;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"></span>
       <span id="nav-user-name" style="font-size:13px;font-weight:600;"></span>
     </button>
@@ -786,7 +786,7 @@ html { height: 100%; }
         <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Deep personalisation is very powerful. Personalise this brochure with your client's name strategically printed throughout — your name and photo are added automatically. Simply enter their name and hit download.</p>
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
-          <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;color:#1a2a3a;font-family:inherit;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#d1d5db'">
+          <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;color:#6b7c8f;font-family:inherit;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#d1d5db'">
           <button id="pb-download-btn" onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;box-sizing:border-box;cursor:pointer;text-align:center;">Download</button>
         </div>
       </div>
@@ -888,7 +888,7 @@ html { height: 100%; }
       <!-- Body -->
       <div style="padding:20px 32px;border-bottom:1px solid #f0f2f5;">
         <div style="font-size:10px;color:#aab4be;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Body · Plus Jakarta Sans Regular · 10pt</div>
-        <div style="font-size:10pt;color:#1a2a3a;line-height:1.7;font-family:'Plus Jakarta Sans',sans-serif;max-width:560px;">We deal in facts. That sometimes means facing harsh realities -and it is our duty to make sure every client fully understands the mortgage they have taken out and the risks of not protecting their ability to repay it.</div>
+        <div style="font-size:10pt;color:#6b7c8f;line-height:1.7;font-family:'Plus Jakarta Sans',sans-serif;max-width:560px;">We deal in facts. That sometimes means facing harsh realities -and it is our duty to make sure every client fully understands the mortgage they have taken out and the risks of not protecting their ability to repay it.</div>
         <div style="font-size:11px;color:#aab4be;margin-top:8px;">All body copy, brochure paragraphs, letters</div>
       </div>
 
@@ -1020,15 +1020,15 @@ html { height: 100%; }
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div style="background:#f0fff6;border-left:4px solid #007744;padding:18px;border-radius:8px;">
         <div style="font-size:10px;font-weight:700;color:#007744;text-transform:uppercase;margin-bottom:10px;">Write this</div>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0 0 10px;">"If you die tomorrow, your family could lose the house. We can make sure they don't."</p>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0 0 10px;">"You've taken out a £280,000 mortgage. Here's what happens to it if you can't work."</p>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0;">"We'll give you a straight answer -and if something isn't right for you, we'll say so."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0 0 10px;">"If you die tomorrow, your family could lose the house. We can make sure they don't."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0 0 10px;">"You've taken out a £280,000 mortgage. Here's what happens to it if you can't work."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0;">"We'll give you a straight answer -and if something isn't right for you, we'll say so."</p>
       </div>
       <div style="background:#fff0f0;border-left:4px solid #cc0000;padding:18px;border-radius:8px;">
         <div style="font-size:10px;font-weight:700;color:#cc0000;text-transform:uppercase;margin-bottom:10px;">Not this</div>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0 0 10px;">"Our flexible protection solutions offer comprehensive peace-of-mind coverage."</p>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0 0 10px;">"We leverage cutting-edge technology to deliver a seamless client journey."</p>
-        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#1a2a3a;margin:0;">"As a leading provider, we're committed to empowering your financial wellness."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0 0 10px;">"Our flexible protection solutions offer comprehensive peace-of-mind coverage."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0 0 10px;">"We leverage cutting-edge technology to deliver a seamless client journey."</p>
+        <p style="font-style:italic;font-size:13px;line-height:1.6;color:#6b7c8f;margin:0;">"As a leading provider, we're committed to empowering your financial wellness."</p>
       </div>
     </div>
 
@@ -1422,7 +1422,7 @@ html { height: 100%; }
           </div>
           <div style="flex-shrink:0;position:relative;">
             <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="lv-search" type="text" placeholder="Search videos…" oninput="searchLv(this.value)" style="padding:9px 14px 9px 36px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;color:#1a2a3a;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+            <input id="lv-search" type="text" placeholder="Search videos…" oninput="searchLv(this.value)" style="padding:9px 14px 9px 36px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;color:#6b7c8f;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
           </div>
         </div>
       </div>
@@ -1642,7 +1642,7 @@ html { height: 100%; }
         <!-- Question panel -->
         <div id="kt-question-panel" style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;padding:28px;">
           <div id="kt-q-num" style="font-size:11px;font-weight:700;color:#e8650a;letter-spacing:.06em;margin-bottom:10px;"></div>
-          <div id="kt-q-text" style="font-size:15px;font-weight:600;color:#1a2a3a;line-height:1.6;margin-bottom:20px;"></div>
+          <div id="kt-q-text" style="font-size:15px;font-weight:600;color:#6b7c8f;line-height:1.6;margin-bottom:20px;"></div>
           <div id="kt-options" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
 
@@ -1697,37 +1697,37 @@ html { height: 100%; }
         <div style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;padding:20px;margin-bottom:14px;">
           <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">Financials</div>
           <div id="fp-yn-q3" class="fp-yn-block">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Since joining the Firm has there been a <strong>negative change in your financial position</strong>? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Since joining the Firm has there been a <strong>negative change in your financial position</strong>? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
             <div style="display:flex;gap:8px;margin-bottom:0;"><button class="fp-yn-btn" onclick="fpYN('q3','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q3','no',this)">No</button></div>
             <textarea id="fp-q3d" placeholder="Please provide details of the change in your financial position…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q4" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Are you able to confirm that the <strong>value of your assets exceeds your liabilities</strong> (all debts)? <span style="color:#6b7c8f;font-size:12px;">(if no, we will ask you to provide details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Are you able to confirm that the <strong>value of your assets exceeds your liabilities</strong> (all debts)? <span style="color:#6b7c8f;font-size:12px;">(if no, we will ask you to provide details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q4','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q4','no',this)">No</button></div>
             <textarea id="fp-q4d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q5" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Have any <strong>CCJs or Defaults</strong> been listed against you since joining the Firm, or are you aware of any pending proceedings? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Have any <strong>CCJs or Defaults</strong> been listed against you since joining the Firm, or are you aware of any pending proceedings? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q5','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q5','no',this)">No</button></div>
             <textarea id="fp-q5d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q6" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Have you been <strong>disqualified from acting as a director</strong> or similar position, since joining the Firm? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Have you been <strong>disqualified from acting as a director</strong> or similar position, since joining the Firm? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q6','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q6','no',this)">No</button></div>
             <textarea id="fp-q6d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q7" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Have you made any <strong>arrangements with your creditors</strong>, including HMRC? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you to provide details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Have you made any <strong>arrangements with your creditors</strong>, including HMRC? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you to provide details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q7','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q7','no',this)">No</button></div>
             <textarea id="fp-q7d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q8" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Have you been <strong>convicted or cautioned for any criminal offence</strong> since joining the Firm, or are you aware of any pending proceedings? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Have you been <strong>convicted or cautioned for any criminal offence</strong> since joining the Firm, or are you aware of any pending proceedings? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q8','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q8','no',this)">No</button></div>
             <textarea id="fp-q8d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q9" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Have you been convicted of any <strong>traffic offences resulting in a driving ban</strong>, since joining the Firm? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Have you been convicted of any <strong>traffic offences resulting in a driving ban</strong>, since joining the Firm? <span style="color:#6b7c8f;font-size:12px;">(if yes, we will ask you for details separately)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q9','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q9','no',this)">No</button></div>
             <textarea id="fp-q9d" placeholder="Please provide details…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
@@ -1737,12 +1737,12 @@ html { height: 100%; }
         <div style="background:#fff;border:1px solid #e8ecf0;border-radius:12px;padding:20px;margin-bottom:14px;">
           <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">Other Business Interests &amp; Introducers</div>
           <div id="fp-yn-q10" class="fp-yn-block">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Do you have any <strong>other business interests</strong>, including second jobs or interests/ownerships in other Firms? <span style="color:#6b7c8f;font-size:12px;">(where you do, please provide details)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Do you have any <strong>other business interests</strong>, including second jobs or interests/ownerships in other Firms? <span style="color:#6b7c8f;font-size:12px;">(where you do, please provide details)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q10','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q10','no',this)">No</button></div>
             <textarea id="fp-q10d" placeholder="Please provide details of your other business interests…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
           <div id="fp-yn-q11" class="fp-yn-block" style="border-top:1px solid #f0f2f5;margin-top:14px;padding-top:14px;">
-            <div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;margin-bottom:8px;">Do you receive leads from an <strong>Introducer</strong> (e.g. an estate agent or marketing lead provider)? We need to record these Firms or Individuals. <span style="color:#6b7c8f;font-size:12px;">(where you do, please provide details)</span></div>
+            <div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;margin-bottom:8px;">Do you receive leads from an <strong>Introducer</strong> (e.g. an estate agent or marketing lead provider)? We need to record these Firms or Individuals. <span style="color:#6b7c8f;font-size:12px;">(where you do, please provide details)</span></div>
             <div style="display:flex;gap:8px;"><button class="fp-yn-btn" onclick="fpYN('q11','yes',this)">Yes</button><button class="fp-yn-btn" onclick="fpYN('q11','no',this)">No</button></div>
             <textarea id="fp-q11d" placeholder="Please list your Introducers…" style="display:none;width:100%;margin-top:10px;border:1px solid #e8ecf0;border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea>
           </div>
@@ -1755,61 +1755,61 @@ html { height: 100%; }
           <div class="fp-confirm-row" id="fp-c12">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q12" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I have read and understood the <strong>FCA's Conduct Rules</strong> which apply to my role, including how Treating Customers Fairly and Consumer Duty applies. <a href="https://www.fca.org.uk/firms/senior-managers-and-certification-regime/conduct-rules" target="_blank" style="color:#003768;font-size:12px;">fca.org.uk →</a></span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I have read and understood the <strong>FCA's Conduct Rules</strong> which apply to my role, including how Treating Customers Fairly and Consumer Duty applies. <a href="https://www.fca.org.uk/firms/senior-managers-and-certification-regime/conduct-rules" target="_blank" style="color:#003768;font-size:12px;">fca.org.uk →</a></span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c13" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q13" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I understand our <strong>Advice Standards and Record Keeping</strong> requirements.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I understand our <strong>Advice Standards and Record Keeping</strong> requirements.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c14" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q14" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I understand our <strong>Anti Money Laundering</strong> procedures, and how to report suspicious circumstances.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I understand our <strong>Anti Money Laundering</strong> procedures, and how to report suspicious circumstances.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c15" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q15" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I understand our policy on <strong>gifts and hospitality</strong> from third parties.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I understand our policy on <strong>gifts and hospitality</strong> from third parties.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c16" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q16" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I know where to report any concerns over <strong>bribery, corruption or inducements</strong>.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I know where to report any concerns over <strong>bribery, corruption or inducements</strong>.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c17" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q17" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I am aware of our <strong>Complaints Procedures</strong> and where to immediately report a complaint.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I am aware of our <strong>Complaints Procedures</strong> and where to immediately report a complaint.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c18" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q18" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I confirm that I hold a <strong>Data Protection Licence with the ICO</strong> (self-employed advisers only; employed advisers are covered by their employer's licence) and that I understand our policy on keeping client personal data secure.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I confirm that I hold a <strong>Data Protection Licence with the ICO</strong> (self-employed advisers only; employed advisers are covered by their employer's licence) and that I understand our policy on keeping client personal data secure.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c19" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q19" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">Regarding <strong>Whistle Blowing</strong> — I acknowledge that Finance Planning endorses the Public Interest Disclosure Act (1988) and that I can freely make any relevant notification to the Compliance Officer.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">Regarding <strong>Whistle Blowing</strong> — I acknowledge that Finance Planning endorses the Public Interest Disclosure Act (1988) and that I can freely make any relevant notification to the Compliance Officer.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c20" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q20" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I understand our policy on <strong>Conflicts of Interest</strong> and will notify any conflicts to the Compliance Officer.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I understand our policy on <strong>Conflicts of Interest</strong> and will notify any conflicts to the Compliance Officer.</span>
             </label>
           </div>
           <div class="fp-confirm-row" id="fp-c21" style="border-top:1px solid #f0f2f5;margin-top:12px;padding-top:12px;">
             <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
               <input type="checkbox" id="fp-q21" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-              <span style="font-size:13px;color:#1a2a3a;line-height:1.5;">I will immediately notify the Compliance Officer of any changes to my personal circumstances which could impact on my fitness or competence to undertake the role for which I have been approved by the FCA.</span>
+              <span style="font-size:13px;color:#6b7c8f;line-height:1.5;">I will immediately notify the Compliance Officer of any changes to my personal circumstances which could impact on my fitness or competence to undertake the role for which I have been approved by the FCA.</span>
             </label>
           </div>
         </div>
@@ -1819,7 +1819,7 @@ html { height: 100%; }
           <div style="font-size:10px;font-weight:800;color:#003768;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;">Declaration</div>
           <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;">
             <input type="checkbox" id="fp-q22" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;cursor:pointer;" onchange="fpCheckConfirms()">
-            <span style="font-size:13.5px;color:#1a2a3a;line-height:1.6;font-weight:500;">I declare that the information I have supplied in this form is <strong>complete to the best of my knowledge and belief</strong>, and that I will promptly notify Finance Planning of any changes in the information I have provided, if applicable.</span>
+            <span style="font-size:13.5px;color:#6b7c8f;line-height:1.6;font-weight:500;">I declare that the information I have supplied in this form is <strong>complete to the best of my knowledge and belief</strong>, and that I will promptly notify Finance Planning of any changes in the information I have provided, if applicable.</span>
           </label>
         </div>
 
@@ -2062,7 +2062,7 @@ html { height: 100%; }
         </div>
         <div style="position:relative;flex-shrink:0;">
           <input id="mas-search" type="text" placeholder="Search standards..." oninput="masSearch(this.value)"
-            style="padding:8px 12px 8px 36px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
+            style="padding:8px 12px 8px 36px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#6b7c8f;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <button id="mas-share-btn" onclick="openShareModal('mas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
@@ -2904,7 +2904,7 @@ html { height: 100%; }
         </div>
         <div style="position:relative;flex-shrink:0;">
           <input id="pas-search" type="text" placeholder="Search standards..." oninput="pasSearch(this.value)"
-            style="padding:8px 12px 8px 36px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#1a2a3a;">
+            style="padding:8px 12px 8px 36px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:240px;outline:none;color:#6b7c8f;">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9baabb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <button id="pas-share-btn" onclick="openShareModal('pas')" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">
@@ -3622,7 +3622,7 @@ html { height: 100%; }
             <div id="cas-countdown" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;display:none;"></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <input type="date" id="cas-predicted-input" style="padding:7px 10px;border:1px solid rgba(255,255,255,0.25);border-radius:7px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;" onchange="savePredictedCasDate()">
+            <input type="date" id="cas-predicted-input" style="padding:7px 10px;border:1px solid rgba(255,255,255,0.25);border-radius:7px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;" onchange="savePredictedCasDate()">
           </div>
         </div>
 
@@ -3832,9 +3832,9 @@ html { height: 100%; }
             </div>
             <div style="display:flex;align-items:center;gap:5px;background:#f5f7fa;border:1px solid #e8ecf0;border-radius:8px;padding:8px 10px;">
               <span style="font-size:11px;color:#6b7c8f;font-weight:600;">From</span>
-              <input id="sv-date-from" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#1a2a3a;outline:none;cursor:pointer;width:120px;">
+              <input id="sv-date-from" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
               <span style="font-size:11px;color:#6b7c8f;font-weight:600;">To</span>
-              <input id="sv-date-to" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#1a2a3a;outline:none;cursor:pointer;width:120px;">
+              <input id="sv-date-to" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
             </div>
             <button onclick="svExportCsv()" style="background:#f5f7fa;color:#003768;border:1px solid #e8ecf0;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Export CSV</button>
             <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:#003768;border:1px solid #e8ecf0;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
@@ -4120,7 +4120,7 @@ html { height: 100%; }
       <div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Two-Factor Authentication</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
-          <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Authenticator app</div>
+          <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Authenticator app</div>
           <div id="acc-2fa-status" style="font-size:12px;color:#16a34a;margin-top:2px;">Active</div>
         </div>
         <button onclick="show2FASetup()" style="background:#f5f7fa;color:#003768;border:1px solid #e8ecf0;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">New device</button>
@@ -4234,14 +4234,14 @@ html { height: 100%; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Security Audit Log
       </div>
-      <div id="admin-audit-list" style="max-height:260px;overflow-y:auto;font-size:12px;font-family:monospace;background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:8px 12px;color:#1a2a3a;">Loading…</div>
+      <div id="admin-audit-list" style="max-height:260px;overflow-y:auto;font-size:12px;font-family:monospace;background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:8px 12px;color:#6b7c8f;">Loading…</div>
     </div>
 
     <!-- User search -->
     <div id="admin-search-bar" style="padding:10px 28px;border-bottom:1px solid #e8ecf0;background:#fff;">
       <div style="position:relative;max-width:320px;">
         <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="admin-user-search" type="text" placeholder="Search for your adviser here…" oninput="filterUsers()" style="width:100%;padding:7px 30px 7px 30px;border:1px solid #e8ecf0;border-radius:7px;font-size:12px;font-family:inherit;box-sizing:border-box;outline:none;background:#fafbfc;color:#1a2a3a;transition:border-color .15s;" onfocus="this.style.borderColor='#003768';this.style.background='#fff'" onblur="this.style.borderColor='#e8ecf0';this.style.background='#fafbfc'">
+        <input id="admin-user-search" type="text" placeholder="Search for your adviser here…" oninput="filterUsers()" style="width:100%;padding:7px 30px 7px 30px;border:1px solid #e8ecf0;border-radius:7px;font-size:12px;font-family:inherit;box-sizing:border-box;outline:none;background:#fafbfc;color:#6b7c8f;transition:border-color .15s;" onfocus="this.style.borderColor='#003768';this.style.background='#fff'" onblur="this.style.borderColor='#e8ecf0';this.style.background='#fafbfc'">
         <button id="admin-search-clear" onclick="clearUserSearch()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7c8f;font-size:14px;line-height:1;padding:2px 3px;">&#x2715;</button>
       </div>
     </div>
@@ -4326,22 +4326,22 @@ html { height: 100%; }
               <div style="flex:1;height:1px;background:#e8ecf0;"></div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Mortgages
               </label>
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Protection
               </label>
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Investments
               </label>
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-equity-release" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Lifetime Mortgages
               </label>
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-commercial-mortgages" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Commercial Mortgages
               </label>
-              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#1a2a3a;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-pmi" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">PMI
               </label>
             </div>
@@ -4353,7 +4353,7 @@ html { height: 100%; }
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-cas" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">CAS — Competent Adviser Status</div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">CAS — Competent Adviser Status</div>
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Adviser is deemed competent to give advice without supervision</div>
                 </div>
               </label>
@@ -4367,7 +4367,7 @@ html { height: 100%; }
               <div style="flex:1;height:1px;background:#e8ecf0;"></div>
             </div>
             <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Supervisor <span style="font-weight:400;color:#6b7c8f;">— leave blank if none</span></label>
-            <select id="uf-supervisoremail" style="width:100%;padding:9px 12px;border:1px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#1a2a3a;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
+            <select id="uf-supervisoremail" style="width:100%;padding:9px 12px;border:1px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;color:#6b7c8f;" onfocus="this.style.borderColor='#003768'" onblur="this.style.borderColor='#e8ecf0'">
               <option value="">— No supervisor —</option>
             </select>
           </div>
@@ -4382,7 +4382,7 @@ html { height: 100%; }
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-issupervisor" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Grant supervisor access</div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Grant supervisor access</div>
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and manage their team's CPD</div>
                 </div>
               </label>
@@ -4390,7 +4390,7 @@ html { height: 100%; }
                 <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                   <input id="uf-admin" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                   <div>
-                    <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Admin access</div>
+                    <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Admin access</div>
                     <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can manage all users and system settings</div>
                   </div>
                 </label>
@@ -4398,7 +4398,7 @@ html { height: 100%; }
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #e8ecf0;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='#003768'" onmouseout="this.style.borderColor='#e8ecf0'">
                 <input id="uf-marketing" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:#1a2a3a;">Marketing access</div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Marketing access</div>
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can add and manage featured posts</div>
                 </div>
               </label>
@@ -4509,11 +4509,11 @@ html { height: 100%; }
     <div style="padding:22px 22px 20px;">
       <div style="margin-bottom:16px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:6px;">Maximum Loan Amount</label>
-        <input id="dip-amount" type="text" placeholder="e.g. 350000 or £350,000" style="width:100%;padding:10px 12px;border:1px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#1a2a3a;outline:none;box-sizing:border-box;" oninput="clearDipError()">
+        <input id="dip-amount" type="text" placeholder="e.g. 350000 or £350,000" style="width:100%;padding:10px 12px;border:1px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#6b7c8f;outline:none;box-sizing:border-box;" oninput="clearDipError()">
       </div>
       <div style="margin-bottom:16px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:6px;">Applicant Name(s)</label>
-        <textarea id="dip-names" rows="3" placeholder="e.g. Mr John Smith&#10;Mrs Jane Smith" style="width:100%;padding:10px 12px;border:1px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#1a2a3a;outline:none;resize:vertical;box-sizing:border-box;" oninput="clearDipError()"></textarea>
+        <textarea id="dip-names" rows="3" placeholder="e.g. Mr John Smith&#10;Mrs Jane Smith" style="width:100%;padding:10px 12px;border:1px solid #dde3ea;border-radius:7px;font-size:14px;font-family:inherit;color:#6b7c8f;outline:none;resize:vertical;box-sizing:border-box;" oninput="clearDipError()"></textarea>
       </div>
       <div style="background:#f0f4f8;border-radius:6px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#4a5a6a;line-height:1.5;">
         <strong style="color:#003768;">Auto-filled:</strong> Decision date (today) and valid-until date (90 days) will be added automatically. Your business card details will appear at the bottom.
@@ -4851,7 +4851,7 @@ function makeWordingBox(storageKey) {
   var ta = document.createElement('textarea');
   ta.placeholder = 'Add post copy, captions or notes here…';
   ta.value = localStorage.getItem(storageKey) || '';
-  ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:80px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
+  ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:80px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;resize:vertical;outline:none;';
   ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); });
   ta.addEventListener('focus', function(){ ta.style.borderColor='#003768'; });
   ta.addEventListener('blur',  function(){ ta.style.borderColor='#e8ecf0'; });
@@ -5176,7 +5176,7 @@ function loadSocialContent() {
 
       var ta = document.createElement('textarea');
       ta.value = taValue;
-      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;color:#1a2a3a;background:#fff;resize:vertical;outline:none;';
+      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:1px solid #e8ecf0;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;resize:vertical;outline:none;';
       ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); localStorage.setItem(baseKey, defaultVal); });
       ta.addEventListener('focus', function(){ ta.style.borderColor = '#003768'; });
       ta.addEventListener('blur',  function(){ ta.style.borderColor = '#e8ecf0'; });
@@ -5286,7 +5286,7 @@ function mkuRenderPlatforms(existing) {
     row.style.cssText = 'display:flex;align-items:center;gap:10px;';
     var label = document.createElement('div');
     label.style.cssText = 'width:120px;flex-shrink:0;';
-    label.innerHTML = '<div style="font-size:12px;font-weight:700;color:#1a2a3a;">' + p.key + '</div><div style="font-size:10px;color:#6b7c8f;">' + p.size + '</div>';
+    label.innerHTML = '<div style="font-size:12px;font-weight:700;color:#6b7c8f;">' + p.key + '</div><div style="font-size:10px;color:#6b7c8f;">' + p.size + '</div>';
     var fileInput = document.createElement('input');
     fileInput.type = 'file'; fileInput.accept = 'image/*';
     fileInput.style.cssText = 'flex:1;font-size:11px;font-family:inherit;';
@@ -5759,7 +5759,7 @@ function buildModuleCards(videos, gridId, label) {
           '<div style="position:absolute;top:8px;left:8px;background:#003768;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;z-index:3;">' + (i+1) + ' of ' + videos.length + '</div>' +
         '</div>' +
         '<div style="padding:11px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
-          '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + escHtml(v.title) + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + escHtml(v.title) + '</div>' +
           '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(label) + '</div>' +
         '</div>' +
       '</div>';
@@ -6090,7 +6090,7 @@ function renderShareAdvisers(list) {
     list.map(function(a) {
       return '<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'\'">' +
         '<input type="checkbox" value="' + a.email + '" onchange="toggleShareAdviser(this)" style="width:15px;height:15px;accent-color:#003768;cursor:pointer;">' +
-        '<span><span style="font-size:13px;color:#1a2a3a;font-weight:600;">' + a.name + '</span>' +
+        '<span><span style="font-size:13px;color:#6b7c8f;font-weight:600;">' + a.name + '</span>' +
         '<span style="font-size:11px;color:#9baabb;margin-left:6px;">' + a.email + '</span></span></label>';
     }).join('') + '</div>';
 }
@@ -6408,7 +6408,7 @@ function renderNlCards(containerId, items) {
           '</div>' +
           '<div style="padding:11px 14px 8px;border-top:1px solid #f0f2f5;">' +
             '<div style="font-size:10px;font-weight:700;color:#6b7c8f;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">' + escHtml(n.label) + '</div>' +
-            '<div style="font-size:13px;font-weight:700;color:#1a2a3a;line-height:1.3;">CPD Round-up</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#6b7c8f;line-height:1.3;">CPD Round-up</div>' +
           '</div>' +
         '</div>' +
         '<div style="padding:0 14px 10px;display:flex;justify-content:flex-end;">' +
@@ -6567,7 +6567,7 @@ function renderLvGrid(containerId, videos, isFeatured) {
         '</div>' +
         '<div style="padding:11px 14px;background:#fff;border-top:1px solid #f0f2f5;">' +
           (formatLvDate(v.added) ? '<div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + formatLvDate(v.added) + '</div>' : '') +
-          '<div style="font-size:13px;font-weight:700;color:#1a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + '</div>' +
           (v.description ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.description) + '</div>' : '') +
         '</div>' +
       '</div>'
@@ -6870,7 +6870,7 @@ function loadHomeData() {
       var complete = done >= target;
       return '<div>'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">'
-        + '<span style="font-size:13px;font-weight:600;color:#1a2a3a;">' + t.key + '</span>'
+        + '<span style="font-size:13px;font-weight:600;color:#6b7c8f;">' + t.key + '</span>'
         + '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete ? '700' : '400') + ';">'
         + doneH + ' / ' + targetH + (complete ? ' ✓' : '') + '</span></div>'
         + '<div style="height:8px;background:#f0f4f8;border-radius:4px;overflow:hidden;">'
@@ -7460,7 +7460,7 @@ function renderFeatureToggles() {
   container.innerHTML = Object.keys(FEATURE_LABELS).map(function(key){
     var checked = _features[key] !== false;
     var label = FEATURE_LABELS[key].label;
-    return '<label style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#1a2a3a;">' +
+    return '<label style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7c8f;">' +
       '<span style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;">' +
         '<input type="checkbox" data-feature="' + key + '" ' + (checked ? 'checked' : '') + ' onchange="onFeatureToggle(this)" style="opacity:0;width:0;height:0;position:absolute;">' +
         '<span class="feat-slider" style="position:absolute;inset:0;border-radius:22px;background:' + (checked ? '#003768' : '#cbd5e1') + ';transition:background .2s;"></span>' +
@@ -7650,7 +7650,7 @@ function renderUserList(users) {
     }
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:#1a2a3a;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + (typeof totpBadge !== 'undefined' ? totpBadge : '') + products.join('') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:#6b7c8f;">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + (typeof totpBadge !== 'undefined' ? totpBadge : '') + products.join('') + '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (displayTitle ? ' · ' + escHtml(displayTitle) : '') + '</div>' +
         supInfo +
       '</div>' +
@@ -7979,7 +7979,7 @@ function loadAuditLog() {
       if (e.email)        detail += ' · ' + escHtml(e.email);
       if (e.targetEmail)  detail += ' → ' + escHtml(e.targetEmail);
       if (e.admin)        detail += ' (by ' + escHtml(e.admin) + ')';
-      return '<div style="padding:4px 0;border-bottom:1px solid #f0f2f5;color:#1a2a3a;"><span style="color:#6b7c8f;">' + escHtml(ts) + '</span>  <span style="color:#003768;font-weight:700;">' + escHtml(action) + '</span>' + detail + ' <span style="color:#9aafbf;font-size:10px;">' + escHtml(e.ip||'') + '</span></div>';
+      return '<div style="padding:4px 0;border-bottom:1px solid #f0f2f5;color:#6b7c8f;"><span style="color:#6b7c8f;">' + escHtml(ts) + '</span>  <span style="color:#003768;font-weight:700;">' + escHtml(action) + '</span>' + detail + ' <span style="color:#9aafbf;font-size:10px;">' + escHtml(e.ip||'') + '</span></div>';
     }).join('');
   }).catch(function(){ el.textContent = 'Failed to load.'; });
 }
@@ -8168,7 +8168,7 @@ function renderCasEntries(entries) {
                 '<span style="width:7px;height:7px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span>' +
                 '<span style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Video</span>' +
               '</div>' +
-              '<div style="font-size:13px;font-weight:600;color:#1a2a3a;margin-bottom:2px;">' + escHtml(title) + '</div>' +
+              '<div style="font-size:13px;font-weight:600;color:#6b7c8f;margin-bottom:2px;">' + escHtml(title) + '</div>' +
               '<div style="font-size:11px;color:' + (dv ? '#059669' : '#aab4be') + ';font-weight:' + (dv ? '700' : '400') + ';">' + (dv ? '✓ ' + formatCasDate(dv) : 'Not watched') + '</div>' +
             '</div>';
           }).join('');
@@ -8232,7 +8232,7 @@ function renderCasEntries(entries) {
         return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
           '<input type="checkbox"' + (done ? ' checked' : '') + ' onchange="completeCasTask(\'' + e.id + '\',this.checked)" style="margin-top:3px;width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#003768;">' +
           '<div style="flex:1;min-width:0;">' +
-            '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#1a2a3a') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
+            '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#6b7c8f') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
             '<div style="font-size:11px;color:#aab4be;margin-top:1px;">Due ' + formatCasDate(e.date) + (e.loggedBy ? ' · set by ' + escHtml(e.loggedBy) : '') + '</div>' +
             notesHtml +
           '</div>' +
@@ -8245,7 +8245,7 @@ function renderCasEntries(entries) {
         var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;line-height:1.5;">' + escHtml(e.notes) + '</div>' : '';
         return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
           '<div>' +
-            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
+            '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
             '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
             notesHtml +
           '</div>' +
@@ -8289,7 +8289,7 @@ function loadBrokerCasPath() {
             return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
               '<input type="checkbox"' + (done ? ' checked' : '') + ' onchange="completeCasTask(\'' + e.id + '\',this.checked)" style="margin-top:3px;width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#003768;">' +
               '<div style="flex:1;">' +
-                '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#1a2a3a') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
+                '<div style="font-size:13px;font-weight:600;color:' + (done ? '#aab4be' : '#6b7c8f') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' + escHtml(e.title || 'Task') + '</div>' +
                 '<div style="font-size:11px;color:#aab4be;margin-top:1px;">Due ' + formatCasDate(e.date) + (e.loggedBy ? ' · set by ' + escHtml(e.loggedBy) : '') + '</div>' +
                 notesHtml +
               '</div>' +
@@ -8308,7 +8308,7 @@ function loadBrokerCasPath() {
           var scoreHtml = (e.score !== null && e.score !== undefined) ? '<span style="background:#f0f6ff;color:#1e40af;font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px;">' + e.score + '%</span>' : '';
           var notesHtml = e.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.notes) + '</div>' : '';
           return '<div style="padding:10px 20px;border-bottom:1px solid #f5f7fa;">' +
-            '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
+            '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(e.title || type) + scoreHtml + '</div>' +
             '<div style="font-size:11px;color:#aab4be;margin-top:1px;">' + formatCasDate(e.date) + (e.loggedBy ? ' · logged by ' + escHtml(e.loggedBy) : '') + '</div>' +
             notesHtml + '</div>';
         }).join('');
@@ -8462,7 +8462,7 @@ function openBrokerProfile(email, name) {
         var complete = done >= target;
         return '<div>' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
-            '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + t.key + '</span>' +
+            '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.key + '</span>' +
             '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
           '</div>' +
           '<div style="height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden;">' +
@@ -8538,7 +8538,7 @@ function openBrokerProfile(email, name) {
             var statusLabel = r.perfect ? 'Full Understanding' : 'Partial';
             return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f4f8;">' +
               '<div>' +
-                '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(r.consumer || 'Unknown') + '</div>' +
+                '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(r.consumer || 'Unknown') + '</div>' +
                 (dateStr ? '<div style="font-size:11px;color:#6b7c8f;">' + dateStr + '</div>' : '') +
               '</div>' +
               '<span style="background:' + (r.perfect?'#f0fdf4':'#fef2f2') + ';color:' + statusColor + ';border:1px solid ' + (r.perfect?'#bbf7d0':'#fecaca') + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + statusLabel + '</span>' +
@@ -8570,7 +8570,7 @@ function openBrokerProfile(email, name) {
           '<div style="display:flex;flex-direction:column;gap:6px;">' +
           videos.map(function(v) {
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
+              '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
               '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
             '</div>';
           }).join('') + '</div>'
@@ -8586,7 +8586,7 @@ function openBrokerProfile(email, name) {
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
             rvVideos.map(function(v) {
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-                '<span style="font-size:12px;color:#1a2a3a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
+                '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
                 '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
               '</div>';
             }).join('') + '</div>'
@@ -8615,7 +8615,7 @@ function openBrokerProfile(email, name) {
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
             nlUniq.map(function(e) {
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">' +
-                '<span style="font-size:12px;color:#1a2a3a;flex:1;">' + escHtml(e.activity || 'Newsletter') + '</span>' +
+                '<span style="font-size:12px;color:#6b7c8f;flex:1;">' + escHtml(e.activity || 'Newsletter') + '</span>' +
                 '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (e.date || '') + '</span>' +
               '</div>';
             }).join('') + '</div>';
@@ -8638,7 +8638,7 @@ function openBrokerProfile(email, name) {
             '<div style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;">' +
             spEntries.map(function(e) {
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-                '<span style="font-size:12px;color:#1a2a3a;flex:1;">' + escHtml(e.activity) + '</span>' +
+                '<span style="font-size:12px;color:#6b7c8f;flex:1;">' + escHtml(e.activity) + '</span>' +
                 '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (e.date || '') + (e.mins ? ' · ' + e.mins + 'm' : '') + '</span>' +
               '</div>';
             }).join('') +
@@ -8794,7 +8794,7 @@ function filterBpReviews() {
         if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'#fcb034':'#ddd') + ';font-size:12px;">★</span>';
         return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px;">' +
-            '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + escHtml(r.customer) + '</span>' +
+            '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + escHtml(r.customer) + '</span>' +
             '<span style="font-size:11px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;">' + (r.date || '') + '</span>' +
           '</div>' +
           (starStr ? '<div style="margin-bottom:4px;">' + starStr + (r.nps != null ? '<span style="margin-left:8px;font-size:11px;color:#6b7c8f;">NPS: ' + r.nps + '</span>' : '') + '</div>' : '') +
@@ -8821,7 +8821,7 @@ function filterBpActivity() {
         var tc = typeColor[e.type] || '#6b7c8f';
         return '<tr style="border-bottom:1px solid #f0f4f8;">' +
           '<td style="padding:7px 10px;white-space:nowrap;color:#6b7c8f;">' + (e.date || '—') + '</td>' +
-          '<td style="padding:7px 10px;color:#1a2a3a;max-width:320px;">' + escHtml(label) + (e.learned ? '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.learned) + '</div>' : '') + '</td>' +
+          '<td style="padding:7px 10px;color:#6b7c8f;max-width:320px;">' + escHtml(label) + (e.learned ? '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(e.learned) + '</div>' : '') + '</td>' +
           '<td style="padding:7px 10px;white-space:nowrap;"><span style="background:' + tc + '22;color:' + tc + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + escHtml(e.type || '—') + '</span></td>' +
           '<td style="padding:7px 10px;color:#6b7c8f;">' + escHtml(e.source || '—') + '</td>' +
           '<td style="padding:7px 10px;text-align:right;font-weight:600;color:#003768;">' + (e.mins || 0) + '</td>' +
@@ -9509,7 +9509,7 @@ function renderSvDashboard(data) {
   if (!members.length) {
     document.getElementById('sv-loading').style.display = 'block';
     document.getElementById('sv-loading').innerHTML =
-      '<div style="font-size:15px;color:#1a2a3a;font-weight:600;margin-bottom:8px;">No team members yet</div>' +
+      '<div style="font-size:15px;color:#6b7c8f;font-weight:600;margin-bottom:8px;">No team members yet</div>' +
       '<div style="font-size:13px;color:#6b7c8f;">Set your email as the Supervisor Email on each adviser in the Admin panel.</div>';
     return;
   }
@@ -9637,7 +9637,7 @@ function renderSvDashboard(data) {
       var status = getStatus(pct);
       return '<div style="margin-bottom:10px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
-          '<span style="font-size:12px;font-weight:600;color:#1a2a3a;">' + t.label + ' CPD</span>' +
+          '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.label + ' CPD</span>' +
           '<span style="font-size:12px;color:#6b7c8f;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</span>' +
         '</div>' +
         '<div style="background:#f0f4f8;border-radius:4px;height:7px;overflow:hidden;">' +
@@ -9658,7 +9658,7 @@ function renderSvDashboard(data) {
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
-            '<div style="font-size:14px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;">' +
+            '<div style="font-size:14px;font-weight:700;color:#6b7c8f;display:flex;align-items:center;">' +
               (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
               _svBirthdayCake(m) + supLabel + nonCasDot +
             '</div>' +
@@ -9690,7 +9690,7 @@ function renderSvDashboard(data) {
     var drillId = 'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_');
     return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:14px;">' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;gap:5px;">' +
+        '<div style="font-size:13px;font-weight:700;color:#6b7c8f;display:flex;align-items:center;gap:5px;">' +
           (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
           _svBirthdayCake(m) +
           (!m.isSupervisor && !m.cas ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#ef4444;white-space:nowrap;">' + fmtTenure(m.startDate) + '</span></span>' : '') +
@@ -9796,7 +9796,7 @@ function svDrillDown(email, drillId) {
         var typeBg    = '#dbeafe';
         return '<tr style="border-bottom:1px solid #f0f2f5;">' +
           '<td style="padding:9px 12px;font-size:12px;color:#6b7c8f;white-space:nowrap;">' + escHtml(e.date) + '</td>' +
-          '<td style="padding:9px 12px;font-size:12px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity || e.videoTitle || '—') + '</td>' +
+          '<td style="padding:9px 12px;font-size:12px;color:#6b7c8f;font-weight:600;">' + escHtml(e.activity || e.videoTitle || '—') + '</td>' +
           '<td style="padding:9px 12px;"><span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">' + escHtml(e.cpdType||'—') + '</span></td>' +
           '<td style="padding:9px 12px;font-size:12px;color:#003768;font-weight:700;text-align:right;">' + fmtMins(e.minutes) + '</td>' +
         '</tr>';
@@ -10133,7 +10133,7 @@ function renderCpdProgress() {
     var barColor  = done ? '#22c55e' : t.color;
     return '<div style="margin-bottom:14px;">' +
       '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
-        '<div style="font-size:13px;font-weight:700;color:#1a2a3a;">' + t.label + ' CPD</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + t.label + ' CPD</div>' +
         '<div style="font-size:13px;color:#6b7c8f;font-weight:600;">' + fmtMins(mins) + ' / ' + fmtMins(target) + '</div>' +
       '</div>' +
       '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
@@ -10233,7 +10233,7 @@ function renderCpdEntries(entries) {
       : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     return '<tr onclick="openCpdFormEdit(' + i + ')" style="border-bottom:1px solid #f0f2f5;cursor:pointer;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'\'">' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
-      '<td style="padding:11px 16px;font-size:13px;color:#1a2a3a;font-weight:600;">' + escHtml(e.activity) + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;font-weight:600;">' + escHtml(e.activity) + '</td>' +
       '<td style="padding:11px 16px;">' + typeTag + '</td>' +
       '<td style="padding:11px 16px;"><span style="background:' + CAT_BG + ';color:' + CAT_TC + ';font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
@@ -10372,7 +10372,7 @@ function renderAdminLvList(videos, featuredCount) {
       : '<span style="background:#f5f7fa;color:#6b7c8f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;">Archive</span>';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div style="overflow:hidden;">' +
-        '<div style="font-size:13px;font-weight:600;color:#1a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + tag + '</div>' +
+        '<div style="font-size:13px;font-weight:600;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.title) + tag + '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.url) + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:10px;">' +
@@ -10516,7 +10516,7 @@ function showImportPreview(rows) {
   var th = cols.map(function(c,i){ return '<th style="padding:6px 10px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #e8ecf0;">' + labels[i] + '</th>'; }).join('');
   var trs = rows.map(function(r, idx) {
     var bg = idx % 2 === 0 ? '#fff' : '#f9fafc';
-    var td = cols.map(function(c){ return '<td style="padding:5px 10px;color:#1a2a3a;">' + escHtml(r[c] || '') + '</td>'; }).join('');
+    var td = cols.map(function(c){ return '<td style="padding:5px 10px;color:#6b7c8f;">' + escHtml(r[c] || '') + '</td>'; }).join('');
     return '<tr style="background:' + bg + ';">' + td + '</tr>';
   }).join('');
   document.getElementById('import-preview-table').innerHTML =
@@ -10959,7 +10959,7 @@ function ktRenderQ() {
     var div = document.createElement('div');
     div.onclick = function(){ktSelect(qi,ai);};
     div.style.cssText = 'display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:8px;cursor:pointer;border:1px solid '+(sel?'#003768':'#e8ecf0')+';background:'+(sel?'#eef3f8':'#fff')+';transition:all .1s;';
-    div.innerHTML = '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:'+(sel?'#003768':'#e8ecf0')+';color:'+(sel?'#fff':'#6b7c8f')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">'+labels[ai]+'</div><div style="font-size:13.5px;color:#1a2a3a;line-height:1.5;padding-top:2px;">'+opt+'</div>';
+    div.innerHTML = '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:'+(sel?'#003768':'#e8ecf0')+';color:'+(sel?'#fff':'#6b7c8f')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">'+labels[ai]+'</div><div style="font-size:13.5px;color:#6b7c8f;line-height:1.5;padding-top:2px;">'+opt+'</div>';
     opts.appendChild(div);
   });
   var answered = Object.keys(_kt.answers).length;
@@ -11008,7 +11008,7 @@ function ktSubmit() {
   test.questions.forEach(function(q,qi){
     if(_kt.answers[qi] !== q.a){
       wrongItems += '<div style="margin-bottom:10px;padding:10px 14px;background:#fff;border:1px solid #fee2e2;border-radius:8px;">'+
-        '<div style="font-size:12px;font-weight:600;color:#1a2a3a;margin-bottom:4px;">Q'+(qi+1)+': '+q.q+'</div>'+
+        '<div style="font-size:12px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Q'+(qi+1)+': '+q.q+'</div>'+
         '<div style="font-size:12px;color:#dc2626;">✗ Your answer: '+(_kt.answers[qi]!==undefined?q.o[_kt.answers[qi]]:'(not answered)')+'</div>'+
         '<div style="font-size:12px;color:#16a34a;">✓ Correct: '+q.o[q.a]+'</div></div>';
     }
@@ -11020,7 +11020,7 @@ function ktSubmit() {
       '<div style="font-size:13px;color:#6b7c8f;">You scored '+score+' out of '+total+' (passmark: '+test.passmark+'/20)</div>'+
       (passed?'<div style="margin-top:12px;font-size:13px;color:#16a34a;font-weight:600;">30 minutes CPD logged ✓</div>':'<div style="margin-top:8px;font-size:13px;color:#6b7c8f;">No CPD logged for a failed attempt. Review the incorrect answers below and try again.</div>')+
     '</div>'+
-    (wrongItems?'<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#1a2a3a;margin-bottom:10px;">Questions to review ('+(total-score)+'):</div>'+wrongItems+'</div>':'<div style="text-align:center;padding:12px;font-size:14px;color:#16a34a;font-weight:600;">Perfect score! All 20 correct.</div>')+
+    (wrongItems?'<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#6b7c8f;margin-bottom:10px;">Questions to review ('+(total-score)+'):</div>'+wrongItems+'</div>':'<div style="text-align:center;padding:12px;font-size:14px;color:#16a34a;font-weight:600;">Perfect score! All 20 correct.</div>')+
     '<div style="display:flex;gap:12px;margin-top:16px;">'+
       '<button onclick="ktLoadTest(\''+_kt.id+'\')" style="flex:1;background:#f5f7fa;color:#003768;border:1px solid #e8ecf0;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Retake Test</button>'+
       '<button onclick="ktShowLanding()" style="flex:1;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">All Tests</button>'+
@@ -11180,7 +11180,7 @@ function pzShowBrokerPanel(sup) {
 
   var bks = PZ_GROUPS[sup] || [];
   var html = '<div style="padding:16px 18px 8px;font-size:11px;font-weight:700;color:#003768;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #e8ecf0;margin-bottom:4px;">' + escHtml(sup) + '</div>';
-  html += '<div style="padding:8px 12px;"><input type="text" placeholder="Search…" oninput="pzFilterPanel(this.value)" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #e8ecf0;border-radius:7px;background:#f5f7fa;color:#1a2a3a;font-size:12px;outline:none;font-family:inherit;"></div>';
+  html += '<div style="padding:8px 12px;"><input type="text" placeholder="Search…" oninput="pzFilterPanel(this.value)" style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #e8ecf0;border-radius:7px;background:#f5f7fa;color:#6b7c8f;font-size:12px;outline:none;font-family:inherit;"></div>';
   for (var i = 0; i < bks.length; i++) {
     var n = escHtml(bks[i]);
     html += '<a href="javascript:void(0)" data-broker="' + n + '" onclick="pzClick(this);return false;">' + n + '</a>';
@@ -11643,7 +11643,7 @@ function renderCdList() {
       + 'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
       + '<div style="min-width:0;">'
-      + '<div style="font-size:13px;font-weight:600;color:#1a2a3a;">' + escHtml(r.consumer || 'Anonymous') + npsHtml + '</div>'
+      + '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(r.consumer || 'Anonymous') + npsHtml + '</div>'
       + '<div style="font-size:11px;color:#aaa;margin-top:2px;">' + d + '</div>'
       + '</div>'
       + badge
@@ -11733,7 +11733,7 @@ function openCdDetail(r) {
   if (r.nps) {
     var npsColor = r.nps >= 9 ? '#16a34a' : r.nps >= 7 ? '#d97706' : '#ef4444';
     npsEl.innerHTML = '<div style="background:#f8fafc;border:1px solid #e8ecf0;border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
-      + '<span style="font-size:13px;font-weight:600;color:#1a2a3a;">NPS Score</span>'
+      + '<span style="font-size:13px;font-weight:600;color:#6b7c8f;">NPS Score</span>'
       + '<span style="font-size:24px;font-weight:800;color:' + npsColor + ';">' + r.nps + '<span style="font-size:13px;font-weight:400;color:#6b7c8f;"> / 10</span></span>'
       + '</div>';
   } else { npsEl.innerHTML = ''; }
@@ -11763,7 +11763,7 @@ function openCdDetail(r) {
       + '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">' + escHtml(q.label) + '</span>'
       + '</div>'
       + '<div style="font-size:12px;color:#6b7c8f;margin-bottom:6px;line-height:1.4;">' + escHtml(q.question) + '</div>'
-      + '<div style="font-size:13px;font-weight:600;color:#1a2a3a;line-height:1.5;">' + escHtml(answer) + '</div>'
+      + '<div style="font-size:13px;font-weight:600;color:#6b7c8f;line-height:1.5;">' + escHtml(answer) + '</div>'
       + checkboxHtml
       + '</div>';
   }).join('');
@@ -11774,7 +11774,7 @@ function openCdDetail(r) {
   if (r.comment) {
     commentEl.innerHTML = '<div style="border-left:3px solid #003768;padding:10px 14px;background:#f0f6ff;border-radius:0 8px 8px 0;">'
       + '<div style="font-size:11px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Additional Comments</div>'
-      + '<div style="font-size:13px;color:#1a2a3a;line-height:1.5;">' + escHtml(r.comment) + '</div>'
+      + '<div style="font-size:13px;color:#6b7c8f;line-height:1.5;">' + escHtml(r.comment) + '</div>'
       + '</div>';
   } else { commentEl.innerHTML = ''; }
 
@@ -12247,7 +12247,7 @@ function payOpenTaxYear(tyKey) {
     grandTotal+=mTotal; grandInit+=initAmt; grandRen+=renAmt;
     var label=(MONTH_NAMES[m.month]||'')+' '+m.year;
     html+='<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" onclick="payNavOpenStatement('+m.key+')" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-    html+='<td style="padding:11px 22px;font-weight:600;color:#1a2a3a;">'+escHtml(label)+'</td>';
+    html+='<td style="padding:11px 22px;font-weight:600;color:#6b7c8f;">'+escHtml(label)+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;color:#fcb034;font-weight:600;white-space:nowrap;">'+escHtml(bacsDate)+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">'+(initAmt?'£'+initAmt.toFixed(2):'—')+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">'+(renAmt?'£'+renAmt.toFixed(2):'—')+'</td>';
@@ -12314,8 +12314,8 @@ function payOpenStatement(mk) {
   if (_rtf) {
     html+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:0 6px 24px;">';
     html+='<div style="display:flex;gap:20px;flex-wrap:wrap;">';
-    if (_rtf.brokerName)    html+='<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(_rtf.brokerName)+'</strong></span>';
-    if (_rtf.statementDate) html+='<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(_rtf.statementDate)+'</strong></span>';
+    if (_rtf.brokerName)    html+='<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#6b7c8f;">'+escHtml(_rtf.brokerName)+'</strong></span>';
+    if (_rtf.statementDate) html+='<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#6b7c8f;">'+escHtml(_rtf.statementDate)+'</strong></span>';
     if (_rtf.bacsDate)      html+='<span style="font-size:12px;color:#6b7c8f;">BACS: <strong style="color:#003768;">'+escHtml(_rtf.bacsDate)+'</strong></span>';
     html+='</div>';
     html+='<div style="display:flex;gap:6px;flex-wrap:wrap;">';
@@ -12427,7 +12427,7 @@ function payRenderMonthBody(m, allMonths) {
           html += '<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" '+
             'onclick="payToggleCat(\''+accBodyId+'\',\''+chevId+'\')" '+
             'onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-          html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:600;">'+escHtml(p.description)+
+          html += '<td style="padding:10px 22px;color:#6b7c8f;font-weight:600;">'+escHtml(p.description)+
             ' <span id="'+chevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">'+(startOpen?'&#9660;':'&#9658;')+'</span>'+
             (!noEntries?' <span style="font-size:10px;color:#9bafc0;font-weight:400;margin-left:6px;">'+subRows.length+' '+(subRows.length===1?'entry':'entries')+'</span>':'')+
             '</td>';
@@ -12469,7 +12469,7 @@ function payRenderMonthBody(m, allMonths) {
             var adjChevId = 'padj-chev-'+detailId+'-'+ai;
             html += '<tbody>';
             html += '<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" onclick="payToggleCat(\''+adjBodyId+'\',\''+adjChevId+'\')" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<td style="padding:10px 22px;font-style:italic;color:'+(isNeg?'#7a3300':'#1a2a3a')+';font-size:12px;">'+escHtml(a.description)+
+            html += '<td style="padding:10px 22px;font-style:italic;color:'+(isNeg?'#7a3300':'#6b7c8f')+';font-size:12px;">'+escHtml(a.description)+
               ' <span id="'+adjChevId+'" style="float:right;color:#c0cdd8;font-size:12px;margin-left:8px;">&#9658;</span></td>';
             html += '<td style="padding:10px 16px;text-align:right;color:'+(isNeg?'#c0392b':'#3a4f63')+';font-weight:600;font-variant-numeric:tabular-nums;">'+(isNeg?'−':'')+'£'+Math.abs(a.gross).toFixed(2)+'</td>';
             html += '<td></td><td></td>';
@@ -12524,7 +12524,7 @@ function payRenderMonthBody(m, allMonths) {
         // Source header bar — only when multiple files share this month (avoids duplicating card header)
         if (validFiles.length > 1) {
           html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 22px 8px;background:#f7f9fc;border-top:1px solid #edf1f5;">';
-          html += '<div><div style="font-size:12px;font-weight:600;color:#1a2a3a;">'+escHtml(stmt.filename||sourceLabel)+'</div>';
+          html += '<div><div style="font-size:12px;font-weight:600;color:#6b7c8f;">'+escHtml(stmt.filename||sourceLabel)+'</div>';
           html += '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">'+escHtml(sourceLabel)+' &nbsp;·&nbsp; '+eLen+' line'+(eLen!==1?'s':'')+'</div></div>';
           html += '<div style="display:flex;align-items:center;gap:12px;">';
           html += '<div style="font-size:17px;font-weight:800;color:#003768;font-variant-numeric:tabular-nums;">£'+stmtTotal.toFixed(2)+'</div>';
@@ -12550,7 +12550,7 @@ function payRenderMonthBody(m, allMonths) {
           html += '</tr></thead><tbody>';
           payments.forEach(function(p) {
             html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<td style="padding:10px 22px;color:#1a2a3a;font-weight:500;">'+escHtml(p.description)+'</td>';
+            html += '<td style="padding:10px 22px;color:#6b7c8f;font-weight:500;">'+escHtml(p.description)+'</td>';
             html += '<td style="padding:10px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">£'+p.gross.toFixed(2)+'</td>';
             html += '<td style="padding:10px 16px;text-align:center;color:#6b7c8f;">'+(p.override!=null?p.override.toFixed(0)+'%':'—')+'</td>';
             html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(p.net!=null?'£'+p.net.toFixed(2):'—')+'</td>';
@@ -12560,7 +12560,7 @@ function payRenderMonthBody(m, allMonths) {
             html += '<tr><td colspan="4" style="padding:6px 22px;font-size:10px;font-weight:700;color:#9bafc0;text-transform:uppercase;background:#fafbfc;border-top:1px solid #e8ecf0;">Adjustments</td></tr>';
             adjustments.forEach(function(a) {
               html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-              html += '<td style="padding:10px 22px;color:#1a2a3a;">'+escHtml(a.description)+'</td>';
+              html += '<td style="padding:10px 22px;color:#6b7c8f;">'+escHtml(a.description)+'</td>';
               html += '<td style="padding:10px 16px;text-align:right;color:#3a4f63;font-variant-numeric:tabular-nums;">£'+a.gross.toFixed(2)+'</td><td></td>';
               html += '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#003768;font-variant-numeric:tabular-nums;">'+(a.net!=null?'£'+a.net.toFixed(2):'—')+'</td>';
               html += '</tr>';
@@ -12574,8 +12574,8 @@ function payRenderMonthBody(m, allMonths) {
           // Detail + download footer
           html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#fafbfc;border-top:1px solid #f0f4f8;flex-wrap:wrap;gap:8px;">';
           html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
-          if (stmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#1a2a3a;">'+escHtml(stmt.brokerName)+'</strong></span>';
-          if (stmt.statementDate) html += '<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#1a2a3a;">'+escHtml(stmt.statementDate)+'</strong></span>';
+          if (stmt.brokerName) html += '<span style="font-size:12px;color:#6b7c8f;">Broker: <strong style="color:#6b7c8f;">'+escHtml(stmt.brokerName)+'</strong></span>';
+          if (stmt.statementDate) html += '<span style="font-size:12px;color:#6b7c8f;">Statement: <strong style="color:#6b7c8f;">'+escHtml(stmt.statementDate)+'</strong></span>';
           if (stmt.bacsDate)      html += '<span style="font-size:12px;color:#6b7c8f;">BACS payment: <strong style="color:#003768;">'+escHtml(stmt.bacsDate)+'</strong></span>';
           html += '</div>';
           if (stmt.path) {
@@ -12595,7 +12595,7 @@ function payRenderMonthBody(m, allMonths) {
           html += '</tr></thead><tbody>';
           (stmt.entries||[]).forEach(function(e) {
             html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<td style="padding:9px 22px;color:#1a2a3a;font-weight:500;">'+escHtml(e.client)+'</td>';
+            html += '<td style="padding:9px 22px;color:#6b7c8f;font-weight:500;">'+escHtml(e.client)+'</td>';
             html += '<td style="padding:9px 14px;color:#3a4f63;">'+escHtml(e.product)+'</td>';
             html += '<td style="padding:9px 14px;font-family:monospace;font-size:11px;color:#3a4f63;">'+escHtml(e.policyNo)+'</td>';
             html += '<td style="padding:9px 14px;font-size:11px;color:#6b7c8f;">'+escHtml(e.provider)+'</td>';
@@ -12634,7 +12634,7 @@ function payRenderMonthBody(m, allMonths) {
             var client = ((e.clientInit?e.clientInit+' ':'')+(e.clientSurname||'')).trim();
             var txDate = e.transactionDate ? new Date(e.transactionDate+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
             html += '<tr style="border-top:1px solid #f0f4f8;" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
-            html += '<td style="padding:9px 22px;color:#1a2a3a;font-weight:500;">'+escHtml(client)+'</td>';
+            html += '<td style="padding:9px 22px;color:#6b7c8f;font-weight:500;">'+escHtml(client)+'</td>';
             html += '<td style="padding:9px 14px;">'+payProductBadge(e.productCode)+'</td>';
             html += '<td style="padding:9px 14px;font-family:monospace;font-size:11px;color:#3a4f63;">'+escHtml(e.policyNo||'—')+'</td>';
             html += '<td style="padding:9px 14px;color:#3a4f63;white-space:nowrap;">'+escHtml(txDate)+'</td>';
@@ -12767,7 +12767,7 @@ function fpYN(qid, val, btn) {
   // Highlight selected button
   var row = btn.parentElement;
   row.querySelectorAll('.fp-yn-btn').forEach(function(b){
-    b.style.background = '#fff'; b.style.color = '#1a2a3a'; b.style.borderColor = '#e8ecf0';
+    b.style.background = '#fff'; b.style.color = '#6b7c8f'; b.style.borderColor = '#e8ecf0';
   });
   btn.style.background = '#003768'; btn.style.color = '#fff'; btn.style.borderColor = '#003768';
   // Show/hide detail textarea
