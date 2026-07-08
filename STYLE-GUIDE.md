@@ -36,7 +36,7 @@ Standard header for any page or major section:
 ```
 
 - Title: navy, 20px, default (bold) weight, `margin:0 0 4px`.
-- Subtitle: grey, 13.5px, `line-height:1.6`, sentence case. Max-width should match the content/card width below it (typically ~640px), not run edge-to-edge.
+- Subtitle: grey, 13.5px, `line-height:1.6`, sentence case, full width of the content column (no `max-width` constraint) unless it shares a flex row with another element (e.g. a search box) that needs the room.
 - If a subtitle needs bottom spacing before the next block, put it on the `<p>` margin-bottom but keep the font styling identical.
 - Modal dialog headers (e.g. "Make My Business Card", "User Management") are intentionally smaller — 18px title, 13px subtitle — since they're in a constrained popup, not a full page.
 
