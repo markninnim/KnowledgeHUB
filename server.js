@@ -59,6 +59,7 @@ const F_CAS                = 'fldzYuTuv9JHEpAq3'; // CAS — Competent Adviser S
 const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
 const F_TOTP               = 'fldpgD672Gikqqnj0'; // TOTP 2FA secret
 const F_BIRTHDAY           = 'fldUxRahlmboP7g4y'; // Birthday (date string)
+const F_START_DATE         = 'fldA7RE4kgsGwqvad'; // Start Date (date string)
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -303,6 +304,7 @@ function recordToUser(record) {
     cas:              f[F_CAS]              || false,
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     birthday:         f[F_BIRTHDAY]           || null,
+    startDate:        f[F_START_DATE]         || null,
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
@@ -3374,7 +3376,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     });
 
     res.json({
-      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'] },
+      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
       consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },

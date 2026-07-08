@@ -3663,9 +3663,12 @@ html { height: 100%; }
       <!-- Back + header -->
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
         <button onclick="closeBrokerProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #e8ecf0;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Back</button>
-        <div>
+        <div style="flex:1;min-width:0;">
           <div id="bp-name" style="font-size:20px;font-weight:800;color:#003768;"></div>
-          <div id="bp-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px;">
+            <div id="bp-meta" style="font-size:13px;color:#6b7c8f;"></div>
+            <div id="bp-tenure" style="font-size:12px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px;"></div>
+          </div>
         </div>
       </div>
 
@@ -8410,6 +8413,27 @@ function openBrokerProfile(email, name) {
         wsLink.onmouseover = function(){ this.style.textDecoration='underline'; };
         wsLink.onmouseout  = function(){ this.style.textDecoration='none'; };
         metaEl.parentNode.insertBefore(wsLink, metaEl.nextSibling);
+      }
+
+      // ── Start date / years of service ──
+      var tenureEl = document.getElementById('bp-tenure');
+      if (tenureEl) {
+        if (u.startDate) {
+          var sd = new Date(u.startDate);
+          var now = new Date();
+          var dateStr = sd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          var totalMonths = (now.getFullYear() - sd.getFullYear()) * 12 + (now.getMonth() - sd.getMonth()) - (now.getDate() < sd.getDate() ? 1 : 0);
+          totalMonths = Math.max(0, totalMonths);
+          var years = Math.floor(totalMonths / 12);
+          var yearsHtml = '<span>Since ' + dateStr + ' · ' + years + ' yr' + (years === 1 ? '' : 's') + ' service</span>';
+          var nonCasHtml = (!u.isSupervisor && !u.cas)
+            ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
+              '<span style="color:#ef4444;font-weight:700;">' + totalMonths + ' mo' + (totalMonths === 1 ? '' : 's') + ' service</span>'
+            : '';
+          tenureEl.innerHTML = yearsHtml + nonCasHtml;
+        } else {
+          tenureEl.innerHTML = '';
+        }
       }
 
       // ── CPD ──
