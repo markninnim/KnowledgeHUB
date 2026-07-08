@@ -6823,8 +6823,8 @@ function loadHomeData() {
 
     // Determine which types to show
     var types = [];
-    if (user.sellsMortgages  || noFlags) types.push({ key: 'Mortgage',   color: '#2e99d5' });
-    if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: '#003768' });
+    if (user.sellsMortgages  || noFlags) types.push({ key: 'Mortgage',   color: '#003768' });
+    if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: '#fcb034' });
     if (user.sellsInvestments)           types.push({ key: 'Investment', color: '#fcb034' });
 
     var totalMins = cpd.ytdMins || 0;
@@ -8434,10 +8434,10 @@ function openBrokerProfile(email, name) {
       var byType = d.cpd ? d.cpd.byType : {};
       var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
       var types = [];
-      if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: '#2e99d5' });
-      if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: '#003768' });
+      if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: '#003768' });
+      if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: '#fcb034' });
       if (u.sellsInvestments) types.push({ key: 'Investment', color: '#fcb034' });
-      if (!types.length) types = [{ key: 'Mortgage', color: '#2e99d5' }, { key: 'Protection', color: '#003768' }];
+      if (!types.length) types = [{ key: 'Mortgage', color: '#003768' }, { key: 'Protection', color: '#fcb034' }];
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
         var target  = targets[t.key] || 900;
@@ -8797,7 +8797,7 @@ function filterBpActivity() {
     return true;
   });
   document.getElementById('bp-activity-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
-  var typeColor = { Mortgage: '#2e99d5', Protection: '#003768', Investment: '#fcb034' };
+  var typeColor = { Mortgage: '#003768', Protection: '#2e99d5', Investment: '#fcb034' };
   document.getElementById('bp-activity-body').innerHTML = filtered.length
     ? filtered.map(function(e) {
         var label = e.video || e.activity || '—';
@@ -9497,7 +9497,7 @@ function renderSvDashboard(data) {
   }
 
   var typeConf = [
-    { key: 'Mortgage',   label: 'Mortgage',   color: '#2e99d5' },
+    { key: 'Mortgage',   label: 'Mortgage',   color: '#003768' },
     { key: 'Protection', label: 'Protection', color: '#fcb034' }
   ];
 
@@ -10095,7 +10095,7 @@ function renderCpdProgress() {
   var user = _currentUser || {};
   var noFlags = !user.sellsMortgages && !user.sellsProtection;
   var typeConf = [
-    { key: 'Mortgage',   label: 'Mortgage',   color: '#2e99d5', show: user.sellsMortgages  || noFlags },
+    { key: 'Mortgage',   label: 'Mortgage',   color: '#003768', show: user.sellsMortgages  || noFlags },
     { key: 'Protection', label: 'Protection', color: '#fcb034', show: user.sellsProtection || noFlags }
   ];
   var visible = typeConf.filter(function(t){ return t.show; });
@@ -10178,13 +10178,13 @@ function renderCpdPie() {
   content.innerHTML =
     '<svg viewBox="0 0 100 100" width="100" height="100">' +
       '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#f0f4f8" stroke-width="' + sw + '"/>' +
-      arcPath(mortPct, 0, '#2e99d5') +
+      arcPath(mortPct, 0, '#003768') +
       arcPath(protPct, mortPct, '#fcb034') +
     '</svg>' +
     '<div style="display:flex;flex-direction:column;gap:8px;width:100%;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<div style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#2e99d5;flex-shrink:0;display:inline-block;"></span><span style="font-size:11px;font-weight:600;color:#6b7c8f;">Mortgage</span></div>' +
-        '<span style="font-size:14px;font-weight:800;color:#2e99d5;">' + Math.round(mortPct*100) + '%</span>' +
+        '<div style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#003768;flex-shrink:0;display:inline-block;"></span><span style="font-size:11px;font-weight:600;color:#6b7c8f;">Mortgage</span></div>' +
+        '<span style="font-size:14px;font-weight:800;color:#003768;">' + Math.round(mortPct*100) + '%</span>' +
       '</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +
         '<div style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#fcb034;flex-shrink:0;display:inline-block;"></span><span style="font-size:11px;font-weight:600;color:#6b7c8f;">Protection</span></div>' +
