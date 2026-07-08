@@ -1359,7 +1359,7 @@ html { height: 100%; }
       <div style="max-width:860px;margin:0 auto;">
         <div style="margin-bottom:24px;">
           <h2 style="color:#003768;font-size:22px;font-weight:800;margin:0 0 8px;">My CAS Path</h2>
-          <div style="background:#f0f6ff;border-left:3px solid #003768;border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;color:#374151;line-height:1.6;max-width:700px;">
+          <div style="background:#f0f6ff;border-left:3px solid #003768;border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;color:#6b7c8f;line-height:1.6;max-width:700px;">
             This is your personal roadmap to Competent Adviser Status (CAS). Every milestone is tracked here — induction videos, knowledge tests, role plays and observed interviews — so you always know exactly where you stand and how far there is to go. Work through any tasks your supervisor has set and keep this page bookmarked: the goal is to get you to CAS as quickly as possible.
           </div>
         </div>
@@ -3547,7 +3547,7 @@ html { height: 100%; }
           <div id="cas-path-name" style="font-size:22px;font-weight:800;color:#003768;"></div>
           <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.06em;">Non-CAS</span>
         </div>
-        <p style="font-size:13px;color:#374151;line-height:1.7;margin:0 0 8px;">This page records <span id="cas-path-name2" style="font-weight:700;"></span>'s path to Competent Adviser Status. Every step of the journey is logged here — induction videos, knowledge tests, role plays and observed interviews — so we can track progress clearly and get there as fast as possible. Tasks set by the supervisor appear below and should be worked through in order.</p>
+        <p style="font-size:13px;color:#6b7c8f;line-height:1.7;margin:0 0 8px;">This page records <span id="cas-path-name2" style="font-weight:700;"></span>'s path to Competent Adviser Status. Every step of the journey is logged here — induction videos, knowledge tests, role plays and observed interviews — so we can track progress clearly and get there as fast as possible. Tasks set by the supervisor appear below and should be worked through in order.</p>
         <p style="font-size:12px;color:#6b7c8f;margin:0;"><span id="cas-path-name3"></span> can see this page and their tasks when they log in to their KnowledgeHUB&#8482; under <strong>Learning → My CAS Path</strong>.</p>
       </div>
 
@@ -8202,7 +8202,7 @@ function renderCasEntries(entries) {
                 '<div style="margin-top:auto;border-top:1px solid ' + divBdr + ';padding-top:10px;">' +
                   '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Supervisor Feedback</div>' +
                   (fb ?
-                    '<div style="font-size:12px;color:#374151;line-height:1.5;margin-bottom:6px;white-space:pre-wrap;">' + escHtml(fb.notes || '—') + '</div>' +
+                    '<div style="font-size:12px;color:#6b7c8f;line-height:1.5;margin-bottom:6px;white-space:pre-wrap;">' + escHtml(fb.notes || '—') + '</div>' +
                     '<div style="font-size:11px;color:#aab4be;margin-bottom:4px;">Added ' + formatCasDate(fb.date) + (fb.loggedBy ? ' by ' + escHtml(fb.loggedBy) : '') + '</div>' +
                     '<button onclick="deleteCasEntry(\'' + fb.id + '\',\'Test\')" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;">Remove</button>'
                     :
@@ -9327,14 +9327,14 @@ function oppDetailHtml(cardKey) {
     '</button>';
   h += '<div style="margin-bottom:12px;">' + (OPP_ICONS[cardKey] || '') + '</div>';
   h += '<h1 style="font-size:24px;font-weight:800;color:#003768;margin:0 0 12px;">' + escHtml(card.title) + '</h1>';
-  h += '<p style="font-size:14px;color:#374151;line-height:1.75;margin:0 0 32px;max-width:640px;">' + escHtml(detail.overview) + '</p>';
+  h += '<p style="font-size:14px;color:#6b7c8f;line-height:1.75;margin:0 0 32px;max-width:640px;">' + escHtml(detail.overview) + '</p>';
   detail.sections.forEach(function(s) {
     h += '<div style="margin-bottom:28px;">';
     h += '<div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
     if (s.points) {
       h += '<ul style="margin:0;padding-left:18px;">';
       s.points.forEach(function(p) {
-        h += '<li style="font-size:13px;color:#374151;line-height:1.75;margin-bottom:7px;">' + escHtml(p) + '</li>';
+        h += '<li style="font-size:13px;color:#6b7c8f;line-height:1.75;margin-bottom:7px;">' + escHtml(p) + '</li>';
       });
       h += '</ul>';
     }
@@ -9342,7 +9342,7 @@ function oppDetailHtml(cardKey) {
       s.items.forEach(function(item) {
         h += '<div style="background:#f8fafc;border-left:3px solid #fcb034;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:10px;">';
         h += '<div style="font-size:13px;font-weight:600;color:#003768;margin-bottom:5px;">' + escHtml(item.q) + '</div>';
-        h += '<div style="font-size:13px;color:#374151;line-height:1.7;">' + escHtml(item.a) + '</div>';
+        h += '<div style="font-size:13px;color:#6b7c8f;line-height:1.7;">' + escHtml(item.a) + '</div>';
         h += '</div>';
       });
     }
@@ -9376,7 +9376,7 @@ function oppBuildPageHtml(pageKey) {
   var sections = OPP_PAGE_SECTIONS[pageKey] || [];
   var html = '<div style="max-width:960px;padding:32px 8px 48px;">';
   html += '<h1 style="font-size:26px;font-weight:800;color:#003768;margin:0 0 10px;">' + escHtml(title) + ' — Sales Opportunities</h1>';
-  html += '<p style="font-size:14px;color:#374151;line-height:1.75;max-width:680px;margin:0 0 36px;">' + escHtml(subtitle) + '</p>';
+  html += '<p style="font-size:14px;color:#6b7c8f;line-height:1.75;max-width:680px;margin:0 0 36px;">' + escHtml(subtitle) + '</p>';
   sections.forEach(function(sKey) {
     var sec = OPP_SECTIONS_DEF[sKey];
     if (!sec) return;
