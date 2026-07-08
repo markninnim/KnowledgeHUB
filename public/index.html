@@ -7690,6 +7690,24 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Length-of-service text, e.g. "7 months service" or "2yr 3 months service"
+function fmtTenure(startDate) {
+  if (!startDate) return '';
+  var sd = new Date(startDate), now = new Date();
+  var totalMonths = (now.getFullYear() - sd.getFullYear()) * 12 + (now.getMonth() - sd.getMonth()) - (now.getDate() < sd.getDate() ? 1 : 0);
+  totalMonths = Math.max(0, totalMonths);
+  if (totalMonths < 12) {
+    return totalMonths + ' month' + (totalMonths === 1 ? '' : 's') + ' service';
+  }
+  var years = Math.floor(totalMonths / 12), rem = totalMonths % 12;
+  return years + 'yr' + (years === 1 ? '' : 's') + (rem ? ' ' + rem + ' month' + (rem === 1 ? '' : 's') : '') + ' service';
+}
+
+// Small red Non-CAS status dot
+function nonCasDotHtml() {
+  return '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>';
+}
+
 function populateSupervisorDropdown(selected) {
   var sel = document.getElementById('uf-supervisoremail');
   if (!sel) return;
@@ -8415,22 +8433,13 @@ function openBrokerProfile(email, name) {
         metaEl.parentNode.insertBefore(wsLink, metaEl.nextSibling);
       }
 
-      // ── Start date / years of service ──
+      // ── Start date / length of service ──
       var tenureEl = document.getElementById('bp-tenure');
       if (tenureEl) {
-        if (u.startDate) {
-          var sd = new Date(u.startDate);
-          var now = new Date();
-          var dateStr = sd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-          var totalMonths = (now.getFullYear() - sd.getFullYear()) * 12 + (now.getMonth() - sd.getMonth()) - (now.getDate() < sd.getDate() ? 1 : 0);
-          totalMonths = Math.max(0, totalMonths);
-          var years = Math.floor(totalMonths / 12);
-          var yearsHtml = '<span>Since ' + dateStr + ' · ' + years + ' yr' + (years === 1 ? '' : 's') + ' service</span>';
-          var nonCasHtml = (!u.isSupervisor && !u.cas)
-            ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' +
-              '<span style="color:#ef4444;font-weight:700;">' + totalMonths + ' mo' + (totalMonths === 1 ? '' : 's') + ' service</span>'
-            : '';
-          tenureEl.innerHTML = yearsHtml + nonCasHtml;
+        var tenureStr = fmtTenure(u.startDate);
+        if (tenureStr) {
+          var dotHtml = (!u.isSupervisor && !u.cas) ? nonCasDotHtml() : '';
+          tenureEl.innerHTML = dotHtml + '<span>' + tenureStr + '</span>';
         } else {
           tenureEl.innerHTML = '';
         }
@@ -9641,7 +9650,7 @@ function renderSvDashboard(data) {
 
     var cardBg = m.isSupervisor ? '#f0f2f5' : '#fff';
     var supLabel = m.isSupervisor ? '<span style="background:#6b7c8f;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
-    var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-left:6px;vertical-align:middle;flex-shrink:0;"></span>' : '';
+    var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span style="display:inline-flex;align-items:center;gap:5px;margin-left:6px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">' + fmtTenure(m.startDate) + '</span></span>' : '';
     var cardId = 'sv-card-' + m.email.replace(/[^a-z0-9]/gi, '_');
     var cardClick = !m.isSupervisor ? ' onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\')"' : '';
     return '<div id="' + cardId + '"' + cardClick + ' class="sv-adv-card" style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);">' +
@@ -9683,7 +9692,7 @@ function renderSvDashboard(data) {
         '<div style="font-size:13px;font-weight:700;color:#1a2a3a;display:flex;align-items:center;gap:5px;">' +
           (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:#003768;text-decoration:none;border-bottom:1px solid #e8ecf0;" onmouseover="this.style.borderBottomColor=\'#003768\'" onmouseout="this.style.borderBottomColor=\'#e8ecf0\'">' + escHtml(name) + '</a>' : escHtml(name)) +
           _svBirthdayCake(m) +
-          (!m.isSupervisor && !m.cas ? '<span title="Non-CAS" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>' : '') +
+          (!m.isSupervisor && !m.cas ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#6b7c8f;white-space:nowrap;">' + fmtTenure(m.startDate) + '</span></span>' : '') +
         '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
       '</div>' +
