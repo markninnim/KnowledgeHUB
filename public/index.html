@@ -578,9 +578,9 @@ html { height: 100%; }
           </div>
           <!-- Date range filter -->
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <input type="date" id="feefo-date-from" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+            <input type="date" id="feefo-date-from" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
             <span style="font-size:12px;color:#6b7c8f;">to</span>
-            <input type="date" id="feefo-date-to" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+            <input type="date" id="feefo-date-to" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:#003768;font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
             <button onclick="feefoDateClear()" style="border:1px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
           </div>
         </div>
@@ -1248,7 +1248,7 @@ html { height: 100%; }
           </div>
           <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Date *</label>
-            <input id="cpdf-date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#e8ecf0'">
+            <input id="cpdf-date" type="date" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
           </div>
           <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Duration (minutes) *</label>
@@ -1308,7 +1308,7 @@ html { height: 100%; }
           </div>
           <div id="cr-row-incident" style="margin-bottom:14px;">
             <label id="cr-incident-label" style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Date of incident</label>
-            <input id="cr-incident" type="date" style="width:100%;padding:10px 12px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            <input id="cr-incident" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
           </div>
           <div id="cr-row-client" style="margin-bottom:14px;">
             <label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:5px;">Client name</label>
@@ -3638,7 +3638,7 @@ html { height: 100%; }
           </div>
           <div>
             <label style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Date</label>
-            <input id="cas-entry-date" type="date" style="width:100%;padding:8px 10px;border:1.5px solid #e8ecf0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            <input id="cas-entry-date" type="date" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
           </div>
         </div>
         <div id="cas-score-row" style="display:none;margin-bottom:12px;">
@@ -3772,9 +3772,9 @@ html { height: 100%; }
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Feefo Reviews <span id="bp-reviews-count" style="font-weight:400;color:#aaa;"></span></div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
-              <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <button onclick="document.getElementById('bp-rev-from').value='';document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
             </div>
           </div>
@@ -3786,9 +3786,9 @@ html { height: 100%; }
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Activity <span id="bp-activity-count" style="font-weight:400;color:#aaa;"></span></div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
-              <input type="date" id="bp-act-to" oninput="filterBpActivity()" style="border:1.5px solid #e8ecf0;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
+              <input type="date" id="bp-act-to" oninput="filterBpActivity()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <button onclick="document.getElementById('bp-act-from').value='';document.getElementById('bp-act-to').value='';filterBpActivity();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
             </div>
           </div>
