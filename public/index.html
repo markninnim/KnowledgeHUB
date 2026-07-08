@@ -9321,13 +9321,13 @@ function oppDetailHtml(cardKey) {
   var card = OPP_CARDS[cardKey];
   var detail = OPP_DETAIL[cardKey];
   if (!card || !detail) return '<p style="padding:32px;color:#6b7c8f;">No detail available.</p>';
-  var h = '<div style="max-width:780px;padding:32px 8px 60px;">';
+  var h = '<div style="max-width:780px;padding:32px 32px 60px;">';
   h += '<button onclick="oppCloseCard()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:#003768;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:24px;padding:0;">' +
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#003768" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back' +
     '</button>';
   h += '<div style="margin-bottom:12px;">' + (OPP_ICONS[cardKey] || '') + '</div>';
-  h += '<h1 style="font-size:24px;font-weight:800;color:#003768;margin:0 0 12px;">' + escHtml(card.title) + '</h1>';
-  h += '<p style="font-size:14px;color:#6b7c8f;line-height:1.75;margin:0 0 32px;max-width:640px;">' + escHtml(detail.overview) + '</p>';
+  h += '<h1 style="font-size:20px;font-weight:800;color:#003768;margin:0 0 4px;">' + escHtml(card.title) + '</h1>';
+  h += '<p style="font-size:13.5px;color:#6b7c8f;line-height:1.6;margin:0 0 32px;max-width:640px;">' + escHtml(detail.overview) + '</p>';
   detail.sections.forEach(function(s) {
     h += '<div style="margin-bottom:28px;">';
     h += '<div style="font-size:13px;font-weight:700;color:#003768;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
@@ -9374,9 +9374,9 @@ function oppBuildPageHtml(pageKey) {
   var title = OPP_TITLES[pageKey] || pageKey;
   var subtitle = OPP_SUBTITLES[pageKey] || '';
   var sections = OPP_PAGE_SECTIONS[pageKey] || [];
-  var html = '<div style="max-width:960px;padding:32px 8px 48px;">';
-  html += '<h1 style="font-size:26px;font-weight:800;color:#003768;margin:0 0 10px;">' + escHtml(title) + ' — Sales Opportunities</h1>';
-  html += '<p style="font-size:14px;color:#6b7c8f;line-height:1.75;max-width:680px;margin:0 0 36px;">' + escHtml(subtitle) + '</p>';
+  var html = '<div style="max-width:960px;padding:32px 32px 48px;">';
+  html += '<h1 style="font-size:20px;font-weight:800;color:#003768;margin:0 0 4px;">' + escHtml(title) + ' — Sales Opportunities</h1>';
+  html += '<p style="font-size:13.5px;color:#6b7c8f;line-height:1.6;max-width:640px;margin:0 0 32px;">' + escHtml(subtitle) + '</p>';
   sections.forEach(function(sKey) {
     var sec = OPP_SECTIONS_DEF[sKey];
     if (!sec) return;
