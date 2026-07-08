@@ -103,7 +103,7 @@ html { height: 100%; }
 .cp-platform { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid #f0f0f0; }
 .cp-platform img { width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #e8ecf0; flex-shrink:0; }
 .cp-platform-name { font-weight:700; font-size:13px; color:#003768; min-width:110px; }
-.cp-platform-size { font-size:11px; color:#aaa; }
+.cp-platform-size { font-size:11px; color:#6b7c8f; }
 .cp-actions { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 .btn-platform { display:inline-block; padding:6px 0; border-radius:6px; font-size:12px; text-decoration:none; cursor:pointer; border:none; width:130px; text-align:center; }
 .btn-dl { background:#003768; color:#fff; }
@@ -415,7 +415,7 @@ html { height: 100%; }
               <button id="news-add-btn" onclick="openNewsModal()" style="display:none;margin-left:auto;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Story</button>
             </div>
             <div style="height:320px;overflow:hidden;position:relative;" id="home-bulletins-wrap"><div style="display:flex;flex-direction:column;gap:12px;padding-right:6px;" id="home-bulletins-grid">
-              <div style="color:#aaa;font-size:13px;text-align:center;padding:20px 0;">No bulletins yet.</div>
+              <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">No bulletins yet.</div>
             </div></div>
           </div>
 
@@ -585,7 +585,7 @@ html { height: 100%; }
           <div>
             <div id="home-feefo-stars" style="margin-bottom:16px;"></div>
             <div id="home-feefo-reviews" style="display:flex;flex-direction:column;gap:0;">
-              <div style="color:#aaa;font-size:13px;">Loading reviews…</div>
+              <div style="color:#6b7c8f;font-size:13px;">Loading reviews…</div>
             </div>
             <div id="home-feefo-pagination" style="display:none;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8;">
               <button id="home-feefo-prev" onclick="feefoPage(-1)" style="background:#f5f7fa;border:1px solid #e8ecf0;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;color:#003768;cursor:pointer;font-family:inherit;">← Prev</button>
@@ -597,11 +597,11 @@ html { height: 100%; }
           <div id="home-feefo-leaderboard" style="display:flex;flex-direction:column;gap:12px;">
             <div style="background:#f8fafc;border:1px solid #e8ecf0;border-radius:8px;padding:14px;">
               <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Top Reviews</div>
-              <div id="home-feefo-leaders" style="font-size:13px;color:#aaa;height:220px;overflow:hidden;">Loading…</div>
+              <div id="home-feefo-leaders" style="font-size:13px;color:#6b7c8f;height:220px;overflow:hidden;">Loading…</div>
             </div>
             <div style="background:#f8fafc;border:1px solid #e8ecf0;border-radius:8px;padding:14px;">
               <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Top NPS</div>
-              <div id="home-feefo-leaders-avg" style="font-size:13px;color:#aaa;height:220px;overflow:hidden;">Loading…</div>
+              <div id="home-feefo-leaders-avg" style="font-size:13px;color:#6b7c8f;height:220px;overflow:hidden;">Loading…</div>
             </div>
           </div>
         </div>
@@ -3768,7 +3768,7 @@ html { height: 100%; }
         <!-- Feefo Reviews (all, with date filter) -->
         <div id="bp-reviews-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Feefo Reviews <span id="bp-reviews-count" style="font-weight:400;color:#aaa;"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Feefo Reviews <span id="bp-reviews-count" style="font-weight:400;color:#6b7c8f;"></span></div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
@@ -3782,7 +3782,7 @@ html { height: 100%; }
         <!-- All Website Activity (CPD log) -->
         <div id="bp-activity-wrap" style="display:none;background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:20px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Activity <span id="bp-activity-count" style="font-weight:400;color:#aaa;"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Activity <span id="bp-activity-count" style="font-weight:400;color:#6b7c8f;"></span></div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:#003768;font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
@@ -6881,7 +6881,7 @@ function loadHomeData() {
       recsWrap.innerHTML = '<button onclick="var l=document.getElementById(\'home-cpd-recs-list\');var open=l.style.display!==\'none\';l.style.display=open?\'none\':\'flex\';this.querySelector(\'.arr\').textContent=open?\'▸\':\'▾\';" '
         + 'style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#003768;padding:0;width:100%;text-align:left;">'
         + '<span class="arr">▸</span> Catch-up videos</button>'
-        + '<div id="home-cpd-recs-list" style="display:none;flex-direction:column;gap:6px;margin-top:10px;"><span style="font-size:12px;color:#aaa;">Loading…</span></div>';
+        + '<div id="home-cpd-recs-list" style="display:none;flex-direction:column;gap:6px;margin-top:10px;"><span style="font-size:12px;color:#6b7c8f;">Loading…</span></div>';
       card.appendChild(recsWrap);
 
       Promise.all(behindTypes.map(function(t) {
@@ -6911,7 +6911,7 @@ function loadHomeData() {
                 + '</div></button>';
             });
         });
-        listEl.innerHTML = html || '<span style="font-size:12px;color:#aaa;">No new videos to recommend.</span>';
+        listEl.innerHTML = html || '<span style="font-size:12px;color:#6b7c8f;">No new videos to recommend.</span>';
       }).catch(function() {});
     }
   }).catch(function() {});
@@ -7037,14 +7037,14 @@ function loadHomeData() {
       // Star bar
       if (starsEl && avg) {
         var pct = Math.round((avg / 5) * 100);
-        starsEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#fcb034;border-radius:4px;"></div></div><span style="font-size:13px;font-weight:700;color:#fcb034;">' + avg + '</span><span style="font-size:12px;color:#aaa;">/ 5</span></div>';
+        starsEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#fcb034;border-radius:4px;"></div></div><span style="font-size:13px;font-weight:700;color:#fcb034;">' + avg + '</span><span style="font-size:12px;color:#6b7c8f;">/ 5</span></div>';
       } else if (starsEl) { starsEl.innerHTML = ''; }
 
       // Paginated reviews
       _feefoAll  = d.reviews || [];
       _feefoPage = 0;
       if (_feefoAll.length) { renderFeefoPage(); }
-      else if (reviewsEl) { reviewsEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;">No written reviews for this period.</p>'; }
+      else if (reviewsEl) { reviewsEl.innerHTML = '<p style="font-size:13px;color:#6b7c8f;padding:12px 0;">No written reviews for this period.</p>'; }
 
       // Leaderboard helpers
       var me = (_currentUser && [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ')) || '';
@@ -7054,7 +7054,7 @@ function loadHomeData() {
         el.innerHTML = items.map(function(e) {
           var isMe = me && e.name.toLowerCase().trim() === me.toLowerCase().trim();
           return '<div' + (isMe ? ' data-isme="true"' : '') + ' style="display:flex;align-items:center;gap:8px;padding:5px 0;' + (isMe ? 'background:#fffbf0;margin:0 -14px;padding:5px 14px;border-radius:6px;' : '') + '">'
-            + '<span style="font-size:11px;font-weight:700;color:' + (e.rank <= 3 ? '#fcb034' : '#aaa') + ';width:20px;flex-shrink:0;">#' + e.rank + '</span>'
+            + '<span style="font-size:11px;font-weight:700;color:' + (e.rank <= 3 ? '#fcb034' : '#6b7c8f') + ';width:20px;flex-shrink:0;">#' + e.rank + '</span>'
             + '<span style="font-size:12px;color:#003768;font-weight:' + (isMe ? '700' : '500') + ';flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(e.name) + '</span>'
             + '<span style="font-size:12px;font-weight:700;color:#003768;">' + e[valueKey] + (suffix || '') + '</span>'
             + '</div>';
@@ -8543,7 +8543,7 @@ function openBrokerProfile(email, name) {
               '</div>' +
             '</div>';
           }).join('')
-        : '<div style="font-size:12px;color:#aaa;">No test results found</div>';
+        : '<div style="font-size:12px;color:#6b7c8f;">No test results found</div>';
 
       // ── Videos Watched (from CPD log) ──
       var allLog = (d.cpd && d.cpd.log) || [];
@@ -8557,7 +8557,7 @@ function openBrokerProfile(email, name) {
               '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
             '</div>';
           }).join('') + '</div>'
-        : '<div style="font-size:12px;color:#aaa;">No videos logged yet</div>';
+        : '<div style="font-size:12px;color:#6b7c8f;">No videos logged yet</div>';
 
       // ── Revalidation Videos (CPD log entries matching known revalidation video titles) ──
       var rvTitles = _rvVideos.map(function(v) { return v.title.toLowerCase(); });
@@ -8573,7 +8573,7 @@ function openBrokerProfile(email, name) {
                 '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
               '</div>';
             }).join('') + '</div>'
-          : '<div style="font-size:12px;color:#aaa;">No revalidation videos watched yet</div>';
+          : '<div style="font-size:12px;color:#6b7c8f;">No revalidation videos watched yet</div>';
       }
 
       // ── Newsletter Access (CPD log entries for FPG CPD Round-up newsletters) ──
@@ -8603,7 +8603,7 @@ function openBrokerProfile(email, name) {
               '</div>';
             }).join('') + '</div>';
         } else {
-          nlEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No newsletters read yet</div>';
+          nlEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No newsletters read yet</div>';
         }
       }
 
@@ -8627,7 +8627,7 @@ function openBrokerProfile(email, name) {
             }).join('') +
             '</div>';
         } else {
-          spEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No advice standards sessions logged yet</div>';
+          spEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No advice standards sessions logged yet</div>';
         }
       }
 
@@ -8641,7 +8641,7 @@ function openBrokerProfile(email, name) {
       // ── Pay / Commission ──
       var bpPayEl = document.getElementById('bp-pay');
       if (bpPayEl) {
-        bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">Loading…</div>';
+        bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Loading…</div>';
         var bpLastName = (u.lastName || '').toUpperCase().trim() || (name || '').split(' ').pop().toUpperCase().trim();
         if (bpLastName) {
           fetch('/api/pay/broker/list?lastName=' + encodeURIComponent(bpLastName))
@@ -8651,7 +8651,7 @@ function openBrokerProfile(email, name) {
               var allFiles = [];
               years.forEach(function(y){ y.files.forEach(function(f){ allFiles.push(f); }); });
               if (!allFiles.length) {
-                bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No commission files found</div>';
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No commission files found</div>';
                 return;
               }
               return Promise.all(allFiles.map(function(fobj) {
@@ -8678,7 +8678,7 @@ function openBrokerProfile(email, name) {
               if (!stmts) return;
               var valid = stmts.filter(function(s){ return !s.error; });
               if (!valid.length) {
-                bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No readable commission files</div>';
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No readable commission files</div>';
                 return;
               }
               // Build monthly totals from RTF statements only (authoritative source).
@@ -8729,7 +8729,7 @@ function openBrokerProfile(email, name) {
               var monthArr = Object.keys(months).map(function(k){ return months[k]; })
                                .sort(function(a, b){ return b.sortKey - a.sortKey; });
               if (!monthArr.length) {
-                bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">No commission data from January 2026</div>';
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No commission data from January 2026</div>';
                 return;
               }
               var html = '';
@@ -8750,9 +8750,9 @@ function openBrokerProfile(email, name) {
               html += '</div>';
               bpPayEl.innerHTML = html;
             })
-            .catch(function(){ bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">Commission data unavailable</div>'; });
+            .catch(function(){ bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Commission data unavailable</div>'; });
         } else {
-          bpPayEl.innerHTML = '<div style="font-size:12px;color:#aaa;">Last name not found</div>';
+          bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Last name not found</div>';
         }
       }
     })
@@ -8784,7 +8784,7 @@ function filterBpReviews() {
           (r.review ? '<div style="font-size:12px;color:#6b7c8f;line-height:1.5;">' + escHtml(r.review) + '</div>' : '') +
         '</div>';
       }).join('')
-    : '<div style="font-size:12px;color:#aaa;padding:10px 0;">No reviews match this date range.</div>';
+    : '<div style="font-size:12px;color:#6b7c8f;padding:10px 0;">No reviews match this date range.</div>';
 }
 
 function filterBpActivity() {
@@ -8810,7 +8810,7 @@ function filterBpActivity() {
           '<td style="padding:7px 10px;text-align:right;font-weight:600;color:#003768;">' + (e.mins || 0) + '</td>' +
         '</tr>';
       }).join('')
-    : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">No activity in this date range.</td></tr>';
+    : '<tr><td colspan="5" style="padding:20px;text-align:center;color:#6b7c8f;font-size:12px;">No activity in this date range.</td></tr>';
 }
 
 // ── Opportunities ──────────────────────────────────────────
@@ -11602,7 +11602,7 @@ function renderCdList() {
   }
   listEl.style.display = 'flex';
   if (!filtered.length) {
-    listEl.innerHTML = '<p style="font-size:13px;color:#aaa;padding:12px 0;text-align:center;">No responses in this category.</p>';
+    listEl.innerHTML = '<p style="font-size:13px;color:#6b7c8f;padding:12px 0;text-align:center;">No responses in this category.</p>';
     return;
   }
   listEl.innerHTML = filtered.map(function(r, i) {
@@ -11626,7 +11626,7 @@ function renderCdList() {
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
       + '<div style="min-width:0;">'
       + '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(r.consumer || 'Anonymous') + npsHtml + '</div>'
-      + '<div style="font-size:11px;color:#aaa;margin-top:2px;">' + d + '</div>'
+      + '<div style="font-size:11px;color:#6b7c8f;margin-top:2px;">' + d + '</div>'
       + '</div>'
       + badge
       + '</div>'
