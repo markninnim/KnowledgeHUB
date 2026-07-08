@@ -2260,7 +2260,7 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
         y -= 20;
       }
 
-      if (i % 2 !== 0) currentPage.drawRectangle({ x: 20, y: y - 5, width: W - 40, height: entryH - 2, color: pageBg });
+      if (i % 2 !== 0) currentPage.drawRectangle({ x: 20, y: y - entryH + 12, width: W - 40, height: entryH - 2, color: pageBg });
       const d = e.date ? new Date(e.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
       currentPage.drawText(d,                        { x: cols[0].x, y, size: 8, font: fontMed,  color: grey });
       currentPage.drawText(truncate(e.activity, 30), { x: cols[1].x, y, size: 8, font: fontBold, color: darkBlue });
