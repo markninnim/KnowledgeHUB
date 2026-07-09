@@ -170,6 +170,9 @@ html { height: 100%; }
 .wb-doc tr:nth-child(even) td { background:#f9fafb; }
 .wb-doc th { background:#f5f7fa; color:#6b7c8f; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
 .wb-doc strong { color:#003768; }
+.wb-doc .wb-editable { cursor:text; transition:background-color .12s, box-shadow .12s; }
+.wb-doc .wb-editable:hover { background-color:#eef4fb !important; }
+.wb-doc .wb-editing { background-color:#fff !important; box-shadow:inset 0 0 0 2px #2e99d5; outline:none; }
 </style>
 </head>
 <body>
@@ -3931,7 +3934,10 @@ html { height: 100%; }
   <!-- ── Whereabouts tab ────────────────────────────────────── -->
   <div id="tab-whereabouts" class="tab-pane">
     <div style="padding:32px 32px 0;">
-      <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Whereabouts</h2>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Whereabouts</h2>
+        <span id="wb-save-indicator" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;">Saved</span>
+      </div>
       <p id="wb-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Latest weekly team whereabouts schedule.</p>
       <div id="wb-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="wb-content" style="display:none;padding-bottom:32px;"></div>
@@ -11987,9 +11993,9 @@ function loadWhereabouts(file) {
     }
     _wbLoaded = true;
     _wbCurrentFile = d.filename;
-    if (subtitleEl) subtitleEl.textContent = d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.';
+    if (subtitleEl) subtitleEl.textContent = (d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.') + (d.canEdit ? ' — click any cell to edit.' : '');
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
-    wbFormatDoc(contentEl);
+    wbFormatDoc(contentEl, d.filename, d.edits || {}, !!d.canEdit);
     wbHighlightActiveWeek();
   }).catch(function() {
     loadingEl.style.display = 'none';
@@ -12000,8 +12006,9 @@ function loadWhereabouts(file) {
 
 // Tidy up the raw HTML converted from the weekly .docx: strip the redundant
 // "WEEKLY WHEREABOUTS..." title (we already show our own page title), give
-// every table a matching name-column width, and shrink any AM/PM column.
-function wbFormatDoc(root) {
+// every table a matching name-column width, shrink any AM/PM column, apply
+// any saved edits, and (for supervisors/admins) make cells editable in place.
+function wbFormatDoc(root, filename, edits, canEdit) {
   // Remove the document's own title line (paragraph or table row containing it)
   Array.prototype.slice.call(root.querySelectorAll('p, tr')).forEach(function(el) {
     var t = el.textContent.trim();
@@ -12010,7 +12017,7 @@ function wbFormatDoc(root) {
 
   var NAME_COL_WIDTH = 150; // px, shared across every table so name boxes line up
 
-  root.querySelectorAll('table').forEach(function(table) {
+  root.querySelectorAll('table').forEach(function(table, tableIndex) {
     var rows = Array.prototype.slice.call(table.rows);
     if (!rows.length) return;
     var maxCols = 0;
@@ -12048,7 +12055,48 @@ function wbFormatDoc(root) {
       colgroup.appendChild(col);
     }
     table.insertBefore(colgroup, table.firstChild);
+
+    // Tag every cell with a stable key, apply saved edits, wire up editing
+    rows.forEach(function(r, rowIndex) {
+      Array.prototype.slice.call(r.cells).forEach(function(cell, colIndex) {
+        var key = 't' + tableIndex + '-r' + rowIndex + '-c' + colIndex;
+        cell.setAttribute('data-wb-key', key);
+        if (edits && edits[key] != null) cell.textContent = edits[key];
+        if (canEdit) {
+          cell.classList.add('wb-editable');
+          cell.setAttribute('contenteditable', 'true');
+          cell.setAttribute('spellcheck', 'false');
+          cell.addEventListener('focus', function() { cell.classList.add('wb-editing'); });
+          cell.addEventListener('blur', function() {
+            cell.classList.remove('wb-editing');
+            wbSaveCellEdit(filename, key, cell.textContent.trim());
+          });
+        }
+      });
+    });
   });
+}
+
+var _wbSaveTimers = {};
+function wbSaveCellEdit(filename, key, text) {
+  var saveKey = filename + '::' + key;
+  var badge = document.getElementById('wb-save-indicator');
+  clearTimeout(_wbSaveTimers[saveKey]);
+  _wbSaveTimers[saveKey] = setTimeout(function() {
+    if (badge) { badge.textContent = 'Saving…'; badge.style.opacity = '1'; }
+    fetch('/api/whereabouts/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: filename, key: key, text: text })
+    }).then(function(r){ return r.json(); }).then(function(d) {
+      if (badge) {
+        badge.textContent = d && d.success ? 'Saved' : 'Failed to save';
+        setTimeout(function(){ badge.style.opacity = '0'; }, 1500);
+      }
+    }).catch(function() {
+      if (badge) { badge.textContent = 'Failed to save'; setTimeout(function(){ badge.style.opacity = '0'; }, 1500); }
+    });
+  }, 150);
 }
 
 var _wbWeeks = [];

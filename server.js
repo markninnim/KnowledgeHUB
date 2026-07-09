@@ -546,6 +546,18 @@ app.get('/api/newsletters', requireAuth, (req, res) => {
 // A new .docx is dropped into public/whereabouts/ each week. Multiple weeks'
 // files can sit in the folder at once, so pick the one whose filename date is
 // latest (file mtimes aren't reliable if the folder syncs via Dropbox/OneDrive).
+//
+// In-app edits are stored separately from the source .docx (which is
+// replaced wholesale every week) — keyed by exact filename, so edits only
+// ever apply to the same week's file and naturally fall away once a new
+// week's document arrives under a new filename.
+const WB_EDITS_PATH = path.join(__dirname, 'whereabouts-edits.json');
+let _wbEdits = {};
+try { _wbEdits = JSON.parse(fs.readFileSync(WB_EDITS_PATH, 'utf8')); } catch(_) {}
+function saveWbEdits() {
+  try { fs.writeFileSync(WB_EDITS_PATH, JSON.stringify(_wbEdits, null, 2)); } catch (e) { console.error('Failed to save whereabouts edits:', e); }
+}
+
 const WB_MONTHS = { january:0, february:1, march:2, april:3, may:4, june:5, july:6, august:7, september:8, october:9, november:10, december:11 };
 function wbParseDateFromFilename(name) {
   const m = name.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{2,4})/);
@@ -626,11 +638,34 @@ app.get('/api/whereabouts', requireAuth, async (req, res) => {
       html: result.value,
       filename: targetFile,
       weekLabel: wbLabelFromFilename(targetFile),
-      updated: new Date(targetMtime).toISOString()
+      updated: new Date(targetMtime).toISOString(),
+      edits: _wbEdits[targetFile] || {},
+      canEdit: !!(user.isSupervisor || user.isAdmin)
     });
   } catch (err) {
     console.error('Whereabouts load error:', err);
     res.status(500).json({ error: 'Failed to load the whereabouts document.' });
+  }
+});
+
+// Save a single cell edit, keyed by exact filename + cell position.
+app.post('/api/whereabouts/edit', requireAuth, (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const { file, key, text } = req.body || {};
+  if (!file || !key) return res.status(400).json({ error: 'file and key required' });
+  try {
+    const dir = path.join(__dirname, 'public/whereabouts');
+    const safeFile = path.basename(String(file));
+    if (!fs.existsSync(path.join(dir, safeFile))) return res.status(404).json({ error: 'Unknown file' });
+    if (!_wbEdits[safeFile]) _wbEdits[safeFile] = {};
+    if (text === '' || text == null) delete _wbEdits[safeFile][key];
+    else _wbEdits[safeFile][key] = String(text);
+    saveWbEdits();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Whereabouts edit save error:', err);
+    res.status(500).json({ error: 'Failed to save edit.' });
   }
 });
 
