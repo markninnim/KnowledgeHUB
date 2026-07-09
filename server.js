@@ -680,6 +680,14 @@ const MC_LENDER      = 'flda3Kbg6U5VlY437'; // Lender
 const MC_BENEFIT_END = 'fldQxzVK10rodVVgH'; // Benefit End (Date) — formula, ISO date
 const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the broker who owns this case
 
+// ── AutoCRM notes / Business Won state (local, per-broker) ────
+const AUTOCRM_NOTES_PATH = path.join(__dirname, 'autocrm-notes.json');
+let _autoCrmNotes = {}; // { [brokerEmailLower]: { [rowKey]: { notes: '', won: false } } }
+try { _autoCrmNotes = JSON.parse(fs.readFileSync(AUTOCRM_NOTES_PATH, 'utf8')); } catch (_) {}
+function saveAutoCrmNotes() {
+  try { fs.writeFileSync(AUTOCRM_NOTES_PATH, JSON.stringify(_autoCrmNotes, null, 2)); } catch (e) { console.error('Failed to save AutoCRM notes:', e); }
+}
+
 app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
   const user = req.session.user;
   try {
@@ -735,20 +743,49 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
       }
     });
 
-    const rows = Array.from(groups.values()).map(g => ({
-      name: g.names.join(' & '),
-      email: g.emails.join(', '),
-      loanAmount: g.loanAmount,
-      valuation: g.valuation,
-      description: g.description,
-      lender: g.lender,
-      benefitEnd: g.benefitEnd
-    }));
+    const brokerNotes = _autoCrmNotes[brokerEmail] || {};
+    const rows = Array.from(groups.entries()).map(([key, g]) => {
+      const saved = brokerNotes[key] || {};
+      return {
+        key,
+        name: g.names.join(' & '),
+        email: g.emails.join(', '),
+        loanAmount: g.loanAmount,
+        valuation: g.valuation,
+        description: g.description,
+        lender: g.lender,
+        benefitEnd: g.benefitEnd,
+        notes: saved.notes || '',
+        won: !!saved.won
+      };
+    });
 
     res.json({ rows });
   } catch (err) {
     console.error('Mortgage completions (AutoCRM) error:', err);
     res.status(500).json({ error: 'Failed to load mortgage renewals.' });
+  }
+});
+
+// Save notes / Business Won state for a single AutoCRM card, scoped to the
+// logged-in broker (each broker's cases have their own independent state).
+app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
+  const user = req.session.user;
+  const brokerEmail = (user.email || '').toLowerCase();
+  const { key, notes, won } = req.body || {};
+  if (!key) return res.status(400).json({ error: 'key required' });
+  try {
+    if (!_autoCrmNotes[brokerEmail]) _autoCrmNotes[brokerEmail] = {};
+    const existing = _autoCrmNotes[brokerEmail][key] || {};
+    _autoCrmNotes[brokerEmail][key] = {
+      notes: (notes !== undefined) ? String(notes) : (existing.notes || ''),
+      won:   (won   !== undefined) ? !!won            : (existing.won   || false)
+    };
+    saveAutoCrmNotes();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('AutoCRM note save error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
   }
 });
 

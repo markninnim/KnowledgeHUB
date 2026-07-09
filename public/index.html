@@ -357,7 +357,13 @@ html { height: 100%; }
   <!-- AutoCRM sidebar -->
   <div id="sidebar-autocrm" style="display:none">
     <h2 style="margin-top: 8px;">AutoCRM&#8482;</h2>
-    <a href="#" class="active">Renewals Due</a>
+    <a href="#" class="active" onclick="acFilterByMonth(null,this);return false;">Renewals Due</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(6,this);return false;">6 Month</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(5,this);return false;">5 Month</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(4,this);return false;">4 Month</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(3,this);return false;">3 Month</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(2,this);return false;">2 Month</a>
+    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(1,this);return false;">1 Month</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -3959,6 +3965,25 @@ html { height: 100%; }
     </div>
   </div>
 
+</div>
+<div id="ac-notes-modal" onclick="if(event.target===this)acCloseNotes()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;margin:0 20px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #d1d5db;">
+      <div>
+        <h2 id="ac-notes-title" style="color:#003768;font-size:16px;margin:0 0 2px;">Notes</h2>
+        <p style="color:#6b7c8f;font-size:12.5px;margin:0;">Private notes for this renewal — only visible to you.</p>
+      </div>
+      <button onclick="acCloseNotes()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <textarea id="ac-notes-textarea" rows="6" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:#6b7c8f;resize:vertical;" placeholder="Add a note about this client or renewal…"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
+      <span id="ac-notes-status" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;margin-right:auto;">Saved</span>
+      <button onclick="acCloseNotes()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Close</button>
+      <button onclick="acSaveNotes()" style="background:#003768;border:1px solid #003768;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
+    </div>
+  </div>
 </div>
 <div id="cp-modal" onclick="if(event.target===this)closeCp()">
   <div id="cp-box">
@@ -12184,6 +12209,130 @@ function wbHighlightActiveWeek() {
 
 // ── AutoCRM™ — mortgage renewals due in the next 6 months ────
 var _acLoaded = false;
+var _acAllRows = [];
+var _acMonthFilter = null; // null = show all, 1-6 = show only that "months away" bucket
+
+function acFmtCurrency(n) { return (typeof n === 'number') ? '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : ''; }
+function acMonthLabel(s) {
+  var dt = new Date(s);
+  if (isNaN(dt.getTime())) return 'Other';
+  return dt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+function acFmtDate(s) {
+  if (!s) return '';
+  var dt = new Date(s);
+  return isNaN(dt.getTime()) ? escHtml(s) : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+// "Months away" bucket: 1 = renewing this calendar month, up to 6 = renewing 6 calendar months from now
+function acMonthsAway(s) {
+  var dt = new Date(s);
+  if (isNaN(dt.getTime())) return null;
+  var now = new Date();
+  var diff = (dt.getFullYear() - now.getFullYear()) * 12 + (dt.getMonth() - now.getMonth());
+  return Math.max(1, Math.min(6, diff + 1));
+}
+
+function acFilterByMonth(bucket, el) {
+  _acMonthFilter = bucket;
+  document.querySelectorAll('#sidebar-autocrm a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  acRenderRows();
+}
+
+function acRenderRows() {
+  var contentEl = document.getElementById('ac-content');
+  var rows = _acAllRows.filter(function(row) {
+    return _acMonthFilter == null || acMonthsAway(row.benefitEnd) === _acMonthFilter;
+  });
+  if (!rows.length) {
+    contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No mortgage renewals due' + (_acMonthFilter ? ' in that period.' : ' in the next 6 months.') + '</div>';
+    return;
+  }
+
+  // Group by month of Benefit End, preserving chronological order (rows already sorted asc by the server)
+  var groups = [];
+  var groupByKey = {};
+  rows.forEach(function(row) {
+    var key = acMonthLabel(row.benefitEnd);
+    if (!groupByKey[key]) {
+      groupByKey[key] = { label: key, rows: [] };
+      groups.push(groupByKey[key]);
+    }
+    groupByKey[key].rows.push(row);
+  });
+
+  contentEl.innerHTML = groups.map(function(group) {
+    var cards = group.rows.map(function(row) {
+      var wonAttr = row.won ? ' data-ac-won="1"' : '';
+      var cardStyle = 'background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;cursor:pointer;transition:opacity .15s;' + (row.won ? 'opacity:.45;' : '');
+      return '<div class="ac-card"' + wonAttr + ' data-ac-key="' + escHtml(row.key) + '" style="' + cardStyle + '" onclick="acOpenNotes(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\')">' +
+          '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">' +
+            '<span style="color:#003768;font-size:14px;font-weight:700;">' + escHtml(row.name || 'Unnamed') + '</span>' +
+            '<span style="color:#6b7c8f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Renewal: ' + acFmtDate(row.benefitEnd) + '</span>' +
+          '</div>' +
+          '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.7;">' +
+            (row.email ? '<div>' + escHtml(row.email) + '</div>' : '') +
+            '<div>Loan Amount: <strong style="color:#6b7c8f;">' + acFmtCurrency(row.loanAmount) + '</strong></div>' +
+            '<div>Valuation: <strong style="color:#6b7c8f;">' + acFmtCurrency(row.valuation) + '</strong></div>' +
+            (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
+          '</div>' +
+          '<label style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #d1d5db;font-size:11.5px;font-weight:700;color:#6b7c8f;cursor:pointer;" onclick="event.stopPropagation();">' +
+            '<input type="checkbox" ' + (row.won ? 'checked' : '') + ' onchange="acToggleWon(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\', this.checked)"> Business Won' +
+          '</label>' +
+        '</div>';
+    }).join('');
+    return '<div style="margin-bottom:28px;">' +
+      '<h3 style="color:#003768;font-size:14px;margin:0 0 12px;">' + escHtml(group.label) + ' <span style="color:#6b7c8f;font-weight:600;font-size:12px;">(' + group.rows.length + ')</span></h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">' + cards + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function acToggleWon(key, won) {
+  var row = _acAllRows.find(function(r) { return r.key === key; });
+  if (row) row.won = won;
+  acRenderRows();
+  fetch('/api/mortgage-completions/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: key, won: won })
+  }).catch(function() {});
+}
+
+var _acNotesKey = null;
+function acOpenNotes(key) {
+  var row = _acAllRows.find(function(r) { return r.key === key; });
+  if (!row) return;
+  _acNotesKey = key;
+  document.getElementById('ac-notes-title').textContent = row.name || 'Notes';
+  document.getElementById('ac-notes-textarea').value = row.notes || '';
+  document.getElementById('ac-notes-modal').style.display = 'flex';
+}
+function acCloseNotes() {
+  document.getElementById('ac-notes-modal').style.display = 'none';
+  _acNotesKey = null;
+}
+function acSaveNotes() {
+  if (!_acNotesKey) return;
+  var text = document.getElementById('ac-notes-textarea').value;
+  var row = _acAllRows.find(function(r) { return r.key === _acNotesKey; });
+  if (row) row.notes = text;
+  var badge = document.getElementById('ac-notes-status');
+  if (badge) { badge.textContent = 'Saving…'; badge.style.opacity = '1'; }
+  fetch('/api/mortgage-completions/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: _acNotesKey, notes: text })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (badge) {
+      badge.textContent = d && d.success ? 'Saved' : 'Failed to save';
+      setTimeout(function() { badge.style.opacity = '0'; }, 1500);
+    }
+  }).catch(function() {
+    if (badge) { badge.textContent = 'Failed to save'; setTimeout(function() { badge.style.opacity = '0'; }, 1500); }
+  });
+}
+
 function loadAutoCrm() {
   if (_acLoaded) return;
   var loadingEl = document.getElementById('ac-loading');
@@ -12205,55 +12354,8 @@ function loadAutoCrm() {
       return;
     }
     _acLoaded = true;
-    var rows = d.rows || [];
-    if (!rows.length) {
-      contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No mortgage renewals due in the next 6 months.</div>';
-      return;
-    }
-    var fmtCurrency = function(n) { return (typeof n === 'number') ? '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : ''; };
-    var monthLabel = function(s) {
-      var dt = new Date(s);
-      if (isNaN(dt.getTime())) return 'Other';
-      return dt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    };
-    var fmtDate = function(s) {
-      if (!s) return '';
-      var dt = new Date(s);
-      return isNaN(dt.getTime()) ? escHtml(s) : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-    };
-
-    // Group by month of Benefit End, preserving chronological order (rows already sorted asc by the server)
-    var groups = [];
-    var groupByKey = {};
-    rows.forEach(function(row) {
-      var key = monthLabel(row.benefitEnd);
-      if (!groupByKey[key]) {
-        groupByKey[key] = { label: key, rows: [] };
-        groups.push(groupByKey[key]);
-      }
-      groupByKey[key].rows.push(row);
-    });
-
-    contentEl.innerHTML = groups.map(function(group) {
-      var cards = group.rows.map(function(row) {
-        return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">' +
-          '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">' +
-            '<span style="color:#003768;font-size:14px;font-weight:700;">' + escHtml(row.name || 'Unnamed') + '</span>' +
-            '<span style="color:#6b7c8f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">' + fmtDate(row.benefitEnd) + '</span>' +
-          '</div>' +
-          '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.7;">' +
-            (row.email ? '<div>' + escHtml(row.email) + '</div>' : '') +
-            '<div>Loan Amount: <strong style="color:#6b7c8f;">' + fmtCurrency(row.loanAmount) + '</strong></div>' +
-            '<div>Valuation: <strong style="color:#6b7c8f;">' + fmtCurrency(row.valuation) + '</strong></div>' +
-            (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
-          '</div>' +
-        '</div>';
-      }).join('');
-      return '<div style="margin-bottom:28px;">' +
-        '<h3 style="color:#003768;font-size:14px;margin:0 0 12px;">' + escHtml(group.label) + ' <span style="color:#6b7c8f;font-weight:600;font-size:12px;">(' + group.rows.length + ')</span></h3>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">' + cards + '</div>' +
-      '</div>';
-    }).join('');
+    _acAllRows = d.rows || [];
+    acRenderRows();
   }).catch(function() {
     clearTimeout(timer);
     _acLoaded = false;
