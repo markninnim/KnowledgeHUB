@@ -190,6 +190,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
+    <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -352,6 +353,11 @@ html { height: 100%; }
   <div id="sidebar-whereabouts" style="display:none">
     <h2 style="margin-top: 8px;">Whereabouts</h2>
     <div id="wb-sidebar-list"><div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">Loading…</div></div>
+  </div>
+  <!-- AutoCRM sidebar -->
+  <div id="sidebar-autocrm" style="display:none">
+    <h2 style="margin-top: 8px;">AutoCRM&#8482;</h2>
+    <a href="#" class="active">Renewals Due</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -3944,6 +3950,30 @@ html { height: 100%; }
     </div>
   </div>
 
+  <div id="tab-autocrm" class="tab-pane">
+    <div style="padding:32px 32px 0;">
+      <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">AutoCRM&#8482;</h2>
+      <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases coming up for renewal in the next 6 months, sourced from our CRM system.</p>
+      <div id="ac-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="ac-content" style="display:none;padding-bottom:32px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Name</th>
+              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Email</th>
+              <th style="text-align:right;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Loan Amount</th>
+              <th style="text-align:right;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Valuation</th>
+              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Description</th>
+              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Lender</th>
+              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Benefit End</th>
+            </tr>
+          </thead>
+          <tbody id="ac-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 <div id="cp-modal" onclick="if(event.target===this)closeCp()">
   <div id="cp-box">
@@ -5678,7 +5708,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts'];
+var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm'];
 function switchTab(tab) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -5708,6 +5738,7 @@ function switchTab(tab) {
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
   if (tab === 'selling-zone') { oppInitPages(); }
   if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
+  if (tab === 'autocrm')      { loadAutoCrm(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -7237,6 +7268,8 @@ var _currentUser = null;
       if (wbtn) wbtn.style.display = '';
       var wbsb = document.getElementById('sidebar-home-whereabouts');
       if (wbsb) wbsb.style.display = '';
+      var acbtn = document.getElementById('tab-btn-autocrm');
+      if (acbtn) acbtn.style.display = '';
       var pbtn = document.getElementById('tab-btn-performance-zone');
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
@@ -11984,10 +12017,21 @@ function loadWhereabouts(file) {
   loadingEl.style.display = 'block';
   contentEl.style.display = 'none';
   var url = '/api/whereabouts' + (file ? '?file=' + encodeURIComponent(file) : '');
-  fetch(url).then(function(r){ return r.json(); }).then(function(d) {
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timedOut = false;
+  var timer = setTimeout(function() {
+    timedOut = true;
+    if (ctrl) ctrl.abort();
+  }, 12000);
+  fetch(url, ctrl ? { signal: ctrl.signal } : {}).then(function(r) {
+    clearTimeout(timer);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(d) {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
     if (d.error) {
+      _wbLoaded = false;
       contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
       return;
     }
@@ -11998,9 +12042,13 @@ function loadWhereabouts(file) {
     wbFormatDoc(contentEl, d.filename, d.edits || {}, !!d.canEdit);
     wbHighlightActiveWeek();
   }).catch(function() {
+    clearTimeout(timer);
+    _wbLoaded = false;
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
-    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load the whereabouts document.</div>';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' +
+      (timedOut ? 'Taking too long to load — please refresh the page and try again.' : 'Unable to load the whereabouts document. Please refresh and try again.') +
+      '</div>';
   });
 }
 
@@ -12088,7 +12136,7 @@ function wbSaveCellEdit(filename, key, text) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file: filename, key: key, text: text })
-    }).then(function(r){ return r.json(); }).then(function(d) {
+    }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(d) {
       if (badge) {
         badge.textContent = d && d.success ? 'Saved' : 'Failed to save';
         setTimeout(function(){ badge.style.opacity = '0'; }, 1500);
@@ -12103,7 +12151,13 @@ var _wbWeeks = [];
 function loadWhereaboutsList() {
   var listEl = document.getElementById('wb-sidebar-list');
   if (!listEl) return;
-  fetch('/api/whereabouts/list').then(function(r){ return r.json(); }).then(function(d) {
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function() { if (ctrl) ctrl.abort(); }, 12000);
+  fetch('/api/whereabouts/list', ctrl ? { signal: ctrl.signal } : {}).then(function(r) {
+    clearTimeout(timer);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(d) {
     _wbWeeks = d.weeks || [];
     if (!_wbWeeks.length) {
       listEl.innerHTML = '<div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">No weeks yet.</div>';
@@ -12114,7 +12168,8 @@ function loadWhereaboutsList() {
     }).join('');
     wbHighlightActiveWeek();
   }).catch(function() {
-    listEl.innerHTML = '<div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">Unable to load weeks.</div>';
+    clearTimeout(timer);
+    listEl.innerHTML = '<div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">Unable to load weeks — please refresh.</div>';
   });
 }
 
@@ -12132,6 +12187,63 @@ function wbHighlightActiveWeek() {
     var el = document.getElementById('wb-week-' + wbSafeId(_wbCurrentFile));
     if (el) el.classList.add('active');
   }
+}
+
+// ── AutoCRM™ — mortgage renewals due in the next 6 months ────
+var _acLoaded = false;
+function loadAutoCrm() {
+  if (_acLoaded) return;
+  var loadingEl = document.getElementById('ac-loading');
+  var contentEl = document.getElementById('ac-content');
+  var bodyEl    = document.getElementById('ac-table-body');
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timedOut = false;
+  var timer = setTimeout(function() { timedOut = true; if (ctrl) ctrl.abort(); }, 15000);
+  fetch('/api/mortgage-completions', ctrl ? { signal: ctrl.signal } : {}).then(function(r) {
+    clearTimeout(timer);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(d) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    if (d.error) {
+      contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
+      return;
+    }
+    _acLoaded = true;
+    var rows = d.rows || [];
+    if (!rows.length) {
+      bodyEl.innerHTML = '<tr><td colspan="7" style="padding:24px 10px;text-align:center;border:1px solid #d1d5db;color:#6b7c8f;font-size:13px;">No mortgage renewals due in the next 6 months.</td></tr>';
+      return;
+    }
+    var fmtCurrency = function(n) { return (typeof n === 'number') ? '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : ''; };
+    var fmtDate = function(s) {
+      if (!s) return '';
+      var dt = new Date(s);
+      return isNaN(dt.getTime()) ? escHtml(s) : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+    bodyEl.innerHTML = rows.map(function(row) {
+      return '<tr>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.name) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.email) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;text-align:right;">' + fmtCurrency(row.loanAmount) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;text-align:right;">' + fmtCurrency(row.valuation) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.description) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.lender) + '</td>' +
+        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + fmtDate(row.benefitEnd) + '</td>' +
+        '</tr>';
+    }).join('');
+  }).catch(function() {
+    clearTimeout(timer);
+    _acLoaded = false;
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' +
+      (timedOut ? 'Taking too long to load — please refresh the page and try again.' : 'Unable to load mortgage renewals. Please refresh and try again.') +
+      '</div>';
+  });
 }
 
 function loadPayData() {

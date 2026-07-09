@@ -669,6 +669,62 @@ app.post('/api/whereabouts/edit', requireAuth, (req, res) => {
   }
 });
 
+// ── AutoCRM™ — Mortgage renewals due (supervisors/admins only) ──
+const MC_TABLE       = 'tblnIBjSXovgaQy7M'; // Mortgage Completions
+const MC_NAME        = 'fld5ooOSvur8MdK8m'; // Name
+const MC_EMAIL       = 'fldbzfp4SBPt9TVyn'; // Email Address
+const MC_LOAN        = 'fldHjlGC5wqDAutum'; // Loan Amount
+const MC_VALUATION   = 'fldymvy7lHtqJ0RLb'; // Valuation
+const MC_DESC        = 'fldnl007W7yv92Uv2'; // Description
+const MC_LENDER      = 'flda3Kbg6U5VlY437'; // Lender
+const MC_BENEFIT_END = 'fldQxzVK10rodVVgH'; // Benefit End (Date) — formula, ISO date
+
+app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const formula = encodeURIComponent(
+      `AND(IS_AFTER({Benefit End (Date)}, DATEADD(TODAY(), -1, 'days')), IS_BEFORE({Benefit End (Date)}, DATEADD(TODAY(), 6, 'months')))`
+    );
+    const fieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_VALUATION, MC_DESC, MC_LENDER, MC_BENEFIT_END]
+      .map(f => `fields[]=${f}`).join('&');
+
+    let all = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${formula}&${fieldQs}` +
+        `&sort[0][field]=${MC_BENEFIT_END}&sort[0][direction]=asc` +
+        `&returnFieldsByFieldId=true&pageSize=100` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      all = all.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && all.length < 3000);
+
+    const rows = all.map(rec => {
+      const f = rec.fields || {};
+      return {
+        name: f[MC_NAME] || '',
+        email: f[MC_EMAIL] || '',
+        loanAmount: (typeof f[MC_LOAN] === 'number') ? f[MC_LOAN] : null,
+        valuation: (typeof f[MC_VALUATION] === 'number') ? f[MC_VALUATION] : null,
+        description: f[MC_DESC] || '',
+        lender: f[MC_LENDER] || '',
+        benefitEnd: f[MC_BENEFIT_END] || ''
+      };
+    });
+
+    res.json({ rows });
+  } catch (err) {
+    console.error('Mortgage completions (AutoCRM) error:', err);
+    res.status(500).json({ error: 'Failed to load mortgage renewals.' });
+  }
+});
+
 // ── Public logo (for display only) ──────────────────────────
 app.get('/public-logo', (req, res) => {
   const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');
