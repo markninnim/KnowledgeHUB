@@ -12246,7 +12246,6 @@ function loadAutoCrm() {
             '<div>Loan Amount: <strong style="color:#6b7c8f;">' + fmtCurrency(row.loanAmount) + '</strong></div>' +
             '<div>Valuation: <strong style="color:#6b7c8f;">' + fmtCurrency(row.valuation) + '</strong></div>' +
             (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
-            (row.description ? '<div>' + escHtml(row.description) + '</div>' : '') +
           '</div>' +
         '</div>';
       }).join('');
