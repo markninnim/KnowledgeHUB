@@ -10,6 +10,7 @@ Font: **Plus Jakarta Sans** everywhere. Never hard-code another font-family; com
 |---|---|
 | All titles/headings (h1, h2, h3) | `#003768` (navy) — no exceptions |
 | All body text (paragraphs, table cells, names, stats, JS-rendered copy, inline `<strong>`/links inside body copy) | `#6b7c8f` — no exceptions |
+| Names in the User Management admin list | `#003768` (navy) — approved exception to the body-text rule |
 | Page background | `#f5f7fa` |
 | CPD/product type colours | Mortgage `#003768` (navy), Protection `#fcb034` (amber), Investment `#fcb034` (amber) — where all three appear together (e.g. activity-type pills), Protection uses accent blue `#2e99d5` instead to stay distinct from Investment |
 | Borders (default) | `#e8ecf0` or `#d1d5db` (see Borders section) |
