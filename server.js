@@ -542,6 +542,43 @@ app.get('/api/newsletters', requireAuth, (req, res) => {
   } catch(e) { res.json([]); }
 });
 
+// ── Weekly Whereabouts (supervisors/admins only) ─────────────
+// A new .docx is dropped into public/whereabouts/ each week — we always
+// serve whichever file was modified most recently, converted to HTML.
+app.get('/api/whereabouts', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const mammoth = require('mammoth');
+    const dir = path.join(__dirname, 'public/whereabouts');
+    if (!fs.existsSync(dir)) return res.json({ error: 'No whereabouts document found yet.' });
+    const files = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.docx'));
+    if (!files.length) return res.json({ error: 'No whereabouts document found yet.' });
+
+    let latestFile = null, latestMtime = 0;
+    files.forEach(f => {
+      const stat = fs.statSync(path.join(dir, f));
+      if (stat.mtimeMs > latestMtime) { latestMtime = stat.mtimeMs; latestFile = f; }
+    });
+
+    const result = await mammoth.convertToHtml({ path: path.join(dir, latestFile) });
+    const weekLabel = latestFile
+      .replace(/\.docx$/i, '')
+      .replace(/^weekly\s*whereabouts\s*/i, '')
+      .trim();
+
+    res.json({
+      html: result.value,
+      filename: latestFile,
+      weekLabel,
+      updated: new Date(latestMtime).toISOString()
+    });
+  } catch (err) {
+    console.error('Whereabouts load error:', err);
+    res.status(500).json({ error: 'Failed to load the whereabouts document.' });
+  }
+});
+
 // ── Public logo (for display only) ──────────────────────────
 app.get('/public-logo', (req, res) => {
   const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');

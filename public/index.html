@@ -157,6 +157,16 @@ html { height: 100%; }
 .mas-list { margin:8px 0 12px 0; padding-left:20px; }
 .mas-list li { font-size:13px; color:#6b7c8f; line-height:1.7; margin-bottom:4px; }
 #mas-search:focus { border-color:#003768; box-shadow:0 0 0 3px rgba(0,55,104,.08); }
+
+/* Whereabouts — styling for the raw table HTML converted from the weekly .docx */
+.wb-doc { font-family:inherit; overflow-x:auto; }
+.wb-doc p { font-size:13.5px; color:#6b7c8f; line-height:1.6; margin:0 0 16px; }
+.wb-doc p strong { color:#003768; font-size:15px; }
+.wb-doc table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:12px; }
+.wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 10px; text-align:left; color:#6b7c8f; vertical-align:middle; }
+.wb-doc tr:nth-child(even) td { background:#f9fafb; }
+.wb-doc th { background:#f5f7fa; color:#6b7c8f; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
+.wb-doc strong { color:#003768; }
 </style>
 </head>
 <body>
@@ -173,6 +183,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
+    <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -329,6 +340,10 @@ html { height: 100%; }
   <div id="sidebar-performance-zone" style="display:none">
     <h2 style="margin-top: 8px;">Numbers</h2>
     <div id="pz-supervisor-list"></div>
+  </div>
+  <!-- Whereabouts sidebar -->
+  <div id="sidebar-whereabouts" style="display:none">
+    <h2 style="margin-top: 8px;">Whereabouts</h2>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -3908,6 +3923,16 @@ html { height: 100%; }
     </div>
   </div>
 
+  <!-- ── Whereabouts tab ────────────────────────────────────── -->
+  <div id="tab-whereabouts" class="tab-pane">
+    <div style="padding:32px 32px 0;">
+      <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Whereabouts</h2>
+      <p id="wb-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Latest weekly team whereabouts schedule.</p>
+      <div id="wb-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="wb-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+  </div>
+
 </div>
 <div id="cp-modal" onclick="if(event.target===this)closeCp()">
   <div id="cp-box">
@@ -5642,7 +5667,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay'];
+var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts'];
 function switchTab(tab) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -5671,6 +5696,7 @@ function switchTab(tab) {
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
   if (tab === 'selling-zone') { oppInitPages(); }
+  if (tab === 'whereabouts')  { loadWhereabouts(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -7196,6 +7222,8 @@ var _currentUser = null;
     if (user && (user.isSupervisor || user.isAdmin)) {
       var sbtn = document.getElementById('tab-btn-supervisor-zone');
       if (sbtn) { sbtn.style.display = ''; sbtn.textContent = 'My Team'; }
+      var wbtn = document.getElementById('tab-btn-whereabouts');
+      if (wbtn) wbtn.style.display = '';
       var pbtn = document.getElementById('tab-btn-performance-zone');
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
@@ -11931,6 +11959,31 @@ function payParseXlsxVitality(rows, filename) {
   entries.forEach(function(e){ byProvider[e.provider] = (byProvider[e.provider]||0) + e.amount; });
   Object.keys(byProvider).forEach(function(k){ byProvider[k] = parseFloat(byProvider[k].toFixed(4)); });
   return { source:'vitality', entries:entries, total:parseFloat(total.toFixed(4)), byProduct:byProvider };
+}
+
+var _wbLoaded = false;
+function loadWhereabouts() {
+  if (_wbLoaded) return;
+  var loadingEl  = document.getElementById('wb-loading');
+  var contentEl  = document.getElementById('wb-content');
+  var subtitleEl = document.getElementById('wb-subtitle');
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  fetch('/api/whereabouts').then(function(r){ return r.json(); }).then(function(d) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    if (d.error) {
+      contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
+      return;
+    }
+    _wbLoaded = true;
+    if (subtitleEl) subtitleEl.textContent = d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.';
+    contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
+  }).catch(function() {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load the whereabouts document.</div>';
+  });
 }
 
 function loadPayData() {
