@@ -678,13 +678,15 @@ const MC_VALUATION   = 'fldymvy7lHtqJ0RLb'; // Valuation
 const MC_DESC        = 'fldnl007W7yv92Uv2'; // Description
 const MC_LENDER      = 'flda3Kbg6U5VlY437'; // Lender
 const MC_BENEFIT_END = 'fldQxzVK10rodVVgH'; // Benefit End (Date) — formula, ISO date
+const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the broker who owns this case
 
 app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
+    const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
     const formula = encodeURIComponent(
-      `AND(IS_AFTER({Benefit End (Date)}, DATEADD(TODAY(), -1, 'days')), IS_BEFORE({Benefit End (Date)}, DATEADD(TODAY(), 6, 'months')))`
+      `AND(IS_AFTER({Benefit End (Date)}, DATEADD(TODAY(), -1, 'days')), IS_BEFORE({Benefit End (Date)}, DATEADD(TODAY(), 6, 'months')), LOWER({Customer Ref Email})="${brokerEmail}")`
     );
     const fieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_VALUATION, MC_DESC, MC_LENDER, MC_BENEFIT_END]
       .map(f => `fields[]=${f}`).join('&');
