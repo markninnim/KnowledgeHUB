@@ -165,6 +165,7 @@ html { height: 100%; }
 .wb-doc table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:12px; table-layout:fixed; }
 .wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 6px; text-align:center !important; vertical-align:middle !important; color:#6b7c8f; }
 .wb-doc th:first-child, .wb-doc td:first-child { text-align:left !important; }
+.wb-doc td p, .wb-doc th p { margin:0 !important; }
 .wb-doc .wb-ampm-col { font-size:10px; font-weight:700; padding:8px 2px; }
 .wb-doc tr:nth-child(even) td { background:#f9fafb; }
 .wb-doc th { background:#f5f7fa; color:#6b7c8f; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
@@ -347,6 +348,7 @@ html { height: 100%; }
   <!-- Whereabouts sidebar -->
   <div id="sidebar-whereabouts" style="display:none">
     <h2 style="margin-top: 8px;">Whereabouts</h2>
+    <div id="wb-sidebar-list"><div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">Loading…</div></div>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -5699,7 +5701,7 @@ function switchTab(tab) {
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
   if (tab === 'selling-zone') { oppInitPages(); }
-  if (tab === 'whereabouts')  { loadWhereabouts(); }
+  if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -11967,14 +11969,16 @@ function payParseXlsxVitality(rows, filename) {
 }
 
 var _wbLoaded = false;
-function loadWhereabouts() {
-  if (_wbLoaded) return;
+var _wbCurrentFile = null;
+function loadWhereabouts(file) {
+  if (_wbLoaded && !file) return;
   var loadingEl  = document.getElementById('wb-loading');
   var contentEl  = document.getElementById('wb-content');
   var subtitleEl = document.getElementById('wb-subtitle');
   loadingEl.style.display = 'block';
   contentEl.style.display = 'none';
-  fetch('/api/whereabouts').then(function(r){ return r.json(); }).then(function(d) {
+  var url = '/api/whereabouts' + (file ? '?file=' + encodeURIComponent(file) : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(d) {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
     if (d.error) {
@@ -11982,9 +11986,11 @@ function loadWhereabouts() {
       return;
     }
     _wbLoaded = true;
+    _wbCurrentFile = d.filename;
     if (subtitleEl) subtitleEl.textContent = d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.';
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
     wbFormatDoc(contentEl);
+    wbHighlightActiveWeek();
   }).catch(function() {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
@@ -12043,6 +12049,41 @@ function wbFormatDoc(root) {
     }
     table.insertBefore(colgroup, table.firstChild);
   });
+}
+
+var _wbWeeks = [];
+function loadWhereaboutsList() {
+  var listEl = document.getElementById('wb-sidebar-list');
+  if (!listEl) return;
+  fetch('/api/whereabouts/list').then(function(r){ return r.json(); }).then(function(d) {
+    _wbWeeks = d.weeks || [];
+    if (!_wbWeeks.length) {
+      listEl.innerHTML = '<div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">No weeks yet.</div>';
+      return;
+    }
+    listEl.innerHTML = _wbWeeks.map(function(w) {
+      return '<a href="#" id="wb-week-' + wbSafeId(w.file) + '" onclick="wbSelectWeek(\'' + w.file.replace(/'/g,"\\'") + '\');return false;">' + escHtml(w.label) + '</a>';
+    }).join('');
+    wbHighlightActiveWeek();
+  }).catch(function() {
+    listEl.innerHTML = '<div style="padding:0 20px;color:rgba(255,255,255,.5);font-size:12px;">Unable to load weeks.</div>';
+  });
+}
+
+function wbSafeId(file) {
+  return file.replace(/[^a-z0-9]/gi, '_');
+}
+
+function wbSelectWeek(file) {
+  loadWhereabouts(file);
+}
+
+function wbHighlightActiveWeek() {
+  document.querySelectorAll('#wb-sidebar-list a').forEach(function(a) { a.classList.remove('active'); });
+  if (_wbCurrentFile) {
+    var el = document.getElementById('wb-week-' + wbSafeId(_wbCurrentFile));
+    if (el) el.classList.add('active');
+  }
 }
 
 function loadPayData() {

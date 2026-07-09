@@ -559,6 +559,35 @@ function wbParseDateFromFilename(name) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function wbLabelFromFilename(f) {
+  return f.replace(/\.docx$/i, '').replace(/^weekly\s*whereabouts\s*/i, '').trim();
+}
+
+// List every weekly file available, newest first, so the UI can offer "look back" links
+app.get('/api/whereabouts/list', requireAuth, (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const dir = path.join(__dirname, 'public/whereabouts');
+    if (!fs.existsSync(dir)) return res.json({ weeks: [] });
+    const files = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.docx'));
+    const weeks = files.map(f => {
+      const stat = fs.statSync(path.join(dir, f));
+      const parsedDate = wbParseDateFromFilename(f);
+      return { file: f, label: wbLabelFromFilename(f), date: parsedDate ? parsedDate.toISOString() : null, mtime: stat.mtimeMs };
+    }).sort((a, b) => {
+      if (a.date && b.date) return new Date(b.date) - new Date(a.date);
+      if (a.date) return -1;
+      if (b.date) return 1;
+      return b.mtime - a.mtime;
+    });
+    res.json({ weeks });
+  } catch (err) {
+    console.error('Whereabouts list error:', err);
+    res.status(500).json({ error: 'Failed to list whereabouts documents.' });
+  }
+});
+
 app.get('/api/whereabouts', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -569,29 +598,35 @@ app.get('/api/whereabouts', requireAuth, async (req, res) => {
     const files = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.docx'));
     if (!files.length) return res.json({ error: 'No whereabouts document found yet.' });
 
-    let latestFile = null, latestDate = null, latestMtime = 0;
-    files.forEach(f => {
-      const stat = fs.statSync(path.join(dir, f));
-      const parsedDate = wbParseDateFromFilename(f);
-      if (parsedDate) {
-        if (!latestDate || parsedDate > latestDate) { latestDate = parsedDate; latestFile = f; latestMtime = stat.mtimeMs; }
-      } else if (!latestDate && (!latestFile || stat.mtimeMs > latestMtime)) {
-        // Fallback: no file parsed a date yet, use mtime
-        latestMtime = stat.mtimeMs; latestFile = f;
-      }
-    });
+    let targetFile = null, targetMtime = 0;
 
-    const result = await mammoth.convertToHtml({ path: path.join(dir, latestFile) });
-    const weekLabel = latestFile
-      .replace(/\.docx$/i, '')
-      .replace(/^weekly\s*whereabouts\s*/i, '')
-      .trim();
+    // Optional ?file= to load a specific week — validate it's an exact,
+    // existing filename in this folder (no path traversal).
+    const requested = (req.query.file || '').toString();
+    if (requested && files.includes(requested)) {
+      targetFile = requested;
+      targetMtime = fs.statSync(path.join(dir, requested)).mtimeMs;
+    } else {
+      let latestDate = null;
+      files.forEach(f => {
+        const stat = fs.statSync(path.join(dir, f));
+        const parsedDate = wbParseDateFromFilename(f);
+        if (parsedDate) {
+          if (!latestDate || parsedDate > latestDate) { latestDate = parsedDate; targetFile = f; targetMtime = stat.mtimeMs; }
+        } else if (!latestDate && (!targetFile || stat.mtimeMs > targetMtime)) {
+          // Fallback: no file parsed a date yet, use mtime
+          targetMtime = stat.mtimeMs; targetFile = f;
+        }
+      });
+    }
+
+    const result = await mammoth.convertToHtml({ path: path.join(dir, targetFile) });
 
     res.json({
       html: result.value,
-      filename: latestFile,
-      weekLabel,
-      updated: new Date(latestMtime).toISOString()
+      filename: targetFile,
+      weekLabel: wbLabelFromFilename(targetFile),
+      updated: new Date(targetMtime).toISOString()
     });
   } catch (err) {
     console.error('Whereabouts load error:', err);
