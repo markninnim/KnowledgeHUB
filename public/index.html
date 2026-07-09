@@ -434,6 +434,29 @@ html { height: 100%; }
         </div>
       </div>
 
+      <!-- AutoCRM Renewals summary -->
+      <div id="home-autocrm-widget" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 24px;align-items:center;gap:28px;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#003768;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#003768;line-height:1.3;">AutoCRM&#8482; Renewals</div>
+            <div style="font-size:11px;color:#6b7c8f;">Updated daily</div>
+          </div>
+        </div>
+        <div style="width:1px;align-self:stretch;background:#d1d5db;flex-shrink:0;"></div>
+        <div id="home-autocrm-months" style="flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;min-width:340px;"></div>
+        <div style="width:1px;align-self:stretch;background:#d1d5db;flex-shrink:0;"></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
+          <div style="text-align:right;">
+            <div id="home-autocrm-total" style="font-size:22px;font-weight:800;color:#003768;line-height:1;">0</div>
+            <div style="font-size:11px;color:#6b7c8f;margin-top:4px;">Total</div>
+          </div>
+          <a href="#" onclick="switchTab('autocrm');return false;" style="font-size:12.5px;font-weight:700;color:#003768;text-decoration:none;cursor:pointer;white-space:nowrap;">View all &rarr;</a>
+        </div>
+      </div>
+
       <!-- Home grid (3 columns) -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:stretch;">
 
@@ -6886,6 +6909,30 @@ function loadHomeData() {
     var m = Math.round(mins % 60);
     return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
   }
+
+  // AutoCRM Renewals summary — parallel fetch
+  fetch('/api/mortgage-completions').then(function(r){ return r.json(); }).then(function(d) {
+    var widget = document.getElementById('home-autocrm-widget');
+    if (!widget || d.error) return;
+    var rows = d.rows || [];
+    var counts = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
+    rows.forEach(function(row) {
+      var bucket = acMonthsAway(row.benefitEnd);
+      if (bucket) counts[bucket]++;
+    });
+    var monthsEl = document.getElementById('home-autocrm-months');
+    var totalEl  = document.getElementById('home-autocrm-total');
+    if (monthsEl) {
+      monthsEl.innerHTML = [1,2,3,4,5,6].map(function(n) {
+        return '<div style="text-align:center;">' +
+          '<div style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + counts[n] + '</div>' +
+          '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + n + ' Month</div>' +
+        '</div>';
+      }).join('');
+    }
+    if (totalEl) totalEl.textContent = rows.length;
+    widget.style.display = 'flex';
+  }).catch(function() {});
 
   // CPD summary — parallel fetch
   fetch('/api/cpd').then(r => r.json()).then(function(cpd) {
