@@ -7249,6 +7249,10 @@ var _currentUser = null;
       var auditBtn = document.getElementById('admin-audit-btn');
       if (auditBtn) auditBtn.style.display = '';
     }
+    if (user && (user.isAdmin || user.isSupervisor) && sessionStorage.getItem('_openAdminAfterReload')) {
+      sessionStorage.removeItem('_openAdminAfterReload');
+      openAdminPanel();
+    }
     // Force-reset: show mandatory password change overlay
     if (user && user._forceReset) {
       document.getElementById('force-reset-overlay').style.display = 'flex';
@@ -7730,7 +7734,11 @@ function impersonateUser(id, name) {
 
 function stopImpersonation() {
   fetch('/api/admin/impersonate/stop', { method:'POST' })
-    .then(function(){ window.location.reload(); });
+    .then(function(){
+      sessionStorage.setItem('_openAdminAfterReload', '1');
+      window.location.hash = 'home';
+      window.location.reload();
+    });
 }
 
 function toggleMarketingRole(email, currentlyMarketing) {
