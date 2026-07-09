@@ -357,13 +357,13 @@ html { height: 100%; }
   <!-- AutoCRM sidebar -->
   <div id="sidebar-autocrm" style="display:none">
     <h2 style="margin-top: 8px;">AutoCRM&#8482;</h2>
-    <a href="#" class="active" onclick="acFilterByMonth(null,this);return false;">Renewals Due</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(6,this);return false;">6 Month</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(5,this);return false;">5 Month</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(4,this);return false;">4 Month</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(3,this);return false;">3 Month</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(2,this);return false;">2 Month</a>
-    <a href="#" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(1,this);return false;">1 Month</a>
+    <a href="#" id="ac-nav-all" class="active" onclick="acFilterByMonth(null,this);return false;">Renewals Due</a>
+    <a href="#" id="ac-nav-m6" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(6,this);return false;">6 Month</a>
+    <a href="#" id="ac-nav-m5" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(5,this);return false;">5 Month</a>
+    <a href="#" id="ac-nav-m4" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(4,this);return false;">4 Month</a>
+    <a href="#" id="ac-nav-m3" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(3,this);return false;">3 Month</a>
+    <a href="#" id="ac-nav-m2" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(2,this);return false;">2 Month</a>
+    <a href="#" id="ac-nav-m1" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(1,this);return false;">1 Month</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -6924,13 +6924,15 @@ function loadHomeData() {
     var totalEl  = document.getElementById('home-autocrm-total');
     if (monthsEl) {
       monthsEl.innerHTML = [1,2,3,4,5,6].map(function(n) {
-        return '<div style="text-align:center;">' +
+        return '<div style="text-align:center;cursor:pointer;" onclick="goToAutoCrmMonth(' + n + ')">' +
           '<div style="font-size:22px;font-weight:800;color:#003768;line-height:1;">' + counts[n] + '</div>' +
           '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + n + ' Month</div>' +
         '</div>';
       }).join('');
     }
     if (totalEl) totalEl.textContent = rows.length;
+    var totalWrap = totalEl ? totalEl.parentElement : null;
+    if (totalWrap) { totalWrap.style.cursor = 'pointer'; totalWrap.onclick = function() { goToAutoCrmMonth(null); }; }
     widget.style.display = 'flex';
   }).catch(function() {});
 
@@ -12284,6 +12286,13 @@ function acFilterByMonth(bucket, el) {
   document.querySelectorAll('#sidebar-autocrm a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
   acRenderRows();
+}
+
+// Jump from the Home page widget straight into a filtered AutoCRM view
+function goToAutoCrmMonth(bucket) {
+  switchTab('autocrm');
+  var el = document.getElementById(bucket ? ('ac-nav-m' + bucket) : 'ac-nav-all');
+  acFilterByMonth(bucket, el);
 }
 
 function acRenderRows() {
