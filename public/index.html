@@ -162,8 +162,9 @@ html { height: 100%; }
 .wb-doc { font-family:inherit; overflow-x:auto; }
 .wb-doc p { font-size:13.5px; color:#6b7c8f; line-height:1.6; margin:0 0 16px; }
 .wb-doc p strong { color:#003768; font-size:15px; }
-.wb-doc table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:12px; }
-.wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 10px; text-align:left; color:#6b7c8f; vertical-align:middle; }
+.wb-doc table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:12px; table-layout:fixed; }
+.wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 10px; text-align:center; vertical-align:middle; color:#6b7c8f; }
+.wb-doc th:first-child, .wb-doc td:first-child { text-align:left; width:150px; }
 .wb-doc tr:nth-child(even) td { background:#f9fafb; }
 .wb-doc th { background:#f5f7fa; color:#6b7c8f; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
 .wb-doc strong { color:#003768; }
