@@ -3955,22 +3955,7 @@ html { height: 100%; }
       <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">AutoCRM&#8482;</h2>
       <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases coming up for renewal in the next 6 months, sourced from our CRM system.</p>
       <div id="ac-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
-      <div id="ac-content" style="display:none;padding-bottom:32px;">
-        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Name</th>
-              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Email</th>
-              <th style="text-align:right;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Loan Amount</th>
-              <th style="text-align:right;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Valuation</th>
-              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Description</th>
-              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Lender</th>
-              <th style="text-align:left;padding:8px 10px;border:1px solid #d1d5db;background:#f5f7fa;color:#6b7c8f;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.4px;">Benefit End</th>
-            </tr>
-          </thead>
-          <tbody id="ac-table-body"></tbody>
-        </table>
-      </div>
+      <div id="ac-content" style="display:none;padding-bottom:32px;"></div>
     </div>
   </div>
 
@@ -12203,7 +12188,6 @@ function loadAutoCrm() {
   if (_acLoaded) return;
   var loadingEl = document.getElementById('ac-loading');
   var contentEl = document.getElementById('ac-content');
-  var bodyEl    = document.getElementById('ac-table-body');
   loadingEl.style.display = 'block';
   contentEl.style.display = 'none';
   var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -12223,25 +12207,53 @@ function loadAutoCrm() {
     _acLoaded = true;
     var rows = d.rows || [];
     if (!rows.length) {
-      bodyEl.innerHTML = '<tr><td colspan="7" style="padding:24px 10px;text-align:center;border:1px solid #d1d5db;color:#6b7c8f;font-size:13px;">No mortgage renewals due in the next 6 months.</td></tr>';
+      contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No mortgage renewals due in the next 6 months.</div>';
       return;
     }
     var fmtCurrency = function(n) { return (typeof n === 'number') ? '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : ''; };
+    var monthLabel = function(s) {
+      var dt = new Date(s);
+      if (isNaN(dt.getTime())) return 'Other';
+      return dt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    };
     var fmtDate = function(s) {
       if (!s) return '';
       var dt = new Date(s);
       return isNaN(dt.getTime()) ? escHtml(s) : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     };
-    bodyEl.innerHTML = rows.map(function(row) {
-      return '<tr>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.name) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.email) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;text-align:right;">' + fmtCurrency(row.loanAmount) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;text-align:right;">' + fmtCurrency(row.valuation) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.description) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + escHtml(row.lender) + '</td>' +
-        '<td style="padding:8px 10px;border:1px solid #d1d5db;color:#6b7c8f;">' + fmtDate(row.benefitEnd) + '</td>' +
-        '</tr>';
+
+    // Group by month of Benefit End, preserving chronological order (rows already sorted asc by the server)
+    var groups = [];
+    var groupByKey = {};
+    rows.forEach(function(row) {
+      var key = monthLabel(row.benefitEnd);
+      if (!groupByKey[key]) {
+        groupByKey[key] = { label: key, rows: [] };
+        groups.push(groupByKey[key]);
+      }
+      groupByKey[key].rows.push(row);
+    });
+
+    contentEl.innerHTML = groups.map(function(group) {
+      var cards = group.rows.map(function(row) {
+        return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">' +
+          '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">' +
+            '<span style="color:#003768;font-size:14px;font-weight:700;">' + escHtml(row.name || 'Unnamed') + '</span>' +
+            '<span style="color:#6b7c8f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">' + fmtDate(row.benefitEnd) + '</span>' +
+          '</div>' +
+          '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.7;">' +
+            (row.email ? '<div>' + escHtml(row.email) + '</div>' : '') +
+            '<div>Loan Amount: <strong style="color:#6b7c8f;">' + fmtCurrency(row.loanAmount) + '</strong></div>' +
+            '<div>Valuation: <strong style="color:#6b7c8f;">' + fmtCurrency(row.valuation) + '</strong></div>' +
+            (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
+            (row.description ? '<div>' + escHtml(row.description) + '</div>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+      return '<div style="margin-bottom:28px;">' +
+        '<h3 style="color:#003768;font-size:14px;margin:0 0 12px;">' + escHtml(group.label) + ' <span style="color:#6b7c8f;font-weight:600;font-size:12px;">(' + group.rows.length + ')</span></h3>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">' + cards + '</div>' +
+      '</div>';
     }).join('');
   }).catch(function() {
     clearTimeout(timer);
