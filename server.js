@@ -679,6 +679,54 @@ const MC_DESC        = 'fldnl007W7yv92Uv2'; // Description
 const MC_LENDER      = 'flda3Kbg6U5VlY437'; // Lender
 const MC_BENEFIT_END = 'fldQxzVK10rodVVgH'; // Benefit End (Date) — formula, ISO date
 const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the broker who owns this case
+const MC_DOB            = 'fldJvFYek6dPQqtF2'; // DOB — text, format M/D/YY
+
+// ── Customer birthdays (today), scoped to the logged-in broker's own clients ──
+app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  try {
+    const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
+    const formula = encodeURIComponent(`LOWER({Customer Ref Email})="${brokerEmail}"`);
+    const fieldQs = [MC_NAME, MC_DOB].map(f => `fields[]=${f}`).join('&');
+
+    let all = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${formula}&${fieldQs}&returnFieldsByFieldId=true&pageSize=100` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      all = all.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && all.length < 3000);
+
+    const today = new Date();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+    const seen = new Set();
+    const names = [];
+    all.forEach(rec => {
+      const f = rec.fields || {};
+      const dob = (f[MC_DOB] || '').toString().trim();
+      const m = dob.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if (!m) return;
+      const month = parseInt(m[1], 10);
+      const day = parseInt(m[2], 10);
+      if (month === todayMonth && day === todayDay) {
+        const name = (f[MC_NAME] || '').trim();
+        if (name && !seen.has(name)) { seen.add(name); names.push(name); }
+      }
+    });
+
+    res.json({ names });
+  } catch (err) {
+    console.error('Customer birthdays error:', err);
+    res.status(500).json({ error: 'Failed to load customer birthdays.' });
+  }
+});
 
 // ── AutoCRM notes / Business Won state (local, per-broker) ────
 const AUTOCRM_NOTES_PATH = path.join(__dirname, 'autocrm-notes.json');
