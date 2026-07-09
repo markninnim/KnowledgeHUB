@@ -163,8 +163,9 @@ html { height: 100%; }
 .wb-doc p { font-size:13.5px; color:#6b7c8f; line-height:1.6; margin:0 0 16px; }
 .wb-doc p strong { color:#003768; font-size:15px; }
 .wb-doc table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:12px; table-layout:fixed; }
-.wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 10px; text-align:center; vertical-align:middle; color:#6b7c8f; }
-.wb-doc th:first-child, .wb-doc td:first-child { text-align:left; width:150px; }
+.wb-doc th, .wb-doc td { border:1px solid #d1d5db; padding:8px 6px; text-align:center !important; vertical-align:middle !important; color:#6b7c8f; }
+.wb-doc th:first-child, .wb-doc td:first-child { text-align:left !important; }
+.wb-doc .wb-ampm-col { font-size:10px; font-weight:700; padding:8px 2px; }
 .wb-doc tr:nth-child(even) td { background:#f9fafb; }
 .wb-doc th { background:#f5f7fa; color:#6b7c8f; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.04em; }
 .wb-doc strong { color:#003768; }
@@ -211,6 +212,7 @@ html { height: 100%; }
     <a href="#" onclick="switchTab('sales-process');return false;">Advice Standards</a>
     <a href="#" onclick="switchTab('learning');return false;">Learning</a>
     <a href="#" onclick="switchTab('surveying');return false;">Surveying</a>
+    <a href="#" id="sidebar-home-whereabouts" style="display:none" onclick="switchTab('whereabouts');return false;">Whereabouts</a>
   </div>
   <!-- Marketing sidebar -->
   <div id="sidebar-marketing" style="display:none">
@@ -7225,6 +7227,8 @@ var _currentUser = null;
       if (sbtn) { sbtn.style.display = ''; sbtn.textContent = 'My Team'; }
       var wbtn = document.getElementById('tab-btn-whereabouts');
       if (wbtn) wbtn.style.display = '';
+      var wbsb = document.getElementById('sidebar-home-whereabouts');
+      if (wbsb) wbsb.style.display = '';
       var pbtn = document.getElementById('tab-btn-performance-zone');
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
@@ -11980,10 +11984,64 @@ function loadWhereabouts() {
     _wbLoaded = true;
     if (subtitleEl) subtitleEl.textContent = d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.';
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
+    wbFormatDoc(contentEl);
   }).catch(function() {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
     contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load the whereabouts document.</div>';
+  });
+}
+
+// Tidy up the raw HTML converted from the weekly .docx: strip the redundant
+// "WEEKLY WHEREABOUTS..." title (we already show our own page title), give
+// every table a matching name-column width, and shrink any AM/PM column.
+function wbFormatDoc(root) {
+  // Remove the document's own title line (paragraph or table row containing it)
+  Array.prototype.slice.call(root.querySelectorAll('p, tr')).forEach(function(el) {
+    var t = el.textContent.trim();
+    if (/^weekly\s+whereabouts/i.test(t)) el.parentNode.removeChild(el);
+  });
+
+  var NAME_COL_WIDTH = 150; // px, shared across every table so name boxes line up
+
+  root.querySelectorAll('table').forEach(function(table) {
+    var rows = Array.prototype.slice.call(table.rows);
+    if (!rows.length) return;
+    var maxCols = 0;
+    rows.forEach(function(r) { maxCols = Math.max(maxCols, r.cells.length); });
+
+    // Find a column where every non-empty cell reads exactly "AM" or "PM"
+    var ampmCol = -1;
+    for (var c = 1; c < maxCols; c++) {
+      var texts = [];
+      rows.forEach(function(r) {
+        if (r.cells[c]) {
+          var txt = r.cells[c].textContent.trim();
+          if (txt) texts.push(txt);
+        }
+      });
+      if (texts.length && texts.every(function(txt) { return txt === 'AM' || txt === 'PM'; })) {
+        ampmCol = c;
+        break;
+      }
+    }
+    if (ampmCol > -1) {
+      rows.forEach(function(r) { if (r.cells[ampmCol]) r.cells[ampmCol].classList.add('wb-ampm-col'); });
+    }
+
+    // Build a colgroup so column widths are respected regardless of which
+    // row the content sits in (table-layout:fixed only reads first-row
+    // widths without an explicit colgroup).
+    var oldColgroup = table.querySelector('colgroup');
+    if (oldColgroup) oldColgroup.parentNode.removeChild(oldColgroup);
+    var colgroup = document.createElement('colgroup');
+    for (var i = 0; i < maxCols; i++) {
+      var col = document.createElement('col');
+      if (i === 0) col.style.width = NAME_COL_WIDTH + 'px';
+      else if (i === ampmCol) col.style.width = '34px';
+      colgroup.appendChild(col);
+    }
+    table.insertBefore(colgroup, table.firstChild);
   });
 }
 

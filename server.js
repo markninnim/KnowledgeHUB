@@ -543,8 +543,22 @@ app.get('/api/newsletters', requireAuth, (req, res) => {
 });
 
 // ── Weekly Whereabouts (supervisors/admins only) ─────────────
-// A new .docx is dropped into public/whereabouts/ each week — we always
-// serve whichever file was modified most recently, converted to HTML.
+// A new .docx is dropped into public/whereabouts/ each week. Multiple weeks'
+// files can sit in the folder at once, so pick the one whose filename date is
+// latest (file mtimes aren't reliable if the folder syncs via Dropbox/OneDrive).
+const WB_MONTHS = { january:0, february:1, march:2, april:3, may:4, june:5, july:6, august:7, september:8, october:9, november:10, december:11 };
+function wbParseDateFromFilename(name) {
+  const m = name.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{2,4})/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = WB_MONTHS[m[2].toLowerCase()];
+  if (month === undefined) return null;
+  let year = parseInt(m[3], 10);
+  if (year < 100) year += 2000;
+  const d = new Date(year, month, day);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 app.get('/api/whereabouts', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -555,10 +569,16 @@ app.get('/api/whereabouts', requireAuth, async (req, res) => {
     const files = fs.readdirSync(dir).filter(f => f.toLowerCase().endsWith('.docx'));
     if (!files.length) return res.json({ error: 'No whereabouts document found yet.' });
 
-    let latestFile = null, latestMtime = 0;
+    let latestFile = null, latestDate = null, latestMtime = 0;
     files.forEach(f => {
       const stat = fs.statSync(path.join(dir, f));
-      if (stat.mtimeMs > latestMtime) { latestMtime = stat.mtimeMs; latestFile = f; }
+      const parsedDate = wbParseDateFromFilename(f);
+      if (parsedDate) {
+        if (!latestDate || parsedDate > latestDate) { latestDate = parsedDate; latestFile = f; latestMtime = stat.mtimeMs; }
+      } else if (!latestDate && (!latestFile || stat.mtimeMs > latestMtime)) {
+        // Fallback: no file parsed a date yet, use mtime
+        latestMtime = stat.mtimeMs; latestFile = f;
+      }
     });
 
     const result = await mammoth.convertToHtml({ path: path.join(dir, latestFile) });
