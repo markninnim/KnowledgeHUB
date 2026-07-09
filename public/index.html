@@ -7268,8 +7268,6 @@ var _currentUser = null;
       if (wbtn) wbtn.style.display = '';
       var wbsb = document.getElementById('sidebar-home-whereabouts');
       if (wbsb) wbsb.style.display = '';
-      var acbtn = document.getElementById('tab-btn-autocrm');
-      if (acbtn) acbtn.style.display = '';
       var pbtn = document.getElementById('tab-btn-performance-zone');
       if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
@@ -7288,10 +7286,12 @@ var _currentUser = null;
       var casLink = document.getElementById('lv-nav-cas-path');
       if (casLink) casLink.style.display = 'block';
     }
-    // Show Pay tab for all logged-in users
+    // Show Pay and AutoCRM tabs for all logged-in users
     if (user) {
       var paybtn = document.getElementById('tab-btn-pay');
       if (paybtn) paybtn.style.display = '';
+      var acbtn = document.getElementById('tab-btn-autocrm');
+      if (acbtn) acbtn.style.display = '';
     }
     updateNavUser(user);
     initShareButtons();

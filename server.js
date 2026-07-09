@@ -682,7 +682,6 @@ const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the bro
 
 app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
   const user = req.session.user;
-  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
     const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
     const formula = encodeURIComponent(
