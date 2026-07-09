@@ -12,12 +12,12 @@ Font: **Plus Jakarta Sans** everywhere. Never hard-code another font-family; com
 | All body text (paragraphs, table cells, names, stats, JS-rendered copy, inline `<strong>`/links inside body copy) | `#6b7c8f` — no exceptions |
 | Names in the User Management admin list | `#003768` (navy) — approved exception to the body-text rule |
 | Page background | `#f5f7fa` |
-| CPD/product type colours | Mortgage `#003768` (navy), Protection `#fcb034` (amber), Investment `#fcb034` (amber) — where all three appear together (e.g. activity-type pills), Protection uses accent blue `#2e99d5` instead to stay distinct from Investment |
-| Borders (default) | `#e8ecf0` or `#d1d5db` (see Borders section) |
+| CPD/product type colours | Mortgage `#003768` (navy), Protection `#fcb034` (amber), Investment `#2e99d5` (accent blue) — where Protection and Investment appear together (e.g. activity-type pills), Protection uses `#fcb034` and Investment `#2e99d5` to stay distinct |
+| Borders (default) | `#d1d5db` everywhere — no exceptions. (Thin one-off dividers, hover-fill backgrounds, and chart/heatmap cell fills are not borders and keep their own light-grey `#e8ecf0`/similar — don't reclassify those as border colour just because they're grey.) |
 | Sidebar section labels | `#fcb034` (orange) |
 | Success / target met / CAS | `#22c55e` / `#166534` (pill bg `#dcfce7`) |
 | Warning / on track | `#854d0e` (pill bg `#fef9c3`) |
-| Error / Non-CAS / destructive | `#ef4444` / `#b91c1c` (pill bg `#fef2f2`) |
+| Error / Non-CAS / destructive | `#b91c1c` only — no `#ef4444` (pill bg `#fef2f2`) |
 | Standard pill background | `#dbeafe` with `#003768` text |
 
 Do not introduce new near-grey or near-navy shades. If existing code has a stray colour (e.g. `#374151`, `#2D3748`, `#4a5a6a`, `#1a2a3a`), it's a bug — replace it with `#6b7c8f` (body) or `#003768` (heading) as appropriate.
@@ -68,7 +68,19 @@ Orange caps: `font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;
 
 ## Borders
 
-All borders are `1px` — no `1.5px`/hairline borders anywhere. Deliberate accent weights (2px/3px/4px underlines, left-accent bars, the avatar ring) are a separate, intentional design choice and stay as-is; every plain container/input/card/date-picker border should be `1px solid #d1d5db` (or `#e8ecf0` for very subtle internal dividers).
+All borders are `1px` — no `1.5px`/hairline borders anywhere. Deliberate accent weights (2px/3px/4px underlines, left-accent bars, the avatar ring) are a separate, intentional design choice and stay as-is; every plain container/input/card/date-picker border is `1px solid #d1d5db`.
+
+## Hover / rollover states
+
+Keep every rollover subtle — never a heavy, near-opaque overlay.
+
+- Clickable card overlays (the "click to view" pattern on My Team, Marketing cards, video thumbnails, etc.): `rgba(0,55,104,0.06)` navy tint with a small (22–26px) navy-stroked icon centred over the card, fading in via `opacity` transition. Never white icons on a >20% opacity overlay — that reads as heavy/blocking.
+- Button/link/row hover backgrounds: light neutral fills only (`#f5f7fa`, `#f9fafb`, or similar) with text/border flipping to navy `#003768`.
+- No slide-in or other page-transition animations anywhere (removed sitewide) — content should switch instantly.
+
+## No animation on content switching
+
+Tab/section switches (Brand Assets pages, Learning docs, Supervisor Zone, etc.) should never animate in — no slide, fade, or transform on page-level content. This was deliberately stripped out; don't reintroduce it.
 
 ## Referencing UI elements in body text
 
