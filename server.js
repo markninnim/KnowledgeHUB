@@ -706,7 +706,7 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
       offset = body.offset || '';
     } while (offset && all.length < 3000);
 
-    const rows = all.map(rec => {
+    const rawRows = all.map(rec => {
       const f = rec.fields || {};
       return {
         name: f[MC_NAME] || '',
@@ -718,6 +718,32 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
         benefitEnd: f[MC_BENEFIT_END] || ''
       };
     });
+
+    // Same Benefit End + Loan Amount + Valuation = same transaction (e.g. joint
+    // applicants each have their own row) — merge those into a single row.
+    const groups = new Map();
+    rawRows.forEach(row => {
+      const key = [row.benefitEnd, row.loanAmount, row.valuation].join('|');
+      if (!groups.has(key)) {
+        groups.set(key, { ...row, names: [row.name].filter(Boolean), emails: [row.email].filter(Boolean) });
+      } else {
+        const g = groups.get(key);
+        if (row.name && !g.names.includes(row.name)) g.names.push(row.name);
+        if (row.email && !g.emails.includes(row.email)) g.emails.push(row.email);
+        if (!g.description && row.description) g.description = row.description;
+        if (!g.lender && row.lender) g.lender = row.lender;
+      }
+    });
+
+    const rows = Array.from(groups.values()).map(g => ({
+      name: g.names.join(' & '),
+      email: g.emails.join(', '),
+      loanAmount: g.loanAmount,
+      valuation: g.valuation,
+      description: g.description,
+      lender: g.lender,
+      benefitEnd: g.benefitEnd
+    }));
 
     res.json({ rows });
   } catch (err) {
