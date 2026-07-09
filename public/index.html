@@ -159,7 +159,6 @@ html { height: 100%; }
 #mas-search:focus { border-color:#003768; box-shadow:0 0 0 3px rgba(0,55,104,.08); }
 
 /* Whereabouts — styling for the raw table HTML converted from the weekly .docx */
-@keyframes homeBdayScroll { from { transform:translateX(0); } to { transform:translateX(var(--bday-overflow)); } }
 .wb-doc { font-family:inherit; overflow-x:auto; }
 .wb-doc p { font-size:13.5px; color:#6b7c8f; line-height:1.6; margin:0 0 16px; }
 .wb-doc p strong { color:#003768; font-size:15px; }
@@ -396,11 +395,10 @@ html { height: 100%; }
           <div id="home-greeting" style="font-size:26px;font-weight:800;color:#003768;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:4px;"></div>
           <div style="font-size:14px;color:#6b7c8f;">Here's your KnowledgeHUB&#8482; overview for today.</div>
         </div>
-        <div id="home-birthdays-widget" style="display:none;text-align:right;max-width:220px;flex-shrink:0;padding-top:4px;">
+        <div id="home-birthdays-widget" style="display:none;text-align:right;max-width:240px;flex-shrink:0;padding-top:4px;">
           <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">🎂 Customer Birthdays</div>
-          <div id="home-birthdays-viewport" style="overflow:hidden;height:18px;position:relative;">
-            <div id="home-birthdays-track" style="font-size:12.5px;color:#003768;font-weight:600;position:absolute;right:0;white-space:nowrap;"></div>
-          </div>
+          <div id="home-birthdays-name" style="font-size:12.5px;color:#003768;font-weight:700;transition:opacity .5s;white-space:nowrap;"></div>
+          <div id="home-birthdays-email" style="font-size:11px;color:#6b7c8f;transition:opacity .5s;white-space:nowrap;"></div>
         </div>
       </div>
 
@@ -6921,22 +6919,31 @@ function loadHomeData() {
 
   // Customer Birthdays (today) — parallel fetch
   fetch('/api/customer-birthdays').then(function(r){ return r.json(); }).then(function(d) {
-    var widget   = document.getElementById('home-birthdays-widget');
-    var track    = document.getElementById('home-birthdays-track');
-    var viewport = document.getElementById('home-birthdays-viewport');
-    if (!widget || !track || !viewport || d.error) return;
-    var names = d.names || [];
-    if (!names.length) return;
-    track.textContent = names.join('   •   ');
+    var widget  = document.getElementById('home-birthdays-widget');
+    var nameEl  = document.getElementById('home-birthdays-name');
+    var emailEl = document.getElementById('home-birthdays-email');
+    if (!widget || !nameEl || !emailEl || d.error) return;
+    var people = d.people || [];
+    if (!people.length) return;
     widget.style.display = 'block';
-    requestAnimationFrame(function() {
-      var overflow = track.scrollWidth - viewport.clientWidth;
-      if (overflow > 4) {
-        var duration = Math.max(6, overflow / 15); // ~15px/sec — deliberately slow
-        track.style.setProperty('--bday-overflow', (-overflow) + 'px');
-        track.style.animation = 'homeBdayScroll ' + duration + 's linear infinite alternate';
-      }
-    });
+    var i = 0;
+    var show = function(idx) {
+      nameEl.textContent  = people[idx].name || '';
+      emailEl.textContent = people[idx].email || '';
+    };
+    show(0);
+    if (people.length > 1) {
+      setInterval(function() {
+        nameEl.style.opacity = '0';
+        emailEl.style.opacity = '0';
+        setTimeout(function() {
+          i = (i + 1) % people.length;
+          show(i);
+          nameEl.style.opacity = '1';
+          emailEl.style.opacity = '1';
+        }, 500);
+      }, 4000); // slow rotation — 4s per person
+    }
   }).catch(function() {});
 
   // AutoCRM Renewals summary — parallel fetch

@@ -687,7 +687,7 @@ app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
   try {
     const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
     const formula = encodeURIComponent(`LOWER({Customer Ref Email})="${brokerEmail}"`);
-    const fieldQs = [MC_NAME, MC_DOB].map(f => `fields[]=${f}`).join('&');
+    const fieldQs = [MC_NAME, MC_DOB, MC_EMAIL].map(f => `fields[]=${f}`).join('&');
 
     let all = [];
     let offset = '';
@@ -707,7 +707,7 @@ app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
     const seen = new Set();
-    const names = [];
+    const people = [];
     all.forEach(rec => {
       const f = rec.fields || {};
       const dob = (f[MC_DOB] || '').toString().trim();
@@ -717,11 +717,13 @@ app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
       const day = parseInt(m[2], 10);
       if (month === todayMonth && day === todayDay) {
         const name = (f[MC_NAME] || '').trim();
-        if (name && !seen.has(name)) { seen.add(name); names.push(name); }
+        const email = (f[MC_EMAIL] || '').trim();
+        const key = name + '|' + email;
+        if (name && !seen.has(key)) { seen.add(key); people.push({ name, email }); }
       }
     });
 
-    res.json({ names });
+    res.json({ people });
   } catch (err) {
     console.error('Customer birthdays error:', err);
     res.status(500).json({ error: 'Failed to load customer birthdays.' });
