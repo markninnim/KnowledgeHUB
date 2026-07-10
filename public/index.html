@@ -406,6 +406,9 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <a href="#" id="lg-nav-all"        class="active" onclick="lgFilterBy('all',this);return false;">All Leads</a>
     <h2>My Leads</h2>
     <a href="#" id="lg-nav-mine"       onclick="lgFilterBy('mine',this);return false;">All Leads</a>
+    <a href="#" id="lg-nav-hot"        style="padding-left:34px;font-size:12.5px;" onclick="lgFilterBy('hot',this);return false;">Hot</a>
+    <a href="#" id="lg-nav-warm"       style="padding-left:34px;font-size:12.5px;" onclick="lgFilterBy('warm',this);return false;">Warm</a>
+    <a href="#" id="lg-nav-cold"       style="padding-left:34px;font-size:12.5px;" onclick="lgFilterBy('cold',this);return false;">Cold</a>
     <a href="#" id="lg-nav-golden"     onclick="lgFilterBy('golden',this);return false;">Golden Hour</a>
     <a href="#" id="lg-nav-today"      onclick="lgFilterBy('today',this);return false;">Today</a>
     <a href="#" id="lg-nav-followup"   onclick="lgFilterBy('followup',this);return false;">Follow Up</a>
@@ -4179,6 +4182,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Source</label><select id="lg-source" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Website</option><option>FP Surveying</option><option>Facebook</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Lead Quality</label><select id="lg-quality" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Hot</option><option>Warm</option><option>Cold</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Mortgage Sale Value &pound;</label><input id="lg-mortval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
@@ -13539,13 +13543,16 @@ function lgFilteredLeads() {
   var leads = _lgLeads;
   // Golden Hour, Today, and Follow Up all live under the "My Leads" sidebar
   // section, so they're scoped to the logged-in user's own leads too.
-  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup'];
+  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
   if (MY_LEADS_FILTERS.indexOf(_lgFilter) !== -1) {
     leads = leads.filter(function(l) { return l.adviser === lgCurrentUserName(); });
   }
   if (_lgFilter === 'golden')   leads = leads.filter(function(l) { return lgIsGoldenHour(l.createdTime); });
   if (_lgFilter === 'today')    leads = leads.filter(function(l) { return lgIsToday(l.createdTime); });
   if (_lgFilter === 'followup') leads = leads.filter(function(l) { return l.followUp === lgTodayStr(); });
+  if (_lgFilter === 'hot')      leads = leads.filter(function(l) { return l.quality === 'Hot'; });
+  if (_lgFilter === 'warm')     leads = leads.filter(function(l) { return l.quality === 'Warm'; });
+  if (_lgFilter === 'cold')     leads = leads.filter(function(l) { return l.quality === 'Cold'; });
   if (_lgAdviserFilter)         leads = leads.filter(function(l) { return l.adviser === _lgAdviserFilter; });
   leads = leads.slice().sort(function(a, b) {
     return new Date(b.createdTime || 0) - new Date(a.createdTime || 0);
@@ -13568,7 +13575,10 @@ function lgUpdateLeadsTitle() {
     mine:     ['My Leads', 'Leads assigned to you.'],
     golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
     today:    ['Today', 'Leads created today.'],
-    followup: ['Follow Up', 'Leads with a follow-up date of today.'] };
+    followup: ['Follow Up', 'Leads with a follow-up date of today.'],
+    hot:      ['Hot Leads', 'Your leads marked Hot.'],
+    warm:     ['Warm Leads', 'Your leads marked Warm.'],
+    cold:     ['Cold Leads', 'Your leads marked Cold.'] };
   var t = titles[_lgFilter] || titles.all;
   var titleEl = document.getElementById('lg-leads-title');
   var subEl   = document.getElementById('lg-leads-subtitle');
@@ -13695,6 +13705,17 @@ function lgStatusSelectHtml(lead) {
     + ['To Call','No Answer','Appointment Booked'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
     + '</select>';
 }
+function lgQualityPillStyle(quality) {
+  if (quality === 'Hot')  return 'background:#fef2f2;color:#b91c1c;';
+  if (quality === 'Warm') return 'background:#fff7ed;color:#c2410c;';
+  if (quality === 'Cold') return 'background:#eff6ff;color:#1d4ed8;';
+  return 'background:#f5f7fa;color:#6b7c8f;'; // unset
+}
+function lgQualitySelectHtml(lead) {
+  return '<select onchange="lgUpdateQuality(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + lgQualityPillStyle(lead.quality) + '">'
+    + ['', 'Hot', 'Warm', 'Cold'].map(function(q) { return '<option value="' + q + '"' + (q === (lead.quality || '') ? ' selected' : '') + '>' + (q || '—') + '</option>'; }).join('')
+    + '</select>';
+}
 function lgAdviserSelectHtml(lead, idPrefix) {
   var options = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
     _lgAdvisers.map(function(name) { return '<option' + (name === lead.adviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
@@ -13742,7 +13763,7 @@ function lgRenderLeads() {
       return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
           + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</span>'
-          + lgStatusSelectHtml(lead)
+          + '<div style="display:flex;gap:6px;flex-shrink:0;">' + lgQualitySelectHtml(lead) + lgStatusSelectHtml(lead) + '</div>'
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
           + (lead.createdTime ? '<div>Created: ' + lgFmtDateTime(lead.createdTime) + '</div>' : '')
@@ -13778,12 +13799,13 @@ function lgRenderLeads() {
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.source) + '</td>'
       + '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>'
+      + '<td style="padding:10px 12px;">' + lgQualitySelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source','Adviser','Status'].map(function(h) {
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source','Adviser','Quality','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -14044,6 +14066,30 @@ function lgUpdateStatus(id, status) {
     alert('Could not save the status change — network error. Please try again.');
   });
 }
+function lgUpdateQuality(id, quality) {
+  var lead = _lgLeads.find(function(l) { return l.id === id; });
+  var previousQuality = lead ? lead.quality : null;
+  if (lead) lead.quality = quality; // optimistic — reverted below if the save actually fails
+  fetch('/api/leadgen-leads/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quality: quality })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.success) {
+      if (lead) lead.quality = previousQuality;
+      lgRenderLeads();
+      alert('Could not save the lead quality change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the Leads base.');
+      return;
+    }
+    // Moves the lead into (or out of) the Hot/Warm/Cold sidebar views automatically
+    // since those are just live filters over quality — no separate table to move it to.
+    lgRenderLeads();
+  }).catch(function() {
+    if (lead) lead.quality = previousQuality;
+    lgRenderLeads();
+    alert('Could not save the lead quality change — network error. Please try again.');
+  });
+}
 function lgOpenModal(id) {
   var lead = id ? _lgLeads.find(function(l) { return l.id === id; }) : null;
   document.getElementById('lg-modal-title').textContent = lead ? 'Edit Lead' : 'Add Lead';
@@ -14066,6 +14112,7 @@ function lgOpenModal(id) {
   adviserSel.innerHTML = adviserOptions.join('');
   document.getElementById('lg-followup').value = lead ? (lead.followUp || '') : '';
   document.getElementById('lg-source').value  = lead ? (lead.source || '') : '';
+  document.getElementById('lg-quality').value = lead ? (lead.quality || '') : '';
   document.getElementById('lg-mortval').value = lead ? (lead.mortgageSaleValue  || '') : '';
   document.getElementById('lg-insval').value  = lead ? (lead.insuranceSaleValue || '') : '';
   document.getElementById('lg-feeval').value  = lead ? (lead.brokerFeeValue     || '') : '';
@@ -14089,6 +14136,7 @@ function lgSaveLead() {
     adviser:       document.getElementById('lg-adviser').value.trim(),
     followUp:      document.getElementById('lg-followup').value,
     source:        document.getElementById('lg-source').value,
+    quality:       document.getElementById('lg-quality').value,
     mortgageSaleValue:  document.getElementById('lg-mortval').value,
     insuranceSaleValue: document.getElementById('lg-insval').value,
     brokerFeeValue:     document.getElementById('lg-feeval').value,

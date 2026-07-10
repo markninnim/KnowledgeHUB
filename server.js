@@ -76,6 +76,7 @@ const LG_MORTVAL   = 'fldKHudKVQNImv5bc';
 const LG_INSVAL    = 'fld9U4XjSLao5w1Ny';
 const LG_FEEVAL    = 'fldOFq58PkIumTXcy';
 const LG_SOURCE    = 'fldO8GJlvlCL7GtI8'; // Source (Website / FP Surveying / Facebook)
+const LG_QUALITY   = 'fldHcCc3tAt8U7dVT'; // Lead Quality (Hot / Warm / Cold)
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -711,7 +712,8 @@ function leadGenRecordToLead(record) {
     mortgageSaleValue:  f[LG_MORTVAL] || null,
     insuranceSaleValue: f[LG_INSVAL]  || null,
     brokerFeeValue:     f[LG_FEEVAL]  || null,
-    source:             selectName(f[LG_SOURCE]) || ''
+    source:             selectName(f[LG_SOURCE]) || '',
+    quality:            selectName(f[LG_QUALITY]) || ''
   };
 }
 
@@ -783,6 +785,7 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     if (b.insuranceSaleValue !== undefined && b.insuranceSaleValue !== '') fields[LG_INSVAL]  = Number(b.insuranceSaleValue);
     if (b.brokerFeeValue !== undefined && b.brokerFeeValue !== '')         fields[LG_FEEVAL]  = Number(b.brokerFeeValue);
     if (b.source)        fields[LG_SOURCE]  = String(b.source);
+    if (b.quality)       fields[LG_QUALITY] = String(b.quality);
 
     if (!fields[LG_NAME]) return res.status(400).json({ error: 'Name is required.' });
 
@@ -819,6 +822,7 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     if (b.insuranceSaleValue !== undefined) fields[LG_INSVAL]  = b.insuranceSaleValue === '' ? null : Number(b.insuranceSaleValue);
     if (b.brokerFeeValue !== undefined)     fields[LG_FEEVAL]  = b.brokerFeeValue === '' ? null : Number(b.brokerFeeValue);
     if (b.source !== undefined)             fields[LG_SOURCE]  = b.source === '' ? null : String(b.source);
+    if (b.quality !== undefined)            fields[LG_QUALITY] = b.quality === '' ? null : String(b.quality);
 
     // First time a lead's status moves off "To Call", stamp Called At automatically
     // (used for the time-to-call stat on the Data page).
