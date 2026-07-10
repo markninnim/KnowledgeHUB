@@ -202,6 +202,7 @@ html { height: 100%; }
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
+    <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -375,6 +376,11 @@ html { height: 100%; }
     <a href="#" id="ac-nav-m3" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(3,this);return false;">3 Month</a>
     <a href="#" id="ac-nav-m2" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(2,this);return false;">2 Month</a>
     <a href="#" id="ac-nav-m1" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(1,this);return false;">1 Month</a>
+  </div>
+  <!-- Muttuo sidebar -->
+  <div id="sidebar-muttuo" style="display:none">
+    <h2 style="margin-top: 8px;">Muttuo</h2>
+    <a href="#" class="active" onclick="return false;">Leads</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -3980,6 +3986,55 @@ html { height: 100%; }
     </div>
   </div>
 
+  <div id="tab-muttuo" class="tab-pane">
+    <div style="padding:32px 32px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
+        <div>
+          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Muttuo</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
+        </div>
+        <button onclick="mzOpenModal()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
+      </div>
+      <div id="mz-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="mz-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+  </div>
+
+</div>
+<div id="mz-modal" onclick="if(event.target===this)mzCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:520px;margin:0 20px;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #d1d5db;">
+      <h2 id="mz-modal-title" style="color:var(--brand-navy);font-size:16px;margin:0;">Add Lead</h2>
+      <button onclick="mzCloseModal()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="mz-id">
+      <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Name</label><input id="mz-name" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Phone Number</label><input id="mz-phone" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Email</label><input id="mz-email" type="email" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Property Value</label><input id="mz-propval" type="text" placeholder="e.g. £250,000" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Deposit</label><input id="mz-deposit" type="text" placeholder="e.g. £25,000" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Salary</label><input id="mz-salary" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Preferred Term (yrs)</label><input id="mz-term" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Scheme</label><select id="mz-scheme" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Payday Loans</label><select id="mz-payday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="mz-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>Todo</option><option>In progress</option><option>Done</option></select></div>
+      </div>
+      <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="mz-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
+      <span id="mz-modal-status" style="font-size:11px;font-weight:700;color:#b91c1c;margin-right:auto;"></span>
+      <button onclick="mzCloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+      <button onclick="mzSaveLead()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Lead</button>
+    </div>
+  </div>
 </div>
 <div id="ac-notes-modal" onclick="if(event.target===this)acCloseNotes()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;margin:0 20px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
@@ -5733,7 +5788,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm'];
+var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','muttuo'];
 function switchTab(tab) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -5764,6 +5819,7 @@ function switchTab(tab) {
   if (tab === 'selling-zone') { oppInitPages(); }
   if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
   if (tab === 'autocrm')      { loadAutoCrm(); }
+  if (tab === 'muttuo')       { loadMuttuo(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -7409,6 +7465,11 @@ var _currentUser = null;
       if (paybtn) paybtn.style.display = '';
       var acbtn = document.getElementById('tab-btn-autocrm');
       if (acbtn) acbtn.style.display = '';
+    }
+    // Muttuo tab — Fitch and Fitch business users (and admins) only
+    if (user && (user.isAdmin || ((user.business || '').trim().toLowerCase() === 'fitch and fitch'))) {
+      var mzbtn = document.getElementById('tab-btn-muttuo');
+      if (mzbtn) mzbtn.style.display = '';
     }
     updateNavUser(user);
     initShareButtons();
@@ -12661,6 +12722,137 @@ function loadAutoCrm() {
     contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' +
       (timedOut ? 'Taking too long to load — please refresh the page and try again.' : 'Unable to load mortgage renewals. Please refresh and try again.') +
       '</div>';
+  });
+}
+
+// ── Muttuo (Fitch and Fitch leads) ────────────────────────────
+var _mzLoaded = false;
+var _mzLeads  = [];
+function mzStatusPillStyle(status) {
+  if (status === 'Done')        return 'background:#dcfce7;color:#166534;';
+  if (status === 'In progress') return 'background:#fef9c3;color:#854d0e;';
+  return 'background:#dbeafe;color:var(--brand-navy);';
+}
+function loadMuttuo() {
+  if (_mzLoaded) return;
+  var loadingEl = document.getElementById('mz-loading');
+  var contentEl = document.getElementById('mz-content');
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  fetch('/api/muttuo-leads').then(function(r) { return r.json(); }).then(function(d) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    if (d.error) {
+      contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
+      return;
+    }
+    _mzLoaded = true;
+    _mzLeads = d.leads || [];
+    mzRenderLeads();
+  }).catch(function() {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load leads. Please refresh and try again.</div>';
+  });
+}
+function mzRenderLeads() {
+  var contentEl = document.getElementById('mz-content');
+  if (!_mzLeads.length) {
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads yet — click <strong>+ Add Lead</strong> to create one.</div>';
+    return;
+  }
+  var rows = _mzLeads.map(function(lead) {
+    return '<tr style="border-bottom:1px solid #d1d5db;">'
+      + '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
+      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.phone) + '</td>'
+      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.email) + '</td>'
+      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.propertyValue) + '</td>'
+      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.deposit) + '</td>'
+      + '<td style="padding:10px 12px;">'
+        + '<select onchange="mzUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + mzStatusPillStyle(lead.status) + '">'
+          + ['Todo','In progress','Done'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+        + '</select>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+  contentEl.innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
+    + '<thead><tr style="background:#f5f7fa;">'
+      + ['Name','Phone','Email','Property Value','Deposit','Status'].map(function(h) {
+          return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;">' + h + '</th>';
+        }).join('')
+    + '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+function mzUpdateStatus(id, status) {
+  var lead = _mzLeads.find(function(l) { return l.id === id; });
+  if (lead) lead.status = status;
+  fetch('/api/muttuo-leads/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status })
+  }).then(function(r) { return r.json(); }).catch(function() {});
+}
+function mzOpenModal(id) {
+  var lead = id ? _mzLeads.find(function(l) { return l.id === id; }) : null;
+  document.getElementById('mz-modal-title').textContent = lead ? 'Edit Lead' : 'Add Lead';
+  document.getElementById('mz-id').value      = lead ? lead.id : '';
+  document.getElementById('mz-name').value    = lead ? lead.name    : '';
+  document.getElementById('mz-phone').value   = lead ? lead.phone   : '';
+  document.getElementById('mz-email').value   = lead ? lead.email   : '';
+  document.getElementById('mz-propval').value = lead ? lead.propertyValue : '';
+  document.getElementById('mz-deposit').value = lead ? lead.deposit : '';
+  document.getElementById('mz-salary').value  = lead ? (lead.salary || '') : '';
+  document.getElementById('mz-term').value    = lead ? (lead.term || '') : '';
+  document.getElementById('mz-scheme').value  = lead ? lead.scheme  : 'No';
+  document.getElementById('mz-payday').value  = lead ? lead.paydayLoans : 'No';
+  document.getElementById('mz-status').value  = lead ? lead.status  : 'Todo';
+  document.getElementById('mz-notes').value   = lead ? lead.notes   : '';
+  document.getElementById('mz-modal-status').textContent = '';
+  document.getElementById('mz-modal').style.display = 'flex';
+}
+function mzCloseModal() {
+  document.getElementById('mz-modal').style.display = 'none';
+}
+function mzSaveLead() {
+  var id = document.getElementById('mz-id').value;
+  var payload = {
+    name:          document.getElementById('mz-name').value.trim(),
+    phone:         document.getElementById('mz-phone').value.trim(),
+    email:         document.getElementById('mz-email').value.trim(),
+    propertyValue: document.getElementById('mz-propval').value.trim(),
+    deposit:       document.getElementById('mz-deposit').value.trim(),
+    salary:        document.getElementById('mz-salary').value,
+    term:          document.getElementById('mz-term').value,
+    scheme:        document.getElementById('mz-scheme').value,
+    paydayLoans:   document.getElementById('mz-payday').value,
+    status:        document.getElementById('mz-status').value,
+    notes:         document.getElementById('mz-notes').value.trim()
+  };
+  if (!payload.name) {
+    document.getElementById('mz-modal-status').textContent = 'Name is required.';
+    return;
+  }
+  var statusEl = document.getElementById('mz-modal-status');
+  statusEl.style.color = '#6b7c8f';
+  statusEl.textContent = 'Saving…';
+  var url    = id ? '/api/muttuo-leads/' + id : '/api/muttuo-leads';
+  var method = id ? 'PATCH' : 'POST';
+  fetch(url, {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.success) { statusEl.style.color = '#b91c1c'; statusEl.textContent = d.error || 'Failed to save.'; return; }
+    if (id) {
+      var idx = _mzLeads.findIndex(function(l) { return l.id === id; });
+      if (idx > -1) _mzLeads[idx] = d.lead;
+    } else {
+      _mzLeads.unshift(d.lead);
+    }
+    mzRenderLeads();
+    mzCloseModal();
+  }).catch(function() {
+    statusEl.style.color = '#b91c1c';
+    statusEl.textContent = 'Failed to save.';
   });
 }
 

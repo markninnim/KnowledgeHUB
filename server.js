@@ -37,6 +37,20 @@ const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
 const AT_KEY      = process.env.AIRTABLE_API_KEY;
 const AT_BASE     = 'appqQv0Xog8yZMwI9';
 const AT_TABLE    = 'tbltcinwWF3FXDGre';
+// Muttuo — Fitch and Fitch's leads base (separate Airtable base, same PAT)
+const MUTTUO_BASE  = 'appZUxEeP6nY26iQh';
+const MUTTUO_TABLE = 'tbl1N4AE687y5BI78';
+const MZ_NAME      = 'fldFmRyb6PBPzqC83';
+const MZ_PHONE     = 'fldFzqXpI9XAaPxYq';
+const MZ_EMAIL     = 'fldvrjFPh5rhkDa3o';
+const MZ_NOTES     = 'fldM7NU4xx9ZRMJOE';
+const MZ_STATUS    = 'fldORaiZsihv8usxG';
+const MZ_PROPVAL   = 'fld5pYM5ZPoq65Qha';
+const MZ_DEPOSIT   = 'fldDskyHnJToPVMXr';
+const MZ_SCHEME    = 'fldXF0SSBBKJnNyfR';
+const MZ_SALARY    = 'fldqAWwktzw7IXlLj';
+const MZ_PAYDAY    = 'fld5sjQq3OUrzJ0tL';
+const MZ_TERM      = 'fldOW9nnAAskOGPf2';
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -458,6 +472,122 @@ function requireMarketingOrAdmin(req, res, next) {
   if (orig && (orig.isAdmin || orig.isMarketing)) return next(); // impersonating
   res.status(403).json({ error: 'Forbidden' });
 }
+
+// Muttuo tab: Fitch and Fitch business users only (admins allowed through for support)
+function requireFitchAndFitch(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const u = req.session.user;
+  const orig = req.session.originalUser;
+  const effective = orig || u;
+  const business = ((effective && effective.business) || '').trim().toLowerCase();
+  if (business === 'fitch and fitch') return next();
+  if (effective && effective.isAdmin) return next();
+  res.status(403).json({ error: 'Forbidden' });
+}
+
+function muttuoRecordToLead(record) {
+  const f = record.fields;
+  return {
+    id:           record.id,
+    name:         f[MZ_NAME]    || '',
+    phone:        f[MZ_PHONE]   || '',
+    email:        f[MZ_EMAIL]   || '',
+    notes:        f[MZ_NOTES]   || '',
+    status:       f[MZ_STATUS]  || 'Todo',
+    propertyValue:f[MZ_PROPVAL] || '',
+    deposit:      f[MZ_DEPOSIT] || '',
+    scheme:       f[MZ_SCHEME]  || 'No',
+    salary:       f[MZ_SALARY]  || null,
+    paydayLoans:  f[MZ_PAYDAY]  || 'No',
+    term:         f[MZ_TERM]    || null
+  };
+}
+
+// GET /api/muttuo-leads — list all leads
+app.get('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res) => {
+  try {
+    let records = [];
+    let offset;
+    do {
+      const qs = offset ? `?pageSize=100&offset=${offset}` : '?pageSize=100';
+      const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    res.json({ leads: records.map(muttuoRecordToLead) });
+  } catch (err) {
+    console.error('Muttuo leads load error:', err);
+    res.status(500).json({ error: 'Failed to load leads.' });
+  }
+});
+
+// POST /api/muttuo-leads — create a new lead
+app.post('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const fields = {};
+    if (b.name)          fields[MZ_NAME]    = String(b.name);
+    if (b.phone)         fields[MZ_PHONE]   = String(b.phone);
+    if (b.email)         fields[MZ_EMAIL]   = String(b.email);
+    if (b.notes)         fields[MZ_NOTES]   = String(b.notes);
+    if (b.status)        fields[MZ_STATUS]  = String(b.status);
+    if (b.propertyValue) fields[MZ_PROPVAL] = String(b.propertyValue);
+    if (b.deposit)       fields[MZ_DEPOSIT] = String(b.deposit);
+    if (b.scheme)        fields[MZ_SCHEME]  = String(b.scheme);
+    if (b.salary !== undefined && b.salary !== '') fields[MZ_SALARY] = Number(b.salary);
+    if (b.paydayLoans)   fields[MZ_PAYDAY]  = String(b.paydayLoans);
+    if (b.term !== undefined && b.term !== '') fields[MZ_TERM] = Number(b.term);
+
+    if (!fields[MZ_NAME]) return res.status(400).json({ error: 'Name is required.' });
+
+    const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields }], typecast: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true, lead: muttuoRecordToLead(d.records[0]) });
+  } catch (err) {
+    console.error('Muttuo lead create error:', err);
+    res.status(500).json({ error: 'Failed to create lead.' });
+  }
+});
+
+// PATCH /api/muttuo-leads/:id — update an existing lead
+app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const fields = {};
+    if (b.name !== undefined)          fields[MZ_NAME]    = String(b.name);
+    if (b.phone !== undefined)         fields[MZ_PHONE]   = String(b.phone);
+    if (b.email !== undefined)         fields[MZ_EMAIL]   = String(b.email);
+    if (b.notes !== undefined)         fields[MZ_NOTES]   = String(b.notes);
+    if (b.status !== undefined)        fields[MZ_STATUS]  = String(b.status);
+    if (b.propertyValue !== undefined) fields[MZ_PROPVAL] = String(b.propertyValue);
+    if (b.deposit !== undefined)       fields[MZ_DEPOSIT] = String(b.deposit);
+    if (b.scheme !== undefined)        fields[MZ_SCHEME]  = String(b.scheme);
+    if (b.salary !== undefined)        fields[MZ_SALARY]  = b.salary === '' ? null : Number(b.salary);
+    if (b.paydayLoans !== undefined)   fields[MZ_PAYDAY]  = String(b.paydayLoans);
+    if (b.term !== undefined)          fields[MZ_TERM]    = b.term === '' ? null : Number(b.term);
+
+    const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id: req.params.id, fields }], typecast: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true, lead: muttuoRecordToLead(d.records[0]) });
+  } catch (err) {
+    console.error('Muttuo lead update error:', err);
+    res.status(500).json({ error: 'Failed to update lead.' });
+  }
+});
 
 
 // ── Serve static assets (only after auth) ───────────────────
