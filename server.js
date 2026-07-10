@@ -3320,9 +3320,13 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       const adv = (r.fields['Adviser'] || '').trim();
       if (adv) counts[adv] = (counts[adv] || 0) + 1;
     });
+    let _lbRank = 0, _lbPrevCount = null;
     const allRanked = Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, count], i) => ({ rank: i + 1, name, count }));
+      .map(([name, count], i) => {
+        if (count !== _lbPrevCount) { _lbRank = i + 1; _lbPrevCount = count; }
+        return { rank: _lbRank, name, count };
+      });
     const leaderboard = allRanked.slice(0, 30);
     // Always include current user even if outside top 30
     const myLbEntry = allRanked.find(e => e.name.toLowerCase().trim() === safeName);
@@ -3341,10 +3345,14 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
         else if (nps <= 6)  npsData[adv].d++;
       }
     });
+    let _npsRank = 0, _npsPrevScore = null;
     const allNpsRanked = Object.entries(npsData)
       .map(([name, d]) => ({ name, nps: Math.round((d.p - d.d) / d.total * 100), count: d.total }))
       .sort((a, b) => b.nps - a.nps || b.count - a.count)
-      .map((e, i) => ({ rank: i + 1, name: e.name, nps: e.nps, count: e.count }));
+      .map((e, i) => {
+        if (e.nps !== _npsPrevScore) { _npsRank = i + 1; _npsPrevScore = e.nps; }
+        return { rank: _npsRank, name: e.name, nps: e.nps, count: e.count };
+      });
     const leaderboardNps = allNpsRanked.slice(0, 30);
     const myNpsEntry = allNpsRanked.find(e => e.name.toLowerCase().trim() === safeName);
     if (myNpsEntry && myNpsEntry.rank > 30) leaderboardNps.push(myNpsEntry);
