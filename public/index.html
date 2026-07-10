@@ -400,7 +400,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <h2>MI Area</h2>
     <a href="#" id="mz-nav-data"       onclick="mzShowPage('data',this);return false;">Data</a>
   </div>
-  <!-- LeadGen Leads sidebar -->
+  <!-- Leads sidebar -->
   <div id="sidebar-leadgen" style="display:none">
     <h2 style="margin-top: 8px;">Lead Manager</h2>
     <a href="#" id="lg-nav-all"        class="active" onclick="lgFilterBy('all',this);return false;">All Leads</a>
@@ -4065,8 +4065,8 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <div id="lg-leads-page" style="padding:32px 32px 0;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
         <div>
-          <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">LeadGen Leads</h2>
-          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">LeadGen leads — add, track, and update leads through the pipeline.</p>
+          <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Leads</h2>
+          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Leads — add, track, and update leads through the pipeline.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
           <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
@@ -4103,7 +4103,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
         </div>
       </div>
       <div id="lg-data-print-header" style="display:none;margin-bottom:20px;">
-        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">LeadGen Leads — Data Report</h2>
+        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Leads — Data Report</h2>
         <p id="lg-data-print-meta" style="color:#6b7c8f;font-size:12.5px;margin:0;"></p>
       </div>
       <div id="lg-data-content" style="padding-bottom:32px;"></div>
@@ -4709,8 +4709,8 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
                 <input id="uf-leadgen" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">LeadGen Leads access</div>
-                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and work the LeadGen Leads tab</div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Leads access</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and work the Leads tab</div>
                 </div>
               </label>
             </div>
@@ -7662,7 +7662,7 @@ var _currentUser = null;
       var mzbtn = document.getElementById('tab-btn-muttuo');
       if (mzbtn) mzbtn.style.display = '';
     }
-    // LeadGen Leads tab — only users with the per-user LeadGen toggle on (and admins)
+    // Leads tab — only users with the per-user LeadGen toggle on (and admins)
     if (user && (user.isAdmin || user.isLeadGen)) {
       var lgbtn = document.getElementById('tab-btn-leadgen');
       if (lgbtn) lgbtn.style.display = '';
@@ -13567,7 +13567,7 @@ function lgAdviserFilterHtml() {
   return '<select onchange="lgSetAdviserFilter(this.value)" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
 function lgUpdateLeadsTitle() {
-  var titles = { all: ['LeadGen Leads', 'LeadGen leads — add, track, and update leads through the pipeline.'],
+  var titles = { all: ['Leads', 'Leads — add, track, and update leads through the pipeline.'],
     mine:     ['My Leads', 'Leads assigned to you.'],
     golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
     today:    ['Today', 'Leads created today.'],
@@ -13576,7 +13576,7 @@ function lgUpdateLeadsTitle() {
   var titleEl = document.getElementById('lg-leads-title');
   var subEl   = document.getElementById('lg-leads-subtitle');
   if (_lgAdviserFilter) {
-    if (titleEl) titleEl.textContent = _lgAdviserFilter + '’s LeadGen Leads';
+    if (titleEl) titleEl.textContent = _lgAdviserFilter + '’s Leads';
     if (subEl)   subEl.textContent   = t[1];
   } else {
     if (titleEl) titleEl.textContent = t[0];
@@ -13690,7 +13690,7 @@ function lgUpdateAdviser(id, adviser) {
     if (!d || !d.success) {
       if (lead) lead.adviser = previousAdviser;
       lgRenderLeads();
-      alert('Could not save the adviser change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the LeadGen Leads base.');
+      alert('Could not save the adviser change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the Leads base.');
     }
   }).catch(function() {
     if (lead) lead.adviser = previousAdviser;
@@ -13995,7 +13995,7 @@ function lgUpdateStatus(id, status) {
     if (!d || !d.success) {
       if (lead) lead.status = previousStatus;
       lgRenderLeads();
-      alert('Could not save the status change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the LeadGen Leads base.');
+      alert('Could not save the status change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the Leads base.');
       return;
     }
     if (lead && d.lead) { lead.calledAt = d.lead.calledAt; }

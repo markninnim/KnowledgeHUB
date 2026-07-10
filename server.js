@@ -58,7 +58,7 @@ const MZ_MORTVAL   = 'fldKHudKVQNImv5bc'; // Mortgage Sale Value
 const MZ_INSVAL    = 'fld9U4XjSLao5w1Ny'; // Insurance Sale Value
 const MZ_FEEVAL    = 'fldOFq58PkIumTXcy'; // Broker Fee Value
 
-// LeadGen Leads — separate opt-in leads base (per-user toggle, not business-gated)
+// Leads — separate opt-in leads base (per-user toggle, not business-gated; internal codename "LeadGen")
 const LG_BASE      = 'appCc3fY3cadqXzf0';
 const LG_TABLE     = 'tblcr4ajTDAR7zbGz';
 const LG_NAME      = 'fldOm3q9hvKWpTWZG';
