@@ -76,6 +76,16 @@ html { height: 100%; }
 #pz-broker-panel a:hover { background:#f5f7fa; color:var(--brand-navy); }
 #pz-broker-panel a.active { background:#eef3f8; color:var(--brand-navy); font-weight:700; border-left-color:var(--brand-navy); }
 .main { margin-left: 220px; margin-top: 60px; padding: 40px; min-height: calc(100vh - 60px); }
+/* Muttuo Data dashboard — PDF export via browser print dialog (Save as PDF) */
+body.mz-printing-data .topbar,
+body.mz-printing-data .tab-nav,
+body.mz-printing-data .sidebar,
+body.mz-printing-data .main > div:not(#tab-muttuo),
+body.mz-printing-data #tab-muttuo > div:not(#mz-data-page),
+body.mz-printing-data #mz-data-controls { display: none !important; }
+body.mz-printing-data .main { margin-left: 0 !important; margin-top: 0 !important; }
+body.mz-printing-data #mz-data-page { display: block !important; padding: 0 !important; }
+body.mz-printing-data #mz-data-print-header { display: block !important; }
 .hero { background: var(--brand-navy); color: #fff; padding: 40px; border-radius: 10px; margin-bottom: 32px; }
 .hero h1 { font-size: 28px; margin: 8px 0; }
 .hero p { color: rgba(255,255,255,.7); }
@@ -4013,7 +4023,7 @@ html { height: 100%; }
       <div id="mz-content" style="display:none;padding-bottom:32px;"></div>
     </div>
     <div id="mz-data-page" style="display:none;padding:32px 32px 0;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+      <div id="mz-data-controls" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
         <div>
           <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">MI overview across the leads pipeline.</p>
@@ -4027,7 +4037,12 @@ html { height: 100%; }
             <input id="mz-data-to" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
           </label>
           <button onclick="mzRenderData()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
+          <button onclick="mzExportPdf()" style="height:100%;box-sizing:border-box;background:#fff;border:1px solid #d1d5db;outline:none;color:var(--brand-navy);padding:0 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#8681; Export PDF</button>
         </div>
+      </div>
+      <div id="mz-data-print-header" style="display:none;margin-bottom:20px;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Muttuo — Data Report</h2>
+        <p id="mz-data-print-meta" style="color:#6b7c8f;font-size:12.5px;margin:0;"></p>
       </div>
       <div id="mz-data-content" style="padding-bottom:32px;"></div>
     </div>
@@ -13022,11 +13037,35 @@ function mzFmtHrs(ms) {
   var hrs = Math.floor(mins / 60), rem = mins % 60;
   return hrs + 'h ' + rem + 'm';
 }
-function mzStatCard(label, value) {
+function mzStatCard(label, value, accent, sub) {
   return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
     + '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>'
-    + '<div style="font-size:22px;font-weight:800;color:var(--brand-navy);line-height:1.2;">' + value + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:' + (accent || 'var(--brand-navy)') + ';line-height:1.2;">' + value + '</div>'
+    + (sub ? '<div style="font-size:12px;color:#6b7c8f;margin-top:4px;">' + sub + '</div>' : '')
     + '</div>';
+}
+function mzSectionTitle(text) {
+  return '<div style="font-size:12px;font-weight:700;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;margin:28px 0 12px;">' + text + '</div>';
+}
+function mzHasSale(lead) {
+  return !!(lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue);
+}
+function mzSumBy(arr, fn) {
+  return arr.reduce(function(sum, item) { return sum + (fn(item) || 0); }, 0);
+}
+// Simple horizontal funnel bar chart, drawn as inline SVG (no external chart library).
+function mzFunnelChartSvg(stages) {
+  var w = 640, barH = 34, gap = 18, labelW = 190, chartW = w - labelW - 70;
+  var h = stages.length * (barH + gap) + gap;
+  var bars = stages.map(function(s, i) {
+    var y = gap + i * (barH + gap);
+    var barW = Math.max(4, (s.pct / 100) * chartW);
+    return '<text x="0" y="' + (y + barH / 2 + 4) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="700" font-size="12" fill="#6b7c8f">' + escHtml(s.label) + '</text>'
+      + '<rect x="' + labelW + '" y="' + y + '" width="' + chartW + '" height="' + barH + '" rx="6" fill="#f5f7fa"/>'
+      + '<rect x="' + labelW + '" y="' + y + '" width="' + barW + '" height="' + barH + '" rx="6" fill="' + s.color + '"/>'
+      + '<text x="' + (labelW + chartW + 12) + '" y="' + (y + barH / 2 + 4) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="13" fill="var(--brand-navy)">' + s.pct + '%</text>';
+  }).join('');
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:640px;height:auto;">' + bars + '</svg>';
 }
 var _mzDataUser = ''; // '' = all users
 function mzDataUserSelectHtml() {
@@ -13059,8 +13098,11 @@ function mzRenderData() {
   var callsAttempted = leads.filter(function(l) { return l.status !== 'To Call'; });
   var appointments    = leads.filter(function(l) { return l.status === 'Appointment Booked'; });
   var noAnswer         = leads.filter(function(l) { return l.status === 'No Answer'; });
-  var callToDiscussionRate     = callsAttempted.length ? Math.round(callsAttempted.length / total * 100) : 0;
+  var sales            = leads.filter(mzHasSale);
+  var pctCalled                = total ? Math.round(callsAttempted.length / total * 100) : 0;
+  var callToDiscussionRate     = total ? Math.round(callsAttempted.length / total * 100) : 0;
   var discussionToApptRate     = callsAttempted.length ? Math.round(appointments.length / callsAttempted.length * 100) : 0;
+  var apptToSaleRate           = appointments.length ? Math.round(sales.length / appointments.length * 100) : 0;
 
   var propVals = leads.map(function(l) { return mzParseCurrency(l.propertyValue); }).filter(function(n) { return n !== null; });
   var depositVals = leads.map(function(l) { return mzParseCurrency(l.deposit); }).filter(function(n) { return n !== null; });
@@ -13076,16 +13118,57 @@ function mzRenderData() {
   var statusCounts = { 'To Call': 0, 'No Answer': 0, 'Appointment Booked': 0 };
   leads.forEach(function(l) { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
 
-  var cards = [
+  // ── Revenue ──
+  var mortgageIncome  = mzSumBy(leads, function(l) { return l.mortgageSaleValue; });
+  var insuranceIncome = mzSumBy(leads, function(l) { return l.insuranceSaleValue; });
+  var brokerIncome    = mzSumBy(leads, function(l) { return l.brokerFeeValue; });
+  var totalIncome     = mortgageIncome + insuranceIncome + brokerIncome;
+
+  // ── Top performers (only meaningful across all users, but still computed within the filtered leads) ──
+  var byAdviser = {};
+  leads.forEach(function(l) {
+    if (!l.adviser) return;
+    if (!byAdviser[l.adviser]) byAdviser[l.adviser] = { income: 0, appointments: 0 };
+    byAdviser[l.adviser].income += (l.mortgageSaleValue || 0) + (l.insuranceSaleValue || 0) + (l.brokerFeeValue || 0);
+    if (l.status === 'Appointment Booked') byAdviser[l.adviser].appointments++;
+  });
+  var advisers = Object.keys(byAdviser);
+  var topSeller = advisers.length ? advisers.reduce(function(best, name) {
+    return (!best || byAdviser[name].income > byAdviser[best].income) ? name : best;
+  }, null) : null;
+  var topAppt = advisers.length ? advisers.reduce(function(best, name) {
+    return (!best || byAdviser[name].appointments > byAdviser[best].appointments) ? name : best;
+  }, null) : null;
+
+  var pipelineCards = [
     mzStatCard('Number of Leads', total),
+    mzStatCard('% of Leads Called', pctCalled + '%'),
     mzStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
     mzStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
+    mzStatCard('Appointment &rarr; Sale', apptToSaleRate + '%')
+  ].join('');
+
+  var callCards = [
     mzStatCard('Avg. Time to Call', avgCall !== null ? mzFmtHrs(avgCall) : '—'),
     mzStatCard('Quickest Call', quickestCall !== null ? mzFmtHrs(quickestCall) : '—'),
     mzStatCard('Slowest Call', slowestCall !== null ? mzFmtHrs(slowestCall) : '—'),
     mzStatCard('Avg. Property Value', propVals.length ? acFmtCurrency(Math.round(mzAvg(propVals))) : '—'),
     mzStatCard('Avg. Deposit', depositVals.length ? acFmtCurrency(Math.round(mzAvg(depositVals))) : '—'),
     mzStatCard('Avg. Salary', salaryVals.length ? acFmtCurrency(Math.round(mzAvg(salaryVals))) : '—')
+  ].join('');
+
+  var revenueCards = [
+    mzStatCard('Mortgage Income', acFmtCurrency(mortgageIncome)),
+    mzStatCard('Insurance Income', acFmtCurrency(insuranceIncome)),
+    mzStatCard('Broker Income', acFmtCurrency(brokerIncome)),
+    mzStatCard('Total Income', acFmtCurrency(totalIncome), 'var(--brand-orange)')
+  ].join('');
+
+  var topCards = [
+    mzStatCard('Top Seller', topSeller ? escHtml(topSeller) : '—', 'var(--brand-orange)',
+      topSeller ? acFmtCurrency(byAdviser[topSeller].income) : ''),
+    mzStatCard('Top Appointment Maker', topAppt ? escHtml(topAppt) : '—', 'var(--brand-orange)',
+      topAppt ? (byAdviser[topAppt].appointments + ' appointment' + (byAdviser[topAppt].appointments === 1 ? '' : 's')) : '')
   ].join('');
 
   var statusRows = Object.keys(statusCounts).map(function(s) {
@@ -13095,12 +13178,46 @@ function mzRenderData() {
       + '</div>';
   }).join('');
 
-  contentEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;">' + cards + '</div>'
-    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;max-width:340px;">'
-      + '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Status Summary</div>'
-      + statusRows
-    + '</div>'
-    + '<p style="color:#6b7c8f;font-size:11.5px;margin:16px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment Booked" rather than "No Answer".</p>';
+  var funnelChart = mzFunnelChartSvg([
+    { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
+    { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#22c55e' }
+  ]);
+
+  contentEl.innerHTML =
+      mzSectionTitle('Pipeline')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + pipelineCards + '</div>'
+
+    + mzSectionTitle('Conversion Funnel')
+    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px 24px;">' + funnelChart + '</div>'
+
+    + mzSectionTitle('Call & Deal Averages')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + callCards + '</div>'
+
+    + mzSectionTitle('Revenue Summary')
+    + '<div style="display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:14px;">' + revenueCards + '</div>'
+
+    + mzSectionTitle('Top Performers')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">' + topCards + '</div>'
+
+    + mzSectionTitle('Status Summary')
+    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;max-width:340px;">' + statusRows + '</div>'
+
+    + '<p style="color:#6b7c8f;font-size:11.5px;margin:20px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment Booked" rather than "No Answer". Appointment &rarr; Sale is the share of "Appointment Booked" leads with a recorded Mortgage, Insurance, or Broker Fee value.</p>';
+
+  // Keep the print-only header's date range / user filter in sync for the PDF export.
+  var metaEl = document.getElementById('mz-data-print-meta');
+  if (metaEl) {
+    var rangeText = (from || to) ? ('From ' + (from || 'the start') + ' to ' + (to || 'today')) : 'All time';
+    var userText = _mzDataUser ? (' — ' + _mzDataUser) : ' — All Users';
+    metaEl.textContent = rangeText + userText + ' — generated ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+}
+function mzExportPdf() {
+  document.body.classList.add('mz-printing-data');
+  var cleanup = function() { document.body.classList.remove('mz-printing-data'); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(function() { window.print(); }, 50);
 }
 function mzUpdateStatus(id, status) {
   var lead = _mzLeads.find(function(l) { return l.id === id; });
