@@ -146,7 +146,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
 .thumb canvas { max-height:104px; max-width:100%; }
 .thumb .type-badge { color:#fff; width:40px; height:40px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
 .tab-nav { display:flex; align-items:center; gap:4px; margin-left:28px; }
-.tab-btn { background:none; border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:400; color:#6b7c8f; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
+.tab-btn { background:none; border:1px solid transparent; height:36px; box-sizing:border-box; padding:0 16px; border-radius:20px; font-size:13px; font-weight:400; color:#6b7c8f; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; display:inline-flex; align-items:center; }
 .tab-btn:hover { background:#f5f7fa; color:var(--brand-navy); }
 .tab-btn.active { background:var(--brand-navy); color:#fff; }
 .sv-stat-card { background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px 24px; }
@@ -4171,11 +4171,6 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Salary</label><input id="lg-salary" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Preferred Term (yrs)</label><input id="lg-term" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
-      </div>
-      <div style="display:flex;gap:12px;">
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Scheme</label><select id="lg-scheme" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Payday Loans</label><select id="lg-payday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="lg-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment Booked</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
@@ -13720,8 +13715,7 @@ function lgRenderLeads() {
           + (lead.phone ? '<div>' + escHtml(lead.phone) + '</div>' : '')
           + (lead.email ? '<div>' + escHtml(lead.email) + '</div>' : '')
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
-          + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
-          + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
+          + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + '</div>'
           + (lead.source ? '<div>Source: ' + escHtml(lead.source) + '</div>' : '')
           + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
           + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
@@ -13748,9 +13742,6 @@ function lgRenderLeads() {
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.source) + '</td>'
       + '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
@@ -13758,7 +13749,7 @@ function lgRenderLeads() {
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Source','Adviser','Status'].map(function(h) {
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source','Adviser','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -14029,9 +14020,6 @@ function lgOpenModal(id) {
   document.getElementById('lg-propval').value = lead ? lead.propertyValue : '';
   document.getElementById('lg-deposit').value = lead ? lead.deposit : '';
   document.getElementById('lg-salary').value  = lead ? (lead.salary || '') : '';
-  document.getElementById('lg-term').value    = lead ? (lead.term || '') : '';
-  document.getElementById('lg-scheme').value  = lead ? lead.scheme  : 'No';
-  document.getElementById('lg-payday').value  = lead ? lead.paydayLoans : 'No';
   document.getElementById('lg-status').value  = lead ? lead.status  : 'To Call';
   var adviserSel = document.getElementById('lg-adviser');
   var currentAdviser = lead ? lead.adviser : '';
@@ -14063,9 +14051,6 @@ function lgSaveLead() {
     propertyValue: document.getElementById('lg-propval').value.trim(),
     deposit:       document.getElementById('lg-deposit').value.trim(),
     salary:        document.getElementById('lg-salary').value,
-    term:          document.getElementById('lg-term').value,
-    scheme:        document.getElementById('lg-scheme').value,
-    paydayLoans:   document.getElementById('lg-payday').value,
     status:        document.getElementById('lg-status').value,
     adviser:       document.getElementById('lg-adviser').value.trim(),
     followUp:      document.getElementById('lg-followup').value,

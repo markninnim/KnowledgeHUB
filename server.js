@@ -68,10 +68,7 @@ const LG_NOTES     = 'fldM7NU4xx9ZRMJOE';
 const LG_STATUS    = 'fldORaiZsihv8usxG';
 const LG_PROPVAL   = 'fld5pYM5ZPoq65Qha';
 const LG_DEPOSIT   = 'fldDskyHnJToPVMXr';
-const LG_SCHEME    = 'fldXF0SSBBKJnNyfR';
 const LG_SALARY    = 'fldqAWwktzw7IXlLj';
-const LG_PAYDAY    = 'fld5sjQq3OUrzJ0tL';
-const LG_TERM      = 'fldOW9nnAAskOGPf2';
 const LG_ADVISER   = 'fldizBOkmRHDrvewE';
 const LG_FOLLOWUP  = 'fldiG17d2OGZzXYmk';
 const LG_CALLEDAT  = 'fldtMWUhE0be4Ts2Q';
@@ -707,10 +704,7 @@ function leadGenRecordToLead(record) {
     status:       selectName(f[LG_STATUS]) || 'To Call',
     propertyValue:f[LG_PROPVAL] || '',
     deposit:      f[LG_DEPOSIT] || '',
-    scheme:       selectName(f[LG_SCHEME]) || 'No',
     salary:       f[LG_SALARY]  || null,
-    paydayLoans:  selectName(f[LG_PAYDAY]) || 'No',
-    term:         f[LG_TERM]    || null,
     adviser:      f[LG_ADVISER] || '',
     followUp:     f[LG_FOLLOWUP] || null,
     calledAt:     f[LG_CALLEDAT] || null,
@@ -782,10 +776,7 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     if (b.status)        fields[LG_STATUS]  = String(b.status);
     if (b.propertyValue) fields[LG_PROPVAL] = String(b.propertyValue);
     if (b.deposit)       fields[LG_DEPOSIT] = String(b.deposit);
-    if (b.scheme)        fields[LG_SCHEME]  = String(b.scheme);
     if (b.salary !== undefined && b.salary !== '') fields[LG_SALARY] = Number(b.salary);
-    if (b.paydayLoans)   fields[LG_PAYDAY]  = String(b.paydayLoans);
-    if (b.term !== undefined && b.term !== '') fields[LG_TERM] = Number(b.term);
     if (b.adviser)       fields[LG_ADVISER] = String(b.adviser);
     if (b.followUp)      fields[LG_FOLLOWUP] = String(b.followUp);
     if (b.mortgageSaleValue !== undefined && b.mortgageSaleValue !== '')   fields[LG_MORTVAL] = Number(b.mortgageSaleValue);
@@ -821,10 +812,7 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     if (b.status !== undefined)        fields[LG_STATUS]  = String(b.status);
     if (b.propertyValue !== undefined) fields[LG_PROPVAL] = String(b.propertyValue);
     if (b.deposit !== undefined)       fields[LG_DEPOSIT] = String(b.deposit);
-    if (b.scheme !== undefined)        fields[LG_SCHEME]  = String(b.scheme);
     if (b.salary !== undefined)        fields[LG_SALARY]  = b.salary === '' ? null : Number(b.salary);
-    if (b.paydayLoans !== undefined)   fields[LG_PAYDAY]  = String(b.paydayLoans);
-    if (b.term !== undefined)          fields[LG_TERM]    = b.term === '' ? null : Number(b.term);
     if (b.adviser !== undefined)       fields[LG_ADVISER] = String(b.adviser);
     if (b.followUp !== undefined)      fields[LG_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
     if (b.mortgageSaleValue !== undefined)  fields[LG_MORTVAL] = b.mortgageSaleValue === '' ? null : Number(b.mortgageSaleValue);
