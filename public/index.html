@@ -379,8 +379,9 @@ html { height: 100%; }
   </div>
   <!-- Muttuo sidebar -->
   <div id="sidebar-muttuo" style="display:none">
-    <a href="#" id="mz-nav-mine" onclick="mzFilterBy('mine',this);return false;" style="display:block;margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brand-orange);padding:0 20px 8px;text-decoration:none;">My Leads</a>
+    <h2 style="margin-top: 8px;">Lead Manager</h2>
     <a href="#" id="mz-nav-all"        class="active" onclick="mzFilterBy('all',this);return false;">All Leads</a>
+    <a href="#" id="mz-nav-mine"       onclick="mzFilterBy('mine',this);return false;">My Leads</a>
     <a href="#" id="mz-nav-golden"     onclick="mzFilterBy('golden',this);return false;">Golden Hour</a>
     <a href="#" id="mz-nav-today"      onclick="mzFilterBy('today',this);return false;">Today</a>
     <a href="#" id="mz-nav-followup"   onclick="mzFilterBy('followup',this);return false;">Follow Up</a>
@@ -6772,6 +6773,12 @@ function getVideoThumb(url) {
 function makeLvThumb(title) {
   var w = 400, h = 225;
   var sc = w / 1920;
+  // CSS variables aren't resolvable inside an SVG served as a data-URI <img> src
+  // (it's an external image resource, not part of the document's render tree),
+  // so resolve the current brand colours to literal hex here instead.
+  var rootStyle = getComputedStyle(document.documentElement);
+  var navyColor   = (rootStyle.getPropertyValue('--brand-navy')   || '#003768').trim() || '#003768';
+  var orangeColor = (rootStyle.getPropertyValue('--brand-orange') || '#fcb034').trim() || '#fcb034';
   // Hero triangles flipped to top-right
   var oA = (1445.242*sc).toFixed(1) + ',0';
   var oB = w + ',0';
@@ -6793,15 +6800,15 @@ function makeLvThumb(title) {
   var lineH = 22;
   var titleY = h - 22 - (lines.length - 1) * lineH;
   var textEls = lines.map(function(l, i) {
-    return '<text x="22" y="' + (titleY + i * lineH) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="15" fill="var(--brand-navy)">' +
+    return '<text x="22" y="' + (titleY + i * lineH) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="15" fill="' + navyColor + '">' +
       l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
     '</text>';
   }).join('');
 
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
     '<rect width="' + w + '" height="' + h + '" fill="#ffffff"/>' +
-    '<polygon points="' + oA + ' ' + oB + ' ' + oC + '" fill="var(--brand-orange)"/>' +
-    '<polygon points="' + bA + ' ' + bB + ' ' + bC + '" fill="var(--brand-navy)"/>' +
+    '<polygon points="' + oA + ' ' + oB + ' ' + oC + '" fill="' + orangeColor + '"/>' +
+    '<polygon points="' + bA + ' ' + bB + ' ' + bC + '" fill="' + navyColor + '"/>' +
     textEls +
   '</svg>';
 
