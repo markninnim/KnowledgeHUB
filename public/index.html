@@ -15,6 +15,7 @@
 :root {
   --brand-navy: #003768; /* overridden per-user by business branding, see initUser() */
   --brand-navy-rgb: 0,55,104; /* rgb triple of --brand-navy, kept in sync in initUser() */
+  --sidebar-label-color: #fcb034; /* sidebar section headers (e.g. OPPORTUNITIES); overridden per-user if it clashes with the brand colour */
 }
 @font-face {
   font-family: 'Plus Jakarta Sans';
@@ -41,7 +42,7 @@ html { height: 100%; }
 .topbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; border-bottom: 1px solid #d1d5db; display: flex; align-items: center; padding: 0 24px; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
 .topbar img { height: 36px; object-fit: contain; }
 .sidebar { width: 220px; background: var(--brand-navy); position: fixed; top: 60px; bottom: 0; padding: 24px 0; overflow-y: auto; }
-.sidebar h2 { color: #fcb034; font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+.sidebar h2 { color: var(--sidebar-label-color); font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
 .ov-card { background:#fff; border:1px solid #d1d5db; border-radius:10px; padding:18px 20px; cursor:pointer; transition:box-shadow .15s,border-color .15s; position:relative; overflow:hidden; }
 .ov-card:hover { box-shadow:0 4px 14px rgba(var(--brand-navy-rgb),.1); }
 .ov-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(var(--brand-navy-rgb),0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23003768' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/22px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
@@ -7319,6 +7320,11 @@ var BUSINESS_BRAND_COLORS = {
   'fitch and fitch':          '#191140',
   'mortgage heroes':          '#9fbd1c'
 };
+// Sidebar section-header colour (e.g. OPPORTUNITIES) — default orange clashes
+// against some brand colours, so override per-business here where needed.
+var BUSINESS_SIDEBAR_LABEL_COLORS = {
+  'mortgage heroes': '#6b7c8f' // FPG dark grey — orange clashes with the lime-green brand colour
+};
 function hexToRgbTriple(hex) {
   var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || '');
   if (!m) return null;
@@ -7328,8 +7334,10 @@ function applyBrandColorForUser(user) {
   var business = ((user && user.business) || '').trim().toLowerCase();
   var color = BUSINESS_BRAND_COLORS[business] || '#003768';
   var rgb = hexToRgbTriple(color) || '0,55,104';
+  var labelColor = BUSINESS_SIDEBAR_LABEL_COLORS[business] || '#fcb034';
   document.documentElement.style.setProperty('--brand-navy', color);
   document.documentElement.style.setProperty('--brand-navy-rgb', rgb);
+  document.documentElement.style.setProperty('--sidebar-label-color', labelColor);
 }
 
 // ── Init: load current user, show admin button if admin ──────
