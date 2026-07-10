@@ -4025,7 +4025,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <div id="mz-data-page" style="display:none;padding:32px 32px 0;">
       <div id="mz-data-controls" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
         <div>
-          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
+          <h2 id="mz-data-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">MI overview across the leads pipeline.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
@@ -12954,12 +12954,23 @@ function mzAdviserSelectHtml(lead, idPrefix) {
 }
 function mzUpdateAdviser(id, adviser) {
   var lead = _mzLeads.find(function(l) { return l.id === id; });
-  if (lead) lead.adviser = adviser;
+  var previousAdviser = lead ? lead.adviser : null;
+  if (lead) lead.adviser = adviser; // optimistic — reverted below if the save actually fails
   fetch('/api/muttuo-leads/' + id, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ adviser: adviser })
-  }).then(function(r) { return r.json(); }).catch(function() {});
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.success) {
+      if (lead) lead.adviser = previousAdviser;
+      mzRenderLeads();
+      alert('Could not save the adviser change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the Muttuo base.');
+    }
+  }).catch(function() {
+    if (lead) lead.adviser = previousAdviser;
+    mzRenderLeads();
+    alert('Could not save the adviser change — network error. Please try again.');
+  });
 }
 function mzRenderLeads() {
   var contentEl = document.getElementById('mz-content');
@@ -13078,6 +13089,8 @@ function mzRenderData() {
   var contentEl = document.getElementById('mz-data-content');
   var userWrap = document.getElementById('mz-data-user-wrap');
   if (userWrap) userWrap.innerHTML = mzDataUserSelectHtml();
+  var titleEl = document.getElementById('mz-data-title');
+  if (titleEl) titleEl.textContent = _mzDataUser ? (_mzDataUser + '’s Data') : 'Data';
   var from = document.getElementById('mz-data-from').value;
   var to   = document.getElementById('mz-data-to').value;
   var leads = _mzLeads.filter(function(l) {
@@ -13221,12 +13234,25 @@ function mzExportPdf() {
 }
 function mzUpdateStatus(id, status) {
   var lead = _mzLeads.find(function(l) { return l.id === id; });
-  if (lead) lead.status = status;
+  var previousStatus = lead ? lead.status : null;
+  if (lead) lead.status = status; // optimistic — reverted below if the save actually fails
   fetch('/api/muttuo-leads/' + id, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: status })
-  }).then(function(r) { return r.json(); }).catch(function() {});
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.success) {
+      if (lead) lead.status = previousStatus;
+      mzRenderLeads();
+      alert('Could not save the status change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the Muttuo base.');
+      return;
+    }
+    if (lead && d.lead) { lead.calledAt = d.lead.calledAt; }
+  }).catch(function() {
+    if (lead) lead.status = previousStatus;
+    mzRenderLeads();
+    alert('Could not save the status change — network error. Please try again.');
+  });
 }
 function mzOpenModal(id) {
   var lead = id ? _mzLeads.find(function(l) { return l.id === id; }) : null;
