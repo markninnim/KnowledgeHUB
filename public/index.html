@@ -12836,6 +12836,9 @@ function mzFilteredLeads() {
   if (_mzFilter === 'today')    leads = leads.filter(function(l) { return mzIsToday(l.createdTime); });
   if (_mzFilter === 'followup') leads = leads.filter(function(l) { return l.followUp === mzTodayStr(); });
   if (_mzAdviserFilter)         leads = leads.filter(function(l) { return l.adviser === _mzAdviserFilter; });
+  leads = leads.slice().sort(function(a, b) {
+    return new Date(b.createdTime || 0) - new Date(a.createdTime || 0);
+  });
   return leads;
 }
 function mzSetAdviserFilter(name) {
