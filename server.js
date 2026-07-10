@@ -105,32 +105,7 @@ const QUICK_LINKS_ORDER_PATH = path.join(__dirname, 'quick-links-order.json');
 let _quickLinksOrder = {}; // { "email": ["menu","marketing",...] }
 try { _quickLinksOrder = JSON.parse(fs.readFileSync(QUICK_LINKS_ORDER_PATH, 'utf8')); } catch(_) {}
 function saveQuickLinksOrder() { fs.writeFileSync(QUICK_LINKS_ORDER_PATH, JSON.stringify(_quickLinksOrder, null, 2)); }
-
-app.get('/api/quick-links', requireAuth, (req, res) => {
-  try {
-    const email = (req.session.user && req.session.user.email || '').toLowerCase();
-    res.json({ order: _quickLinksOrder[email] || null });
-  } catch (err) {
-    console.error('Quick links load error:', err);
-    res.status(500).json({ error: 'Failed to load.' });
-  }
-});
-
-app.post('/api/quick-links', requireAuth, (req, res) => {
-  const email = (req.session.user && req.session.user.email || '').toLowerCase();
-  const { order } = req.body || {};
-  if (!Array.isArray(order) || !order.every(v => typeof v === 'string')) {
-    return res.status(400).json({ error: 'order must be an array of strings' });
-  }
-  try {
-    _quickLinksOrder[email] = order;
-    saveQuickLinksOrder();
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Quick links save error:', err);
-    res.status(500).json({ error: 'Failed to save.' });
-  }
-});
+// Routes for /api/quick-links are registered further down, after session middleware is set up.
 
 // ── Login attempt tracking (in-memory, resets on restart) ────────
 // { "email@x.com": { count: 3, lockedUntil: <ms timestamp> } }
@@ -407,6 +382,32 @@ app.use('/api/', (req, res, next) => {
     }
   }
   next();
+});
+
+app.get('/api/quick-links', requireAuth, (req, res) => {
+  try {
+    const email = (req.session.user && req.session.user.email || '').toLowerCase();
+    res.json({ order: _quickLinksOrder[email] || null });
+  } catch (err) {
+    console.error('Quick links load error:', err);
+    res.status(500).json({ error: 'Failed to load.' });
+  }
+});
+
+app.post('/api/quick-links', requireAuth, (req, res) => {
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  const { order } = req.body || {};
+  if (!Array.isArray(order) || !order.every(v => typeof v === 'string')) {
+    return res.status(400).json({ error: 'order must be an array of strings' });
+  }
+  try {
+    _quickLinksOrder[email] = order;
+    saveQuickLinksOrder();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Quick links save error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
 });
 
 // ── Auth guards ──────────────────────────────────────────────
