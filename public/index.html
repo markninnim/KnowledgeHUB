@@ -4174,7 +4174,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Salary</label><input id="lg-salary" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="lg-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment Booked</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="lg-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment</option><option>Signed Up</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="lg-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
@@ -13611,8 +13611,9 @@ function lgShowPage(page) {
   }
 }
 function lgStatusPillStyle(status) {
-  if (status === 'Appointment Booked') return 'background:#dcfce7;color:#166534;';
-  if (status === 'No Answer')          return 'background:#fef2f2;color:#b91c1c;';
+  if (status === 'Signed Up')   return 'background:#dcfce7;color:#166534;';
+  if (status === 'Appointment') return 'background:#eef2ff;color:#4338ca;';
+  if (status === 'No Answer')   return 'background:#fef2f2;color:#b91c1c;';
   return 'background:#dbeafe;color:var(--brand-navy);'; // To Call
 }
 function loadLeadGen() {
@@ -13702,7 +13703,7 @@ function lgSetView(view) {
 }
 function lgStatusSelectHtml(lead) {
   return '<select onchange="lgUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + lgStatusPillStyle(lead.status) + '">'
-    + ['To Call','No Answer','Appointment Booked'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+    + ['To Call','No Answer','Appointment','Signed Up'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
     + '</select>';
 }
 function lgQualityPillStyle(quality) {
@@ -13909,7 +13910,7 @@ function lgRenderData() {
 
   var total          = leads.length;
   var callsAttempted = leads.filter(function(l) { return l.status !== 'To Call'; });
-  var appointments    = leads.filter(function(l) { return l.status === 'Appointment Booked'; });
+  var appointments    = leads.filter(function(l) { return l.status === 'Appointment'; });
   var noAnswer         = leads.filter(function(l) { return l.status === 'No Answer'; });
   var sales            = leads.filter(lgHasSale);
   var pctCalled                = total ? Math.round(callsAttempted.length / total * 100) : 0;
@@ -13929,7 +13930,7 @@ function lgRenderData() {
   var slowestCall  = callTimes.length ? Math.max.apply(null, callTimes) : null;
   var avgCall      = callTimes.length ? lgAvg(callTimes) : null;
 
-  var statusCounts = { 'To Call': 0, 'No Answer': 0, 'Appointment Booked': 0 };
+  var statusCounts = { 'To Call': 0, 'No Answer': 0, 'Appointment': 0, 'Signed Up': 0 };
   leads.forEach(function(l) { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
 
   // ── Revenue ──
@@ -13944,7 +13945,7 @@ function lgRenderData() {
     if (!l.adviser) return;
     if (!byAdviser[l.adviser]) byAdviser[l.adviser] = { income: 0, appointments: 0 };
     byAdviser[l.adviser].income += (l.mortgageSaleValue || 0) + (l.insuranceSaleValue || 0) + (l.brokerFeeValue || 0);
-    if (l.status === 'Appointment Booked') byAdviser[l.adviser].appointments++;
+    if (l.status === 'Appointment') byAdviser[l.adviser].appointments++;
   });
   var advisers = Object.keys(byAdviser);
   var topSeller = advisers.length ? advisers.reduce(function(best, name) {
@@ -14027,7 +14028,7 @@ function lgRenderData() {
     + lgSectionTitle('Status Summary')
     + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;max-width:340px;">' + statusRows + '</div>'
 
-    + '<p style="color:#6b7c8f;font-size:11.5px;margin:20px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment Booked" rather than "No Answer". Appointment &rarr; Sale is the share of "Appointment Booked" leads with a recorded Mortgage, Insurance, or Broker Fee value.</p>';
+    + '<p style="color:#6b7c8f;font-size:11.5px;margin:20px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment" rather than "No Answer". Appointment &rarr; Sale is the share of "Appointment" leads with a recorded Mortgage, Insurance, or Broker Fee value.</p>';
 
   // Keep the print-only header's date range / user filter in sync for the PDF export.
   var metaEl = document.getElementById('lg-data-print-meta');
