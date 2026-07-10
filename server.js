@@ -51,6 +51,8 @@ const MZ_SCHEME    = 'fldXF0SSBBKJnNyfR';
 const MZ_SALARY    = 'fldqAWwktzw7IXlLj';
 const MZ_PAYDAY    = 'fld5sjQq3OUrzJ0tL';
 const MZ_TERM      = 'fldOW9nnAAskOGPf2';
+const MZ_ADVISER   = 'fldizBOkmRHDrvewE';
+const MZ_FOLLOWUP  = 'fldiG17d2OGZzXYmk';
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -502,7 +504,9 @@ function muttuoRecordToLead(record) {
     scheme:       selectName(f[MZ_SCHEME]) || 'No',
     salary:       f[MZ_SALARY]  || null,
     paydayLoans:  selectName(f[MZ_PAYDAY]) || 'No',
-    term:         f[MZ_TERM]    || null
+    term:         f[MZ_TERM]    || null,
+    adviser:      f[MZ_ADVISER] || '',
+    followUp:     f[MZ_FOLLOWUP] || null
   };
 }
 
@@ -544,6 +548,8 @@ app.post('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res
     if (b.salary !== undefined && b.salary !== '') fields[MZ_SALARY] = Number(b.salary);
     if (b.paydayLoans)   fields[MZ_PAYDAY]  = String(b.paydayLoans);
     if (b.term !== undefined && b.term !== '') fields[MZ_TERM] = Number(b.term);
+    if (b.adviser)       fields[MZ_ADVISER] = String(b.adviser);
+    if (b.followUp)      fields[MZ_FOLLOWUP] = String(b.followUp);
 
     if (!fields[MZ_NAME]) return res.status(400).json({ error: 'Name is required.' });
 
@@ -577,6 +583,8 @@ app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req
     if (b.salary !== undefined)        fields[MZ_SALARY]  = b.salary === '' ? null : Number(b.salary);
     if (b.paydayLoans !== undefined)   fields[MZ_PAYDAY]  = String(b.paydayLoans);
     if (b.term !== undefined)          fields[MZ_TERM]    = b.term === '' ? null : Number(b.term);
+    if (b.adviser !== undefined)       fields[MZ_ADVISER] = String(b.adviser);
+    if (b.followUp !== undefined)      fields[MZ_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
 
     const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
       method: 'PATCH',

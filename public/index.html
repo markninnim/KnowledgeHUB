@@ -4033,6 +4033,10 @@ html { height: 100%; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Payday Loans</label><select id="mz-payday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="mz-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>Todo</option><option>In progress</option><option>Done</option></select></div>
       </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><input id="mz-adviser" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="mz-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
       <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="mz-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
@@ -12796,6 +12800,7 @@ function mzRenderLeads() {
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
           + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
           + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
+          + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
           + (lead.notes ? '<div style="margin-top:6px;font-style:italic;">' + escHtml(lead.notes) + '</div>' : '')
         + '</div>'
         + '</div>';
@@ -12815,12 +12820,14 @@ function mzRenderLeads() {
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.adviser) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.followUp ? acFmtDate(lead.followUp) : '') + '</td>'
       + '<td style="padding:10px 12px;">' + mzStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Status'].map(function(h) {
+      + ['Name','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Adviser','Follow Up','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -12848,6 +12855,8 @@ function mzOpenModal(id) {
   document.getElementById('mz-scheme').value  = lead ? lead.scheme  : 'No';
   document.getElementById('mz-payday').value  = lead ? lead.paydayLoans : 'No';
   document.getElementById('mz-status').value  = lead ? lead.status  : 'Todo';
+  document.getElementById('mz-adviser').value  = lead ? lead.adviser  : '';
+  document.getElementById('mz-followup').value = lead ? (lead.followUp || '') : '';
   document.getElementById('mz-notes').value   = lead ? lead.notes   : '';
   document.getElementById('mz-modal-status').textContent = '';
   document.getElementById('mz-modal').style.display = 'flex';
@@ -12868,6 +12877,8 @@ function mzSaveLead() {
     scheme:        document.getElementById('mz-scheme').value,
     paydayLoans:   document.getElementById('mz-payday').value,
     status:        document.getElementById('mz-status').value,
+    adviser:       document.getElementById('mz-adviser').value.trim(),
+    followUp:      document.getElementById('mz-followup').value,
     notes:         document.getElementById('mz-notes').value.trim()
   };
   if (!payload.name) {
