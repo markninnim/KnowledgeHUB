@@ -13319,7 +13319,7 @@ function mzRenderData() {
     mzStatCard('% of Leads Called', pctCalled + '%'),
     mzStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
     mzStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
-    mzStatCard('Appointment &rarr; Sale', apptToSaleRate + '%', '#2e99d5'),
+    mzStatCard('Appointment &rarr; Sale', apptToSaleRate + '%', 'var(--brand-navy)'),
     mzStatCard('Leads &rarr; Sale', leadsToSaleRatio, 'var(--brand-orange)')
   ].join('');
 
@@ -13356,7 +13356,7 @@ function mzRenderData() {
   var funnelChart = mzFunnelChartSvg([
     { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
     { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
-    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#7c4dea' }
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#2e99d5' }
   ]);
 
   var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
@@ -13912,7 +13912,7 @@ function lgRenderData() {
     lgStatCard('% of Leads Called', pctCalled + '%'),
     lgStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
     lgStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
-    lgStatCard('Appointment &rarr; Sale', apptToSaleRate + '%', '#2e99d5'),
+    lgStatCard('Appointment &rarr; Sale', apptToSaleRate + '%', 'var(--brand-navy)'),
     lgStatCard('Leads &rarr; Sale', leadsToSaleRatio, 'var(--brand-orange)')
   ].join('');
 
@@ -13949,7 +13949,7 @@ function lgRenderData() {
   var funnelChart = lgFunnelChartSvg([
     { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
     { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
-    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#7c4dea' }
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#2e99d5' }
   ]);
 
   var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
