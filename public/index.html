@@ -15,7 +15,7 @@
 :root {
   --brand-navy: #003768; /* overridden per-user by business branding, see initUser() */
   --brand-navy-rgb: 0,55,104; /* rgb triple of --brand-navy, kept in sync in initUser() */
-  --sidebar-label-color: #fcb034; /* sidebar section headers (e.g. OPPORTUNITIES); overridden per-user if it clashes with the brand colour */
+  --brand-orange: #fcb034; /* FPG accent orange — overridden per-user if it clashes with the business's brand colour */
 }
 @font-face {
   font-family: 'Plus Jakarta Sans';
@@ -42,7 +42,7 @@ html { height: 100%; }
 .topbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; border-bottom: 1px solid #d1d5db; display: flex; align-items: center; padding: 0 24px; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
 .topbar img { height: 36px; object-fit: contain; }
 .sidebar { width: 220px; background: var(--brand-navy); position: fixed; top: 60px; bottom: 0; padding: 24px 0; overflow-y: auto; }
-.sidebar h2 { color: var(--sidebar-label-color); font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+.sidebar h2 { color: var(--brand-orange); font-size: 11px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
 .ov-card { background:#fff; border:1px solid #d1d5db; border-radius:10px; padding:18px 20px; cursor:pointer; transition:box-shadow .15s,border-color .15s; position:relative; overflow:hidden; }
 .ov-card:hover { box-shadow:0 4px 14px rgba(var(--brand-navy-rgb),.1); }
 .ov-card::after { content:''; position:absolute; inset:0; z-index:2; background:rgba(var(--brand-navy-rgb),0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23003768' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") center/22px no-repeat; opacity:0; transition:opacity .18s; border-radius:inherit; pointer-events:none; }
@@ -71,7 +71,7 @@ html { height: 100%; }
 .kd-test-num { display:block; font-size:9px; font-weight:700; color:rgba(255,255,255,.35); letter-spacing:.08em; text-transform:uppercase; margin-bottom:1px; }
 .kd-test-line { display:block; line-height:1.35; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
-.sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid #fcb034; }
+.sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid var(--brand-orange); }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
 #pz-broker-panel a:hover { background:#f5f7fa; color:var(--brand-navy); }
 #pz-broker-panel a.active { background:#eef3f8; color:var(--brand-navy); font-weight:700; border-left-color:var(--brand-navy); }
@@ -238,7 +238,7 @@ html { height: 100%; }
     <a href="#" onclick="show('logos',this);loadLogosDates()">Logo Files</a>
     <a href="#" onclick="show('marketing',this);loadMarketingDates()">Marketing Materials</a>
     <a href="#" onclick="show('social',this);loadSocialAssetDates()">Social Assets</a>
-    <a href="#" onclick="show('social-content',this);loadSocialContent()">Bespoke Social Content <span id="social-count-badge" style="display:none;background:#fcb034;color:var(--brand-navy);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
+    <a href="#" onclick="show('social-content',this);loadSocialContent()">Bespoke Social Content <span id="social-count-badge" style="display:none;background:var(--brand-orange);color:var(--brand-navy);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
     <a href="#" onclick="show('stationery',this)">Stationery</a>
     <a href="#" onclick="show('templates',this);loadTemplatesDates()">Templates</a>
     <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
@@ -251,7 +251,7 @@ html { height: 100%; }
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">REPORTING</span></div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">REPORTING</span></div>
     <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
     <a href="#" id="cr-nav-breach" onclick="return showCrForm('Breach', this)">Breach Report</a>
     <a href="#" id="cr-nav-conflict" onclick="return showCrForm('Conflict of Interest', this)">Conflict of Interest</a>
@@ -267,10 +267,10 @@ html { height: 100%; }
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">READING</span></div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">READING</span></div>
     <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters</a>
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
-    <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">KNOWLEDGE TESTS</span></div>
+    <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">KNOWLEDGE TESTS</span></div>
 
     <!-- Induction accordion -->
     <button class="kd-acc-btn" id="kd-btn-induction" onclick="kdToggle('kd-induction','kd-btn-induction')">
@@ -334,7 +334,7 @@ html { height: 100%; }
   <!-- Surveying sidebar -->
   <div id="sidebar-surveying" style="display:none">
     <h2 style="margin-top:8px;">Surveying</h2>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">LINKS</span></div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">LINKS</span></div>
     <a href="https://acresurveying.co.uk" target="_blank" rel="noopener">Visit Website</a>
     <a href="https://uk.trustpilot.com/review/fpsurveying.co.uk" target="_blank" rel="noopener">Trustpilot</a>
     <a href="https://www.facebook.com/fpsurveying" target="_blank" rel="noopener">Facebook</a>
@@ -381,7 +381,7 @@ html { height: 100%; }
     <h2 style="margin-top: 8px;">My Team</h2>
     <a href="#" id="sv-sb-all" class="active" onclick="return svSidebarSelect('all',this)">View All <span id="sv-sidebar-count" style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;"></span></a>
     <div id="sv-sb-supervisors" style="display:none;">
-      <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>
+      <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>
     </div>
     <div id="sv-sb-noncas" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS</span></div>
@@ -390,7 +390,7 @@ html { height: 100%; }
 </div>
 <!-- Hero triangles -->
 <svg style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:0.07;" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 1445.242188 1080 L 1920 1080 L 1920 605.242188 Z" fill="#fcb034"/>
+  <path d="M 1445.242188 1080 L 1920 1080 L 1920 605.242188 Z" fill="var(--brand-orange)"/>
   <path d="M 966.332031 1080 L 1919.847656 1080 L 1443.089844 603.242188 Z" fill="var(--brand-navy)"/>
 </svg>
 
@@ -491,7 +491,7 @@ html { height: 100%; }
             <div id="home-nl-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1;min-width:0;">
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Latest Newsletter</div>
               <div style="display:flex;gap:14px;align-items:center;">
-                <div style="width:52px;height:52px;background:#fcb034;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <div style="width:52px;height:52px;background:var(--brand-orange);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
                 <div>
@@ -521,28 +521,28 @@ html { height: 100%; }
                 <span style="font-size:12px;color:#6b7c8f;font-weight:500;">Leads this month</span>
                 <div style="display:flex;align-items:baseline;gap:6px;">
                   <span id="acre-leads-month" style="font-size:22px;font-weight:800;color:var(--brand-navy);">—</span>
-                  <span id="acre-leads-month-rank" style="font-size:11px;font-weight:700;color:#fcb034;"></span>
+                  <span id="acre-leads-month-rank" style="font-size:11px;font-weight:700;color:var(--brand-orange);"></span>
                 </div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #f0f4f8;">
                 <span style="font-size:12px;color:#6b7c8f;font-weight:500;">Leads this year</span>
                 <div style="display:flex;align-items:baseline;gap:6px;">
                   <span id="acre-leads-year" style="font-size:22px;font-weight:800;color:var(--brand-navy);">—</span>
-                  <span id="acre-leads-year-rank" style="font-size:11px;font-weight:700;color:#fcb034;"></span>
+                  <span id="acre-leads-year-rank" style="font-size:11px;font-weight:700;color:var(--brand-orange);"></span>
                 </div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #f0f4f8;">
                 <span style="font-size:12px;color:#6b7c8f;font-weight:500;">Sales</span>
                 <div style="display:flex;align-items:baseline;gap:6px;">
                   <span id="acre-sales-year" style="font-size:22px;font-weight:800;color:var(--brand-navy);">—</span>
-                  <span id="acre-sales-rank" style="font-size:11px;font-weight:700;color:#fcb034;"></span>
+                  <span id="acre-sales-rank" style="font-size:11px;font-weight:700;color:var(--brand-orange);"></span>
                 </div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-size:12px;color:#6b7c8f;font-weight:500;">Commission paid</span>
                 <div style="display:flex;align-items:baseline;gap:6px;">
                   <span id="acre-sales-value" style="font-size:22px;font-weight:800;color:var(--brand-navy);">—</span>
-                  <span id="acre-comm-rank" style="font-size:11px;font-weight:700;color:#fcb034;"></span>
+                  <span id="acre-comm-rank" style="font-size:11px;font-weight:700;color:var(--brand-orange);"></span>
                 </div>
               </div>
             </div>
@@ -617,7 +617,7 @@ html { height: 100%; }
           <div style="flex:1;min-width:160px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">Your Feefo Reviews</div>
-              <div id="home-feefo-rank-badge" style="display:none;background:#fcb034;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"></div>
+              <div id="home-feefo-rank-badge" style="display:none;background:var(--brand-orange);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"></div>
             </div>
             <div id="home-feefo-summary" style="font-size:12px;color:#6b7c8f;">Loading…</div>
           </div>
@@ -668,14 +668,14 @@ html { height: 100%; }
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">Please use only the official FPG logo files provided in this library. <strong>Do not alter, recolour, stretch, or modify the logo in any way.</strong> The logo must always appear exactly as supplied -maintaining its proportions, clear space, and approved colour versions. If you have a design requirement that is not supported by the available files or brand colours, please do not attempt to create your own variation -speak to <strong>Mark Ninnim</strong> who will be able to assist -<a href="mailto:mark.ninnim@financeplanning.co.uk" style="color:#6b7c8f;text-decoration:none;">mark.ninnim@financeplanning.co.uk</a> or <a href="tel:07525932299" style="color:#6b7c8f;text-decoration:none;">07525 932 299</a></p>
     <div style="margin-bottom:24px;"></div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Print</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Print</h3>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 16px;">Please supply these logos if you are having anything professionally printed - for example football kits. If you are in any doubt, please speak to Mark. Both of these file types scale without pixelation.</p>
     <div class="grid">
       <div class="card"><div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:7px;padding:12px;margin-bottom:4px;text-align:center;min-height:52px;display:flex;align-items:center;justify-content:center;"><img src="/public-logo" style="height:32px;max-width:100%;object-fit:contain;"></div><h3>FPG Logo Master</h3><p>Master AI artwork for all print production.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Logo-Master.ai" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/logos/print/FPG-Logo-Master.ai" class="btn">Download</a></div>
       <div class="card"><div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:7px;padding:12px;margin-bottom:4px;text-align:center;min-height:52px;display:flex;align-items:center;justify-content:center;"><img src="/public-logo" style="height:32px;max-width:100%;object-fit:contain;"></div><h3>FPG Logo EPS</h3><p>Vector EPS for press and large-format print.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Logo.eps" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/logos/print/FPG-Logo.eps" class="btn">Download</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Web &amp; Digital</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Web &amp; Digital</h3>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 16px;">All of these are fine to use online, but try to avoid large format as they will pixelate and do not scale well.</p>
     <div class="grid">
       <div class="card"><div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:7px;padding:12px;margin-bottom:4px;text-align:center;min-height:52px;display:flex;align-items:center;justify-content:center;"><img src="/view-asset/logos/web/FPG-Logo.svg" style="height:32px;max-width:100%;object-fit:contain;"></div><h3>FPG Logo SVG</h3><p>Scalable vector for web and digital use.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Logo.svg" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/logos/web/FPG-Logo.svg" class="btn">Download</a><a href="/view-asset/logos/web/FPG-Logo.svg" class="btn-view" target="_blank">View</a></div>
@@ -684,7 +684,7 @@ html { height: 100%; }
       <div class="card"><div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:7px;padding:12px;margin-bottom:4px;text-align:center;min-height:52px;display:flex;align-items:center;justify-content:center;"><img src="/view-asset/logos/web/FPG-Logo.webp" style="height:32px;max-width:100%;object-fit:contain;"></div><h3>FPG Logo WEBP</h3><p>Optimised WebP for fast-loading web use.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Logo.webp" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/logos/web/FPG-Logo.webp" class="btn">Download</a><a href="/view-asset/logos/web/FPG-Logo.webp" class="btn-view" target="_blank">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Logo Components</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Logo Components</h3>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 16px;">Please avoid using the triangles in isolation as it dilutes the brand message. However, if you really must, we would rather you used the actual ones. We are currently in a transition where you will see more of the hero triangle formation, which you are welcome to use.</p>
     <div class="grid">
       <div class="card"><div class="thumb"><img src="/view-asset/logos/components/FPG-Logo-Blue.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>FPG Logo Blue</h3><p>Isolated blue wordmark component.</p><br><span class="badge ready">Approved</span><br><a href="/download-asset/logos/components/FPG-Logo-Blue.png" class="btn">Download</a><a href="/view-asset/logos/components/FPG-Logo-Blue.png" class="btn-view" onclick="openPreview(event,this)">View</a></div>
@@ -694,7 +694,7 @@ html { height: 100%; }
       <div class="card"><div class="thumb"><img src="/view-asset/logos/components/FPG-Logo-Hero-Transparent.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Hero Triangle Formation</h3><p>The FPG hero triangle formation, typically placed on the top right of posts to introduce brand colours.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Logo-Hero.png" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/logos/components/FPG-Logo-Hero.png" class="btn">Download</a><a href="/view-asset/logos/components/FPG-Logo-Hero.png" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Individual Broker Branding</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Individual Broker Branding</h3>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 16px;">Your name, your brand. This personalised logo places your name alongside the FPG identity — perfect for email signatures, social profiles, and printed materials. Enter your name and download a ready-to-use version in seconds.</p>
     <div class="grid">
       <div class="card">
@@ -724,7 +724,7 @@ html { height: 100%; }
       <!-- DIP Certificate card -->
       <div class="card">
         <div class="thumb" style="display:flex;align-items:center;justify-content:center;height:120px;background:linear-gradient(135deg,var(--brand-navy) 0%,#004a8a 100%);border-radius:7px;position:relative;overflow:hidden;">
-          <div style="position:absolute;bottom:0;right:0;width:50px;height:50px;background:#fcb034;clip-path:polygon(100% 0,100% 100%,0 100%);"></div>
+          <div style="position:absolute;bottom:0;right:0;width:50px;height:50px;background:var(--brand-orange);clip-path:polygon(100% 0,100% 100%,0 100%);"></div>
           <div style="text-align:center;color:#fff;z-index:1;">
             <div style="font-size:18px;font-weight:900;letter-spacing:-0.5px;">DIP</div>
             <div style="font-size:9px;letter-spacing:1px;opacity:0.8;margin-top:2px;">CERTIFICATE</div>
@@ -737,7 +737,7 @@ html { height: 100%; }
       </div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Zoom Backgrounds</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Zoom Backgrounds</h3>
     <div class="grid">
       <div class="card"><div class="thumb"><img src="/view-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background.jpg" style="max-height:104px;max-width:100%;object-fit:cover;border-radius:4px;"></div><h3>FPG Zoom Background</h3><p>Branded office background for Zoom and video calls.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Zoom-Background.jpg" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background.jpg" class="btn">Download</a><a href="/view-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background.jpg" class="btn-view" onclick="openPreview(event,this)">View</a></div>
       <div class="card"><div class="thumb"><img src="/view-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background-II.jpg" style="max-height:104px;max-width:100%;object-fit:cover;border-radius:4px;"></div><h3>FPG Zoom Background II</h3><p>Branded background for Zoom and video calls.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="FPG-Zoom-Background-II.jpg" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background-II.jpg" class="btn">Download</a><a href="/view-asset/templates/Zoom%20backgrounds/FPG-Zoom-Background-II.jpg" class="btn-view" onclick="openPreview(event,this)">View</a></div>
@@ -754,7 +754,7 @@ html { height: 100%; }
       <div class="card"><div class="thumb"><img src="/download/social/two-triangles-transparent-thumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Hero Triangle Formation</h3><p>The FPG hero triangle formation, typically placed on the top right of posts to introduce brand colours.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="two-triangles-top.png" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download/social/two-triangles-top.png" class="btn">Download</a><a href="/download/social/two-triangles-top.png" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Layout Templates</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Layout Templates</h3>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">Not all social media platforms are the same. A post that looks great on Instagram may feel out of place on LinkedIn, and what performs on Facebook may not translate to Twitter or TikTok. Each platform has its own audience expectations, aspect ratios, and content rhythm.</p>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 16px;">For every post we create, we produce <strong>five variations</strong>, each curated to fit the specific platform it is designed for. Below are examples of a single post across all platforms.</p>
     <div class="grid">
@@ -766,7 +766,7 @@ html { height: 100%; }
       <div class="card"><div class="thumb" data-img="/download/social/fpg-1080x1920-tiktok-story.jpg"></div><h3>TikTok / Story</h3><p>1080 × 1920px -TikTok, Instagram & Facebook Stories.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-1080x1920-tiktok-story.jpg" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download/social/fpg-1080x1920-tiktok-story.jpg" class="btn">Download</a><a href="/download/social/fpg-1080x1920-tiktok-story.jpg" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Review Platform Post</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Review Platform Post</h3>
     <div class="grid">
       <div class="card"><div class="thumb"><img src="/download/social/review-template-thumb.png" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Review Platform Post</h3><p>Photoshop template for building trust and publishing Feefo reviews. Requires a licenced version of Adobe Photoshop.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-review-template.psd" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download/social/fpg-review-template.psd" class="btn">Download</a></div>
       <div class="card"><div class="thumb" data-img="/download/social/fpg-review-627x1200-linkedin.jpg"></div><h3>LinkedIn Post</h3><p>1200 × 630px — LinkedIn.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-review-627x1200-linkedin.jpg" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download/social/fpg-review-627x1200-linkedin.jpg" class="btn">Download</a><a href="/download/social/fpg-review-627x1200-linkedin.jpg" class="btn-view" onclick="openPreview(event,this)">View</a></div>
@@ -823,7 +823,7 @@ html { height: 100%; }
   <div id="brochures" class="section">
     <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">Brochures</h2>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Protection</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Protection</h3>
     <div class="grid">
       <div class="card">
         <div class="thumb" data-pdf="/view-asset/brochures/protection/fpg-protection-brochure-2026.pdf"></div>
@@ -844,13 +844,13 @@ html { height: 100%; }
       </div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">LeadGEN</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">LeadGEN</h3>
     <div class="grid">
       <div class="card"><div class="thumb" data-pdf="/view-asset/brochures/leadgen/fpg-staff-buy-employer.pdf"></div><h3>Staff Buy -Employer</h3><p>Staff buy brochure for employers.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-staff-buy-employer.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/brochures/leadgen/fpg-staff-buy-employer.pdf" class="btn">Download</a><a href="/view-asset/brochures/leadgen/fpg-staff-buy-employer.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
       <div class="card"><div class="thumb" data-pdf="/view-asset/brochures/leadgen/fpg-staff-buy-employee.pdf"></div><h3>Staff Buy -Employee</h3><p>Staff buy brochure for employees.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-staff-buy-employee.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/brochures/leadgen/fpg-staff-buy-employee.pdf" class="btn">Download</a><a href="/view-asset/brochures/leadgen/fpg-staff-buy-employee.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">General</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">General</h3>
     <div class="grid">
       <div class="card"><div class="thumb" data-pdf="/view-asset/brochures/general/service.pdf"></div><h3>Service Brochure</h3><p>FPG general service brochure.</p><br><span class="badge ready">Approved</span> <span class="file-date" data-file="service.pdf" style="font-size:11px;color:#6b7c8f;"></span><br><a href="/download-asset/brochures/general/service.pdf" class="btn">Download</a><a href="/view-asset/brochures/general/service.pdf" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
@@ -862,7 +862,7 @@ html { height: 100%; }
     <div class="grid">
       <div class="card" onclick="copy('var(--brand-navy)')" style="cursor:pointer"><div style="height:60px;background:var(--brand-navy);border-radius:4px;margin-bottom:8px;"></div><strong>Hero Blue</strong><br><code>var(--brand-navy)</code><br><small style="color:#6b7c8f">RGB 0 / 55 / 104</small><br><small style="color:#6b7c8f">CMYK 100 / 47 / 0 / 59</small><br><small style="color:var(--brand-navy);font-weight:600;font-size:10px;">■ Digital / Screen</small></div>
       <div class="card" onclick="copy('#021346')" style="cursor:pointer"><div style="height:60px;background:#021346;border-radius:4px;margin-bottom:8px;"></div><strong>Hero Dark Blue</strong><br><code>#021346</code><br><small style="color:#6b7c8f">RGB 2 / 19 / 70</small><br><small style="color:#6b7c8f">CMYK 98 / 84 / 43 / 51</small><br><small style="color:var(--brand-navy);font-weight:600;font-size:10px;">■ Print titles &amp; headings</small></div>
-      <div class="card" onclick="copy('#fcb034')" style="cursor:pointer"><div style="height:60px;background:#fcb034;border-radius:4px;margin-bottom:8px;"></div><strong>Hero Orange</strong><br><code>#FCB034</code><br><small style="color:#6b7c8f">RGB 252 / 176 / 52</small><br><small style="color:#6b7c8f">CMYK 0 / 30 / 79 / 1</small><br><small style="color:var(--brand-navy);font-weight:600;font-size:10px;">■ Print accents &amp; fact headlines</small></div>
+      <div class="card" onclick="copy('var(--brand-orange)')" style="cursor:pointer"><div style="height:60px;background:var(--brand-orange);border-radius:4px;margin-bottom:8px;"></div><strong>Hero Orange</strong><br><code>var(--brand-orange)</code><br><small style="color:#6b7c8f">RGB 252 / 176 / 52</small><br><small style="color:#6b7c8f">CMYK 0 / 30 / 79 / 1</small><br><small style="color:var(--brand-navy);font-weight:600;font-size:10px;">■ Print accents &amp; fact headlines</small></div>
       <div class="card" onclick="copy('#2e99d5')" style="cursor:pointer"><div style="height:60px;background:#2e99d5;border-radius:4px;margin-bottom:8px;"></div><strong>Accent Blue</strong><br><code>#2E99D5</code><br><small style="color:#6b7c8f">RGB 46 / 153 / 213</small><br><small style="color:#6b7c8f">CMYK 78 / 28 / 0 / 16</small></div>
       <div class="card" onclick="copy('#f5f7fa')" style="cursor:pointer"><div style="height:60px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:4px;margin-bottom:8px;"></div><strong>Off White</strong><br><code>#F5F7FA</code><br><small style="color:#6b7c8f">Backgrounds</small></div>
       <div class="card" onclick="copy('#6b7c8f')" style="cursor:pointer"><div style="height:60px;background:#6b7c8f;border-radius:4px;margin-bottom:8px;"></div><strong>Mid Grey</strong><br><code>#6B7C8F</code><br><small style="color:#6b7c8f">Body copy</small></div>
@@ -883,7 +883,7 @@ html { height: 100%; }
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:28px;">
       <div style="background:var(--brand-navy);color:#fff;padding:24px;border-radius:8px;">
         <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Primary -Headings &amp; Display</div>
-        <div style="font-size:28px;font-weight:700;color:#fcb034;letter-spacing:-0.5px;">Gilroy Bold</div>
+        <div style="font-size:28px;font-weight:700;color:var(--brand-orange);letter-spacing:-0.5px;">Gilroy Bold</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:10px;">Commercial licence · myfonts.com</div>
       </div>
       <div style="background:#fff;border:1px solid #d1d5db;padding:24px;border-radius:8px;">
@@ -893,13 +893,13 @@ html { height: 100%; }
       </div>
       <div style="background:var(--brand-navy);color:#fff;padding:24px;border-radius:8px;">
         <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Print / PDF -Titles &amp; Subtitles</div>
-        <div style="font-size:28px;font-weight:700;color:#fcb034;font-family:'DejaVu Serif',Georgia,serif;">DejaVu Serif Bold</div>
+        <div style="font-size:28px;font-weight:700;color:var(--brand-orange);font-family:'DejaVu Serif',Georgia,serif;">DejaVu Serif Bold</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:10px;">Bundled · npm dejavu-fonts-ttf</div>
       </div>
     </div>
 
     <!-- Print type specimen -->
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Print -Headers &amp; Titles</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Print -Headers &amp; Titles</h3>
     <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:28px;">
 
       <!-- Display -->
@@ -947,7 +947,7 @@ html { height: 100%; }
     </div>
 
     <!-- DejaVu Serif print specimen -->
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Print / PDF -Personalised Documents</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Print / PDF -Personalised Documents</h3>
     <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;margin-bottom:28px;">
 
       <div style="padding:28px 32px;border-bottom:1px solid #f0f2f5;">
@@ -964,8 +964,8 @@ html { height: 100%; }
 
       <div style="padding:24px 32px;border-bottom:1px solid #f0f2f5;">
         <div style="font-size:10px;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Fact Headline · DejaVu Serif Bold · 36pt · FPG Orange</div>
-        <div style="font-size:36px;font-weight:700;color:#fcb034;font-family:'DejaVu Serif',Georgia,serif;line-height:1.1;">Pete, it's a fact...</div>
-        <div style="font-size:11px;color:#6b7c8f;margin-top:8px;">FPG Orange #fcb034 -used on page 2 of personalised brochure</div>
+        <div style="font-size:36px;font-weight:700;color:var(--brand-orange);font-family:'DejaVu Serif',Georgia,serif;line-height:1.1;">Pete, it's a fact...</div>
+        <div style="font-size:11px;color:#6b7c8f;margin-top:8px;">FPG Orange var(--brand-orange) -used on page 2 of personalised brochure</div>
       </div>
 
       <div style="padding:22px 32px;background:#fafbfc;">
@@ -977,7 +977,7 @@ html { height: 100%; }
     </div>
 
     <!-- Quick reference table -->
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Quick Reference</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Quick Reference</h3>
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead><tr style="background:var(--brand-navy);color:#fff;">
         <th style="padding:10px 14px;text-align:left;font-weight:600;">Style</th>
@@ -994,7 +994,7 @@ html { height: 100%; }
         <tr style="background:#f5f7fa;"><td style="padding:9px 14px;font-weight:600;">Body</td><td>Plus Jakarta Sans</td><td>10pt</td><td>Regular</td><td>All body copy</td></tr>
         <tr><td style="padding:9px 14px;font-weight:600;">Caption</td><td>Plus Jakarta Sans</td><td>8pt</td><td>Regular</td><td>Footnotes &amp; legal</td></tr>
         <tr style="background:#f5f7fa;"><td style="padding:9px 14px;font-weight:600;">CTA</td><td>Gilroy</td><td>11pt</td><td>Bold</td><td>Buttons &amp; calls-to-action</td></tr>
-        <tr><td style="padding:9px 14px;font-weight:600;border-top:2px solid #fcb034;" colspan="5" style="color:var(--brand-navy);">Print / PDF (personalised brochure)</td></tr>
+        <tr><td style="padding:9px 14px;font-weight:600;border-top:2px solid var(--brand-orange);" colspan="5" style="color:var(--brand-navy);">Print / PDF (personalised brochure)</td></tr>
         <tr style="background:#f5f7fa;"><td style="padding:9px 14px;font-weight:600;">PDF Title</td><td>DejaVu Serif</td><td>36pt</td><td>Bold</td><td>"Pete, what if..." -pages 5, 7, 9, 11</td></tr>
         <tr><td style="padding:9px 14px;font-weight:600;">PDF Subtitle</td><td>DejaVu Serif</td><td>22pt</td><td>Bold</td><td>Section callout headings</td></tr>
         <tr style="background:#f5f7fa;"><td style="padding:9px 14px;font-weight:600;">PDF Fact</td><td>DejaVu Serif</td><td>36pt</td><td>Bold</td><td>"Pete, it's a fact..." -page 2 (orange)</td></tr>
@@ -1007,19 +1007,19 @@ html { height: 100%; }
 
     <!-- Personality tiles -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;">
-      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Direct</div><div style="color:rgba(255,255,255,.7);font-size:12px;">We are not afraid of speaking the truth.</div></div>
-      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Human</div><div style="color:rgba(255,255,255,.7);font-size:12px;">Image use is typically of living beings.</div></div>
-      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Confident</div><div style="color:rgba(255,255,255,.7);font-size:12px;">We are qualified professionals and know our subject.</div></div>
-      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:#fcb034;font-weight:700;margin-bottom:4px;">Concise</div><div style="color:rgba(255,255,255,.7);font-size:12px;">It's a fact that less is more when it comes to clarity.</div></div>
+      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:var(--brand-orange);font-weight:700;margin-bottom:4px;">Direct</div><div style="color:rgba(255,255,255,.7);font-size:12px;">We are not afraid of speaking the truth.</div></div>
+      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:var(--brand-orange);font-weight:700;margin-bottom:4px;">Human</div><div style="color:rgba(255,255,255,.7);font-size:12px;">Image use is typically of living beings.</div></div>
+      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:var(--brand-orange);font-weight:700;margin-bottom:4px;">Confident</div><div style="color:rgba(255,255,255,.7);font-size:12px;">We are qualified professionals and know our subject.</div></div>
+      <div style="background:var(--brand-navy);border-radius:8px;padding:16px;text-align:center;"><div style="color:var(--brand-orange);font-weight:700;margin-bottom:4px;">Concise</div><div style="color:rgba(255,255,255,.7);font-size:12px;">It's a fact that less is more when it comes to clarity.</div></div>
     </div>
 
     <!-- Core principles -->
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Our Principles</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Our Principles</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;">
 
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:18px;display:flex;gap:14px;align-items:flex-start;">
         <div style="flex-shrink:0;width:36px;height:36px;background:var(--brand-navy);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fcb034" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <div>
           <div style="font-weight:700;color:var(--brand-navy);font-size:13px;margin-bottom:5px;">Trusted. Local. Advice.</div>
@@ -1029,7 +1029,7 @@ html { height: 100%; }
 
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:18px;display:flex;gap:14px;align-items:flex-start;">
         <div style="flex-shrink:0;width:36px;height:36px;background:var(--brand-navy);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fcb034" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
         <div>
           <div style="font-weight:700;color:var(--brand-navy);font-size:13px;margin-bottom:5px;">Technology that serves people</div>
@@ -1039,7 +1039,7 @@ html { height: 100%; }
 
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:18px;display:flex;gap:14px;align-items:flex-start;">
         <div style="flex-shrink:0;width:36px;height:36px;background:var(--brand-navy);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fcb034" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
         <div>
           <div style="font-weight:700;color:var(--brand-navy);font-size:13px;margin-bottom:5px;">Treat people as we'd wish to be treated</div>
@@ -1050,7 +1050,7 @@ html { height: 100%; }
 
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:18px;display:flex;gap:14px;align-items:flex-start;">
         <div style="flex-shrink:0;width:36px;height:36px;background:var(--brand-navy);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fcb034" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></svg>
         </div>
         <div>
           <div style="font-weight:700;color:var(--brand-navy);font-size:13px;margin-bottom:5px;">Emotional Intelligence</div>
@@ -1061,7 +1061,7 @@ html { height: 100%; }
     </div>
 
     <!-- Write / Not this examples -->
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Tone in Practice</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Tone in Practice</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div style="background:#f0fff6;border-left:4px solid #007744;padding:18px;border-radius:8px;">
         <div style="font-size:10px;font-weight:700;color:#007744;text-transform:uppercase;margin-bottom:10px;">Write this</div>
@@ -1085,7 +1085,7 @@ html { height: 100%; }
       <div class="card"><div class="thumb"><img src="/view-graphic/fpg-email-footer.gif" style="max-height:104px;max-width:100%;object-fit:contain;"></div><h3>Email Footer Graphic</h3><p>Branded GIF footer for use in all email communications.</p><br><span class="badge ready">Approved</span><br><a href="/download-graphic/fpg-email-footer.gif" class="btn">Download</a><a href="/view-graphic/fpg-email-footer.gif" class="btn-view" onclick="openPreview(event,this)">View</a></div>
     </div>
 
-    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;">Feefo</h3>
+    <h3 style="color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">Feefo</h3>
 
     <h4 style="color:var(--brand-navy);font-size:12px;font-weight:700;margin:0 0 10px;">Platinum Trusted Service 2026</h4>
     <div class="grid" style="margin-bottom:28px;">
@@ -1573,7 +1573,7 @@ html { height: 100%; }
         <!-- Timer (reading in progress) -->
         <div id="ms-state-reading" style="display:none;max-width:480px;">
           <div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:28px 32px;">
-            <div id="ms-source-label" style="font-size:12px;font-weight:700;color:#fcb034;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Reading</div>
+            <div id="ms-source-label" style="font-size:12px;font-weight:700;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Reading</div>
             <div id="ms-source-name" style="font-size:15px;font-weight:700;color:var(--brand-navy);margin-bottom:16px;"></div>
             <div style="font-size:13px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Time Reading</div>
             <div id="ms-timer-display" style="font-size:56px;font-weight:900;color:var(--brand-navy);line-height:1;margin-bottom:4px;">00:00</div>
@@ -3936,7 +3936,7 @@ html { height: 100%; }
         <div style="font-size:32px;margin-bottom:12px;opacity:.4;">£</div>
         Loading statements…
       </div>
-      <div id="pay-no-parser" style="display:none;background:#fff8ec;border:1px solid #fcb034;border-radius:10px;padding:16px 20px;font-size:13px;color:#7a5300;">
+      <div id="pay-no-parser" style="display:none;background:#fff8ec;border:1px solid var(--brand-orange);border-radius:10px;padding:16px 20px;font-size:13px;color:#7a5300;">
         The Excel parser is not yet available. This will resolve after the next deploy.
       </div>
       <div id="pay-no-data" style="display:none;text-align:center;padding:80px 0;color:#6b7c8f;">
@@ -4130,7 +4130,7 @@ html { height: 100%; }
       <div style="display:flex;align-items:center;gap:14px;">
         <div style="position:relative;flex-shrink:0;" onclick="document.getElementById('acc-photo-input').click()" title="Change photo" style="cursor:pointer;">
           <div id="acc-avatar" style="width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;border:2.5px solid rgba(255,255,255,.3);" onclick="document.getElementById('acc-photo-input').click()"></div>
-          <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:#fcb034;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:var(--brand-orange);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <input id="acc-photo-input" type="file" accept="image/*" style="display:none;" onchange="handlePhotoUpload(this)">
@@ -4138,7 +4138,7 @@ html { height: 100%; }
         <div>
           <div id="acc-full-name" style="font-size:17px;font-weight:700;color:#fff;"></div>
           <div id="acc-email" style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px;"></div>
-          <div id="acc-title" style="font-size:12px;color:#fcb034;margin-top:2px;font-weight:600;"></div>
+          <div id="acc-title" style="font-size:12px;color:var(--brand-orange);margin-top:2px;font-weight:600;"></div>
           <div id="acc-photo-status" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;"></div>
         </div>
       </div>
@@ -4954,7 +4954,7 @@ function loadVideoContent() {
         sectionHeader.style.cssText = 'margin:32px 0 20px;';
         var sectionH2 = document.createElement('h2');
         sectionH2.textContent = sectionLabel;
-        sectionH2.style.cssText = 'color:var(--brand-navy);font-size:16px;font-weight:700;margin:0;padding-bottom:8px;border-bottom:3px solid #fcb034;display:inline-block;';
+        sectionH2.style.cssText = 'color:var(--brand-navy);font-size:16px;font-weight:700;margin:0;padding-bottom:8px;border-bottom:3px solid var(--brand-orange);display:inline-block;';
         sectionHeader.appendChild(sectionH2);
         container.appendChild(sectionHeader);
       }
@@ -5232,7 +5232,7 @@ function loadSocialContent() {
         expiredBadge.style.cssText = 'margin-left:10px;font-size:10px;font-weight:700;color:#cc0000;background:rgba(204,0,0,.1);padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;vertical-align:middle;';
         h3.appendChild(expiredBadge);
       }
-      h3.style.cssText = 'color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #fcb034;';
+      h3.style.cssText = 'color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);';
       container.appendChild(h3);
       var grid = document.createElement('div'); grid.className = 'grid';
       post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file)); });
@@ -6711,7 +6711,7 @@ function makeLvThumb(title) {
 
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
     '<rect width="' + w + '" height="' + h + '" fill="#ffffff"/>' +
-    '<polygon points="' + oA + ' ' + oB + ' ' + oC + '" fill="#fcb034"/>' +
+    '<polygon points="' + oA + ' ' + oB + ' ' + oC + '" fill="var(--brand-orange)"/>' +
     '<polygon points="' + bA + ' ' + bB + ' ' + bC + '" fill="var(--brand-navy)"/>' +
     textEls +
   '</svg>';
@@ -6852,7 +6852,7 @@ function renderFeefoPage() {
 
   reviewsEl.innerHTML = slice.map(function(r, i) {
     var stars = '';
-    for (var s = 1; s <= 5; s++) stars += '<span style="color:' + (s <= (r.rating||0) ? '#fcb034' : '#e0e0e0') + ';font-size:13px;">★</span>';
+    for (var s = 1; s <= 5; s++) stars += '<span style="color:' + (s <= (r.rating||0) ? 'var(--brand-orange)' : '#e0e0e0') + ';font-size:13px;">★</span>';
     return '<div style="padding:14px 0;' + (i > 0 ? 'border-top:1px solid #f0f4f8;' : '') + '">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
       + '<span style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(r.customer) + '</span>'
@@ -6972,7 +6972,7 @@ function loadHomeData() {
     // Determine which types to show
     var types = [];
     if (user.sellsMortgages  || noFlags) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
-    if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: '#fcb034' });
+    if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
     if (user.sellsInvestments)           types.push({ key: 'Investment', color: '#2e99d5' });
 
     var totalMins = cpd.ytdMins || 0;
@@ -7185,7 +7185,7 @@ function loadHomeData() {
       // Star bar
       if (starsEl && avg) {
         var pct = Math.round((avg / 5) * 100);
-        starsEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:#fcb034;border-radius:4px;"></div></div><span style="font-size:13px;font-weight:700;color:#fcb034;">' + avg + '</span><span style="font-size:12px;color:#6b7c8f;">/ 5</span></div>';
+        starsEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:var(--brand-orange);border-radius:4px;"></div></div><span style="font-size:13px;font-weight:700;color:var(--brand-orange);">' + avg + '</span><span style="font-size:12px;color:#6b7c8f;">/ 5</span></div>';
       } else if (starsEl) { starsEl.innerHTML = ''; }
 
       // Paginated reviews
@@ -7202,7 +7202,7 @@ function loadHomeData() {
         el.innerHTML = items.map(function(e) {
           var isMe = me && e.name.toLowerCase().trim() === me.toLowerCase().trim();
           return '<div' + (isMe ? ' data-isme="true"' : '') + ' style="display:flex;align-items:center;gap:8px;padding:5px 0;' + (isMe ? 'background:#fffbf0;margin:0 -14px;padding:5px 14px;border-radius:6px;' : '') + '">'
-            + '<span style="font-size:11px;font-weight:700;color:' + (e.rank <= 3 ? '#fcb034' : '#6b7c8f') + ';width:20px;flex-shrink:0;">#' + e.rank + '</span>'
+            + '<span style="font-size:11px;font-weight:700;color:' + (e.rank <= 3 ? 'var(--brand-orange)' : '#6b7c8f') + ';width:20px;flex-shrink:0;">#' + e.rank + '</span>'
             + '<span style="font-size:12px;color:#6b7c8f;font-weight:' + (isMe ? '700' : '500') + ';flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(e.name) + '</span>'
             + '<span style="font-size:12px;font-weight:700;color:#6b7c8f;">' + e[valueKey] + (suffix || '') + '</span>'
             + '</div>';
@@ -7320,9 +7320,10 @@ var BUSINESS_BRAND_COLORS = {
   'fitch and fitch':          '#191140',
   'mortgage heroes':          '#9fbd1c'
 };
-// Sidebar section-header colour (e.g. OPPORTUNITIES) — default orange clashes
-// against some brand colours, so override per-business here where needed.
-var BUSINESS_SIDEBAR_LABEL_COLORS = {
+// FPG accent orange (--brand-orange) is used throughout for sidebar section
+// headers, pills, and highlights. Override per-business here where the
+// default orange clashes with that business's brand colour.
+var BUSINESS_ORANGE_COLORS = {
   'mortgage heroes':  '#6b7c8f', // FPG dark grey — orange clashes with the lime-green brand colour
   'fitch and fitch':  '#61bdb0'  // Fitch & Fitch secondary brand colour
 };
@@ -7335,10 +7336,10 @@ function applyBrandColorForUser(user) {
   var business = ((user && user.business) || '').trim().toLowerCase();
   var color = BUSINESS_BRAND_COLORS[business] || '#003768';
   var rgb = hexToRgbTriple(color) || '0,55,104';
-  var labelColor = BUSINESS_SIDEBAR_LABEL_COLORS[business] || '#fcb034';
+  var orange = BUSINESS_ORANGE_COLORS[business] || '#fcb034';
   document.documentElement.style.setProperty('--brand-navy', color);
   document.documentElement.style.setProperty('--brand-navy-rgb', rgb);
-  document.documentElement.style.setProperty('--sidebar-label-color', labelColor);
+  document.documentElement.style.setProperty('--brand-orange', orange);
 }
 
 // ── Init: load current user, show admin button if admin ──────
@@ -8639,9 +8640,9 @@ function openBrokerProfile(email, name) {
       var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
       var types = [];
       if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
-      if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: '#fcb034' });
+      if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
       if (u.sellsInvestments) types.push({ key: 'Investment', color: '#2e99d5' });
-      if (!types.length) types = [{ key: 'Mortgage', color: 'var(--brand-navy)' }, { key: 'Protection', color: '#fcb034' }];
+      if (!types.length) types = [{ key: 'Mortgage', color: 'var(--brand-navy)' }, { key: 'Protection', color: 'var(--brand-orange)' }];
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
         var target  = targets[t.key] || 900;
@@ -8662,7 +8663,7 @@ function openBrokerProfile(email, name) {
       // ── Feefo ──
       var f = d.feefo || {};
       var stars = '';
-      if (f.avg) { var avgN = parseFloat(f.avg); for (var i=1;i<=5;i++) stars += '<span style="color:' + (i<=Math.round(avgN)?'#fcb034':'#ddd') + ';">★</span>'; }
+      if (f.avg) { var avgN = parseFloat(f.avg); for (var i=1;i<=5;i++) stars += '<span style="color:' + (i<=Math.round(avgN)?'var(--brand-orange)':'#ddd') + ';">★</span>'; }
       document.getElementById('bp-feefo').innerHTML =
         '<div style="display:flex;gap:16px;margin-bottom:14px;">' +
           '<div style="text-align:center;">' +
@@ -8978,7 +8979,7 @@ function filterBpReviews() {
   document.getElementById('bp-reviews').innerHTML = filtered.length
     ? filtered.map(function(r) {
         var starStr = '';
-        if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'#fcb034':'#ddd') + ';font-size:12px;">★</span>';
+        if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'var(--brand-orange)':'#ddd') + ';font-size:12px;">★</span>';
         return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px;">' +
             '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + escHtml(r.customer) + '</span>' +
@@ -9001,7 +9002,7 @@ function filterBpActivity() {
     return true;
   });
   document.getElementById('bp-activity-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
-  var typeColor = { Mortgage: 'var(--brand-navy)', Protection: '#fcb034', Investment: '#2e99d5' };
+  var typeColor = { Mortgage: 'var(--brand-navy)', Protection: 'var(--brand-orange)', Investment: '#2e99d5' };
   document.getElementById('bp-activity-body').innerHTML = filtered.length
     ? filtered.map(function(e) {
         var label = e.video || e.activity || '—';
@@ -9527,7 +9528,7 @@ function oppDetailHtml(cardKey) {
     }
     if (s.items) {
       s.items.forEach(function(item) {
-        h += '<div style="background:#f8fafc;border-left:3px solid #fcb034;border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:10px;">';
+        h += '<div style="background:#f8fafc;border-left:3px solid var(--brand-orange);border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:10px;">';
         h += '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">' + escHtml(item.q) + '</div>';
         h += '<div style="font-size:13px;color:#6b7c8f;line-height:1.7;">' + escHtml(item.a) + '</div>';
         h += '</div>';
@@ -9567,7 +9568,7 @@ function oppBuildPageHtml(pageKey) {
   sections.forEach(function(sKey) {
     var sec = OPP_SECTIONS_DEF[sKey];
     if (!sec) return;
-    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fcb034;margin-bottom:12px;">' + escHtml(sec.label) + '</div>';
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-orange);margin-bottom:12px;">' + escHtml(sec.label) + '</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px;">';
     sec.cards.forEach(function(cKey) {
       var card = OPP_CARDS[cKey];
@@ -9657,7 +9658,7 @@ function loadSupervisorZone() {
       // ── Populate sidebar supervisor links
       var sbWrap = document.getElementById('sv-sb-supervisors');
       if (sbWrap && supervisors.length > 0) {
-        var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
+        var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>';
         if (_currentUser && _currentUser.isAdmin) {
           // "All Company" removed — use "Whole company" top-level link instead
         }
@@ -9702,7 +9703,7 @@ function renderSvDashboard(data) {
 
   var typeConf = [
     { key: 'Mortgage',   label: 'Mortgage',   color: 'var(--brand-navy)' },
-    { key: 'Protection', label: 'Protection', color: '#fcb034' }
+    { key: 'Protection', label: 'Protection', color: 'var(--brand-orange)' }
   ];
 
   function getStatus(pct) {
@@ -10300,7 +10301,7 @@ function renderCpdProgress() {
   var noFlags = !user.sellsMortgages && !user.sellsProtection;
   var typeConf = [
     { key: 'Mortgage',   label: 'Mortgage',   color: 'var(--brand-navy)', show: user.sellsMortgages  || noFlags },
-    { key: 'Protection', label: 'Protection', color: '#fcb034', show: user.sellsProtection || noFlags }
+    { key: 'Protection', label: 'Protection', color: 'var(--brand-orange)', show: user.sellsProtection || noFlags }
   ];
   var visible = typeConf.filter(function(t){ return t.show; });
   if (!visible.length) visible = typeConf;
@@ -10383,7 +10384,7 @@ function renderCpdPie() {
     '<svg viewBox="0 0 100 100" width="100" height="100">' +
       '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#f0f4f8" stroke-width="' + sw + '"/>' +
       arcPath(mortPct, 0, 'var(--brand-navy)') +
-      arcPath(protPct, mortPct, '#fcb034') +
+      arcPath(protPct, mortPct, 'var(--brand-orange)') +
     '</svg>' +
     '<div style="display:flex;flex-direction:column;gap:8px;width:100%;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +
@@ -10391,8 +10392,8 @@ function renderCpdPie() {
         '<span style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + Math.round(mortPct*100) + '%</span>' +
       '</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<div style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#fcb034;flex-shrink:0;display:inline-block;"></span><span style="font-size:11px;font-weight:600;color:#6b7c8f;">Protection</span></div>' +
-        '<span style="font-size:14px;font-weight:800;color:#fcb034;">' + Math.round(protPct*100) + '%</span>' +
+        '<div style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:var(--brand-orange);flex-shrink:0;display:inline-block;"></span><span style="font-size:11px;font-weight:600;color:#6b7c8f;">Protection</span></div>' +
+        '<span style="font-size:14px;font-weight:800;color:var(--brand-orange);">' + Math.round(protPct*100) + '%</span>' +
       '</div>' +
     '</div>';
 }
@@ -11284,7 +11285,7 @@ function pzRender(map) {
   if (supList) {
     var viewAllCount = totalFromMap || names.length;
     var sHtml = '<a href="javascript:void(0)" data-sup="__all__" class="active" onclick="pzClickSup(this);return false;">View All<span style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">' + viewAllCount + '</span></a>';
-    sHtml += '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#fcb034;">SUPERVISORS</span></div>';
+    sHtml += '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>';
     for (var s = 0; s < supNames.length; s++) {
       var sup = supNames[s];
       var cnt = mapGroupCounts[sup] || PZ_GROUPS[sup].length;
@@ -11331,7 +11332,7 @@ function pzShowMainView(filterSup) {
             (isNonCas ? '<span style="flex-shrink:0;width:7px;height:7px;border-radius:50%;background:#b91c1c;display:inline-block;"></span>' : '') +
             '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);">' + ne + '</span>' +
           '</div>' +
-          (rank ? '<span style="font-size:14px;font-weight:700;color:#fcb034;white-space:nowrap;margin-left:6px;">#' + rank + '</span>' : '') +
+          (rank ? '<span style="font-size:14px;font-weight:700;color:var(--brand-orange);white-space:nowrap;margin-left:6px;">#' + rank + '</span>' : '') +
         '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-bottom:2px;">Mtg: '+(d.ms||0)+' · Prot: '+(d.ps||0)+lpStr+'</div>' +
         '<div style="font-size:12px;color:#6b7c8f;">GI: '+(d.gs||0)+'</div>' +
@@ -12969,7 +12970,7 @@ function payOpenTaxYear(tyKey) {
     var label=(MONTH_NAMES[m.month]||'')+' '+m.year;
     html+='<tr style="border-top:1px solid #f0f4f8;cursor:pointer;" onclick="payNavOpenStatement('+m.key+')" onmouseover="this.style.background=\'#fafbfc\'" onmouseout="this.style.background=\'transparent\'">';
     html+='<td style="padding:11px 22px;font-weight:600;color:#6b7c8f;">'+escHtml(label)+'</td>';
-    html+='<td style="padding:11px 16px;text-align:right;color:#fcb034;font-weight:600;white-space:nowrap;">'+escHtml(bacsDate)+'</td>';
+    html+='<td style="padding:11px 16px;text-align:right;color:var(--brand-orange);font-weight:600;white-space:nowrap;">'+escHtml(bacsDate)+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;color:#6b7c8f;font-variant-numeric:tabular-nums;">'+(initAmt?'£'+initAmt.toFixed(2):'—')+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;color:#6b7c8f;font-variant-numeric:tabular-nums;">'+(renAmt?'£'+renAmt.toFixed(2):'—')+'</td>';
     html+='<td style="padding:11px 16px;text-align:right;font-weight:700;color:var(--brand-navy);font-variant-numeric:tabular-nums;">£'+mTotal.toFixed(2)+'</td>';
@@ -13071,7 +13072,7 @@ function payRenderSummary(m) {
   // Statement Date
   if (rtfStmt&&rtfStmt.statementDate) items.push({label:'Statement Date',val:escHtml(rtfStmt.statementDate),color:'#fff'});
   // BACS Date
-  if (rtfStmt&&rtfStmt.bacsDate)      items.push({label:'BACS Date',val:escHtml(rtfStmt.bacsDate),color:'#fcb034'});
+  if (rtfStmt&&rtfStmt.bacsDate)      items.push({label:'BACS Date',val:escHtml(rtfStmt.bacsDate),color:'var(--brand-orange)'});
   // Initial Commission
   if (rtfStmt&&rtfStmt.payments) {
     var initP=(rtfStmt.payments||[]).find(function(p){return p.description==='Initial Commission';});
@@ -13230,7 +13231,7 @@ function payRenderMonthBody(m, allMonths) {
       // Render each source file
       m.files.forEach(function(stmt, fi) {
         if (stmt.error) {
-          html += '<div style="margin:10px 22px;background:#fff8ec;border:1px solid #fcb034;border-radius:8px;padding:10px 14px;font-size:12px;color:#7a5300;">';
+          html += '<div style="margin:10px 22px;background:#fff8ec;border:1px solid var(--brand-orange);border-radius:8px;padding:10px 14px;font-size:12px;color:#7a5300;">';
           html += escHtml(stmt.filename||'') + ' — could not be read ('+escHtml(stmt.error)+')';
           html += '</div>';
           return;
