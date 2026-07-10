@@ -53,6 +53,7 @@ const MZ_PAYDAY    = 'fld5sjQq3OUrzJ0tL';
 const MZ_TERM      = 'fldOW9nnAAskOGPf2';
 const MZ_ADVISER   = 'fldizBOkmRHDrvewE';
 const MZ_FOLLOWUP  = 'fldiG17d2OGZzXYmk';
+const MZ_CALLEDAT  = 'fldtMWUhE0be4Ts2Q'; // set automatically first time Status leaves "To Call"
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -494,11 +495,12 @@ function muttuoRecordToLead(record) {
   function selectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
   return {
     id:           record.id,
+    createdTime:  record.createdTime || null,
     name:         f[MZ_NAME]    || '',
     phone:        f[MZ_PHONE]   || '',
     email:        f[MZ_EMAIL]   || '',
     notes:        f[MZ_NOTES]   || '',
-    status:       selectName(f[MZ_STATUS]) || 'Todo',
+    status:       selectName(f[MZ_STATUS]) || 'To Call',
     propertyValue:f[MZ_PROPVAL] || '',
     deposit:      f[MZ_DEPOSIT] || '',
     scheme:       selectName(f[MZ_SCHEME]) || 'No',
@@ -506,7 +508,8 @@ function muttuoRecordToLead(record) {
     paydayLoans:  selectName(f[MZ_PAYDAY]) || 'No',
     term:         f[MZ_TERM]    || null,
     adviser:      f[MZ_ADVISER] || '',
-    followUp:     f[MZ_FOLLOWUP] || null
+    followUp:     f[MZ_FOLLOWUP] || null,
+    calledAt:     f[MZ_CALLEDAT] || null
   };
 }
 
@@ -585,6 +588,19 @@ app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req
     if (b.term !== undefined)          fields[MZ_TERM]    = b.term === '' ? null : Number(b.term);
     if (b.adviser !== undefined)       fields[MZ_ADVISER] = String(b.adviser);
     if (b.followUp !== undefined)      fields[MZ_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
+
+    // First time a lead's status moves off "To Call", stamp Called At automatically
+    // (used for the time-to-call stat on the Data page).
+    if (fields[MZ_STATUS] && fields[MZ_STATUS] !== 'To Call') {
+      try {
+        const existing = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
+          headers: { Authorization: `Bearer ${AT_KEY}` }
+        }).then(r2 => r2.json());
+        if (existing && existing.fields && !existing.fields[MZ_CALLEDAT]) {
+          fields[MZ_CALLEDAT] = new Date().toISOString();
+        }
+      } catch (_) { /* non-fatal — Called At stamp is best-effort */ }
+    }
 
     const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
       method: 'PATCH',

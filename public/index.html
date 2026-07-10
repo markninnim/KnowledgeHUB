@@ -379,8 +379,13 @@ html { height: 100%; }
   </div>
   <!-- Muttuo sidebar -->
   <div id="sidebar-muttuo" style="display:none">
-    <h2 style="margin-top: 8px;">Muttuo</h2>
-    <a href="#" class="active" onclick="return false;">Leads</a>
+    <h2 style="margin-top: 8px;">Leads</h2>
+    <a href="#" id="mz-nav-all"        class="active" onclick="mzFilterBy('all',this);return false;">All Leads</a>
+    <a href="#" id="mz-nav-golden"     onclick="mzFilterBy('golden',this);return false;">Golden Hour</a>
+    <a href="#" id="mz-nav-today"      onclick="mzFilterBy('today',this);return false;">Today</a>
+    <a href="#" id="mz-nav-followup"   onclick="mzFilterBy('followup',this);return false;">Follow Up</a>
+    <h2>MI Area</h2>
+    <a href="#" id="mz-nav-data"       onclick="mzShowPage('data',this);return false;">Data</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -3987,11 +3992,11 @@ html { height: 100%; }
   </div>
 
   <div id="tab-muttuo" class="tab-pane">
-    <div style="padding:32px 32px 0;">
+    <div id="mz-leads-page" style="padding:32px 32px 0;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
         <div>
-          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Muttuo</h2>
-          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
+          <h2 id="mz-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Muttuo</h2>
+          <p id="mz-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
@@ -4003,6 +4008,20 @@ html { height: 100%; }
       </div>
       <div id="mz-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="mz-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+    <div id="mz-data-page" style="display:none;padding:32px 32px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+        <div>
+          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">MI overview across the leads pipeline.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label style="font-size:11px;color:#6b7c8f;font-weight:600;">From <input id="mz-data-from" type="date" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;margin-left:4px;"></label>
+          <label style="font-size:11px;color:#6b7c8f;font-weight:600;">To <input id="mz-data-to" type="date" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;margin-left:4px;"></label>
+          <button onclick="mzRenderData()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
+        </div>
+      </div>
+      <div id="mz-data-content" style="padding-bottom:32px;"></div>
     </div>
   </div>
 
@@ -4031,7 +4050,7 @@ html { height: 100%; }
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Scheme</label><select id="mz-scheme" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Payday Loans</label><select id="mz-payday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="mz-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>Todo</option><option>In progress</option><option>Done</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="mz-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment Booked</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><input id="mz-adviser" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
@@ -12740,10 +12759,60 @@ function loadAutoCrm() {
 // ── Muttuo (Fitch and Fitch leads) ────────────────────────────
 var _mzLoaded = false;
 var _mzLeads  = [];
+var _mzFilter = 'all'; // 'all' | 'golden' | 'today' | 'followup'
+function mzTodayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function mzIsToday(iso) {
+  if (!iso) return false;
+  var d = new Date(iso);
+  var now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+function mzIsGoldenHour(iso) {
+  if (!iso) return false;
+  var t = new Date(iso).getTime();
+  return (Date.now() - t) <= 3600000 && (Date.now() - t) >= 0;
+}
+function mzFilteredLeads() {
+  if (_mzFilter === 'golden')   return _mzLeads.filter(function(l) { return mzIsGoldenHour(l.createdTime); });
+  if (_mzFilter === 'today')    return _mzLeads.filter(function(l) { return mzIsToday(l.createdTime); });
+  if (_mzFilter === 'followup') return _mzLeads.filter(function(l) { return l.followUp === mzTodayStr(); });
+  return _mzLeads;
+}
+function mzFilterBy(kind, el) {
+  _mzFilter = kind;
+  document.querySelectorAll('#sidebar-muttuo a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  mzShowPage('leads');
+  var titles = { all: ['Muttuo', 'Fitch and Fitch leads — add, track, and update leads through the pipeline.'],
+    golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
+    today:    ['Today', 'Leads created today.'],
+    followup: ['Follow Up', 'Leads with a follow-up date of today.'] };
+  var t = titles[kind] || titles.all;
+  var titleEl = document.getElementById('mz-leads-title');
+  var subEl   = document.getElementById('mz-leads-subtitle');
+  if (titleEl) titleEl.textContent = t[0];
+  if (subEl)   subEl.textContent   = t[1];
+  mzRenderLeads();
+}
+function mzShowPage(page) {
+  var leadsPage = document.getElementById('mz-leads-page');
+  var dataPage  = document.getElementById('mz-data-page');
+  if (leadsPage) leadsPage.style.display = (page === 'leads') ? '' : 'none';
+  if (dataPage)  dataPage.style.display  = (page === 'data')  ? '' : 'none';
+  if (page === 'data') {
+    document.querySelectorAll('#sidebar-muttuo a').forEach(function(a) { a.classList.remove('active'); });
+    var dbtn = document.getElementById('mz-nav-data');
+    if (dbtn) dbtn.classList.add('active');
+    mzRenderData();
+  }
+}
 function mzStatusPillStyle(status) {
-  if (status === 'Done')        return 'background:#dcfce7;color:#166534;';
-  if (status === 'In progress') return 'background:#fef9c3;color:#854d0e;';
-  return 'background:#dbeafe;color:var(--brand-navy);';
+  if (status === 'Appointment Booked') return 'background:#dcfce7;color:#166534;';
+  if (status === 'No Answer')          return 'background:#fef2f2;color:#b91c1c;';
+  return 'background:#dbeafe;color:var(--brand-navy);'; // To Call
 }
 function loadMuttuo() {
   if (_mzLoaded) return;
@@ -12796,17 +12865,19 @@ function mzSetView(view) {
 }
 function mzStatusSelectHtml(lead) {
   return '<select onchange="mzUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + mzStatusPillStyle(lead.status) + '">'
-    + ['Todo','In progress','Done'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+    + ['To Call','No Answer','Appointment Booked'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
     + '</select>';
 }
 function mzRenderLeads() {
   var contentEl = document.getElementById('mz-content');
-  if (!_mzLeads.length) {
-    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads yet — click <strong>+ Add Lead</strong> to create one.</div>';
+  var leads = mzFilteredLeads();
+  if (!leads.length) {
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' +
+      (_mzLeads.length ? 'No leads match this view.' : 'No leads yet — click <strong>+ Add Lead</strong> to create one.') + '</div>';
     return;
   }
   if (_mzView === 'card') {
-    var cards = _mzLeads.map(function(lead) {
+    var cards = leads.map(function(lead) {
       return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
           + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</span>'
@@ -12826,7 +12897,7 @@ function mzRenderLeads() {
     contentEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">' + cards + '</div>';
     return;
   }
-  var rows = _mzLeads.map(function(lead) {
+  var rows = leads.map(function(lead) {
     var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
       + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
@@ -12850,6 +12921,89 @@ function mzRenderLeads() {
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
+function mzParseCurrency(s) {
+  if (typeof s === 'number') return s;
+  if (!s) return null;
+  var n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
+  return isNaN(n) ? null : n;
+}
+function mzAvg(arr) { return arr.length ? arr.reduce(function(a, b) { return a + b; }, 0) / arr.length : null; }
+function mzFmtHrs(ms) {
+  var mins = Math.round(ms / 60000);
+  if (mins < 60) return mins + ' min';
+  var hrs = Math.floor(mins / 60), rem = mins % 60;
+  return hrs + 'h ' + rem + 'm';
+}
+function mzStatCard(label, value) {
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
+    + '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:var(--brand-navy);line-height:1.2;">' + value + '</div>'
+    + '</div>';
+}
+function mzRenderData() {
+  var contentEl = document.getElementById('mz-data-content');
+  var from = document.getElementById('mz-data-from').value;
+  var to   = document.getElementById('mz-data-to').value;
+  var leads = _mzLeads.filter(function(l) {
+    if (!l.createdTime) return true;
+    var d = l.createdTime.slice(0, 10);
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+
+  if (!leads.length) {
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads in this date range.</div>';
+    return;
+  }
+
+  var total          = leads.length;
+  var callsAttempted = leads.filter(function(l) { return l.status !== 'To Call'; });
+  var appointments    = leads.filter(function(l) { return l.status === 'Appointment Booked'; });
+  var noAnswer         = leads.filter(function(l) { return l.status === 'No Answer'; });
+  var callToDiscussionRate     = callsAttempted.length ? Math.round(callsAttempted.length / total * 100) : 0;
+  var discussionToApptRate     = callsAttempted.length ? Math.round(appointments.length / callsAttempted.length * 100) : 0;
+
+  var propVals = leads.map(function(l) { return mzParseCurrency(l.propertyValue); }).filter(function(n) { return n !== null; });
+  var depositVals = leads.map(function(l) { return mzParseCurrency(l.deposit); }).filter(function(n) { return n !== null; });
+  var salaryVals = leads.map(function(l) { return l.salary; }).filter(function(n) { return n !== null && n !== undefined; });
+
+  var callTimes = leads.filter(function(l) { return l.createdTime && l.calledAt; })
+    .map(function(l) { return new Date(l.calledAt).getTime() - new Date(l.createdTime).getTime(); })
+    .filter(function(ms) { return ms >= 0; });
+  var quickestCall = callTimes.length ? Math.min.apply(null, callTimes) : null;
+  var slowestCall  = callTimes.length ? Math.max.apply(null, callTimes) : null;
+  var avgCall      = callTimes.length ? mzAvg(callTimes) : null;
+
+  var statusCounts = { 'To Call': 0, 'No Answer': 0, 'Appointment Booked': 0 };
+  leads.forEach(function(l) { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
+
+  var cards = [
+    mzStatCard('Number of Leads', total),
+    mzStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
+    mzStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
+    mzStatCard('Avg. Time to Call', avgCall !== null ? mzFmtHrs(avgCall) : '—'),
+    mzStatCard('Quickest Call', quickestCall !== null ? mzFmtHrs(quickestCall) : '—'),
+    mzStatCard('Slowest Call', slowestCall !== null ? mzFmtHrs(slowestCall) : '—'),
+    mzStatCard('Avg. Property Value', propVals.length ? acFmtCurrency(Math.round(mzAvg(propVals))) : '—'),
+    mzStatCard('Avg. Deposit', depositVals.length ? acFmtCurrency(Math.round(mzAvg(depositVals))) : '—'),
+    mzStatCard('Avg. Salary', salaryVals.length ? acFmtCurrency(Math.round(mzAvg(salaryVals))) : '—')
+  ].join('');
+
+  var statusRows = Object.keys(statusCounts).map(function(s) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1d5db;">'
+      + '<span style="font-size:11px;font-weight:700;border-radius:20px;padding:4px 10px;' + mzStatusPillStyle(s) + '">' + s + '</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + statusCounts[s] + '</span>'
+      + '</div>';
+  }).join('');
+
+  contentEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;">' + cards + '</div>'
+    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;max-width:340px;">'
+      + '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Status Summary</div>'
+      + statusRows
+    + '</div>'
+    + '<p style="color:#6b7c8f;font-size:11.5px;margin:16px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment Booked" rather than "No Answer".</p>';
+}
 function mzUpdateStatus(id, status) {
   var lead = _mzLeads.find(function(l) { return l.id === id; });
   if (lead) lead.status = status;
@@ -12872,7 +13026,7 @@ function mzOpenModal(id) {
   document.getElementById('mz-term').value    = lead ? (lead.term || '') : '';
   document.getElementById('mz-scheme').value  = lead ? lead.scheme  : 'No';
   document.getElementById('mz-payday').value  = lead ? lead.paydayLoans : 'No';
-  document.getElementById('mz-status').value  = lead ? lead.status  : 'Todo';
+  document.getElementById('mz-status').value  = lead ? lead.status  : 'To Call';
   document.getElementById('mz-adviser').value  = lead ? lead.adviser  : '';
   document.getElementById('mz-followup').value = lead ? (lead.followUp || '') : '';
   document.getElementById('mz-notes').value   = lead ? lead.notes   : '';
