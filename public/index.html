@@ -13357,7 +13357,7 @@ function mzRenderData() {
   var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
   var leadsToSaleRate = total ? Math.round(sales.length / total * 100) : 0;
   var leadsToApptPie = mzPieChartSvg(leadsToApptRate, 'var(--brand-orange)', 'Leads → Appointment', appointments.length + ' of ' + total + ' leads');
-  var leadsToSalePie  = mzPieChartSvg(leadsToSaleRate, '#7c4dea', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
+  var leadsToSalePie  = mzPieChartSvg(leadsToSaleRate, 'var(--brand-orange)', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
 
   contentEl.innerHTML =
       mzSectionTitle('Pipeline')
@@ -13946,7 +13946,7 @@ function lgRenderData() {
   var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
   var leadsToSaleRate = total ? Math.round(sales.length / total * 100) : 0;
   var leadsToApptPie = lgPieChartSvg(leadsToApptRate, 'var(--brand-orange)', 'Leads → Appointment', appointments.length + ' of ' + total + ' leads');
-  var leadsToSalePie  = lgPieChartSvg(leadsToSaleRate, '#7c4dea', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
+  var leadsToSalePie  = lgPieChartSvg(leadsToSaleRate, 'var(--brand-orange)', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
 
   contentEl.innerHTML =
       lgSectionTitle('Pipeline')
