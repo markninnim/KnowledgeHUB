@@ -13087,6 +13087,20 @@ function mzFunnelChartSvg(stages) {
   }).join('');
   return '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:640px;height:auto;">' + bars + '</svg>';
 }
+function mzPieChartSvg(pct, color, label, sub) {
+  var size = 140, r = 56, cx = size / 2, cy = size / 2;
+  var circumference = 2 * Math.PI * r;
+  var dash = (Math.max(0, Math.min(100, pct)) / 100) * circumference;
+  return '<svg viewBox="0 0 ' + size + ' ' + size + '" style="width:140px;height:140px;">'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#f5f7fa" stroke-width="18"/>'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="18" '
+      + 'stroke-dasharray="' + dash + ' ' + circumference + '" stroke-linecap="round" '
+      + 'transform="rotate(-90 ' + cx + ' ' + cy + ')"/>'
+    + '<text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="20" fill="var(--brand-navy)">' + pct + '%</text>'
+    + '</svg>'
+    + '<div style="text-align:center;font-size:12.5px;font-weight:700;color:var(--brand-navy);margin-top:8px;">' + escHtml(label) + '</div>'
+    + (sub ? '<div style="text-align:center;font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(sub) + '</div>' : '');
+}
 var _mzDataUser = ''; // '' = all users
 function mzDataUserSelectHtml() {
   var options = ['<option value="">All Users</option>'].concat(
@@ -13208,12 +13222,21 @@ function mzRenderData() {
     { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#7c4dea' }
   ]);
 
+  var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
+  var leadsToSaleRate = total ? Math.round(sales.length / total * 100) : 0;
+  var leadsToApptPie = mzPieChartSvg(leadsToApptRate, 'var(--brand-orange)', 'Leads → Appointment', appointments.length + ' of ' + total + ' leads');
+  var leadsToSalePie  = mzPieChartSvg(leadsToSaleRate, '#7c4dea', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
+
   contentEl.innerHTML =
       mzSectionTitle('Pipeline')
     + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + pipelineCards + '</div>'
 
     + mzSectionTitle('Conversion Funnel')
-    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px 24px;">' + funnelChart + '</div>'
+    + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;">'
+      + '<div style="flex:2 1 340px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px 24px;">' + funnelChart + '</div>'
+      + '<div style="flex:1 1 140px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;">' + leadsToApptPie + '</div>'
+      + '<div style="flex:1 1 140px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;">' + leadsToSalePie + '</div>'
+    + '</div>'
 
     + mzSectionTitle('Call & Deal Averages')
     + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + callCards + '</div>'
