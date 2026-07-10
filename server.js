@@ -487,18 +487,21 @@ function requireFitchAndFitch(req, res, next) {
 
 function muttuoRecordToLead(record) {
   const f = record.fields;
+  // Single-select fields come back as {id,name,color} objects when the request
+  // uses returnFieldsByFieldId=true — unwrap to the plain option name.
+  function selectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
   return {
     id:           record.id,
     name:         f[MZ_NAME]    || '',
     phone:        f[MZ_PHONE]   || '',
     email:        f[MZ_EMAIL]   || '',
     notes:        f[MZ_NOTES]   || '',
-    status:       f[MZ_STATUS]  || 'Todo',
+    status:       selectName(f[MZ_STATUS]) || 'Todo',
     propertyValue:f[MZ_PROPVAL] || '',
     deposit:      f[MZ_DEPOSIT] || '',
-    scheme:       f[MZ_SCHEME]  || 'No',
+    scheme:       selectName(f[MZ_SCHEME]) || 'No',
     salary:       f[MZ_SALARY]  || null,
-    paydayLoans:  f[MZ_PAYDAY]  || 'No',
+    paydayLoans:  selectName(f[MZ_PAYDAY]) || 'No',
     term:         f[MZ_TERM]    || null
   };
 }
@@ -509,7 +512,7 @@ app.get('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res)
     let records = [];
     let offset;
     do {
-      const qs = offset ? `?pageSize=100&offset=${offset}` : '?pageSize=100';
+      const qs = offset ? `?returnFieldsByFieldId=true&pageSize=100&offset=${offset}` : '?returnFieldsByFieldId=true&pageSize=100';
       const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}${qs}`, {
         headers: { Authorization: `Bearer ${AT_KEY}` }
       });
@@ -547,7 +550,7 @@ app.post('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res
     const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records: [{ fields }], typecast: true })
+      body: JSON.stringify({ records: [{ fields }], typecast: true, returnFieldsByFieldId: true })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
@@ -578,7 +581,7 @@ app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req
     const r = await fetch(`https://api.airtable.com/v0/${MUTTUO_BASE}/${MUTTUO_TABLE}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records: [{ id: req.params.id, fields }], typecast: true })
+      body: JSON.stringify({ records: [{ id: req.params.id, fields }], typecast: true, returnFieldsByFieldId: true })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');

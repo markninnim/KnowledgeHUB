@@ -3993,7 +3993,13 @@ html { height: 100%; }
           <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Muttuo</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
         </div>
-        <button onclick="mzOpenModal()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
+            <button id="mz-view-table" onclick="mzSetView('table')" style="padding:9px 14px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
+            <button id="mz-view-card" onclick="mzSetView('card')" style="padding:9px 14px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+          </div>
+          <button onclick="mzOpenModal()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
+        </div>
       </div>
       <div id="mz-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="mz-content" style="display:none;padding-bottom:32px;"></div>
@@ -12755,10 +12761,44 @@ function loadMuttuo() {
     contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load leads. Please refresh and try again.</div>';
   });
 }
+var _mzView = 'table';
+function mzSetView(view) {
+  _mzView = view;
+  var tableBtn = document.getElementById('mz-view-table');
+  var cardBtn  = document.getElementById('mz-view-card');
+  if (tableBtn) { tableBtn.style.background = (view === 'table') ? 'var(--brand-navy)' : '#f5f7fa'; tableBtn.style.color = (view === 'table') ? '#fff' : 'var(--brand-navy)'; }
+  if (cardBtn)  { cardBtn.style.background  = (view === 'card')  ? 'var(--brand-navy)' : '#f5f7fa'; cardBtn.style.color  = (view === 'card')  ? '#fff' : 'var(--brand-navy)'; }
+  mzRenderLeads();
+}
+function mzStatusSelectHtml(lead) {
+  return '<select onchange="mzUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + mzStatusPillStyle(lead.status) + '">'
+    + ['Todo','In progress','Done'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+    + '</select>';
+}
 function mzRenderLeads() {
   var contentEl = document.getElementById('mz-content');
   if (!_mzLeads.length) {
     contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads yet — click <strong>+ Add Lead</strong> to create one.</div>';
+    return;
+  }
+  if (_mzView === 'card') {
+    var cards = _mzLeads.map(function(lead) {
+      return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
+          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</span>'
+          + mzStatusSelectHtml(lead)
+        + '</div>'
+        + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
+          + (lead.phone ? '<div>' + escHtml(lead.phone) + '</div>' : '')
+          + (lead.email ? '<div>' + escHtml(lead.email) + '</div>' : '')
+          + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
+          + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
+          + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
+          + (lead.notes ? '<div style="margin-top:6px;font-style:italic;">' + escHtml(lead.notes) + '</div>' : '')
+        + '</div>'
+        + '</div>';
+    }).join('');
+    contentEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">' + cards + '</div>';
     return;
   }
   var rows = _mzLeads.map(function(lead) {
@@ -12768,11 +12808,7 @@ function mzRenderLeads() {
       + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.email) + '</td>'
       + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.propertyValue) + '</td>'
       + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.deposit) + '</td>'
-      + '<td style="padding:10px 12px;">'
-        + '<select onchange="mzUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + mzStatusPillStyle(lead.status) + '">'
-          + ['Todo','In progress','Done'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
-        + '</select>'
-      + '</td>'
+      + '<td style="padding:10px 12px;">' + mzStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
   contentEl.innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
