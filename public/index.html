@@ -213,6 +213,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
+    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;">LeadGen Leads</button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -398,6 +399,18 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <a href="#" id="mz-nav-followup"   onclick="mzFilterBy('followup',this);return false;">Follow Up</a>
     <h2>MI Area</h2>
     <a href="#" id="mz-nav-data"       onclick="mzShowPage('data',this);return false;">Data</a>
+  </div>
+  <!-- LeadGen Leads sidebar -->
+  <div id="sidebar-leadgen" style="display:none">
+    <h2 style="margin-top: 8px;">Lead Manager</h2>
+    <a href="#" id="lg-nav-all"        class="active" onclick="lgFilterBy('all',this);return false;">All Leads</a>
+    <h2>My Leads</h2>
+    <a href="#" id="lg-nav-mine"       onclick="lgFilterBy('mine',this);return false;">All Leads</a>
+    <a href="#" id="lg-nav-golden"     onclick="lgFilterBy('golden',this);return false;">Golden Hour</a>
+    <a href="#" id="lg-nav-today"      onclick="lgFilterBy('today',this);return false;">Today</a>
+    <a href="#" id="lg-nav-followup"   onclick="lgFilterBy('followup',this);return false;">Follow Up</a>
+    <h2>MI Area</h2>
+    <a href="#" id="lg-nav-data"       onclick="lgShowPage('data',this);return false;">Data</a>
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
@@ -4048,6 +4061,51 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     </div>
   </div>
 
+  <div id="tab-leadgen" class="tab-pane">
+    <div id="lg-leads-page" style="padding:32px 32px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
+        <div>
+          <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">LeadGen Leads</h2>
+          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">LeadGen leads — add, track, and update leads through the pipeline.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;height:38px;">
+          <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
+          <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;height:100%;box-sizing:border-box;">
+            <button id="lg-view-table" onclick="lgSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
+            <button id="lg-view-card" onclick="lgSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+          </div>
+          <button onclick="lgOpenModal()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
+        </div>
+      </div>
+      <div id="lg-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="lg-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+    <div id="lg-data-page" style="display:none;padding:32px 32px 0;">
+      <div id="lg-data-controls" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+        <div>
+          <h2 id="lg-data-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">MI overview across the leads pipeline.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;height:38px;">
+          <div id="lg-data-user-wrap" style="display:flex;align-items:center;height:100%;"></div>
+          <label style="display:flex;align-items:center;gap:4px;height:100%;font-size:11px;color:#6b7c8f;font-weight:600;">From
+            <input id="lg-data-from" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;height:100%;font-size:11px;color:#6b7c8f;font-weight:600;">To
+            <input id="lg-data-to" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
+          </label>
+          <button onclick="lgRenderData()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
+          <button onclick="lgExportPdf()" style="height:100%;box-sizing:border-box;background:#fff;border:1px solid #d1d5db;outline:none;color:var(--brand-navy);padding:0 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">&#8681; Export PDF</button>
+        </div>
+      </div>
+      <div id="lg-data-print-header" style="display:none;margin-bottom:20px;">
+        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">LeadGen Leads — Data Report</h2>
+        <p id="lg-data-print-meta" style="color:#6b7c8f;font-size:12.5px;margin:0;"></p>
+      </div>
+      <div id="lg-data-content" style="padding-bottom:32px;"></div>
+    </div>
+  </div>
+
 </div>
 <div id="mz-modal" onclick="if(event.target===this)mzCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;width:100%;max-width:520px;margin:0 20px;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25);">
@@ -4090,6 +4148,50 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
       <span id="mz-modal-status" style="font-size:11px;font-weight:700;color:#b91c1c;margin-right:auto;"></span>
       <button onclick="mzCloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
       <button onclick="mzSaveLead()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Lead</button>
+    </div>
+  </div>
+</div>
+<div id="lg-modal" onclick="if(event.target===this)lgCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:520px;margin:0 20px;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #d1d5db;">
+      <h2 id="lg-modal-title" style="color:var(--brand-navy);font-size:16px;margin:0;">Add Lead</h2>
+      <button onclick="lgCloseModal()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="lg-id">
+      <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Name</label><input id="lg-name" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Phone Number</label><input id="lg-phone" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Email</label><input id="lg-email" type="email" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Property Value</label><input id="lg-propval" type="text" placeholder="e.g. £250,000" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Deposit</label><input id="lg-deposit" type="text" placeholder="e.g. £25,000" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Salary</label><input id="lg-salary" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Preferred Term (yrs)</label><input id="lg-term" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Scheme</label><select id="lg-scheme" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Payday Loans</label><select id="lg-payday" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>No</option><option>Yes</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="lg-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment Booked</option></select></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="lg-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="lg-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Mortgage Sale Value &pound;</label><input id="lg-mortval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Insurance Sale Value &pound;</label><input id="lg-insval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Broker Fee Value &pound;</label><input id="lg-feeval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="lg-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
+      <span id="lg-modal-status" style="font-size:11px;font-weight:700;color:#b91c1c;margin-right:auto;"></span>
+      <button onclick="lgCloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+      <button onclick="lgSaveLead()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Lead</button>
     </div>
   </div>
 </div>
@@ -4598,6 +4700,13 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
                 <div>
                   <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Marketing access</div>
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can add and manage featured posts</div>
+                </div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
+                <input id="uf-leadgen" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">LeadGen Leads access</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and work the LeadGen Leads tab</div>
                 </div>
               </label>
             </div>
@@ -5845,7 +5954,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','muttuo'];
+var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','muttuo','leadgen'];
 function switchTab(tab) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -5880,6 +5989,10 @@ function switchTab(tab) {
     if (typeof loadMuttuo === 'function') loadMuttuo();
     if (typeof mzStartPolling === 'function') mzStartPolling();
   } else if (typeof mzStopPolling === 'function') { mzStopPolling(); }
+  if (tab === 'leadgen') {
+    if (typeof loadLeadGen === 'function') loadLeadGen();
+    if (typeof lgStartPolling === 'function') lgStartPolling();
+  } else if (typeof lgStopPolling === 'function') { lgStopPolling(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -7545,6 +7658,11 @@ var _currentUser = null;
       var mzbtn = document.getElementById('tab-btn-muttuo');
       if (mzbtn) mzbtn.style.display = '';
     }
+    // LeadGen Leads tab — only users with the per-user LeadGen toggle on (and admins)
+    if (user && (user.isAdmin || user.isLeadGen)) {
+      var lgbtn = document.getElementById('tab-btn-leadgen');
+      if (lgbtn) lgbtn.style.display = '';
+    }
     updateNavUser(user);
     initShareButtons();
     qlInit();
@@ -8083,6 +8201,7 @@ function openUserForm(userId) {
     document.getElementById('uf-website').value        = u.website || '';
     document.getElementById('uf-admin').checked        = u.isAdmin || false;
     document.getElementById('uf-marketing').checked    = u.isMarketing || false;
+    document.getElementById('uf-leadgen').checked      = u.isLeadGen || false;
     document.getElementById('uf-investments').checked          = u.sellsInvestments   || false;
     document.getElementById('uf-mortgages').checked            = u.sellsMortgages     || false;
     document.getElementById('uf-protection').checked           = u.sellsProtection    || false;
@@ -8103,6 +8222,7 @@ function openUserForm(userId) {
     });
     document.getElementById('uf-admin').checked           = false;
     document.getElementById('uf-marketing').checked       = false;
+    document.getElementById('uf-leadgen').checked         = false;
     document.getElementById('uf-investments').checked          = false;
     document.getElementById('uf-mortgages').checked            = false;
     document.getElementById('uf-protection').checked           = false;
@@ -8143,6 +8263,7 @@ function saveUser() {
     website:          document.getElementById('uf-website').value.trim(),
     isAdmin:          document.getElementById('uf-admin').checked,
     isMarketing:      document.getElementById('uf-marketing').checked,
+    isLeadGen:        document.getElementById('uf-leadgen').checked,
     sellsInvestments:    document.getElementById('uf-investments').checked,
     sellsMortgages:      document.getElementById('uf-mortgages').checked,
     sellsProtection:     document.getElementById('uf-protection').checked,
@@ -13377,6 +13498,586 @@ function mzSaveLead() {
     }
     mzRenderLeads();
     mzCloseModal();
+  }).catch(function() {
+    statusEl.style.color = '#b91c1c';
+    statusEl.textContent = 'Failed to save.';
+  });
+}
+
+var _lgLoaded = false;
+var _lgLeads  = [];
+var _lgAdvisers = []; // LeadGen-enabled users, for the Adviser dropdown
+var _lgFilter = 'all'; // 'all' | 'golden' | 'today' | 'followup'
+function lgFmtDateTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+function lgTodayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function lgIsToday(iso) {
+  if (!iso) return false;
+  var d = new Date(iso);
+  var now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+function lgIsGoldenHour(iso) {
+  if (!iso) return false;
+  var t = new Date(iso).getTime();
+  return (Date.now() - t) <= 3600000 && (Date.now() - t) >= 0;
+}
+var _lgAdviserFilter = ''; // '' = all advisers, otherwise an exact adviser name
+function lgCurrentUserName() {
+  var u = _currentUser || {};
+  return [u.firstName, u.lastName].filter(Boolean).join(' ');
+}
+function lgFilteredLeads() {
+  var leads = _lgLeads;
+  // Golden Hour, Today, and Follow Up all live under the "My Leads" sidebar
+  // section, so they're scoped to the logged-in user's own leads too.
+  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup'];
+  if (MY_LEADS_FILTERS.indexOf(_lgFilter) !== -1) {
+    leads = leads.filter(function(l) { return l.adviser === lgCurrentUserName(); });
+  }
+  if (_lgFilter === 'golden')   leads = leads.filter(function(l) { return lgIsGoldenHour(l.createdTime); });
+  if (_lgFilter === 'today')    leads = leads.filter(function(l) { return lgIsToday(l.createdTime); });
+  if (_lgFilter === 'followup') leads = leads.filter(function(l) { return l.followUp === lgTodayStr(); });
+  if (_lgAdviserFilter)         leads = leads.filter(function(l) { return l.adviser === _lgAdviserFilter; });
+  leads = leads.slice().sort(function(a, b) {
+    return new Date(b.createdTime || 0) - new Date(a.createdTime || 0);
+  });
+  return leads;
+}
+function lgSetAdviserFilter(name) {
+  _lgAdviserFilter = name;
+  lgUpdateLeadsTitle();
+  lgRenderLeads();
+}
+function lgAdviserFilterHtml() {
+  var options = ['<option value="">All Advisers</option>'].concat(
+    _lgAdvisers.map(function(name) { return '<option' + (name === _lgAdviserFilter ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  return '<select onchange="lgSetAdviserFilter(this.value)" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
+}
+function lgUpdateLeadsTitle() {
+  var titles = { all: ['LeadGen Leads', 'LeadGen leads — add, track, and update leads through the pipeline.'],
+    mine:     ['My Leads', 'Leads assigned to you.'],
+    golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
+    today:    ['Today', 'Leads created today.'],
+    followup: ['Follow Up', 'Leads with a follow-up date of today.'] };
+  var t = titles[_lgFilter] || titles.all;
+  var titleEl = document.getElementById('lg-leads-title');
+  var subEl   = document.getElementById('lg-leads-subtitle');
+  if (_lgAdviserFilter) {
+    if (titleEl) titleEl.textContent = _lgAdviserFilter + '’s LeadGen Leads';
+    if (subEl)   subEl.textContent   = t[1];
+  } else {
+    if (titleEl) titleEl.textContent = t[0];
+    if (subEl)   subEl.textContent   = t[1];
+  }
+}
+function lgFilterBy(kind, el) {
+  _lgFilter = kind;
+  document.querySelectorAll('#sidebar-leadgen a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  lgShowPage('leads');
+  lgUpdateLeadsTitle();
+  lgRenderLeads();
+}
+function lgShowPage(page) {
+  var leadsPage = document.getElementById('lg-leads-page');
+  var dataPage  = document.getElementById('lg-data-page');
+  if (leadsPage) leadsPage.style.display = (page === 'leads') ? '' : 'none';
+  if (dataPage)  dataPage.style.display  = (page === 'data')  ? '' : 'none';
+  if (page === 'data') {
+    document.querySelectorAll('#sidebar-leadgen a').forEach(function(a) { a.classList.remove('active'); });
+    var dbtn = document.getElementById('lg-nav-data');
+    if (dbtn) dbtn.classList.add('active');
+    lgRenderData();
+  }
+}
+function lgStatusPillStyle(status) {
+  if (status === 'Appointment Booked') return 'background:#dcfce7;color:#166534;';
+  if (status === 'No Answer')          return 'background:#fef2f2;color:#b91c1c;';
+  return 'background:#dbeafe;color:var(--brand-navy);'; // To Call
+}
+function loadLeadGen() {
+  if (_lgLoaded) return;
+  var loadingEl = document.getElementById('lg-loading');
+  var contentEl = document.getElementById('lg-content');
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  fetch('/api/leadgen-advisers').then(function(r) { return r.json(); }).then(function(d) {
+    _lgAdvisers = (d && d.advisers) || [];
+    if (_lgLoaded) lgRenderLeads(); // refresh dropdown options if leads already rendered first
+  }).catch(function() {});
+  fetch('/api/leadgen-leads').then(function(r) { return r.json(); }).then(function(d) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    if (d.error) {
+      contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
+      return;
+    }
+    _lgLoaded = true;
+    _lgLeads = d.leads || [];
+    lgRenderLeads();
+  }).catch(function() {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load leads. Please refresh and try again.</div>';
+  });
+}
+// Background refresh while the tab is open — no loading spinner, just quietly
+// pulls the latest from Airtable so new entries show up without a manual reload.
+var _lgPollTimer = null;
+function lgStartPolling() {
+  if (_lgPollTimer) return;
+  _lgPollTimer = setInterval(lgPollRefresh, 30000);
+}
+function lgStopPolling() {
+  if (_lgPollTimer) { clearInterval(_lgPollTimer); _lgPollTimer = null; }
+}
+function lgPollRefresh() {
+  if (!_lgLoaded) return; // initial load still in flight or hasn't happened
+  fetch('/api/leadgen-leads').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) return;
+    _lgLeads = d.leads || [];
+    lgRenderLeads();
+  }).catch(function() {});
+}
+var _lgView = 'table';
+function lgSetView(view) {
+  _lgView = view;
+  var tableBtn = document.getElementById('lg-view-table');
+  var cardBtn  = document.getElementById('lg-view-card');
+  if (tableBtn) { tableBtn.style.background = (view === 'table') ? 'var(--brand-navy)' : '#f5f7fa'; tableBtn.style.color = (view === 'table') ? '#fff' : 'var(--brand-navy)'; }
+  if (cardBtn)  { cardBtn.style.background  = (view === 'card')  ? 'var(--brand-navy)' : '#f5f7fa'; cardBtn.style.color  = (view === 'card')  ? '#fff' : 'var(--brand-navy)'; }
+  lgRenderLeads();
+}
+function lgStatusSelectHtml(lead) {
+  return '<select onchange="lgUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + lgStatusPillStyle(lead.status) + '">'
+    + ['To Call','No Answer','Appointment Booked'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+    + '</select>';
+}
+function lgAdviserSelectHtml(lead, idPrefix) {
+  var options = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
+    _lgAdvisers.map(function(name) { return '<option' + (name === lead.adviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  // If the lead's current adviser isn't in the LeadGen-enabled list (e.g. toggle since turned off), keep it selectable.
+  if (lead.adviser && _lgAdvisers.indexOf(lead.adviser) === -1) {
+    options.push('<option selected>' + escHtml(lead.adviser) + '</option>');
+  }
+  return '<select ' + (idPrefix ? 'id="' + idPrefix + '-adviser" ' : '') + 'onchange="lgUpdateAdviser(\'' + lead.id + '\', this.value)" style="font-size:12.5px;color:#6b7c8f;border:1px solid #d1d5db;border-radius:6px;padding:4px 8px;font-family:inherit;cursor:pointer;background:#fff;">'
+    + options.join('')
+    + '</select>';
+}
+function lgUpdateAdviser(id, adviser) {
+  var lead = _lgLeads.find(function(l) { return l.id === id; });
+  var previousAdviser = lead ? lead.adviser : null;
+  if (lead) lead.adviser = adviser; // optimistic — reverted below if the save actually fails
+  fetch('/api/leadgen-leads/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adviser: adviser })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.success) {
+      if (lead) lead.adviser = previousAdviser;
+      lgRenderLeads();
+      alert('Could not save the adviser change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the LeadGen Leads base.');
+    }
+  }).catch(function() {
+    if (lead) lead.adviser = previousAdviser;
+    lgRenderLeads();
+    alert('Could not save the adviser change — network error. Please try again.');
+  });
+}
+function lgRenderLeads() {
+  var contentEl = document.getElementById('lg-content');
+  var filterWrap = document.getElementById('lg-adviser-filter-wrap');
+  if (filterWrap) filterWrap.innerHTML = lgAdviserFilterHtml();
+  var leads = lgFilteredLeads();
+  if (!leads.length) {
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' +
+      (_lgLeads.length ? 'No leads match this view.' : 'No leads yet — click <strong>+ Add Lead</strong> to create one.') + '</div>';
+    return;
+  }
+  if (_lgView === 'card') {
+    var cards = leads.map(function(lead) {
+      return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
+          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</span>'
+          + lgStatusSelectHtml(lead)
+        + '</div>'
+        + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
+          + (lead.createdTime ? '<div>Created: ' + lgFmtDateTime(lead.createdTime) + '</div>' : '')
+          + (lead.phone ? '<div>' + escHtml(lead.phone) + '</div>' : '')
+          + (lead.email ? '<div>' + escHtml(lead.email) + '</div>' : '')
+          + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
+          + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
+          + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
+          + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
+          + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
+              (lead.mortgageSaleValue ? 'Mortgage: ' + acFmtCurrency(lead.mortgageSaleValue) : '') +
+              (lead.mortgageSaleValue && lead.insuranceSaleValue ? ' &middot; ' : '') +
+              (lead.insuranceSaleValue ? 'Insurance: ' + acFmtCurrency(lead.insuranceSaleValue) : '') +
+              ((lead.mortgageSaleValue || lead.insuranceSaleValue) && lead.brokerFeeValue ? ' &middot; ' : '') +
+              (lead.brokerFeeValue ? 'Fee: ' + acFmtCurrency(lead.brokerFeeValue) : '') +
+            '</div>' : '')
+          + (lead.notes ? '<div style="margin-top:6px;font-style:italic;">' + escHtml(lead.notes) + '</div>' : '')
+        + '</div>'
+        + '</div>';
+    }).join('');
+    contentEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">' + cards + '</div>';
+    return;
+  }
+  var rows = leads.map(function(lead) {
+    var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
+    return '<tr style="border-bottom:1px solid #d1d5db;">'
+      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? lgFmtDateTime(lead.createdTime) : '') + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
+      + '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>'
+      + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
+      + '</tr>';
+  }).join('');
+  contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
+    + '<thead><tr style="background:#f5f7fa;">'
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Adviser','Status'].map(function(h) {
+          return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
+        }).join('')
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+function lgParseCurrency(s) {
+  if (typeof s === 'number') return s;
+  if (!s) return null;
+  var n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
+  return isNaN(n) ? null : n;
+}
+function lgAvg(arr) { return arr.length ? arr.reduce(function(a, b) { return a + b; }, 0) / arr.length : null; }
+function lgFmtHrs(ms) {
+  var mins = Math.round(ms / 60000);
+  if (mins < 60) return mins + ' min';
+  var hrs = Math.floor(mins / 60), rem = mins % 60;
+  return hrs + 'h ' + rem + 'm';
+}
+function lgStatCard(label, value, accent, sub) {
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
+    + '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:' + (accent || 'var(--brand-navy)') + ';line-height:1.2;">' + value + '</div>'
+    + (sub ? '<div style="font-size:12px;color:#6b7c8f;margin-top:4px;">' + sub + '</div>' : '')
+    + '</div>';
+}
+function lgSectionTitle(text) {
+  return '<div style="font-size:12px;font-weight:700;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;margin:28px 0 12px;">' + text + '</div>';
+}
+function lgHasSale(lead) {
+  return !!(lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue);
+}
+function lgSumBy(arr, fn) {
+  return arr.reduce(function(sum, item) { return sum + (fn(item) || 0); }, 0);
+}
+// Simple horizontal funnel bar chart, drawn as inline SVG (no external chart library).
+function lgFunnelChartSvg(stages) {
+  var w = 640, barH = 34, gap = 18, labelW = 190, chartW = w - labelW - 70;
+  var h = stages.length * (barH + gap) + gap;
+  var bars = stages.map(function(s, i) {
+    var y = gap + i * (barH + gap);
+    var barW = Math.max(4, (s.pct / 100) * chartW);
+    return '<text x="0" y="' + (y + barH / 2 + 4) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="700" font-size="12" fill="#6b7c8f">' + escHtml(s.label) + '</text>'
+      + '<rect x="' + labelW + '" y="' + y + '" width="' + chartW + '" height="' + barH + '" rx="6" fill="#f5f7fa"/>'
+      + '<rect x="' + labelW + '" y="' + y + '" width="' + barW + '" height="' + barH + '" rx="6" fill="' + s.color + '"/>'
+      + '<text x="' + (labelW + chartW + 12) + '" y="' + (y + barH / 2 + 4) + '" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="13" fill="var(--brand-navy)">' + s.pct + '%</text>';
+  }).join('');
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:640px;height:auto;">' + bars + '</svg>';
+}
+function lgPieChartSvg(pct, color, label, sub) {
+  var size = 140, r = 56, cx = size / 2, cy = size / 2;
+  var circumference = 2 * Math.PI * r;
+  var dash = (Math.max(0, Math.min(100, pct)) / 100) * circumference;
+  return '<svg viewBox="0 0 ' + size + ' ' + size + '" style="width:140px;height:140px;">'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#f5f7fa" stroke-width="18"/>'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="18" '
+      + 'stroke-dasharray="' + dash + ' ' + circumference + '" stroke-linecap="round" '
+      + 'transform="rotate(-90 ' + cx + ' ' + cy + ')"/>'
+    + '<text x="' + cx + '" y="' + (cy + 6) + '" text-anchor="middle" font-family="\'Plus Jakarta Sans\', sans-serif" font-weight="800" font-size="20" fill="var(--brand-navy)">' + pct + '%</text>'
+    + '</svg>'
+    + '<div style="text-align:center;font-size:12.5px;font-weight:700;color:var(--brand-navy);margin-top:8px;">' + escHtml(label) + '</div>'
+    + (sub ? '<div style="text-align:center;font-size:11px;color:#6b7c8f;margin-top:2px;">' + escHtml(sub) + '</div>' : '');
+}
+var _lgDataUser = ''; // '' = all users
+function lgDataUserSelectHtml() {
+  var options = ['<option value="">All Users</option>'].concat(
+    _lgAdvisers.map(function(name) { return '<option' + (name === _lgDataUser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  return '<select id="lg-data-user" onchange="_lgDataUser=this.value;lgRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
+}
+function lgRenderData() {
+  var contentEl = document.getElementById('lg-data-content');
+  var userWrap = document.getElementById('lg-data-user-wrap');
+  if (userWrap) userWrap.innerHTML = lgDataUserSelectHtml();
+  var titleEl = document.getElementById('lg-data-title');
+  if (titleEl) titleEl.textContent = _lgDataUser ? (_lgDataUser + '’s Data') : 'Data';
+  var from = document.getElementById('lg-data-from').value;
+  var to   = document.getElementById('lg-data-to').value;
+  var leads = _lgLeads.filter(function(l) {
+    if (_lgDataUser && l.adviser !== _lgDataUser) return false;
+    if (!l.createdTime) return true;
+    var d = l.createdTime.slice(0, 10);
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+
+  if (!leads.length) {
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads match this filter.</div>';
+    return;
+  }
+
+  var total          = leads.length;
+  var callsAttempted = leads.filter(function(l) { return l.status !== 'To Call'; });
+  var appointments    = leads.filter(function(l) { return l.status === 'Appointment Booked'; });
+  var noAnswer         = leads.filter(function(l) { return l.status === 'No Answer'; });
+  var sales            = leads.filter(lgHasSale);
+  var pctCalled                = total ? Math.round(callsAttempted.length / total * 100) : 0;
+  var callToDiscussionRate     = total ? Math.round(callsAttempted.length / total * 100) : 0;
+  var discussionToApptRate     = callsAttempted.length ? Math.round(appointments.length / callsAttempted.length * 100) : 0;
+  var apptToSaleRate           = appointments.length ? Math.round(sales.length / appointments.length * 100) : 0;
+  var leadsToSaleRatio         = sales.length ? '1 in ' + Math.round(total / sales.length) : '—';
+
+  var propVals = leads.map(function(l) { return lgParseCurrency(l.propertyValue); }).filter(function(n) { return n !== null; });
+  var depositVals = leads.map(function(l) { return lgParseCurrency(l.deposit); }).filter(function(n) { return n !== null; });
+  var salaryVals = leads.map(function(l) { return l.salary; }).filter(function(n) { return n !== null && n !== undefined; });
+
+  var callTimes = leads.filter(function(l) { return l.createdTime && l.calledAt; })
+    .map(function(l) { return new Date(l.calledAt).getTime() - new Date(l.createdTime).getTime(); })
+    .filter(function(ms) { return ms >= 0; });
+  var quickestCall = callTimes.length ? Math.min.apply(null, callTimes) : null;
+  var slowestCall  = callTimes.length ? Math.max.apply(null, callTimes) : null;
+  var avgCall      = callTimes.length ? lgAvg(callTimes) : null;
+
+  var statusCounts = { 'To Call': 0, 'No Answer': 0, 'Appointment Booked': 0 };
+  leads.forEach(function(l) { statusCounts[l.status] = (statusCounts[l.status] || 0) + 1; });
+
+  // ── Revenue ──
+  var mortgageIncome  = lgSumBy(leads, function(l) { return l.mortgageSaleValue; });
+  var insuranceIncome = lgSumBy(leads, function(l) { return l.insuranceSaleValue; });
+  var brokerIncome    = lgSumBy(leads, function(l) { return l.brokerFeeValue; });
+  var totalIncome     = mortgageIncome + insuranceIncome + brokerIncome;
+
+  // ── Top performers (only meaningful across all users, but still computed within the filtered leads) ──
+  var byAdviser = {};
+  leads.forEach(function(l) {
+    if (!l.adviser) return;
+    if (!byAdviser[l.adviser]) byAdviser[l.adviser] = { income: 0, appointments: 0 };
+    byAdviser[l.adviser].income += (l.mortgageSaleValue || 0) + (l.insuranceSaleValue || 0) + (l.brokerFeeValue || 0);
+    if (l.status === 'Appointment Booked') byAdviser[l.adviser].appointments++;
+  });
+  var advisers = Object.keys(byAdviser);
+  var topSeller = advisers.length ? advisers.reduce(function(best, name) {
+    return (!best || byAdviser[name].income > byAdviser[best].income) ? name : best;
+  }, null) : null;
+  var topAppt = advisers.length ? advisers.reduce(function(best, name) {
+    return (!best || byAdviser[name].appointments > byAdviser[best].appointments) ? name : best;
+  }, null) : null;
+
+  var pipelineCards = [
+    lgStatCard('Number of Leads', total),
+    lgStatCard('% of Leads Called', pctCalled + '%'),
+    lgStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
+    lgStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
+    lgStatCard('Appointment &rarr; Sale', apptToSaleRate + '%'),
+    lgStatCard('Leads &rarr; Sale', leadsToSaleRatio, 'var(--brand-orange)')
+  ].join('');
+
+  var callCards = [
+    lgStatCard('Avg. Time to Call', avgCall !== null ? lgFmtHrs(avgCall) : '—'),
+    lgStatCard('Quickest Call', quickestCall !== null ? lgFmtHrs(quickestCall) : '—'),
+    lgStatCard('Slowest Call', slowestCall !== null ? lgFmtHrs(slowestCall) : '—'),
+    lgStatCard('Avg. Property Value', propVals.length ? acFmtCurrency(Math.round(lgAvg(propVals))) : '—'),
+    lgStatCard('Avg. Deposit', depositVals.length ? acFmtCurrency(Math.round(lgAvg(depositVals))) : '—'),
+    lgStatCard('Avg. Salary', salaryVals.length ? acFmtCurrency(Math.round(lgAvg(salaryVals))) : '—')
+  ].join('');
+
+  var revenueCards = [
+    lgStatCard('Mortgage Income', acFmtCurrency(mortgageIncome)),
+    lgStatCard('Insurance Income', acFmtCurrency(insuranceIncome)),
+    lgStatCard('Broker Income', acFmtCurrency(brokerIncome)),
+    lgStatCard('Total Income', acFmtCurrency(totalIncome), 'var(--brand-orange)')
+  ].join('');
+
+  var topCards = [
+    lgStatCard('Top Seller', topSeller ? escHtml(topSeller) : '—', 'var(--brand-orange)',
+      topSeller ? acFmtCurrency(byAdviser[topSeller].income) : ''),
+    lgStatCard('Top Appointment Maker', topAppt ? escHtml(topAppt) : '—', 'var(--brand-orange)',
+      topAppt ? (byAdviser[topAppt].appointments + ' appointment' + (byAdviser[topAppt].appointments === 1 ? '' : 's')) : '')
+  ].join('');
+
+  var statusRows = Object.keys(statusCounts).map(function(s) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1d5db;">'
+      + '<span style="font-size:11px;font-weight:700;border-radius:20px;padding:4px 10px;' + lgStatusPillStyle(s) + '">' + s + '</span>'
+      + '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + statusCounts[s] + '</span>'
+      + '</div>';
+  }).join('');
+
+  var funnelChart = lgFunnelChartSvg([
+    { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
+    { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#7c4dea' }
+  ]);
+
+  var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
+  var leadsToSaleRate = total ? Math.round(sales.length / total * 100) : 0;
+  var leadsToApptPie = lgPieChartSvg(leadsToApptRate, 'var(--brand-orange)', 'Leads → Appointment', appointments.length + ' of ' + total + ' leads');
+  var leadsToSalePie  = lgPieChartSvg(leadsToSaleRate, '#7c4dea', 'Leads → Sale', sales.length + ' of ' + total + ' leads');
+
+  contentEl.innerHTML =
+      lgSectionTitle('Pipeline')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + pipelineCards + '</div>'
+
+    + lgSectionTitle('Conversion Funnel')
+    + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;">'
+      + '<div style="flex:2 1 340px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px 24px;">' + funnelChart + '</div>'
+      + '<div style="flex:1 1 140px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;">' + leadsToApptPie + '</div>'
+      + '<div style="flex:1 1 140px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;">' + leadsToSalePie + '</div>'
+    + '</div>'
+
+    + lgSectionTitle('Call & Deal Averages')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">' + callCards + '</div>'
+
+    + lgSectionTitle('Revenue Summary')
+    + '<div style="display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:14px;">' + revenueCards + '</div>'
+
+    + lgSectionTitle('Top Performers')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">' + topCards + '</div>'
+
+    + lgSectionTitle('Status Summary')
+    + '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;max-width:340px;">' + statusRows + '</div>'
+
+    + '<p style="color:#6b7c8f;font-size:11.5px;margin:20px 0 0;line-height:1.6;">Call &rarr; Discussion is the share of leads moved off "To Call". Discussion &rarr; Appointment is the share of those calls that ended in "Appointment Booked" rather than "No Answer". Appointment &rarr; Sale is the share of "Appointment Booked" leads with a recorded Mortgage, Insurance, or Broker Fee value.</p>';
+
+  // Keep the print-only header's date range / user filter in sync for the PDF export.
+  var metaEl = document.getElementById('lg-data-print-meta');
+  if (metaEl) {
+    var rangeText = (from || to) ? ('From ' + (from || 'the start') + ' to ' + (to || 'today')) : 'All time';
+    var userText = _lgDataUser ? (' — ' + _lgDataUser) : ' — All Users';
+    metaEl.textContent = rangeText + userText + ' — generated ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+}
+function lgExportPdf() {
+  document.body.classList.add('lg-printing-data');
+  var cleanup = function() { document.body.classList.remove('lg-printing-data'); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(function() { window.print(); }, 50);
+}
+function lgUpdateStatus(id, status) {
+  var lead = _lgLeads.find(function(l) { return l.id === id; });
+  var previousStatus = lead ? lead.status : null;
+  if (lead) lead.status = status; // optimistic — reverted below if the save actually fails
+  fetch('/api/leadgen-leads/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d || !d.success) {
+      if (lead) lead.status = previousStatus;
+      lgRenderLeads();
+      alert('Could not save the status change: ' + ((d && d.error) || 'unknown error') + '. Check that the Airtable token has write access to the LeadGen Leads base.');
+      return;
+    }
+    if (lead && d.lead) { lead.calledAt = d.lead.calledAt; }
+  }).catch(function() {
+    if (lead) lead.status = previousStatus;
+    lgRenderLeads();
+    alert('Could not save the status change — network error. Please try again.');
+  });
+}
+function lgOpenModal(id) {
+  var lead = id ? _lgLeads.find(function(l) { return l.id === id; }) : null;
+  document.getElementById('lg-modal-title').textContent = lead ? 'Edit Lead' : 'Add Lead';
+  document.getElementById('lg-id').value      = lead ? lead.id : '';
+  document.getElementById('lg-name').value    = lead ? lead.name    : '';
+  document.getElementById('lg-phone').value   = lead ? lead.phone   : '';
+  document.getElementById('lg-email').value   = lead ? lead.email   : '';
+  document.getElementById('lg-propval').value = lead ? lead.propertyValue : '';
+  document.getElementById('lg-deposit').value = lead ? lead.deposit : '';
+  document.getElementById('lg-salary').value  = lead ? (lead.salary || '') : '';
+  document.getElementById('lg-term').value    = lead ? (lead.term || '') : '';
+  document.getElementById('lg-scheme').value  = lead ? lead.scheme  : 'No';
+  document.getElementById('lg-payday').value  = lead ? lead.paydayLoans : 'No';
+  document.getElementById('lg-status').value  = lead ? lead.status  : 'To Call';
+  var adviserSel = document.getElementById('lg-adviser');
+  var currentAdviser = lead ? lead.adviser : '';
+  var adviserOptions = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
+    _lgAdvisers.map(function(name) { return '<option' + (name === currentAdviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  if (currentAdviser && _lgAdvisers.indexOf(currentAdviser) === -1) {
+    adviserOptions.push('<option selected>' + escHtml(currentAdviser) + '</option>');
+  }
+  adviserSel.innerHTML = adviserOptions.join('');
+  document.getElementById('lg-followup').value = lead ? (lead.followUp || '') : '';
+  document.getElementById('lg-mortval').value = lead ? (lead.mortgageSaleValue  || '') : '';
+  document.getElementById('lg-insval').value  = lead ? (lead.insuranceSaleValue || '') : '';
+  document.getElementById('lg-feeval').value  = lead ? (lead.brokerFeeValue     || '') : '';
+  document.getElementById('lg-notes').value   = lead ? lead.notes   : '';
+  document.getElementById('lg-modal-status').textContent = '';
+  document.getElementById('lg-modal').style.display = 'flex';
+}
+function lgCloseModal() {
+  document.getElementById('lg-modal').style.display = 'none';
+}
+function lgSaveLead() {
+  var id = document.getElementById('lg-id').value;
+  var payload = {
+    name:          document.getElementById('lg-name').value.trim(),
+    phone:         document.getElementById('lg-phone').value.trim(),
+    email:         document.getElementById('lg-email').value.trim(),
+    propertyValue: document.getElementById('lg-propval').value.trim(),
+    deposit:       document.getElementById('lg-deposit').value.trim(),
+    salary:        document.getElementById('lg-salary').value,
+    term:          document.getElementById('lg-term').value,
+    scheme:        document.getElementById('lg-scheme').value,
+    paydayLoans:   document.getElementById('lg-payday').value,
+    status:        document.getElementById('lg-status').value,
+    adviser:       document.getElementById('lg-adviser').value.trim(),
+    followUp:      document.getElementById('lg-followup').value,
+    mortgageSaleValue:  document.getElementById('lg-mortval').value,
+    insuranceSaleValue: document.getElementById('lg-insval').value,
+    brokerFeeValue:     document.getElementById('lg-feeval').value,
+    notes:         document.getElementById('lg-notes').value.trim()
+  };
+  if (!payload.name) {
+    document.getElementById('lg-modal-status').textContent = 'Name is required.';
+    return;
+  }
+  var statusEl = document.getElementById('lg-modal-status');
+  statusEl.style.color = '#6b7c8f';
+  statusEl.textContent = 'Saving…';
+  var url    = id ? '/api/leadgen-leads/' + id : '/api/leadgen-leads';
+  var method = id ? 'PATCH' : 'POST';
+  fetch(url, {
+    method: method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.success) { statusEl.style.color = '#b91c1c'; statusEl.textContent = d.error || 'Failed to save.'; return; }
+    if (id) {
+      var idx = _lgLeads.findIndex(function(l) { return l.id === id; });
+      if (idx > -1) _lgLeads[idx] = d.lead;
+    } else {
+      _lgLeads.unshift(d.lead);
+    }
+    lgRenderLeads();
+    lgCloseModal();
   }).catch(function() {
     statusEl.style.color = '#b91c1c';
     statusEl.textContent = 'Failed to save.';

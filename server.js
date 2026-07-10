@@ -57,6 +57,27 @@ const MZ_CALLEDAT  = 'fldtMWUhE0be4Ts2Q'; // set automatically first time Status
 const MZ_MORTVAL   = 'fldKHudKVQNImv5bc'; // Mortgage Sale Value
 const MZ_INSVAL    = 'fld9U4XjSLao5w1Ny'; // Insurance Sale Value
 const MZ_FEEVAL    = 'fldOFq58PkIumTXcy'; // Broker Fee Value
+
+// LeadGen Leads — separate opt-in leads base (per-user toggle, not business-gated)
+const LG_BASE      = 'appCc3fY3cadqXzf0';
+const LG_TABLE     = 'tblcr4ajTDAR7zbGz';
+const LG_NAME      = 'fldOm3q9hvKWpTWZG';
+const LG_PHONE     = 'fldfLAjROGvcBhJJq';
+const LG_EMAIL     = 'fldKxsiLW17tXrt1K';
+const LG_NOTES     = 'fldffIXjBk8eZSkmq';
+const LG_STATUS    = 'fldYogc7jlsc1WIxf';
+const LG_PROPVAL   = 'fldDVpv0ZzEtWN7FO';
+const LG_DEPOSIT   = 'fldB5Ssf6ZeP8mp72';
+const LG_SCHEME    = 'fld2xRbRdJa81P1hY';
+const LG_SALARY    = 'fldyXnLrlr6eIFs1J';
+const LG_PAYDAY    = 'flde06fl0lWXSg0gj';
+const LG_TERM      = 'fld92MRnZsPdBENcr';
+const LG_ADVISER   = 'fldnblWrGmpMVxxBS';
+const LG_FOLLOWUP  = 'fldST4rjtR1j9Pzv9';
+const LG_CALLEDAT  = 'fldzzJMH0RjORjlGC';
+const LG_MORTVAL   = 'fldq1SBE7fCSgSbs1';
+const LG_INSVAL    = 'fldAwLTrTQtG4Titf';
+const LG_FEEVAL    = 'fldiPt9EYNXxN1Sa2';
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -108,6 +129,11 @@ async function casPathFetch(endpoint, options = {}) {
 const MARKETING_USERS_PATH = path.join(__dirname, 'marketing-users.json');
 let _marketingUsers = new Set();
 try { _marketingUsers = new Set(JSON.parse(fs.readFileSync(MARKETING_USERS_PATH, 'utf8'))); } catch(_) {}
+
+// ── LeadGen users (local, no Airtable field needed) — opt-in per user ──
+const LEADGEN_USERS_PATH = path.join(__dirname, 'leadgen-users.json');
+let _leadGenUsers = new Set();
+try { _leadGenUsers = new Set(JSON.parse(fs.readFileSync(LEADGEN_USERS_PATH, 'utf8'))); } catch(_) {}
 
 // ── Extra products (local) — Equity Release, Commercial Mortgages ──
 const EXTRA_PRODUCTS_PATH = path.join(__dirname, 'extra-products.json');
@@ -329,6 +355,7 @@ function recordToUser(record) {
     supervisorEmail:  f[F_SUPERVISOR_EMAIL] || '',
     avatarUrl:        f[F_AVATAR]           || '',
     isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
+    isLeadGen:        _leadGenUsers.has((f[F_EMAIL] || '').toLowerCase()),
     cas:              f[F_CAS]              || false,
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     birthday:         f[F_BIRTHDAY]           || null,
@@ -488,6 +515,16 @@ function requireFitchAndFitch(req, res, next) {
   const business = ((effective && effective.business) || '').trim().toLowerCase();
   if (business === 'fitch and fitch') return next();
   if (effective && effective.isAdmin) return next();
+  res.status(403).json({ error: 'Forbidden' });
+}
+
+// LeadGen Leads tab: only users with the isLeadGen toggle on (admins allowed through for support)
+function requireLeadGen(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const u = req.session.user;
+  const orig = req.session.originalUser;
+  const effective = orig || u;
+  if (effective && (effective.isLeadGen || effective.isAdmin)) return next();
   res.status(403).json({ error: 'Forbidden' });
 }
 
@@ -654,6 +691,184 @@ app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req
     console.error('Muttuo lead update error:', err);
     res.status(500).json({ error: 'Failed to update lead.' });
   }
+});
+
+function leadGenRecordToLead(record) {
+  const f = record.fields;
+  function selectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
+  return {
+    id:           record.id,
+    createdTime:  record.createdTime || null,
+    name:         f[LG_NAME]    || '',
+    phone:        f[LG_PHONE]   || '',
+    email:        f[LG_EMAIL]   || '',
+    notes:        f[LG_NOTES]   || '',
+    status:       selectName(f[LG_STATUS]) || 'To Call',
+    propertyValue:f[LG_PROPVAL] || '',
+    deposit:      f[LG_DEPOSIT] || '',
+    scheme:       selectName(f[LG_SCHEME]) || 'No',
+    salary:       f[LG_SALARY]  || null,
+    paydayLoans:  selectName(f[LG_PAYDAY]) || 'No',
+    term:         f[LG_TERM]    || null,
+    adviser:      f[LG_ADVISER] || '',
+    followUp:     f[LG_FOLLOWUP] || null,
+    calledAt:     f[LG_CALLEDAT] || null,
+    mortgageSaleValue:  f[LG_MORTVAL] || null,
+    insuranceSaleValue: f[LG_INSVAL]  || null,
+    brokerFeeValue:     f[LG_FEEVAL]  || null
+  };
+}
+
+// GET /api/leadgen-advisers — users with the LeadGen toggle enabled, for the Adviser dropdown
+app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    let records = [];
+    let offset;
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    const advisers = records
+      .filter(r => _leadGenUsers.has((r.fields[F_EMAIL] || '').toLowerCase()))
+      .map(r => [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    res.json({ advisers });
+  } catch (err) {
+    console.error('LeadGen advisers load error:', err);
+    res.status(500).json({ error: 'Failed to load advisers.' });
+  }
+});
+
+// GET /api/leadgen-leads — list all leads
+app.get('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    let records = [];
+    let offset;
+    do {
+      const qs = offset ? `?returnFieldsByFieldId=true&pageSize=100&offset=${offset}` : '?returnFieldsByFieldId=true&pageSize=100';
+      const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    res.json({ leads: records.map(leadGenRecordToLead) });
+  } catch (err) {
+    console.error('LeadGen leads load error:', err);
+    res.status(500).json({ error: 'Failed to load leads.' });
+  }
+});
+
+// POST /api/leadgen-leads — create a new lead
+app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const fields = {};
+    if (b.name)          fields[LG_NAME]    = String(b.name);
+    if (b.phone)         fields[LG_PHONE]   = String(b.phone);
+    if (b.email)         fields[LG_EMAIL]   = String(b.email);
+    if (b.notes)         fields[LG_NOTES]   = String(b.notes);
+    if (b.status)        fields[LG_STATUS]  = String(b.status);
+    if (b.propertyValue) fields[LG_PROPVAL] = String(b.propertyValue);
+    if (b.deposit)       fields[LG_DEPOSIT] = String(b.deposit);
+    if (b.scheme)        fields[LG_SCHEME]  = String(b.scheme);
+    if (b.salary !== undefined && b.salary !== '') fields[LG_SALARY] = Number(b.salary);
+    if (b.paydayLoans)   fields[LG_PAYDAY]  = String(b.paydayLoans);
+    if (b.term !== undefined && b.term !== '') fields[LG_TERM] = Number(b.term);
+    if (b.adviser)       fields[LG_ADVISER] = String(b.adviser);
+    if (b.followUp)      fields[LG_FOLLOWUP] = String(b.followUp);
+    if (b.mortgageSaleValue !== undefined && b.mortgageSaleValue !== '')   fields[LG_MORTVAL] = Number(b.mortgageSaleValue);
+    if (b.insuranceSaleValue !== undefined && b.insuranceSaleValue !== '') fields[LG_INSVAL]  = Number(b.insuranceSaleValue);
+    if (b.brokerFeeValue !== undefined && b.brokerFeeValue !== '')         fields[LG_FEEVAL]  = Number(b.brokerFeeValue);
+
+    if (!fields[LG_NAME]) return res.status(400).json({ error: 'Name is required.' });
+
+    const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields }], typecast: true, returnFieldsByFieldId: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true, lead: leadGenRecordToLead(d.records[0]) });
+  } catch (err) {
+    console.error('LeadGen lead create error:', err);
+    res.status(500).json({ error: 'Failed to create lead.' });
+  }
+});
+
+// PATCH /api/leadgen-leads/:id — update an existing lead
+app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const fields = {};
+    if (b.name !== undefined)          fields[LG_NAME]    = String(b.name);
+    if (b.phone !== undefined)         fields[LG_PHONE]   = String(b.phone);
+    if (b.email !== undefined)         fields[LG_EMAIL]   = String(b.email);
+    if (b.notes !== undefined)         fields[LG_NOTES]   = String(b.notes);
+    if (b.status !== undefined)        fields[LG_STATUS]  = String(b.status);
+    if (b.propertyValue !== undefined) fields[LG_PROPVAL] = String(b.propertyValue);
+    if (b.deposit !== undefined)       fields[LG_DEPOSIT] = String(b.deposit);
+    if (b.scheme !== undefined)        fields[LG_SCHEME]  = String(b.scheme);
+    if (b.salary !== undefined)        fields[LG_SALARY]  = b.salary === '' ? null : Number(b.salary);
+    if (b.paydayLoans !== undefined)   fields[LG_PAYDAY]  = String(b.paydayLoans);
+    if (b.term !== undefined)          fields[LG_TERM]    = b.term === '' ? null : Number(b.term);
+    if (b.adviser !== undefined)       fields[LG_ADVISER] = String(b.adviser);
+    if (b.followUp !== undefined)      fields[LG_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
+    if (b.mortgageSaleValue !== undefined)  fields[LG_MORTVAL] = b.mortgageSaleValue === '' ? null : Number(b.mortgageSaleValue);
+    if (b.insuranceSaleValue !== undefined) fields[LG_INSVAL]  = b.insuranceSaleValue === '' ? null : Number(b.insuranceSaleValue);
+    if (b.brokerFeeValue !== undefined)     fields[LG_FEEVAL]  = b.brokerFeeValue === '' ? null : Number(b.brokerFeeValue);
+
+    // First time a lead's status moves off "To Call", stamp Called At automatically
+    // (used for the time-to-call stat on the Data page).
+    if (fields[LG_STATUS] && fields[LG_STATUS] !== 'To Call') {
+      try {
+        const existing = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
+          headers: { Authorization: `Bearer ${AT_KEY}` }
+        }).then(r2 => r2.json());
+        if (existing && existing.fields && !existing.fields[LG_CALLEDAT]) {
+          fields[LG_CALLEDAT] = new Date().toISOString();
+        }
+      } catch (_) { /* non-fatal — Called At stamp is best-effort */ }
+    }
+
+    const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id: req.params.id, fields }], typecast: true, returnFieldsByFieldId: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true, lead: leadGenRecordToLead(d.records[0]) });
+  } catch (err) {
+    console.error('LeadGen lead update error:', err);
+    res.status(500).json({ error: 'Failed to update lead.' });
+  }
+});
+
+// ── LeadGen users management (admin only) ──────────────────────
+app.get('/api/leadgen-users', requireAdmin, (req, res) => {
+  res.json([..._leadGenUsers]);
+});
+app.post('/api/leadgen-users', requireAdmin, (req, res) => {
+  const { email, remove } = req.body;
+  if (!email) return res.status(400).json({ error: 'Missing email' });
+  const e = email.toLowerCase();
+  if (remove) _leadGenUsers.delete(e); else _leadGenUsers.add(e);
+  try {
+    fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
+    res.json({ ok: true, leadGenUsers: [..._leadGenUsers] });
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 
@@ -1398,7 +1613,7 @@ app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
 
 // ── Admin: create user ────────────────────────────────────────
 app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
-  const { email, password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail } = req.body;
+  const { email, password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, isLeadGen, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
   // Supervisors cannot create admin users
@@ -1436,6 +1651,11 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     if (mktFlag) _marketingUsers.add(normEmail);
     else _marketingUsers.delete(normEmail);
     fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
+    // Handle LeadGen toggle
+    const lgFlag = isLeadGen === true || isLeadGen === 'true';
+    if (lgFlag) _leadGenUsers.add(normEmail);
+    else _leadGenUsers.delete(normEmail);
+    fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
     // Handle extra products (cas now in Airtable)
     _extraProducts[normEmail] = {
       equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
@@ -1511,7 +1731,7 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
 // ── Admin: update user ────────────────────────────────────────
 app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
   const { id } = req.params;
-  const { password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail, email } = req.body;
+  const { password, salutation, firstName, lastName, jobTitle, mobile, landline, website, isAdmin, isMarketing, isLeadGen, sellsMortgages, sellsProtection, sellsInvestments, isSupervisor, supervisorEmail, email } = req.body;
   // Supervisors cannot edit admin users or grant admin access
   const actingUser = req.session.originalUser || req.session.user;
   if (!actingUser.isAdmin) {
@@ -1560,6 +1780,10 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       if (mktFlag) _marketingUsers.add(normEmail);
       else _marketingUsers.delete(normEmail);
       fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
+      const lgFlag = isLeadGen === true || isLeadGen === 'true';
+      if (lgFlag) _leadGenUsers.add(normEmail);
+      else _leadGenUsers.delete(normEmail);
+      fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
       _extraProducts[normEmail] = {
         equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
         commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
