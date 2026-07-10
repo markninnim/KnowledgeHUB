@@ -4053,7 +4053,7 @@ html { height: 100%; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="mz-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment Booked</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><input id="mz-adviser" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="mz-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="mz-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
       </div>
       <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="mz-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
@@ -12762,6 +12762,7 @@ function loadAutoCrm() {
 // ── Muttuo (Fitch and Fitch leads) ────────────────────────────
 var _mzLoaded = false;
 var _mzLeads  = [];
+var _mzAdvisers = []; // Fitch and Fitch users, for the Adviser dropdown
 var _mzFilter = 'all'; // 'all' | 'golden' | 'today' | 'followup'
 function mzTodayStr() {
   var d = new Date();
@@ -12823,6 +12824,9 @@ function loadMuttuo() {
   var contentEl = document.getElementById('mz-content');
   loadingEl.style.display = 'block';
   contentEl.style.display = 'none';
+  fetch('/api/muttuo-advisers').then(function(r) { return r.json(); }).then(function(d) {
+    _mzAdvisers = (d && d.advisers) || [];
+  }).catch(function() {});
   fetch('/api/muttuo-leads').then(function(r) { return r.json(); }).then(function(d) {
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
@@ -12871,6 +12875,27 @@ function mzStatusSelectHtml(lead) {
     + ['To Call','No Answer','Appointment Booked'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
     + '</select>';
 }
+function mzAdviserSelectHtml(lead, idPrefix) {
+  var options = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
+    _mzAdvisers.map(function(name) { return '<option' + (name === lead.adviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  // If the lead's current adviser isn't in the Fitch and Fitch list (e.g. left the business), keep it selectable.
+  if (lead.adviser && _mzAdvisers.indexOf(lead.adviser) === -1) {
+    options.push('<option selected>' + escHtml(lead.adviser) + '</option>');
+  }
+  return '<select ' + (idPrefix ? 'id="' + idPrefix + '-adviser" ' : '') + 'onchange="mzUpdateAdviser(\'' + lead.id + '\', this.value)" style="font-size:12.5px;color:#6b7c8f;border:1px solid #d1d5db;border-radius:6px;padding:4px 8px;font-family:inherit;cursor:pointer;background:#fff;">'
+    + options.join('')
+    + '</select>';
+}
+function mzUpdateAdviser(id, adviser) {
+  var lead = _mzLeads.find(function(l) { return l.id === id; });
+  if (lead) lead.adviser = adviser;
+  fetch('/api/muttuo-leads/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adviser: adviser })
+  }).then(function(r) { return r.json(); }).catch(function() {});
+}
 function mzRenderLeads() {
   var contentEl = document.getElementById('mz-content');
   var leads = mzFilteredLeads();
@@ -12912,7 +12937,7 @@ function mzRenderLeads() {
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
-      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.adviser) + '</td>'
+      + '<td style="padding:10px 12px;">' + mzAdviserSelectHtml(lead) + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.followUp ? acFmtDate(lead.followUp) : '') + '</td>'
       + '<td style="padding:10px 12px;">' + mzStatusSelectHtml(lead) + '</td>'
       + '</tr>';
@@ -13030,7 +13055,15 @@ function mzOpenModal(id) {
   document.getElementById('mz-scheme').value  = lead ? lead.scheme  : 'No';
   document.getElementById('mz-payday').value  = lead ? lead.paydayLoans : 'No';
   document.getElementById('mz-status').value  = lead ? lead.status  : 'To Call';
-  document.getElementById('mz-adviser').value  = lead ? lead.adviser  : '';
+  var adviserSel = document.getElementById('mz-adviser');
+  var currentAdviser = lead ? lead.adviser : '';
+  var adviserOptions = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
+    _mzAdvisers.map(function(name) { return '<option' + (name === currentAdviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  if (currentAdviser && _mzAdvisers.indexOf(currentAdviser) === -1) {
+    adviserOptions.push('<option selected>' + escHtml(currentAdviser) + '</option>');
+  }
+  adviserSel.innerHTML = adviserOptions.join('');
   document.getElementById('mz-followup').value = lead ? (lead.followUp || '') : '';
   document.getElementById('mz-notes').value   = lead ? lead.notes   : '';
   document.getElementById('mz-modal-status').textContent = '';

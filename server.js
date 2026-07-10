@@ -513,6 +513,34 @@ function muttuoRecordToLead(record) {
   };
 }
 
+// GET /api/muttuo-advisers — Fitch and Fitch users, for the Adviser dropdown
+app.get('/api/muttuo-advisers', requireAuth, requireFitchAndFitch, async (req, res) => {
+  try {
+    const formula = `LOWER({Business})="fitch and fitch"`;
+    let records = [];
+    let offset;
+    do {
+      const qs = `?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=true&pageSize=100` +
+        `&fields[]=${F_FIRST}&fields[]=${F_LAST}` + (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+      records = records.concat(d.records || []);
+      offset = d.offset;
+    } while (offset);
+    const advisers = records
+      .map(r => [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    res.json({ advisers });
+  } catch (err) {
+    console.error('Muttuo advisers load error:', err);
+    res.status(500).json({ error: 'Failed to load advisers.' });
+  }
+});
+
 // GET /api/muttuo-leads — list all leads
 app.get('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res) => {
   try {
