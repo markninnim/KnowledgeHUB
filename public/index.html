@@ -13125,6 +13125,7 @@ function mzRenderData() {
   var callToDiscussionRate     = total ? Math.round(callsAttempted.length / total * 100) : 0;
   var discussionToApptRate     = callsAttempted.length ? Math.round(appointments.length / callsAttempted.length * 100) : 0;
   var apptToSaleRate           = appointments.length ? Math.round(sales.length / appointments.length * 100) : 0;
+  var leadsToSaleRatio         = sales.length ? '1 in ' + Math.round(total / sales.length) : '—';
 
   var propVals = leads.map(function(l) { return mzParseCurrency(l.propertyValue); }).filter(function(n) { return n !== null; });
   var depositVals = leads.map(function(l) { return mzParseCurrency(l.deposit); }).filter(function(n) { return n !== null; });
@@ -13167,7 +13168,8 @@ function mzRenderData() {
     mzStatCard('% of Leads Called', pctCalled + '%'),
     mzStatCard('Call &rarr; Discussion', callToDiscussionRate + '%'),
     mzStatCard('Discussion &rarr; Appointment', discussionToApptRate + '%'),
-    mzStatCard('Appointment &rarr; Sale', apptToSaleRate + '%')
+    mzStatCard('Appointment &rarr; Sale', apptToSaleRate + '%'),
+    mzStatCard('Leads &rarr; Sale', leadsToSaleRatio, 'var(--brand-orange)')
   ].join('');
 
   var callCards = [
@@ -13203,7 +13205,7 @@ function mzRenderData() {
   var funnelChart = mzFunnelChartSvg([
     { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
     { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
-    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#22c55e' }
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: '#7c4dea' }
   ]);
 
   contentEl.innerHTML =
