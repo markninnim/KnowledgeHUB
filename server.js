@@ -721,15 +721,16 @@ function leadGenRecordToLead(record) {
   };
 }
 
-// GET /api/leadgen-advisers — users with the LeadGen toggle enabled, for the Adviser dropdown
+// GET /api/leadgen-advisers — distinct Adviser values already present on the Leads table,
+// for the Adviser dropdown (reflects who's actually been assigned leads, not who has the toggle on).
 app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) => {
   try {
     let records = [];
     let offset;
     do {
-      const qs = `?returnFieldsByFieldId=true&pageSize=100&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}` +
+      const qs = `?returnFieldsByFieldId=true&pageSize=100&fields[]=${LG_ADVISER}` +
         (offset ? `&offset=${offset}` : '');
-      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${qs}`, {
+      const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}${qs}`, {
         headers: { Authorization: `Bearer ${AT_KEY}` }
       });
       const d = await r.json();
@@ -737,11 +738,9 @@ app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) =
       records = records.concat(d.records || []);
       offset = d.offset;
     } while (offset);
-    const advisers = records
-      .filter(r => _leadGenUsers.has((r.fields[F_EMAIL] || '').toLowerCase()))
-      .map(r => [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '))
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
+    const advisers = [...new Set(
+      records.map(r => (r.fields[LG_ADVISER] || '').trim()).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
     res.json({ advisers });
   } catch (err) {
     console.error('LeadGen advisers load error:', err);
