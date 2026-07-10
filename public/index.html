@@ -93,6 +93,7 @@ html { height: 100%; }
 .home-ql-btn.ql-dragging { opacity:.4;cursor:grabbing; }
 .ql-tile-wrap { cursor:grab; }
 .ql-tile-wrap.ql-dragging { opacity:.4;cursor:grabbing; }
+.ql-edit-btn { opacity:0; }
 .ql-tile-wrap:hover .ql-edit-btn { opacity:1; }
 #preview-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
 #preview-modal.open { display:flex; }
@@ -11739,7 +11740,7 @@ function qlBuildTileHtml(key) {
   return '<div class="ql-tile-wrap" data-ql-key="' + key + '" style="position:relative;">' +
     '<button class="home-ql-btn" style="width:100%;" onclick="qlNavigate(\'' + key + '\')">' + d.icon + '<span>' + d.label + '</span></button>' +
     '<button class="ql-edit-btn" onclick="qlOpenPicker(event, this)" aria-label="Change this quick link" ' +
-      'style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:1px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;">' +
+      'style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:1px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s;">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
     '</button>' +
   '</div>';
