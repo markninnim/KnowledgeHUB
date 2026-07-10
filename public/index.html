@@ -4088,10 +4088,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
           <div id="lg-data-user-wrap" style="display:flex;align-items:center;height:100%;"></div>
-          <a href="https://airtable.com/appGDjB2lKQd5uOOG/tbl1N4AE687y5BI78" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;font-weight:600;color:var(--brand-navy);background:#fff;text-decoration:none;white-space:nowrap;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Source
-          </a>
+          <div id="lg-data-source-wrap" style="display:flex;align-items:center;height:100%;"></div>
           <label style="display:flex;align-items:center;gap:4px;height:100%;font-size:11px;color:#6b7c8f;font-weight:600;">From
             <input id="lg-data-from" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
           </label>
@@ -13830,16 +13827,27 @@ function lgDataUserSelectHtml() {
   );
   return '<select id="lg-data-user" onchange="_lgDataUser=this.value;lgRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
+var _lgDataSource = ''; // '' = all sources
+function lgDataSourceSelectHtml() {
+  var sources = Array.from(new Set(_lgLeads.map(function(l) { return l.source; }).filter(Boolean))).sort(function(a, b) { return a.localeCompare(b); });
+  var options = ['<option value="">All Sources</option>'].concat(
+    sources.map(function(name) { return '<option' + (name === _lgDataSource ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  return '<select id="lg-data-source" onchange="_lgDataSource=this.value;lgRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
+}
 function lgRenderData() {
   var contentEl = document.getElementById('lg-data-content');
   var userWrap = document.getElementById('lg-data-user-wrap');
   if (userWrap) userWrap.innerHTML = lgDataUserSelectHtml();
+  var sourceWrap = document.getElementById('lg-data-source-wrap');
+  if (sourceWrap) sourceWrap.innerHTML = lgDataSourceSelectHtml();
   var titleEl = document.getElementById('lg-data-title');
   if (titleEl) titleEl.textContent = _lgDataUser ? (_lgDataUser + '’s Data') : 'Data';
   var from = document.getElementById('lg-data-from').value;
   var to   = document.getElementById('lg-data-to').value;
   var leads = _lgLeads.filter(function(l) {
     if (_lgDataUser && l.adviser !== _lgDataUser) return false;
+    if (_lgDataSource && l.source !== _lgDataSource) return false;
     if (!l.createdTime) return true;
     var d = l.createdTime.slice(0, 10);
     if (from && d < from) return false;
@@ -13979,7 +13987,8 @@ function lgRenderData() {
   if (metaEl) {
     var rangeText = (from || to) ? ('From ' + (from || 'the start') + ' to ' + (to || 'today')) : 'All time';
     var userText = _lgDataUser ? (' — ' + _lgDataUser) : ' — All Users';
-    metaEl.textContent = rangeText + userText + ' — generated ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    var sourceText = _lgDataSource ? (' — ' + _lgDataSource) : '';
+    metaEl.textContent = rangeText + userText + sourceText + ' — generated ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 }
 function lgExportPdf() {
