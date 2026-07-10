@@ -5848,7 +5848,8 @@ function switchTab(tab) {
   if (tab === 'selling-zone') { oppInitPages(); }
   if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
   if (tab === 'autocrm')      { loadAutoCrm(); }
-  if (tab === 'muttuo')       { loadMuttuo(); mzStartPolling(); } else { mzStopPolling(); }
+  if (tab === 'muttuo')       { loadMuttuo(); if (typeof mzStartPolling === 'function') mzStartPolling(); }
+  else if (typeof mzStopPolling === 'function') { mzStopPolling(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
