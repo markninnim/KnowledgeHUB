@@ -4018,10 +4018,15 @@ html { height: 100%; }
           <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Data</h2>
           <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">MI overview across the leads pipeline.</p>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <label style="font-size:11px;color:#6b7c8f;font-weight:600;">From <input id="mz-data-from" type="date" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;margin-left:4px;"></label>
-          <label style="font-size:11px;color:#6b7c8f;font-weight:600;">To <input id="mz-data-to" type="date" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;margin-left:4px;"></label>
-          <button onclick="mzRenderData()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
+        <div style="display:flex;gap:8px;align-items:center;height:38px;">
+          <div id="mz-data-user-wrap" style="display:flex;align-items:center;height:100%;"></div>
+          <label style="display:flex;align-items:center;gap:4px;height:100%;font-size:11px;color:#6b7c8f;font-weight:600;">From
+            <input id="mz-data-from" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;height:100%;font-size:11px;color:#6b7c8f;font-weight:600;">To
+            <input id="mz-data-to" type="date" style="height:100%;box-sizing:border-box;padding:0 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;">
+          </label>
+          <button onclick="mzRenderData()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
         </div>
       </div>
       <div id="mz-data-content" style="padding-bottom:32px;"></div>
@@ -12801,7 +12806,12 @@ function mzCurrentUserName() {
 }
 function mzFilteredLeads() {
   var leads = _mzLeads;
-  if (_mzFilter === 'mine')     leads = leads.filter(function(l) { return l.adviser === mzCurrentUserName(); });
+  // Golden Hour, Today, and Follow Up all live under the "My Leads" sidebar
+  // section, so they're scoped to the logged-in user's own leads too.
+  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup'];
+  if (MY_LEADS_FILTERS.indexOf(_mzFilter) !== -1) {
+    leads = leads.filter(function(l) { return l.adviser === mzCurrentUserName(); });
+  }
   if (_mzFilter === 'golden')   leads = leads.filter(function(l) { return mzIsGoldenHour(l.createdTime); });
   if (_mzFilter === 'today')    leads = leads.filter(function(l) { return mzIsToday(l.createdTime); });
   if (_mzFilter === 'followup') leads = leads.filter(function(l) { return l.followUp === mzTodayStr(); });
@@ -13006,11 +13016,21 @@ function mzStatCard(label, value) {
     + '<div style="font-size:22px;font-weight:800;color:var(--brand-navy);line-height:1.2;">' + value + '</div>'
     + '</div>';
 }
+var _mzDataUser = ''; // '' = all users
+function mzDataUserSelectHtml() {
+  var options = ['<option value="">All Users</option>'].concat(
+    _mzAdvisers.map(function(name) { return '<option' + (name === _mzDataUser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  return '<select id="mz-data-user" onchange="_mzDataUser=this.value;mzRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
+}
 function mzRenderData() {
   var contentEl = document.getElementById('mz-data-content');
+  var userWrap = document.getElementById('mz-data-user-wrap');
+  if (userWrap) userWrap.innerHTML = mzDataUserSelectHtml();
   var from = document.getElementById('mz-data-from').value;
   var to   = document.getElementById('mz-data-to').value;
   var leads = _mzLeads.filter(function(l) {
+    if (_mzDataUser && l.adviser !== _mzDataUser) return false;
     if (!l.createdTime) return true;
     var d = l.createdTime.slice(0, 10);
     if (from && d < from) return false;
@@ -13019,7 +13039,7 @@ function mzRenderData() {
   });
 
   if (!leads.length) {
-    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads in this date range.</div>';
+    contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">No leads match this filter.</div>';
     return;
   }
 
