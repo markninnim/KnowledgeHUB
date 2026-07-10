@@ -60,6 +60,7 @@ const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
 const F_TOTP               = 'fldpgD672Gikqqnj0'; // TOTP 2FA secret
 const F_BIRTHDAY           = 'fldUxRahlmboP7g4y'; // Birthday (date string)
 const F_START_DATE         = 'fldA7RE4kgsGwqvad'; // Start Date (date string)
+const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -312,6 +313,7 @@ function recordToUser(record) {
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     birthday:         f[F_BIRTHDAY]           || null,
     startDate:        f[F_START_DATE]         || null,
+    business:         f[F_BUSINESS]           || '',
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
@@ -877,6 +879,30 @@ app.get('/public-logo', (req, res) => {
   const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');
   if (require('fs').existsSync(p)) res.sendFile(p);
   else res.status(404).send('Not found');
+});
+// Nav bar logo — shows the signed-in user's business logo (from public/branding),
+// matched off their Airtable "Business" field; falls back to the default FPG logo.
+function slugifyBusiness(name) {
+  return String(name || '').toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+app.get('/nav-logo', (req, res) => {
+  try {
+    const business = req.session && req.session.user && req.session.user.business;
+    if (business) {
+      const slug = slugifyBusiness(business);
+      const candidates = [slug, slug.replace(/-/g, '')];
+      for (const c of candidates) {
+        if (!c) continue;
+        const p = path.join(__dirname, 'public/branding', c + '.png');
+        if (fs.existsSync(p)) return res.sendFile(p);
+      }
+    }
+  } catch (err) {
+    console.error('Nav logo error:', err);
+  }
+  const fallback = path.join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');
+  if (fs.existsSync(fallback)) return res.sendFile(fallback);
+  res.status(404).send('Not found');
 });
 app.get('/public-feefo-logo', (req, res) => {
   const p = path.join(__dirname, 'public/feefo.png');

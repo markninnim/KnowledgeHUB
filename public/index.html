@@ -183,7 +183,7 @@ html { height: 100%; }
 </head>
 <body>
 <div class="topbar">
-  <img src="/public-logo" alt="Finance Planning Group" onclick="switchTab('home')" style="cursor:pointer;">
+  <img id="nav-logo-img" src="/public-logo" alt="Finance Planning Group" onclick="switchTab('home')" style="cursor:pointer;">
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-btn-home"          onclick="switchTab('home')">Home</button>
     <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Advice Standards</button>
@@ -7308,6 +7308,8 @@ var _currentUser = null;
 (function initUser() {
   fetch('/api/me').then(r => r.json()).then(function(user) {
     _currentUser = user;
+    var navLogoImg = document.getElementById('nav-logo-img');
+    if (navLogoImg) navLogoImg.src = '/nav-logo?t=' + Date.now();
     if (user && user._impersonating) {
       var banner = document.createElement('div');
       banner.id = 'impersonate-banner';
