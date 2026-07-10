@@ -59,25 +59,26 @@ const MZ_INSVAL    = 'fld9U4XjSLao5w1Ny'; // Insurance Sale Value
 const MZ_FEEVAL    = 'fldOFq58PkIumTXcy'; // Broker Fee Value
 
 // Leads — separate opt-in leads base (per-user toggle, not business-gated; internal codename "LeadGen")
-const LG_BASE      = 'appCc3fY3cadqXzf0';
-const LG_TABLE     = 'tblcr4ajTDAR7zbGz';
-const LG_NAME      = 'fldOm3q9hvKWpTWZG';
-const LG_PHONE     = 'fldfLAjROGvcBhJJq';
-const LG_EMAIL     = 'fldKxsiLW17tXrt1K';
-const LG_NOTES     = 'fldffIXjBk8eZSkmq';
-const LG_STATUS    = 'fldYogc7jlsc1WIxf';
-const LG_PROPVAL   = 'fldDVpv0ZzEtWN7FO';
-const LG_DEPOSIT   = 'fldB5Ssf6ZeP8mp72';
-const LG_SCHEME    = 'fld2xRbRdJa81P1hY';
-const LG_SALARY    = 'fldyXnLrlr6eIFs1J';
-const LG_PAYDAY    = 'flde06fl0lWXSg0gj';
-const LG_TERM      = 'fld92MRnZsPdBENcr';
-const LG_ADVISER   = 'fldnblWrGmpMVxxBS';
-const LG_FOLLOWUP  = 'fldST4rjtR1j9Pzv9';
-const LG_CALLEDAT  = 'fldzzJMH0RjORjlGC';
-const LG_MORTVAL   = 'fldq1SBE7fCSgSbs1';
-const LG_INSVAL    = 'fldAwLTrTQtG4Titf';
-const LG_FEEVAL    = 'fldiPt9EYNXxN1Sa2';
+const LG_BASE      = 'appGDjB2lKQd5uOOG';
+const LG_TABLE     = 'tbl1N4AE687y5BI78';
+const LG_NAME      = 'fldFmRyb6PBPzqC83';
+const LG_PHONE     = 'fldFzqXpI9XAaPxYq';
+const LG_EMAIL     = 'fldvrjFPh5rhkDa3o';
+const LG_NOTES     = 'fldM7NU4xx9ZRMJOE';
+const LG_STATUS    = 'fldORaiZsihv8usxG';
+const LG_PROPVAL   = 'fld5pYM5ZPoq65Qha';
+const LG_DEPOSIT   = 'fldDskyHnJToPVMXr';
+const LG_SCHEME    = 'fldXF0SSBBKJnNyfR';
+const LG_SALARY    = 'fldqAWwktzw7IXlLj';
+const LG_PAYDAY    = 'fld5sjQq3OUrzJ0tL';
+const LG_TERM      = 'fldOW9nnAAskOGPf2';
+const LG_ADVISER   = 'fldizBOkmRHDrvewE';
+const LG_FOLLOWUP  = 'fldiG17d2OGZzXYmk';
+const LG_CALLEDAT  = 'fldtMWUhE0be4Ts2Q';
+const LG_MORTVAL   = 'fldKHudKVQNImv5bc';
+const LG_INSVAL    = 'fld9U4XjSLao5w1Ny';
+const LG_FEEVAL    = 'fldOFq58PkIumTXcy';
+const LG_SOURCE    = 'fldO8GJlvlCL7GtI8'; // Source (Website / FP Surveying / Facebook)
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -715,7 +716,8 @@ function leadGenRecordToLead(record) {
     calledAt:     f[LG_CALLEDAT] || null,
     mortgageSaleValue:  f[LG_MORTVAL] || null,
     insuranceSaleValue: f[LG_INSVAL]  || null,
-    brokerFeeValue:     f[LG_FEEVAL]  || null
+    brokerFeeValue:     f[LG_FEEVAL]  || null,
+    source:             selectName(f[LG_SOURCE]) || ''
   };
 }
 
@@ -790,6 +792,7 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     if (b.mortgageSaleValue !== undefined && b.mortgageSaleValue !== '')   fields[LG_MORTVAL] = Number(b.mortgageSaleValue);
     if (b.insuranceSaleValue !== undefined && b.insuranceSaleValue !== '') fields[LG_INSVAL]  = Number(b.insuranceSaleValue);
     if (b.brokerFeeValue !== undefined && b.brokerFeeValue !== '')         fields[LG_FEEVAL]  = Number(b.brokerFeeValue);
+    if (b.source)        fields[LG_SOURCE]  = String(b.source);
 
     if (!fields[LG_NAME]) return res.status(400).json({ error: 'Name is required.' });
 
@@ -828,6 +831,7 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     if (b.mortgageSaleValue !== undefined)  fields[LG_MORTVAL] = b.mortgageSaleValue === '' ? null : Number(b.mortgageSaleValue);
     if (b.insuranceSaleValue !== undefined) fields[LG_INSVAL]  = b.insuranceSaleValue === '' ? null : Number(b.insuranceSaleValue);
     if (b.brokerFeeValue !== undefined)     fields[LG_FEEVAL]  = b.brokerFeeValue === '' ? null : Number(b.brokerFeeValue);
+    if (b.source !== undefined)             fields[LG_SOURCE]  = b.source === '' ? null : String(b.source);
 
     // First time a lead's status moves off "To Call", stamp Called At automatically
     // (used for the time-to-call stat on the Data page).

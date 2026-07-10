@@ -4088,7 +4088,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
           <div id="lg-data-user-wrap" style="display:flex;align-items:center;height:100%;"></div>
-          <a href="https://airtable.com/appCc3fY3cadqXzf0/tblcr4ajTDAR7zbGz/viwSQEeOP0mq959C3" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;font-weight:600;color:var(--brand-navy);background:#fff;text-decoration:none;white-space:nowrap;">
+          <a href="https://airtable.com/appGDjB2lKQd5uOOG/tbl1N4AE687y5BI78" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;font-weight:600;color:var(--brand-navy);background:#fff;text-decoration:none;white-space:nowrap;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Source
           </a>
@@ -4184,6 +4184,9 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="lg-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="lg-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Source</label><select id="lg-source" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Website</option><option>FP Surveying</option><option>Facebook</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Mortgage Sale Value &pound;</label><input id="lg-mortval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
@@ -13722,6 +13725,7 @@ function lgRenderLeads() {
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
           + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
           + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
+          + (lead.source ? '<div>Source: ' + escHtml(lead.source) + '</div>' : '')
           + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
           + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
               (lead.mortgageSaleValue ? 'Mortgage: ' + acFmtCurrency(lead.mortgageSaleValue) : '') +
@@ -13750,13 +13754,14 @@ function lgRenderLeads() {
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.source) + '</td>'
       + '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Adviser','Status'].map(function(h) {
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Source','Adviser','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -14029,6 +14034,7 @@ function lgOpenModal(id) {
   }
   adviserSel.innerHTML = adviserOptions.join('');
   document.getElementById('lg-followup').value = lead ? (lead.followUp || '') : '';
+  document.getElementById('lg-source').value  = lead ? (lead.source || '') : '';
   document.getElementById('lg-mortval').value = lead ? (lead.mortgageSaleValue  || '') : '';
   document.getElementById('lg-insval').value  = lead ? (lead.insuranceSaleValue || '') : '';
   document.getElementById('lg-feeval').value  = lead ? (lead.brokerFeeValue     || '') : '';
@@ -14054,6 +14060,7 @@ function lgSaveLead() {
     status:        document.getElementById('lg-status').value,
     adviser:       document.getElementById('lg-adviser').value.trim(),
     followUp:      document.getElementById('lg-followup').value,
+    source:        document.getElementById('lg-source').value,
     mortgageSaleValue:  document.getElementById('lg-mortval').value,
     insuranceSaleValue: document.getElementById('lg-insval').value,
     brokerFeeValue:     document.getElementById('lg-feeval').value,
