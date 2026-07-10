@@ -379,9 +379,8 @@ html { height: 100%; }
   </div>
   <!-- Muttuo sidebar -->
   <div id="sidebar-muttuo" style="display:none">
-    <h2 style="margin-top: 8px;">Leads</h2>
+    <a href="#" id="mz-nav-mine" onclick="mzFilterBy('mine',this);return false;" style="display:block;margin-top:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brand-orange);padding:0 20px 8px;text-decoration:none;">My Leads</a>
     <a href="#" id="mz-nav-all"        class="active" onclick="mzFilterBy('all',this);return false;">All Leads</a>
-    <a href="#" id="mz-nav-mine"       onclick="mzFilterBy('mine',this);return false;">My Leads</a>
     <a href="#" id="mz-nav-golden"     onclick="mzFilterBy('golden',this);return false;">Golden Hour</a>
     <a href="#" id="mz-nav-today"      onclick="mzFilterBy('today',this);return false;">Today</a>
     <a href="#" id="mz-nav-followup"   onclick="mzFilterBy('followup',this);return false;">Follow Up</a>
@@ -3999,13 +3998,13 @@ html { height: 100%; }
           <h2 id="mz-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Muttuo</h2>
           <p id="mz-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <div id="mz-adviser-filter-wrap"></div>
-          <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
-            <button id="mz-view-table" onclick="mzSetView('table')" style="padding:9px 14px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
-            <button id="mz-view-card" onclick="mzSetView('card')" style="padding:9px 14px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+        <div style="display:flex;gap:8px;align-items:center;height:38px;">
+          <div id="mz-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
+          <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;height:100%;box-sizing:border-box;">
+            <button id="mz-view-table" onclick="mzSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
+            <button id="mz-view-card" onclick="mzSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
           </div>
-          <button onclick="mzOpenModal()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
+          <button onclick="mzOpenModal()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
         </div>
       </div>
       <div id="mz-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
@@ -12809,7 +12808,7 @@ function mzAdviserFilterHtml() {
   var options = ['<option value="">All Advisers</option>'].concat(
     _mzAdvisers.map(function(name) { return '<option' + (name === _mzAdviserFilter ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
   );
-  return '<select onchange="mzSetAdviserFilter(this.value)" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;">' + options.join('') + '</select>';
+  return '<select onchange="mzSetAdviserFilter(this.value)" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
 function mzFilterBy(kind, el) {
   _mzFilter = kind;
