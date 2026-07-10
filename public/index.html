@@ -7091,11 +7091,17 @@ function loadHomeData() {
     var user    = _currentUser || {};
     var noFlags = !user.sellsMortgages && !user.sellsProtection;
 
+    // If this business has its own secondary brand colour (BUSINESS_ORANGE_COLORS
+    // override), use the two brand colours across all bars instead of the
+    // unrelated default blue for Investment.
+    var userBusiness  = (user.business || '').trim().toLowerCase();
+    var hasTwoColors  = !!BUSINESS_ORANGE_COLORS[userBusiness];
+
     // Determine which types to show
     var types = [];
     if (user.sellsMortgages  || noFlags) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
     if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
-    if (user.sellsInvestments)           types.push({ key: 'Investment', color: '#2e99d5' });
+    if (user.sellsInvestments)           types.push({ key: 'Investment', color: hasTwoColors ? 'var(--brand-navy)' : '#2e99d5' });
 
     var totalMins = cpd.ytdMins || 0;
 
@@ -7479,10 +7485,10 @@ var _currentUser = null;
     if (user && user._impersonating) {
       var banner = document.createElement('div');
       banner.id = 'impersonate-banner';
-      banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#2e99d5;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:16px;';
+      banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#9ca3af;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:16px;';
       var name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
       banner.innerHTML = '<span>Viewing as <strong style="font-weight:700;">' + name + '</strong></span>'
-        + '<button onclick="stopImpersonation()" style="background:#fff;color:#2e99d5;border:none;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">↩ Exit View As</button>';
+        + '<button onclick="stopImpersonation()" style="background:#fff;color:#9ca3af;border:none;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">↩ Exit View As</button>';
       document.body.appendChild(banner);
       document.body.style.paddingBottom = '48px';
     }
@@ -11883,7 +11889,9 @@ var QL_DESTINATIONS = {
   myteam:        { label: 'My Team',          tab: 'supervisor-zone', adminOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   numbers:       { label: 'Numbers',          tab: 'performance-zone', adminOnly: true,
-                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' }
+                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' },
+  muttuo:        { label: 'Muttuo',           tab: 'muttuo', fitchOnly: true,
+                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
 };
 // Same destination list offered in the "Main Menu" popover — what a tile can be reassigned to
 var QL_EDITABLE_KEYS = ['advice', 'compliance', 'learning', 'marketing', 'opportunities', 'pay', 'surveying'];
@@ -11947,7 +11955,8 @@ function qlOpenPicker(e, btn) {
   var currentKey = wrap.dataset.qlKey;
   var u = _currentUser || {};
   var isSvAdmin = u.isSupervisor || u.isAdmin;
-  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []);
+  var isFitch = ((u.business || '').trim().toLowerCase() === 'fitch and fitch') || u.isAdmin;
+  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []);
 
   var btnStyle = 'width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;border-radius:7px;font-family:inherit;display:block;';
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Change this link to</div>';
