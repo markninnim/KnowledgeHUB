@@ -213,7 +213,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
-    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;">Leads</button>
+    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Leads<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -5991,6 +5991,7 @@ function switchTab(tab) {
   if (tab === 'leadgen') {
     if (typeof loadLeadGen === 'function') loadLeadGen();
     if (typeof lgStartPolling === 'function') lgStartPolling();
+    if (typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
   } else if (typeof lgStopPolling === 'function') { lgStopPolling(); }
 }
 
@@ -7661,6 +7662,7 @@ var _currentUser = null;
     if (user && (user.isAdmin || user.isLeadGen)) {
       var lgbtn = document.getElementById('tab-btn-leadgen');
       if (lgbtn) lgbtn.style.display = '';
+      if (typeof lgStartNewLeadWatch === 'function') lgStartNewLeadWatch();
     }
     updateNavUser(user);
     initShareButtons();
@@ -13646,6 +13648,38 @@ function lgPollRefresh() {
     _lgLeads = d.leads || [];
     lgRenderLeads();
   }).catch(function() {});
+}
+
+// ── New-lead notification dot on the top-nav "Leads" tab ──────
+// Runs in the background regardless of which tab is open, so a broker sees
+// the red dot as soon as a lead lands, without needing the Leads tab loaded.
+var _lgNewLeadTimer = null;
+function lgLastSeenKey() {
+  var email = (_currentUser && _currentUser.email) || 'anon';
+  return 'lgLeadsLastSeen:' + email.toLowerCase();
+}
+function lgCheckNewLeads() {
+  fetch('/api/leadgen-leads').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) return;
+    var leads = d.leads || [];
+    var me = lgCurrentUserName();
+    var lastSeen = Number(localStorage.getItem(lgLastSeenKey())) || 0;
+    var hasNew = leads.some(function(l) {
+      return l.adviser === me && l.createdTime && new Date(l.createdTime).getTime() > lastSeen;
+    });
+    var dot = document.getElementById('lg-nav-dot');
+    if (dot) dot.style.display = hasNew ? 'block' : 'none';
+  }).catch(function() {});
+}
+function lgStartNewLeadWatch() {
+  if (_lgNewLeadTimer) return;
+  lgCheckNewLeads();
+  _lgNewLeadTimer = setInterval(lgCheckNewLeads, 60000);
+}
+function lgMarkLeadsSeen() {
+  localStorage.setItem(lgLastSeenKey(), String(Date.now()));
+  var dot = document.getElementById('lg-nav-dot');
+  if (dot) dot.style.display = 'none';
 }
 var _lgView = 'table';
 function lgSetView(view) {
