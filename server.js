@@ -107,8 +107,13 @@ try { _quickLinksOrder = JSON.parse(fs.readFileSync(QUICK_LINKS_ORDER_PATH, 'utf
 function saveQuickLinksOrder() { fs.writeFileSync(QUICK_LINKS_ORDER_PATH, JSON.stringify(_quickLinksOrder, null, 2)); }
 
 app.get('/api/quick-links', requireAuth, (req, res) => {
-  const email = (req.session.user && req.session.user.email || '').toLowerCase();
-  res.json({ order: _quickLinksOrder[email] || null });
+  try {
+    const email = (req.session.user && req.session.user.email || '').toLowerCase();
+    res.json({ order: _quickLinksOrder[email] || null });
+  } catch (err) {
+    console.error('Quick links load error:', err);
+    res.status(500).json({ error: 'Failed to load.' });
+  }
 });
 
 app.post('/api/quick-links', requireAuth, (req, res) => {
