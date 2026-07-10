@@ -381,6 +381,7 @@ html { height: 100%; }
   <div id="sidebar-muttuo" style="display:none">
     <h2 style="margin-top: 8px;">Leads</h2>
     <a href="#" id="mz-nav-all"        class="active" onclick="mzFilterBy('all',this);return false;">All Leads</a>
+    <a href="#" id="mz-nav-mine"       onclick="mzFilterBy('mine',this);return false;">My Leads</a>
     <a href="#" id="mz-nav-golden"     onclick="mzFilterBy('golden',this);return false;">Golden Hour</a>
     <a href="#" id="mz-nav-today"      onclick="mzFilterBy('today',this);return false;">Today</a>
     <a href="#" id="mz-nav-followup"   onclick="mzFilterBy('followup',this);return false;">Follow Up</a>
@@ -3999,6 +4000,7 @@ html { height: 100%; }
           <p id="mz-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Fitch and Fitch leads — add, track, and update leads through the pipeline.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
+          <div id="mz-adviser-filter-wrap"></div>
           <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
             <button id="mz-view-table" onclick="mzSetView('table')" style="padding:9px 14px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
             <button id="mz-view-card" onclick="mzSetView('card')" style="padding:9px 14px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
@@ -12764,6 +12766,12 @@ var _mzLoaded = false;
 var _mzLeads  = [];
 var _mzAdvisers = []; // Fitch and Fitch users, for the Adviser dropdown
 var _mzFilter = 'all'; // 'all' | 'golden' | 'today' | 'followup'
+function mzFmtDateTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
 function mzTodayStr() {
   var d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -12779,11 +12787,29 @@ function mzIsGoldenHour(iso) {
   var t = new Date(iso).getTime();
   return (Date.now() - t) <= 3600000 && (Date.now() - t) >= 0;
 }
+var _mzAdviserFilter = ''; // '' = all advisers, otherwise an exact adviser name
+function mzCurrentUserName() {
+  var u = _currentUser || {};
+  return [u.firstName, u.lastName].filter(Boolean).join(' ');
+}
 function mzFilteredLeads() {
-  if (_mzFilter === 'golden')   return _mzLeads.filter(function(l) { return mzIsGoldenHour(l.createdTime); });
-  if (_mzFilter === 'today')    return _mzLeads.filter(function(l) { return mzIsToday(l.createdTime); });
-  if (_mzFilter === 'followup') return _mzLeads.filter(function(l) { return l.followUp === mzTodayStr(); });
-  return _mzLeads;
+  var leads = _mzLeads;
+  if (_mzFilter === 'mine')     leads = leads.filter(function(l) { return l.adviser === mzCurrentUserName(); });
+  if (_mzFilter === 'golden')   leads = leads.filter(function(l) { return mzIsGoldenHour(l.createdTime); });
+  if (_mzFilter === 'today')    leads = leads.filter(function(l) { return mzIsToday(l.createdTime); });
+  if (_mzFilter === 'followup') leads = leads.filter(function(l) { return l.followUp === mzTodayStr(); });
+  if (_mzAdviserFilter)         leads = leads.filter(function(l) { return l.adviser === _mzAdviserFilter; });
+  return leads;
+}
+function mzSetAdviserFilter(name) {
+  _mzAdviserFilter = name;
+  mzRenderLeads();
+}
+function mzAdviserFilterHtml() {
+  var options = ['<option value="">All Advisers</option>'].concat(
+    _mzAdvisers.map(function(name) { return '<option' + (name === _mzAdviserFilter ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+  );
+  return '<select onchange="mzSetAdviserFilter(this.value)" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;">' + options.join('') + '</select>';
 }
 function mzFilterBy(kind, el) {
   _mzFilter = kind;
@@ -12791,6 +12817,7 @@ function mzFilterBy(kind, el) {
   if (el) el.classList.add('active');
   mzShowPage('leads');
   var titles = { all: ['Muttuo', 'Fitch and Fitch leads — add, track, and update leads through the pipeline.'],
+    mine:     ['My Leads', 'Leads assigned to you.'],
     golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
     today:    ['Today', 'Leads created today.'],
     followup: ['Follow Up', 'Leads with a follow-up date of today.'] };
@@ -12826,6 +12853,7 @@ function loadMuttuo() {
   contentEl.style.display = 'none';
   fetch('/api/muttuo-advisers').then(function(r) { return r.json(); }).then(function(d) {
     _mzAdvisers = (d && d.advisers) || [];
+    if (_mzLoaded) mzRenderLeads(); // refresh dropdown options if leads already rendered first
   }).catch(function() {});
   fetch('/api/muttuo-leads').then(function(r) { return r.json(); }).then(function(d) {
     loadingEl.style.display = 'none';
@@ -12898,6 +12926,8 @@ function mzUpdateAdviser(id, adviser) {
 }
 function mzRenderLeads() {
   var contentEl = document.getElementById('mz-content');
+  var filterWrap = document.getElementById('mz-adviser-filter-wrap');
+  if (filterWrap) filterWrap.innerHTML = mzAdviserFilterHtml();
   var leads = mzFilteredLeads();
   if (!leads.length) {
     contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' +
@@ -12912,6 +12942,7 @@ function mzRenderLeads() {
           + mzStatusSelectHtml(lead)
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
+          + (lead.createdTime ? '<div>Created: ' + mzFmtDateTime(lead.createdTime) + '</div>' : '')
           + (lead.phone ? '<div>' + escHtml(lead.phone) + '</div>' : '')
           + (lead.email ? '<div>' + escHtml(lead.email) + '</div>' : '')
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
@@ -12929,6 +12960,7 @@ function mzRenderLeads() {
     var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
       + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? mzFmtDateTime(lead.createdTime) : '') + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
       + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
@@ -12944,7 +12976,7 @@ function mzRenderLeads() {
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Adviser','Follow Up','Status'].map(function(h) {
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Adviser','Follow Up','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
