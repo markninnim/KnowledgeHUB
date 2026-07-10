@@ -11858,9 +11858,18 @@ document.addEventListener('click', function(e) {
 function toggleQlMenu(e) {
   e.stopPropagation();
   var p = document.getElementById('ql-menu-popover');
+  var grid = document.getElementById('ql-grid');
   if (!p) return;
   var open = p.style.display === 'block';
   if (open) { p.style.display = 'none'; return; }
+
+  // Position under whichever tile triggered it (it's draggable, so it may not be top-left anymore)
+  if (grid && e.currentTarget) {
+    var rect = e.currentTarget.getBoundingClientRect();
+    var gridRect = grid.getBoundingClientRect();
+    p.style.top  = (rect.bottom - gridRect.top + 8) + 'px';
+    p.style.left = Math.max(0, rect.left - gridRect.left) + 'px';
+  }
 
   // Build menu from current user permissions
   var u = _currentUser || {};
