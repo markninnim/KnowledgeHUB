@@ -100,6 +100,33 @@ function getExtraProducts(email) {
   return rest;
 }
 
+// ── Quick Links order (local, per-user) ────────────────────────
+const QUICK_LINKS_ORDER_PATH = path.join(__dirname, 'quick-links-order.json');
+let _quickLinksOrder = {}; // { "email": ["menu","marketing",...] }
+try { _quickLinksOrder = JSON.parse(fs.readFileSync(QUICK_LINKS_ORDER_PATH, 'utf8')); } catch(_) {}
+function saveQuickLinksOrder() { fs.writeFileSync(QUICK_LINKS_ORDER_PATH, JSON.stringify(_quickLinksOrder, null, 2)); }
+
+app.get('/api/quick-links', requireAuth, (req, res) => {
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  res.json({ order: _quickLinksOrder[email] || null });
+});
+
+app.post('/api/quick-links', requireAuth, (req, res) => {
+  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+  const { order } = req.body || {};
+  if (!Array.isArray(order) || !order.every(v => typeof v === 'string')) {
+    return res.status(400).json({ error: 'order must be an array of strings' });
+  }
+  try {
+    _quickLinksOrder[email] = order;
+    saveQuickLinksOrder();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Quick links save error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
 // ── Login attempt tracking (in-memory, resets on restart) ────────
 // { "email@x.com": { count: 3, lockedUntil: <ms timestamp> } }
 const _loginAttempts = {};
