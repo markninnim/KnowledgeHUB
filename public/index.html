@@ -12804,21 +12804,26 @@ function mzRenderLeads() {
     return;
   }
   var rows = _mzLeads.map(function(lead) {
+    var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
-      + '<td style="padding:10px 12px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
-      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.phone) + '</td>'
-      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.email) + '</td>'
-      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.propertyValue) + '</td>'
-      + '<td style="padding:10px 12px;font-size:12.5px;color:#6b7c8f;">' + escHtml(lead.deposit) + '</td>'
+      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + (lead.term ? lead.term + ' yrs' : '') + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.scheme) + '</td>'
+      + '<td style="' + td + '" onclick="mzOpenModal(\'' + lead.id + '\')">' + escHtml(lead.paydayLoans) + '</td>'
       + '<td style="padding:10px 12px;">' + mzStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
-  contentEl.innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
+  contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Phone','Email','Property Value','Deposit','Status'].map(function(h) {
-          return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;">' + h + '</th>';
+      + ['Name','Phone','Email','Property Value','Deposit','Salary','Term','Scheme','Payday Loans','Status'].map(function(h) {
+          return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
-    + '</tr></thead><tbody>' + rows + '</tbody></table>';
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 function mzUpdateStatus(id, status) {
   var lead = _mzLeads.find(function(l) { return l.id === id; });
