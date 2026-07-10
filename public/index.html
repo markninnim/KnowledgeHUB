@@ -5829,7 +5829,7 @@ function switchTab(tab) {
   if (tab === 'selling-zone') { oppInitPages(); }
   if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
   if (tab === 'autocrm')      { loadAutoCrm(); }
-  if (tab === 'muttuo')       { loadMuttuo(); }
+  if (tab === 'muttuo')       { loadMuttuo(); mzStartPolling(); } else { mzStopPolling(); }
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -12766,6 +12766,24 @@ function loadMuttuo() {
     contentEl.style.display = 'block';
     contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">Unable to load leads. Please refresh and try again.</div>';
   });
+}
+// Background refresh while the tab is open — no loading spinner, just quietly
+// pulls the latest from Airtable so new entries show up without a manual reload.
+var _mzPollTimer = null;
+function mzStartPolling() {
+  if (_mzPollTimer) return;
+  _mzPollTimer = setInterval(mzPollRefresh, 30000);
+}
+function mzStopPolling() {
+  if (_mzPollTimer) { clearInterval(_mzPollTimer); _mzPollTimer = null; }
+}
+function mzPollRefresh() {
+  if (!_mzLoaded) return; // initial load still in flight or hasn't happened
+  fetch('/api/muttuo-leads').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) return;
+    _mzLeads = d.leads || [];
+    mzRenderLeads();
+  }).catch(function() {});
 }
 var _mzView = 'table';
 function mzSetView(view) {
