@@ -54,6 +54,9 @@ const MZ_TERM      = 'fldOW9nnAAskOGPf2';
 const MZ_ADVISER   = 'fldizBOkmRHDrvewE';
 const MZ_FOLLOWUP  = 'fldiG17d2OGZzXYmk';
 const MZ_CALLEDAT  = 'fldtMWUhE0be4Ts2Q'; // set automatically first time Status leaves "To Call"
+const MZ_MORTVAL   = 'fldKHudKVQNImv5bc'; // Mortgage Sale Value
+const MZ_INSVAL    = 'fld9U4XjSLao5w1Ny'; // Insurance Sale Value
+const MZ_FEEVAL    = 'fldOFq58PkIumTXcy'; // Broker Fee Value
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -509,7 +512,10 @@ function muttuoRecordToLead(record) {
     term:         f[MZ_TERM]    || null,
     adviser:      f[MZ_ADVISER] || '',
     followUp:     f[MZ_FOLLOWUP] || null,
-    calledAt:     f[MZ_CALLEDAT] || null
+    calledAt:     f[MZ_CALLEDAT] || null,
+    mortgageSaleValue:  f[MZ_MORTVAL] || null,
+    insuranceSaleValue: f[MZ_INSVAL]  || null,
+    brokerFeeValue:     f[MZ_FEEVAL]  || null
   };
 }
 
@@ -581,6 +587,9 @@ app.post('/api/muttuo-leads', requireAuth, requireFitchAndFitch, async (req, res
     if (b.term !== undefined && b.term !== '') fields[MZ_TERM] = Number(b.term);
     if (b.adviser)       fields[MZ_ADVISER] = String(b.adviser);
     if (b.followUp)      fields[MZ_FOLLOWUP] = String(b.followUp);
+    if (b.mortgageSaleValue !== undefined && b.mortgageSaleValue !== '')   fields[MZ_MORTVAL] = Number(b.mortgageSaleValue);
+    if (b.insuranceSaleValue !== undefined && b.insuranceSaleValue !== '') fields[MZ_INSVAL]  = Number(b.insuranceSaleValue);
+    if (b.brokerFeeValue !== undefined && b.brokerFeeValue !== '')         fields[MZ_FEEVAL]  = Number(b.brokerFeeValue);
 
     if (!fields[MZ_NAME]) return res.status(400).json({ error: 'Name is required.' });
 
@@ -616,6 +625,9 @@ app.patch('/api/muttuo-leads/:id', requireAuth, requireFitchAndFitch, async (req
     if (b.term !== undefined)          fields[MZ_TERM]    = b.term === '' ? null : Number(b.term);
     if (b.adviser !== undefined)       fields[MZ_ADVISER] = String(b.adviser);
     if (b.followUp !== undefined)      fields[MZ_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
+    if (b.mortgageSaleValue !== undefined)  fields[MZ_MORTVAL] = b.mortgageSaleValue === '' ? null : Number(b.mortgageSaleValue);
+    if (b.insuranceSaleValue !== undefined) fields[MZ_INSVAL]  = b.insuranceSaleValue === '' ? null : Number(b.insuranceSaleValue);
+    if (b.brokerFeeValue !== undefined)     fields[MZ_FEEVAL]  = b.brokerFeeValue === '' ? null : Number(b.brokerFeeValue);
 
     // First time a lead's status moves off "To Call", stamp Called At automatically
     // (used for the time-to-call stat on the Data page).

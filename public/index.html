@@ -4064,6 +4064,11 @@ html { height: 100%; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="mz-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="mz-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
       </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Mortgage Sale Value &pound;</label><input id="mz-mortval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Insurance Sale Value &pound;</label><input id="mz-insval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Broker Fee Value &pound;</label><input id="mz-feeval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      </div>
       <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="mz-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
@@ -12966,6 +12971,13 @@ function mzRenderLeads() {
           + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + ' &middot; Term: ' + (lead.term ? lead.term + ' yrs' : '—') + '</div>'
           + '<div>Scheme: ' + escHtml(lead.scheme) + ' &middot; Payday Loans: ' + escHtml(lead.paydayLoans) + '</div>'
           + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
+          + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
+              (lead.mortgageSaleValue ? 'Mortgage: ' + acFmtCurrency(lead.mortgageSaleValue) : '') +
+              (lead.mortgageSaleValue && lead.insuranceSaleValue ? ' &middot; ' : '') +
+              (lead.insuranceSaleValue ? 'Insurance: ' + acFmtCurrency(lead.insuranceSaleValue) : '') +
+              ((lead.mortgageSaleValue || lead.insuranceSaleValue) && lead.brokerFeeValue ? ' &middot; ' : '') +
+              (lead.brokerFeeValue ? 'Fee: ' + acFmtCurrency(lead.brokerFeeValue) : '') +
+            '</div>' : '')
           + (lead.notes ? '<div style="margin-top:6px;font-style:italic;">' + escHtml(lead.notes) + '</div>' : '')
         + '</div>'
         + '</div>';
@@ -13123,6 +13135,9 @@ function mzOpenModal(id) {
   }
   adviserSel.innerHTML = adviserOptions.join('');
   document.getElementById('mz-followup').value = lead ? (lead.followUp || '') : '';
+  document.getElementById('mz-mortval').value = lead ? (lead.mortgageSaleValue  || '') : '';
+  document.getElementById('mz-insval').value  = lead ? (lead.insuranceSaleValue || '') : '';
+  document.getElementById('mz-feeval').value  = lead ? (lead.brokerFeeValue     || '') : '';
   document.getElementById('mz-notes').value   = lead ? lead.notes   : '';
   document.getElementById('mz-modal-status').textContent = '';
   document.getElementById('mz-modal').style.display = 'flex';
@@ -13145,6 +13160,9 @@ function mzSaveLead() {
     status:        document.getElementById('mz-status').value,
     adviser:       document.getElementById('mz-adviser').value.trim(),
     followUp:      document.getElementById('mz-followup').value,
+    mortgageSaleValue:  document.getElementById('mz-mortval').value,
+    insuranceSaleValue: document.getElementById('mz-insval').value,
+    brokerFeeValue:     document.getElementById('mz-feeval').value,
     notes:         document.getElementById('mz-notes').value.trim()
   };
   if (!payload.name) {
