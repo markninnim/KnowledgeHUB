@@ -13001,17 +13001,26 @@ function mzAdviserFilterHtml() {
   );
   return '<select onchange="mzSetAdviserFilter(this.value)" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
+function mzPossessive(name) {
+  if (!name) return '';
+  return name + (name.slice(-1).toLowerCase() === 's' ? '’' : '’s');
+}
 function mzUpdateLeadsTitle() {
+  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup'];
   var titles = { all: ['Muttuo', 'Fitch and Fitch leads — add, track, and update leads through the pipeline.'],
-    mine:     ['My Leads', 'Leads assigned to you.'],
-    golden:   ['Golden Hour', 'Leads created in the last hour — the fastest follow-up window.'],
-    today:    ['Today', 'Leads created today.'],
-    followup: ['Follow Up', 'Leads with a follow-up date of today.'] };
+    mine:     ['Leads', 'Leads assigned to you.'],
+    golden:   ['Golden Hour Leads', 'Leads created in the last hour — the fastest follow-up window.'],
+    today:    ["Today's Leads", 'Leads created today.'],
+    followup: ['Follow Up Leads', 'Leads with a follow-up date of today.'] };
   var t = titles[_mzFilter] || titles.all;
   var titleEl = document.getElementById('mz-leads-title');
   var subEl   = document.getElementById('mz-leads-subtitle');
   if (_mzAdviserFilter) {
-    if (titleEl) titleEl.textContent = _mzAdviserFilter + '’s Muttuo Leads';
+    if (titleEl) titleEl.textContent = mzPossessive(_mzAdviserFilter) + ' Muttuo Leads';
+    if (subEl)   subEl.textContent   = t[1];
+  } else if (MY_LEADS_FILTERS.indexOf(_mzFilter) !== -1) {
+    var first = (_currentUser && _currentUser.firstName || '').trim();
+    if (titleEl) titleEl.textContent = first ? (mzPossessive(first) + ' ' + t[0]) : t[0];
     if (subEl)   subEl.textContent   = t[1];
   } else {
     if (titleEl) titleEl.textContent = t[0];
