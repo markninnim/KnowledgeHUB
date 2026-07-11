@@ -15200,7 +15200,7 @@ function fpSubmit() {
     var flexMatch = cs.match(/flex\s*:\s*([^;]+)/);
     if (flexMatch) wrap.style.flex = flexMatch[1];
     if (/width\s*:\s*100%/.test(cs)) wrap.style.width = '100%';
-    else if (rect.width) wrap.style.width = rect.width + 'px';
+    else if (rect.width) wrap.style.width = (rect.width + 22) + 'px';
     if (/height\s*:\s*100%/.test(cs)) wrap.style.height = '100%';
     else if (rect.height) wrap.style.height = rect.height + 'px';
 
