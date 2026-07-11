@@ -12031,6 +12031,8 @@ var QL_DESTINATIONS = {
   numbers:       { label: 'Numbers',          tab: 'performance-zone', adminOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' },
   muttuo:        { label: 'Muttuo',           tab: 'muttuo', fitchOnly: true,
+                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+  leads:         { label: 'Leads',            tab: 'leadgen', leadGenOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
 };
 // Same destination list offered in the "Main Menu" popover — what a tile can be reassigned to
@@ -12096,7 +12098,8 @@ function qlOpenPicker(e, btn) {
   var u = _currentUser || {};
   var isSvAdmin = u.isSupervisor || u.isAdmin;
   var isFitch = ((u.business || '').trim().toLowerCase() === 'fitch and fitch') || u.isAdmin;
-  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []);
+  var isLeadGen = u.isLeadGen || u.isAdmin;
+  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []);
 
   var btnStyle = 'width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;border-radius:7px;font-family:inherit;display:block;';
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Change this link to</div>';
