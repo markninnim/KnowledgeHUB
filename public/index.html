@@ -13381,7 +13381,7 @@ function mzRenderData() {
   var funnelChart = mzFunnelChartSvg([
     { label: 'Call → Discussion',        pct: callToDiscussionRate, color: 'var(--brand-navy)' },
     { label: 'Discussion → Appointment', pct: discussionToApptRate, color: 'var(--brand-orange)' },
-    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: _mzIsFitchUser ? '#191140' : '#2e99d5' }
+    { label: 'Appointment → Sale',       pct: apptToSaleRate,       color: _mzIsFitchUser ? '#7c3aed' : '#2e99d5' }
   ]);
 
   var leadsToApptRate = total ? Math.round(appointments.length / total * 100) : 0;
