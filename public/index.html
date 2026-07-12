@@ -8238,6 +8238,10 @@ function populateSupervisorDropdown(selected) {
     opt.selected = true;
     sel.appendChild(opt);
   }
+  // The options were rebuilt in place (not via a fresh <select>), so the
+  // custom dropdown button's displayed label — which only updates on a
+  // "change" event or a direct .value assignment — needs a manual nudge.
+  sel.dispatchEvent(new Event('change'));
 }
 
 // Per-user "Top Nav Tabs" toggles — keys must match NAV_TOGGLE_KEYS in server.js
