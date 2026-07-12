@@ -1628,11 +1628,21 @@ app.post('/api/profile/photo', requireAuth, async (req, res) => {
 });
 
 // ── Admin: list users ─────────────────────────────────────────
-// ── PMI-licenced advisers — used by the Opportunities > Private Medical
-// Insurance page to show who to refer/introduce a client to. Open to any
-// logged-in user (not admin-only), and only returns the fields needed to
-// contact an adviser.
-app.get('/api/pmi-advisers', requireAuth, async (req, res) => {
+// ── Licenced advisers — used by Opportunities pages (e.g. Private Medical
+// Insurance, Lifetime Mortgages) to show who to refer/introduce a client
+// to. Open to any logged-in user (not admin-only), and only returns the
+// fields needed to contact an adviser. ?type= must be one of the flags
+// below (mapped from the "Sells" checkboxes / extra products in User
+// Management).
+const LICENCED_ADVISER_TYPES = {
+  pmi:                 u => !!u.pmi,
+  equityRelease:       u => !!u.equityRelease,
+  commercialMortgages: u => !!u.commercialMortgages
+};
+app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
+  const type = req.query.type;
+  const matches = LICENCED_ADVISER_TYPES[type];
+  if (!matches) return res.status(400).json({ error: 'Unknown or missing type.' });
   try {
     const advisers = [];
     let offset = '';
@@ -1641,7 +1651,7 @@ app.get('/api/pmi-advisers', requireAuth, async (req, res) => {
       const data = await atFetch(qs);
       for (const r of (data.records || [])) {
         const u = recordToUser(r);
-        if (u.pmi) {
+        if (matches(u)) {
           advisers.push({
             firstName: u.firstName,
             lastName:  u.lastName,

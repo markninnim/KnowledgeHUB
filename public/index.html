@@ -9915,18 +9915,21 @@ function oppOpenCard(cardKey) {
   document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
   detail.style.display = 'block';
   detail.scrollTop = 0;
-  if (cardKey === 'pmi') oppLoadPmiAdvisers();
+  if (cardKey === 'pmi') oppLoadLicencedAdvisers('pmi', 'opp-pmi-advisers');
 }
 
-function oppLoadPmiAdvisers() {
-  var container = document.getElementById('opp-pmi-advisers');
+// Generic loader for any "Licenced Advisers" section — used on the PMI
+// detail card and on main Opportunities pages (e.g. Lifetime Mortgage).
+// `type` must match one of the LICENCED_ADVISER_TYPES keys in server.js.
+function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
+  var container = document.getElementById(containerId);
   if (!container) return;
-  fetch('/api/pmi-advisers').then(function(r) { return r.json(); }).then(function(d) {
-    container = document.getElementById('opp-pmi-advisers'); // re-check — user may have navigated away while loading
+  fetch('/api/licenced-advisers?type=' + encodeURIComponent(type)).then(function(r) { return r.json(); }).then(function(d) {
+    container = document.getElementById(containerId); // re-check — user may have navigated away while loading
     if (!container) return;
     var advisers = (d && d.advisers) || [];
     if (!advisers.length) {
-      container.innerHTML = '<div style="color:#6b7c8f;font-size:13px;">No PMI-licenced advisers are set up yet.</div>';
+      container.innerHTML = '<div style="color:#6b7c8f;font-size:13px;">' + escHtml(emptyLabel || 'No licenced advisers are set up yet.') + '</div>';
       return;
     }
     container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">' +
@@ -9944,7 +9947,7 @@ function oppLoadPmiAdvisers() {
       }).join('') +
       '</div>';
   }).catch(function() {
-    var el = document.getElementById('opp-pmi-advisers');
+    var el = document.getElementById(containerId);
     if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Unable to load advisers — please try again.</div>';
   });
 }
@@ -9984,6 +9987,10 @@ function oppBuildPageHtml(pageKey) {
     });
     html += '</div>';
   });
+  if (pageKey === 'lifetime') {
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-orange);margin-bottom:12px;">Licenced Advisers</div>';
+    html += '<div id="opp-lifetime-advisers" style="color:#6b7c8f;font-size:13px;margin-bottom:8px;">Loading…</div>';
+  }
   html += '</div>';
   return html;
 }
@@ -9995,6 +10002,7 @@ function oppInitPages() {
     var el = document.getElementById('opp-page-' + key);
     if (el) el.innerHTML = oppBuildPageHtml(key);
   });
+  oppLoadLicencedAdvisers('equityRelease', 'opp-lifetime-advisers', 'No Lifetime Mortgage-licenced advisers are set up yet.');
 }
 
 function oppShowPage(page, el) {
