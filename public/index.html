@@ -4014,13 +4014,23 @@ select:focus { outline:none; }
   <!-- ── Whereabouts tab ────────────────────────────────────── -->
   <div id="tab-whereabouts" class="tab-pane">
     <div style="padding:32px 32px 0;">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;">
-        <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Whereabouts</h2>
-        <span id="wb-save-indicator" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;">Saved</span>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+        <div>
+          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Whereabouts</h2>
+          <p id="wb-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Latest weekly team whereabouts schedule.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="wb-save-indicator" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;">Saved</span>
+          <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;height:38px;box-sizing:border-box;">
+            <button id="wb-view-table" onclick="wbSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
+            <button id="wb-view-card" onclick="wbSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+          </div>
+        </div>
       </div>
-      <p id="wb-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Latest weekly team whereabouts schedule.</p>
+      <div style="margin-top:20px;"></div>
       <div id="wb-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="wb-content" style="display:none;padding-bottom:32px;"></div>
+      <div id="wb-cards" style="display:none;padding-bottom:32px;"></div>
     </div>
   </div>
 
@@ -12699,6 +12709,7 @@ function loadWhereabouts(file) {
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
     wbFormatDoc(contentEl, d.filename, d.edits || {}, !!d.canEdit);
     wbHighlightActiveWeek();
+    wbSetView(_wbView, true);
   }).catch(function() {
     clearTimeout(timer);
     _wbLoaded = false;
@@ -12708,6 +12719,66 @@ function loadWhereabouts(file) {
       (timedOut ? 'Taking too long to load — please refresh the page and try again.' : 'Unable to load the whereabouts document. Please refresh and try again.') +
       '</div>';
   });
+}
+
+// Table / Cards view toggle for Whereabouts — Cards is a derived, read-only
+// summary built from whatever table(s) are in the currently-loaded doc, so
+// it works no matter how many tables/columns a given week's file has.
+var _wbView = localStorage.getItem('wbView') || 'table';
+function wbSetView(view, skipRebuild) {
+  _wbView = view;
+  localStorage.setItem('wbView', view);
+  var tableBtn = document.getElementById('wb-view-table');
+  var cardBtn  = document.getElementById('wb-view-card');
+  var tableEl  = document.getElementById('wb-content');
+  var cardsEl  = document.getElementById('wb-cards');
+  if (tableBtn) { tableBtn.style.background = view === 'table' ? 'var(--brand-navy)' : '#f5f7fa'; tableBtn.style.color = view === 'table' ? '#fff' : 'var(--brand-navy)'; }
+  if (cardBtn)  { cardBtn.style.background  = view === 'card'  ? 'var(--brand-navy)' : '#f5f7fa'; cardBtn.style.color  = view === 'card'  ? '#fff' : 'var(--brand-navy)'; }
+  if (tableEl) tableEl.style.display = (view === 'table' && _wbLoaded) ? 'block' : 'none';
+  if (cardsEl) cardsEl.style.display = (view === 'card'  && _wbLoaded) ? 'block' : 'none';
+  if (view === 'card' && _wbLoaded) wbBuildCards();
+}
+function wbBuildCards() {
+  var src  = document.getElementById('wb-content');
+  var dest = document.getElementById('wb-cards');
+  if (!src || !dest) return;
+  var tables = src.querySelectorAll('.wb-doc table');
+  var html = '';
+  tables.forEach(function(table) {
+    var rows = Array.prototype.slice.call(table.rows);
+    if (!rows.length) return;
+    var headerRow = rows[0];
+    var headers = Array.prototype.slice.call(headerRow.cells).map(function(c) { return c.textContent.trim(); });
+    var dataRows = rows.slice(1);
+    // A preceding paragraph/heading right before the table is usually its label (e.g. a day or office name)
+    var label = '';
+    var prev = table.previousElementSibling;
+    if (prev && /^(P|H\d)$/i.test(prev.tagName)) label = prev.textContent.trim();
+    if (label) html += '<div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px;">' + escHtml(label) + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:8px;">';
+    dataRows.forEach(function(row) {
+      var cells = Array.prototype.slice.call(row.cells);
+      if (!cells.length) return;
+      var name = cells[0].textContent.trim();
+      if (!name) return;
+      var rowsHtml = '';
+      for (var i = 1; i < cells.length; i++) {
+        var head = headers[i] || ('Column ' + (i + 1));
+        var val = cells[i].textContent.trim();
+        if (!val) continue;
+        rowsHtml += '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:12px;">'
+          + '<span style="color:#6b7c8f;font-weight:600;">' + escHtml(head) + '</span>'
+          + '<span style="color:var(--brand-navy);font-weight:600;text-align:right;">' + escHtml(val) + '</span>'
+          + '</div>';
+      }
+      html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">'
+        + '<div style="font-size:13.5px;font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(name) + '</div>'
+        + (rowsHtml || '<div style="font-size:12px;color:#9aa5b1;">No entries</div>')
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  dest.innerHTML = html || '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">Nothing to show yet.</div>';
 }
 
 // Tidy up the raw HTML converted from the weekly .docx: strip the redundant
