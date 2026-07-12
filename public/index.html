@@ -7886,8 +7886,14 @@ var FEATURE_LABELS = {
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
   sellingZone:     { label: 'Opportunities',     tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
   performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
-  supervisorZone:  { label: 'My Team',            tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' }
+  supervisorZone:  { label: 'My Team',            tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
+  pay:             { label: 'Pay',                tab: 'tab-btn-pay',               pane: 'tab-pay' },
+  autocrm:         { label: 'AutoCRM™',           tab: 'tab-btn-autocrm',           pane: 'tab-autocrm' },
+  muttuo:          { label: 'Muttuo',             tab: 'tab-btn-muttuo',            pane: 'tab-muttuo' },
+  whereabouts:     { label: 'Whereabouts',        tab: 'tab-btn-whereabouts',       pane: 'tab-whereabouts' }
 };
+// Leads is handled separately below — visibility also requires the per-user
+// isLeadGen toggle (or admin), on top of this site-wide flag.
 
 function applyFeatureFlags() {
   fetch('/api/admin/features').then(function(r){ return r.json(); }).then(function(f){
@@ -7896,7 +7902,7 @@ function applyFeatureFlags() {
     var activePaneId = activePane ? activePane.id : null;
     var activeDisabled = false;
     var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
-    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true };
+    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true, whereabouts: true };
     var userNav = (_currentUser && _currentUser.navAccess) || {};
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
@@ -7910,6 +7916,12 @@ function applyFeatureFlags() {
       if (btn) btn.style.display = (enabled && userAllowed && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
       if (!enabled && cfg.pane === activePaneId) activeDisabled = true;
     });
+    // Leads — site-wide flag plus the per-user isLeadGen toggle (or admin)
+    var lgbtn = document.getElementById('tab-btn-leadgen');
+    if (lgbtn) {
+      var leadsEnabled = f.leadgen !== false && _currentUser && (_currentUser.isAdmin || _currentUser.isLeadGen);
+      lgbtn.style.display = leadsEnabled ? '' : 'none';
+    }
     // If the currently-visible tab was disabled, jump to the first enabled one
     if (activeDisabled) {
       var firstKey = Object.keys(FEATURE_LABELS).find(function(k){ return f[k] !== false; });
@@ -7918,12 +7930,16 @@ function applyFeatureFlags() {
   }).catch(function(){});
 }
 
+// Rollout-panel-only entries that aren't nav-tab toggles managed by
+// applyFeatureFlags() directly (Leads has its own combined gating logic).
+var FEATURE_TOGGLE_EXTRA_LABELS = { leadgen: 'Leads' };
 function renderFeatureToggles() {
   var container = document.getElementById('admin-feature-toggles');
   if (!container) return;
-  container.innerHTML = Object.keys(FEATURE_LABELS).map(function(key){
+  var keys = Object.keys(FEATURE_LABELS).concat(Object.keys(FEATURE_TOGGLE_EXTRA_LABELS));
+  container.innerHTML = keys.map(function(key){
     var checked = _features[key] !== false;
-    var label = FEATURE_LABELS[key].label;
+    var label = FEATURE_LABELS[key] ? FEATURE_LABELS[key].label : FEATURE_TOGGLE_EXTRA_LABELS[key];
     return '<label style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7c8f;">' +
       '<span style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;">' +
         '<input type="checkbox" data-feature="' + key + '" ' + (checked ? 'checked' : '') + ' onchange="onFeatureToggle(this)" style="opacity:0;width:0;height:0;position:absolute;">' +

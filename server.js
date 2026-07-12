@@ -351,7 +351,8 @@ const FEATURES_PATH = path.join(__dirname, 'features.json');
 const FEATURES_DEFAULT = {
   marketing: true, compliance: true, adviceStandards: true,
   learning: true, surveying: true, sellingZone: true,
-  performanceZone: true, supervisorZone: true
+  performanceZone: true, supervisorZone: true,
+  pay: true, autocrm: true, muttuo: true, whereabouts: true, leadgen: true
 };
 let _features = { ...FEATURES_DEFAULT };
 try { _features = { ...FEATURES_DEFAULT, ...JSON.parse(fs.readFileSync(FEATURES_PATH, 'utf8')) }; } catch(_) {}
