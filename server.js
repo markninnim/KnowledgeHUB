@@ -134,6 +134,48 @@ const LEADGEN_USERS_PATH = path.join(__dirname, 'leadgen-users.json');
 let _leadGenUsers = new Set();
 try { _leadGenUsers = new Set(JSON.parse(fs.readFileSync(LEADGEN_USERS_PATH, 'utf8'))); } catch(_) {}
 
+// ── Per-user top-nav tab access (local, no Airtable field needed) ──────
+// Every top-nav tab is individually toggleable per user from the admin
+// "Access" panel. Only explicit overrides are stored here; a user/key not
+// present falls back to computeNavDefaults() below, which mirrors the
+// original hardcoded visibility rules so nobody loses access on rollout.
+const NAV_ACCESS_PATH = path.join(__dirname, 'nav-access.json');
+let _navOverrides = {}; // { "email": { compliance: true, muttuo: false, ... } }
+try { _navOverrides = JSON.parse(fs.readFileSync(NAV_ACCESS_PATH, 'utf8')) || {}; } catch(_) {}
+function saveNavOverrides() { fs.writeFileSync(NAV_ACCESS_PATH, JSON.stringify(_navOverrides, null, 2)); }
+const NAV_TOGGLE_KEYS = [
+  'adviceStandards', 'compliance', 'learning', 'surveying', 'sellingZone',
+  'pay', 'autocrm', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
+];
+function computeNavDefaults(f) {
+  const isAdmin = f[F_ADMIN] || false;
+  const isSupervisor = f[F_IS_SUPERVISOR] || false;
+  const business = (f[F_BUSINESS] || '').trim().toLowerCase();
+  const supervisorOrAdmin = isAdmin || isSupervisor;
+  return {
+    adviceStandards: true,
+    compliance:      true,
+    learning:        true,
+    surveying:       true,
+    sellingZone:     true,
+    pay:             true,
+    autocrm:         true,
+    muttuo:          isAdmin || business === 'fitch and fitch',
+    whereabouts:     supervisorOrAdmin,
+    performanceZone: supervisorOrAdmin,
+    supervisorZone:  supervisorOrAdmin
+  };
+}
+function computeNavAccess(f, email) {
+  const defaults = computeNavDefaults(f);
+  const overrides = _navOverrides[(email || '').toLowerCase()] || {};
+  const result = {};
+  NAV_TOGGLE_KEYS.forEach(key => {
+    result[key] = overrides[key] !== undefined ? !!overrides[key] : defaults[key];
+  });
+  return result;
+}
+
 // ── Extra products (local) — Equity Release, Commercial Mortgages ──
 const EXTRA_PRODUCTS_PATH = path.join(__dirname, 'extra-products.json');
 let _extraProducts = {}; // { "email": { equityRelease: true, commercialMortgages: false } }
@@ -360,6 +402,7 @@ function recordToUser(record) {
     birthday:         f[F_BIRTHDAY]           || null,
     startDate:        f[F_START_DATE]         || null,
     business:         f[F_BUSINESS]           || '',
+    navAccess:        computeNavAccess(f, f[F_EMAIL] || ''),
     ...getExtraProducts(f[F_EMAIL] || '')
   };
 }
@@ -1651,6 +1694,13 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     if (lgFlag) _leadGenUsers.add(normEmail);
     else _leadGenUsers.delete(normEmail);
     fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
+    // Handle per-user top-nav tab access
+    if (req.body.navAccess && typeof req.body.navAccess === 'object') {
+      const nav = {};
+      NAV_TOGGLE_KEYS.forEach(key => { nav[key] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
+      _navOverrides[normEmail] = nav;
+      saveNavOverrides();
+    }
     // Handle extra products (cas now in Airtable)
     _extraProducts[normEmail] = {
       equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
@@ -1779,6 +1829,12 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       if (lgFlag) _leadGenUsers.add(normEmail);
       else _leadGenUsers.delete(normEmail);
       fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
+      if (req.body.navAccess && typeof req.body.navAccess === 'object') {
+        const nav = {};
+        NAV_TOGGLE_KEYS.forEach(key => { nav[key] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
+        _navOverrides[normEmail] = nav;
+        saveNavOverrides();
+      }
       _extraProducts[normEmail] = {
         equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
         commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',

@@ -4727,6 +4727,11 @@ select:focus { outline:none; }
                 </div>
               </label>
             </div>
+            <div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">
+              <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Top Nav Tabs</span>
+              <div style="flex:1;height:1px;background:#e8ecf0;"></div>
+            </div>
+            <div id="uf-nav-toggles" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
           </div>
         </div>
         <div id="admin-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:14px;"></div>
@@ -7646,14 +7651,6 @@ var _currentUser = null;
       if (mkbtn) mkbtn.style.display = 'inline-flex';
     }
     if (user && (user.isSupervisor || user.isAdmin)) {
-      var sbtn = document.getElementById('tab-btn-supervisor-zone');
-      if (sbtn) { sbtn.style.display = ''; sbtn.textContent = 'My Team'; }
-      var wbtn = document.getElementById('tab-btn-whereabouts');
-      if (wbtn) wbtn.style.display = '';
-      var wbsb = document.getElementById('sidebar-home-whereabouts');
-      if (wbsb) wbsb.style.display = '';
-      var pbtn = document.getElementById('tab-btn-performance-zone');
-      if (pbtn) pbtn.style.display = '';
       var nlup = document.getElementById('nl-upload-wrap');
       if (nlup) nlup.style.display = 'block';
       var newsBtn = document.getElementById('news-add-btn');
@@ -7664,17 +7661,32 @@ var _currentUser = null;
       var casLink = document.getElementById('lv-nav-cas-path');
       if (casLink) casLink.style.display = 'block';
     }
-    // Show Pay and AutoCRM tabs for all logged-in users
+    // Every top-nav tab is individually toggleable per user (Admin → user
+    // management → Access). navAccess is computed server-side with sensible
+    // defaults (see computeNavDefaults in server.js) and can be overridden.
+    var NAV_TAB_IDS = {
+      adviceStandards: 'tab-btn-sales-process',
+      compliance:       'tab-btn-compliance',
+      learning:         'tab-btn-learning',
+      surveying:        'tab-btn-surveying',
+      sellingZone:      'tab-btn-selling-zone',
+      pay:              'tab-btn-pay',
+      autocrm:          'tab-btn-autocrm',
+      muttuo:           'tab-btn-muttuo',
+      whereabouts:      'tab-btn-whereabouts',
+      performanceZone:  'tab-btn-performance-zone',
+      supervisorZone:   'tab-btn-supervisor-zone'
+    };
     if (user) {
-      var paybtn = document.getElementById('tab-btn-pay');
-      if (paybtn) paybtn.style.display = '';
-      var acbtn = document.getElementById('tab-btn-autocrm');
-      if (acbtn) acbtn.style.display = '';
-    }
-    // Muttuo tab — Fitch and Fitch business users (and admins) only
-    if (user && (user.isAdmin || ((user.business || '').trim().toLowerCase() === 'fitch and fitch'))) {
-      var mzbtn = document.getElementById('tab-btn-muttuo');
-      if (mzbtn) mzbtn.style.display = '';
+      var nav = user.navAccess || {};
+      Object.keys(NAV_TAB_IDS).forEach(function(key) {
+        var btn = document.getElementById(NAV_TAB_IDS[key]);
+        if (btn) btn.style.display = nav[key] ? '' : 'none';
+      });
+      var sbtn = document.getElementById('tab-btn-supervisor-zone');
+      if (sbtn && nav.supervisorZone) sbtn.textContent = 'My Team';
+      var wbsb = document.getElementById('sidebar-home-whereabouts');
+      if (wbsb) wbsb.style.display = nav.whereabouts ? '' : 'none';
     }
     // Leads tab — only users with the per-user LeadGen toggle on (and admins)
     if (user && (user.isAdmin || user.isLeadGen)) {
@@ -7885,12 +7897,17 @@ function applyFeatureFlags() {
     var activeDisabled = false;
     var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
     var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true };
+    var userNav = (_currentUser && _currentUser.navAccess) || {};
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
       var enabled = f[key] !== false;
+      // Per-user "Access" toggles (user management) take precedence — a
+      // site-wide feature flag can never re-show a tab a user's own access
+      // has switched off, only hide tabs further.
+      var userAllowed = userNav[key] !== false;
       var btn = document.getElementById(cfg.tab);
       // Supervisor-only tabs must never be shown to regular brokers
-      if (btn) btn.style.display = (enabled && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
+      if (btn) btn.style.display = (enabled && userAllowed && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
       if (!enabled && cfg.pane === activePaneId) activeDisabled = true;
     });
     // If the currently-visible tab was disabled, jump to the first enabled one
@@ -8194,6 +8211,39 @@ function populateSupervisorDropdown(selected) {
   }
 }
 
+// Per-user "Top Nav Tabs" toggles — keys must match NAV_TOGGLE_KEYS in server.js
+var NAV_TOGGLE_LABELS = {
+  adviceStandards: 'Advice Standards',
+  compliance:       'Compliance',
+  learning:         'Learning',
+  surveying:        'Surveying',
+  sellingZone:      'Opportunities',
+  pay:              'Pay',
+  autocrm:          'AutoCRM™',
+  muttuo:           'Muttuo',
+  whereabouts:      'Whereabouts',
+  performanceZone:  'Numbers',
+  supervisorZone:   'My Team'
+};
+function renderNavAccessToggles(navAccess) {
+  var container = document.getElementById('uf-nav-toggles');
+  if (!container) return;
+  var nav = navAccess || {};
+  container.innerHTML = Object.keys(NAV_TOGGLE_LABELS).map(function(key) {
+    var checked = nav[key] !== false;
+    return '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;font-size:12.5px;font-weight:600;color:#6b7c8f;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
+      + '<input type="checkbox" data-nav-key="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">'
+      + NAV_TOGGLE_LABELS[key]
+      + '</label>';
+  }).join('');
+}
+function collectNavAccess() {
+  var result = {};
+  document.querySelectorAll('#uf-nav-toggles input[data-nav-key]').forEach(function(input) {
+    result[input.dataset.navKey] = input.checked;
+  });
+  return result;
+}
 function openUserForm(userId) {
   _editingUserId = userId || null;
   var form = document.getElementById('admin-user-form');
@@ -8229,6 +8279,7 @@ function openUserForm(userId) {
     document.getElementById('uf-pmi').checked                  = u.pmi               || false;
     document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
+    renderNavAccessToggles(u.navAccess);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
     title.textContent = 'Add New User';
@@ -8250,6 +8301,7 @@ function openUserForm(userId) {
     document.getElementById('uf-pmi').checked                  = false;
     document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
+    renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false });
     populateSupervisorDropdown('');
   }
   form.style.display = 'block';
@@ -8291,7 +8343,8 @@ function saveUser() {
     pmi:              document.getElementById('uf-pmi').checked,
     cas:              document.getElementById('uf-cas').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
-    supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim()
+    supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim(),
+    navAccess:        collectNavAccess()
   };
 
   var url, method;
