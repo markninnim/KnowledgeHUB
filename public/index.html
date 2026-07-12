@@ -14278,6 +14278,11 @@ function lgSetView(view) {
   if (cardBtn)  { cardBtn.style.background  = (view === 'card')  ? 'var(--brand-navy)' : '#f5f7fa'; cardBtn.style.color  = (view === 'card')  ? '#fff' : 'var(--brand-navy)'; }
   lgRenderLeads();
 }
+// Small AutoCRM icon shown after a lead's name once they've been enrolled.
+function lgAutoCrmIconHtml(lead) {
+  if (!lead.enrollAutoCrm) return '';
+  return '<svg width="14" height="14" viewBox="0 0 24 24" style="margin-left:5px;vertical-align:middle;" title="Enrolled into AutoCRM&#8482;"><path fill="var(--brand-orange)" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-1.2 14.5-4.3-4.3 1.4-1.4 2.9 2.9 6.9-6.9 1.4 1.4z"/></svg>';
+}
 function lgStatusSelectHtml(lead) {
   return '<select onchange="lgUpdateStatus(\'' + lead.id + '\', this.value)" style="font-size:11px;font-weight:700;border-radius:20px;border:none;padding:4px 10px;font-family:inherit;cursor:pointer;' + lgStatusPillStyle(lead.status) + '">'
     + ['To Call','No Answer','Appointment','Signed Up'].map(function(s) { return '<option' + (s === lead.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
@@ -14340,7 +14345,7 @@ function lgRenderLeads() {
     var cards = leads.map(function(lead) {
       return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
-          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</span>'
+          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + '</span>'
           + '<div style="display:flex;gap:6px;flex-shrink:0;">' + lgQualitySelectHtml(lead) + lgStatusSelectHtml(lead) + '</div>'
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
@@ -14368,7 +14373,7 @@ function lgRenderLeads() {
   var rows = leads.map(function(lead) {
     var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
-      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + '</td>'
+      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? lgFmtDateTime(lead.createdTime) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
