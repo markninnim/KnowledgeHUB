@@ -14140,7 +14140,7 @@ function lgFilteredLeads() {
   var leads = _lgLeads;
   // Golden Hour, Today, and Follow Up all live under the "My Leads" sidebar
   // section, so they're scoped to the logged-in user's own leads too.
-  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
+  var MY_LEADS_FILTERS = ['all', 'mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
   if (MY_LEADS_FILTERS.indexOf(_lgFilter) !== -1) {
     leads = leads.filter(function(l) { return l.adviser === lgCurrentUserName(); });
   }
@@ -14176,7 +14176,7 @@ function lgPossessive(name) {
   return name + (name.slice(-1).toLowerCase() === 's' ? '’' : '’s');
 }
 function lgUpdateLeadsTitle() {
-  var MY_LEADS_FILTERS = ['mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
+  var MY_LEADS_FILTERS = ['all', 'mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
   var titles = { all: ['Leads', 'Leads — add, track, and update leads through the pipeline.'],
     mine:     ['Leads', 'Leads assigned to you.'],
     golden:   ['Golden Hour Leads', 'You only get one opportunity to make a killer first impression. If you get a lead, calling it within the first hour is a proven recipe for creating that wow factor.'],
@@ -14372,8 +14372,9 @@ function lgUpdateAdviser(id, adviser) {
 }
 function lgRenderLeads() {
   var contentEl = document.getElementById('lg-content');
+  // Adviser filter dropdown removed — Lead Manager is now always scoped to the logged-in user's own leads.
   var filterWrap = document.getElementById('lg-adviser-filter-wrap');
-  if (filterWrap) filterWrap.innerHTML = lgAdviserFilterHtml();
+  if (filterWrap) filterWrap.innerHTML = '';
   var leads = lgFilteredLeads();
   if (!leads.length) {
     contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' +
@@ -14394,7 +14395,7 @@ function lgRenderLeads() {
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
           + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + '</div>'
           + (lead.source ? '<div>Source: ' + escHtml(lead.source) + '</div>' : '')
-          + (lead.adviser || lead.followUp ? '<div>' + (lead.adviser ? 'Adviser: ' + escHtml(lead.adviser) : '') + (lead.adviser && lead.followUp ? ' &middot; ' : '') + (lead.followUp ? 'Follow up: ' + acFmtDate(lead.followUp) : '') + '</div>' : '')
+          + (lead.followUp ? '<div>Follow up: ' + acFmtDate(lead.followUp) + '</div>' : '')
           + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
               (lead.mortgageSaleValue ? 'Mortgage: ' + acFmtCurrency(lead.mortgageSaleValue) : '') +
               (lead.mortgageSaleValue && lead.insuranceSaleValue ? ' &middot; ' : '') +
@@ -14420,14 +14421,13 @@ function lgRenderLeads() {
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.source) + '</td>'
-      + '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgQualitySelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
-      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source','Adviser','Quality','Status'].map(function(h) {
+      + ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source','Quality','Status'].map(function(h) {
           return '<th style="text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;">' + h + '</th>';
         }).join('')
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
