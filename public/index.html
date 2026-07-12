@@ -4686,6 +4686,9 @@ select:focus { outline:none; }
               <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
                 <input id="uf-bridging" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Bridging Finance
               </label>
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
+                <input id="uf-business-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Business Protection
+              </label>
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f2f5;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -8323,6 +8326,7 @@ function openUserForm(userId) {
     document.getElementById('uf-commercial-mortgages').checked = u.commercialMortgages|| false;
     document.getElementById('uf-pmi').checked                  = u.pmi               || false;
     document.getElementById('uf-bridging').checked              = u.bridging          || false;
+    document.getElementById('uf-business-protection').checked   = u.businessProtection|| false;
     document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
     renderNavAccessToggles(u.navAccess);
@@ -8346,6 +8350,7 @@ function openUserForm(userId) {
     document.getElementById('uf-commercial-mortgages').checked = false;
     document.getElementById('uf-pmi').checked                  = false;
     document.getElementById('uf-bridging').checked              = false;
+    document.getElementById('uf-business-protection').checked   = false;
     document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false });
@@ -8389,6 +8394,7 @@ function saveUser() {
     commercialMortgages: document.getElementById('uf-commercial-mortgages').checked,
     pmi:              document.getElementById('uf-pmi').checked,
     bridging:         document.getElementById('uf-bridging').checked,
+    businessProtection: document.getElementById('uf-business-protection').checked,
     cas:              document.getElementById('uf-cas').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
     supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim(),

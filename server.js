@@ -100,6 +100,12 @@ const F_PREDICTED_CAS_DATE = 'fldWZw2VTzmEujf0O'; // Predicted CAS Date
 const F_TOTP               = 'fldpgD672Gikqqnj0'; // TOTP 2FA secret
 const F_BIRTHDAY           = 'fldUxRahlmboP7g4y'; // Birthday (date string)
 const F_START_DATE         = 'fldA7RE4kgsGwqvad'; // Start Date (date string)
+// Product licences (checkboxes) — drive the "Licenced Advisers" sections in Opportunities
+const F_EQUITY_RELEASE       = 'fldWvMjnPA7lsaVCX'; // Lifetime Mortgages Licence
+const F_COMMERCIAL_MORTGAGES = 'fldHWmLqZD8VH2F42'; // Commercial Mortgages Licence
+const F_PMI                  = 'fldvwp33og4kQ8AJ2'; // PMI Licence
+const F_BRIDGING             = 'fld2jngdHrczCcZSh'; // Bridging Finance Licence
+const F_BUSINESS_PROTECTION  = 'fldhe5XTYR7Amu4FS'; // Business Protection Licence
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -174,18 +180,6 @@ function computeNavAccess(f, email) {
     result[key] = overrides[key] !== undefined ? !!overrides[key] : defaults[key];
   });
   return result;
-}
-
-// ── Extra products (local) — Equity Release, Commercial Mortgages ──
-const EXTRA_PRODUCTS_PATH = path.join(__dirname, 'extra-products.json');
-let _extraProducts = {}; // { "email": { equityRelease: true, commercialMortgages: false } }
-try { _extraProducts = JSON.parse(fs.readFileSync(EXTRA_PRODUCTS_PATH, 'utf8')); } catch(_) {}
-function saveExtraProducts() { fs.writeFileSync(EXTRA_PRODUCTS_PATH, JSON.stringify(_extraProducts, null, 2)); }
-function getExtraProducts(email) {
-  const stored = _extraProducts[(email||'').toLowerCase()] || {};
-  // cas is now stored in Airtable — exclude from here
-  const { cas: _cas, ...rest } = stored;
-  return rest;
 }
 
 // ── Quick Links order (local, per-user) ────────────────────────
@@ -404,7 +398,11 @@ function recordToUser(record) {
     startDate:        f[F_START_DATE]         || null,
     business:         f[F_BUSINESS]           || '',
     navAccess:        computeNavAccess(f, f[F_EMAIL] || ''),
-    ...getExtraProducts(f[F_EMAIL] || '')
+    equityRelease:       f[F_EQUITY_RELEASE]       || false,
+    commercialMortgages: f[F_COMMERCIAL_MORTGAGES] || false,
+    pmi:                 f[F_PMI]                  || false,
+    bridging:            f[F_BRIDGING]             || false,
+    businessProtection:  f[F_BUSINESS_PROTECTION]  || false
   };
 }
 
@@ -1639,6 +1637,7 @@ const LICENCED_ADVISER_TYPES = {
   equityRelease:       u => !!u.equityRelease,
   commercialMortgages: u => !!u.commercialMortgages,
   bridging:            u => !!u.bridging,
+  businessProtection:  u => !!u.businessProtection,
   // "Protection only" — sells protection but none of the other licensed
   // product lines. Used on life-assurance-related opportunity cards (Life
   // Cover, CI, IP, FIB, ASU, Children's Cover) to point to the right adviser.
@@ -1727,7 +1726,12 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_INVESTMENTS]:      sellsInvestments === true || sellsInvestments === 'true',
       [F_IS_SUPERVISOR]:    isSupervisor === true || isSupervisor === 'true',
       [F_SUPERVISOR_EMAIL]: supervisorEmail  || null,
-      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true'
+      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true',
+      [F_EQUITY_RELEASE]:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
+      [F_COMMERCIAL_MORTGAGES]: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
+      [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
+      [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
+      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true'
     };
     const data = await atFetch('', {
       method: 'POST',
@@ -1750,14 +1754,7 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       _navOverrides[normEmail] = nav;
       saveNavOverrides();
     }
-    // Handle extra products (cas now in Airtable)
-    _extraProducts[normEmail] = {
-      equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
-      commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
-      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
-      bridging:            req.body.bridging             === true || req.body.bridging             === 'true'
-    };
-    saveExtraProducts();
+    // Product licences are now written directly to Airtable above (F_EQUITY_RELEASE etc.)
     auditLog('admin_user_created', { targetEmail: normEmail, admin: (req.session.user || {}).email }, req);
     res.json(recordToUser(data.records[0]));
   } catch (err) {
@@ -1855,7 +1852,12 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_INVESTMENTS]:      sellsInvestments === true || sellsInvestments === 'true',
       [F_IS_SUPERVISOR]:    isSupervisor === true || isSupervisor === 'true',
       [F_SUPERVISOR_EMAIL]: supervisorEmail  || null,
-      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true'
+      [F_CAS]:              req.body.cas     === true || req.body.cas     === 'true',
+      [F_EQUITY_RELEASE]:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
+      [F_COMMERCIAL_MORTGAGES]: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
+      [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
+      [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
+      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true'
     };
     if (password) {
       if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
@@ -1885,12 +1887,7 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
         _navOverrides[normEmail] = nav;
         saveNavOverrides();
       }
-      _extraProducts[normEmail] = {
-        equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
-        commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
-        pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true'
-      };
-      saveExtraProducts();
+      // Product licences are now written directly to Airtable above (F_EQUITY_RELEASE etc.)
     }
     res.json(recordToUser(data));
   } catch (err) {
@@ -2140,7 +2137,7 @@ app.get('/api/pz/supervisor-map', requireAuth, async (req, res) => {
       const n = [u.firstName, u.lastName].filter(Boolean).join(' ');
       if (!n) continue;
       if (u.isSupervisor) continue;
-      if (u.isAdmin && !u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages && !u.pmi) continue;
+      if (u.isAdmin && !u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages && !u.pmi && !u.bridging && !u.businessProtection) continue;
       const supEmail = (u.supervisorEmail || '').toLowerCase();
       map[n] = supEmail ? (emailToName[supEmail] || 'Other') : 'Unassigned';
       if (!u.cas) nonCas.push(n);
