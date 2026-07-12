@@ -14157,13 +14157,19 @@ function lgUpdateLeadsTitle() {
   var t = titles[_lgFilter] || titles.all;
   var titleEl = document.getElementById('lg-leads-title');
   var subEl   = document.getElementById('lg-leads-subtitle');
+  var hotCount = (_lgFilter === 'hot') ? lgFilteredLeads().length : 0;
+  var hotTitleSuffix = (_lgFilter === 'hot') ? (hotCount + ' Hot Leads') : t[0];
+  var hotSubtitle = t[1];
+  if (_lgFilter === 'hot' && hotCount > 0) {
+    hotSubtitle += ' With ' + hotCount + ' leads in the funnel, you should comfortably be able to secure ' + Math.floor(hotCount / 2) + ' sales — keep it up!';
+  }
   if (_lgAdviserFilter) {
-    if (titleEl) titleEl.textContent = lgPossessive(_lgAdviserFilter) + ' Leads';
-    if (subEl)   subEl.textContent   = t[1];
+    if (titleEl) titleEl.textContent = lgPossessive(_lgAdviserFilter) + (_lgFilter === 'hot' ? ' ' + hotTitleSuffix : ' Leads');
+    if (subEl)   subEl.textContent   = hotSubtitle;
   } else if (MY_LEADS_FILTERS.indexOf(_lgFilter) !== -1) {
     var first = lgFirstName();
-    if (titleEl) titleEl.textContent = first ? (lgPossessive(first) + ' ' + t[0]) : t[0];
-    if (subEl)   subEl.textContent   = t[1];
+    if (titleEl) titleEl.textContent = first ? (lgPossessive(first) + ' ' + hotTitleSuffix) : hotTitleSuffix;
+    if (subEl)   subEl.textContent   = hotSubtitle;
   } else {
     if (titleEl) titleEl.textContent = t[0];
     if (subEl)   subEl.textContent   = t[1];
