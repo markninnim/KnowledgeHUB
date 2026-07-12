@@ -109,6 +109,8 @@ const F_BUSINESS_PROTECTION  = 'fldhe5XTYR7Amu4FS'; // Business Protection Licen
 const F_ABOUT_ME             = 'fldf6Nbs76yPYGwVO'; // About Me — profile paragraph shown on Licenced Adviser modal
 const F_WHATSAPP             = 'fldhYhFc63htpAnHR'; // WhatsApp Number — shown on Licenced Adviser modal
 const F_COMMISSION_SPLIT     = 'fldugIzgLk3INhuDF'; // Commission Split — shown on Licenced Adviser modal
+const F_SURVEYING            = 'fldwLzeKJxEpzHvrn'; // Surveying Licence
+const F_TRUSTS               = 'flda7udm9DghkQfuj'; // Trusts Licence
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -408,7 +410,9 @@ function recordToUser(record) {
     businessProtection:  f[F_BUSINESS_PROTECTION]  || false,
     aboutMe:             f[F_ABOUT_ME]             || '',
     whatsapp:            f[F_WHATSAPP]             || '',
-    commissionSplit:     f[F_COMMISSION_SPLIT]     || ''
+    commissionSplit:     f[F_COMMISSION_SPLIT]     || '',
+    surveying:           f[F_SURVEYING]            || false,
+    trusts:              f[F_TRUSTS]               || false
   };
 }
 
@@ -1647,6 +1651,8 @@ const LICENCED_ADVISER_TYPES = {
   commercialMortgages: u => !!u.commercialMortgages,
   bridging:            u => !!u.bridging,
   businessProtection:  u => !!u.businessProtection,
+  surveying:           u => !!u.surveying,
+  trusts:              u => !!u.trusts,
   // "Protection only" — sells protection but none of the other licensed
   // product lines. Used on life-assurance-related opportunity cards (Life
   // Cover, CI, IP, FIB, ASU, Children's Cover) to point to the right adviser.
@@ -1744,7 +1750,9 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_COMMERCIAL_MORTGAGES]: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
       [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
-      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true'
+      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
+      [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
+      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true'
     };
     const data = await atFetch('', {
       method: 'POST',
@@ -1870,7 +1878,9 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_COMMERCIAL_MORTGAGES]: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
       [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
-      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true'
+      [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
+      [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
+      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true'
     };
     if (password) {
       if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
