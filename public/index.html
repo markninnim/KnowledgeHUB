@@ -9701,7 +9701,8 @@ var OPP_DETAIL = {
         '"Are you aware of current NHS waiting times for specialist referrals? For some conditions it\'s over a year — PMI gets you seen within days."',
         '"If you were diagnosed with something that needed investigation, would you want to control the timing and who treats you?"',
         '"For self-employed clients, being on a waiting list for six months can cost far more in lost work than the annual insurance premium."'
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamic: 'pmiAdvisers' }
     ]
   },
   wills: {
@@ -9878,6 +9879,9 @@ function oppDetailHtml(cardKey) {
   detail.sections.forEach(function(s) {
     h += '<div style="margin-bottom:28px;">';
     h += '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
+    if (s.dynamic === 'pmiAdvisers') {
+      h += '<div id="opp-pmi-advisers" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
+    }
     if (s.points) {
       h += '<ul style="margin:0;padding-left:18px;">';
       s.points.forEach(function(p) {
@@ -9907,6 +9911,38 @@ function oppOpenCard(cardKey) {
   document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
   detail.style.display = 'block';
   detail.scrollTop = 0;
+  if (cardKey === 'pmi') oppLoadPmiAdvisers();
+}
+
+function oppLoadPmiAdvisers() {
+  var container = document.getElementById('opp-pmi-advisers');
+  if (!container) return;
+  fetch('/api/pmi-advisers').then(function(r) { return r.json(); }).then(function(d) {
+    container = document.getElementById('opp-pmi-advisers'); // re-check — user may have navigated away while loading
+    if (!container) return;
+    var advisers = (d && d.advisers) || [];
+    if (!advisers.length) {
+      container.innerHTML = '<div style="color:#6b7c8f;font-size:13px;">No PMI-licenced advisers are set up yet.</div>';
+      return;
+    }
+    container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">' +
+      advisers.map(function(a) {
+        var name = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email;
+        var rows = '';
+        if (a.jobTitle) rows += '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + escHtml(a.jobTitle) + '</div>';
+        if (a.email)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="mailto:' + escHtml(a.email) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.email) + '</a></div>';
+        if (a.mobile)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.mobile) + '</a></div>';
+        if (a.landline)  rows += '<div style="font-size:12px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
+        return '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:14px 16px;">' +
+          '<div style="font-size:13.5px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">' + escHtml(name) + '</div>' +
+          rows +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }).catch(function() {
+    var el = document.getElementById('opp-pmi-advisers');
+    if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Unable to load advisers — please try again.</div>';
+  });
 }
 
 function oppCloseCard() {

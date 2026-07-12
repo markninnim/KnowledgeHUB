@@ -1628,6 +1628,39 @@ app.post('/api/profile/photo', requireAuth, async (req, res) => {
 });
 
 // ── Admin: list users ─────────────────────────────────────────
+// ── PMI-licenced advisers — used by the Opportunities > Private Medical
+// Insurance page to show who to refer/introduce a client to. Open to any
+// logged-in user (not admin-only), and only returns the fields needed to
+// contact an adviser.
+app.get('/api/pmi-advisers', requireAuth, async (req, res) => {
+  try {
+    const advisers = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        const u = recordToUser(r);
+        if (u.pmi) {
+          advisers.push({
+            firstName: u.firstName,
+            lastName:  u.lastName,
+            jobTitle:  u.jobTitle,
+            email:     u.email,
+            mobile:    u.mobile,
+            landline:  u.landline
+          });
+        }
+      }
+      offset = data.offset || '';
+    } while (offset);
+    advisers.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+    res.json({ advisers });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
   try {
     const users = [];
