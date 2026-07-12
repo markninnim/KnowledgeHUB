@@ -77,6 +77,7 @@ const LG_INSVAL    = 'fld9U4XjSLao5w1Ny';
 const LG_FEEVAL    = 'fldOFq58PkIumTXcy';
 const LG_SOURCE    = 'fldO8GJlvlCL7GtI8'; // Source (Website / FP Surveying / Facebook)
 const LG_QUALITY   = 'fldHcCc3tAt8U7dVT'; // Lead Quality (Hot / Warm / Cold)
+const LG_AUTOCRM   = 'fldTTNjbgLCVVuI1B'; // Enroll into AutoCRM — creates a linked Mortgage Completions row
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -767,8 +768,28 @@ function leadGenRecordToLead(record) {
     insuranceSaleValue: f[LG_INSVAL]  || null,
     brokerFeeValue:     f[LG_FEEVAL]  || null,
     source:             selectName(f[LG_SOURCE]) || '',
-    quality:            selectName(f[LG_QUALITY]) || ''
+    quality:            selectName(f[LG_QUALITY]) || '',
+    enrollAutoCrm:      f[LG_AUTOCRM] || false
   };
+}
+
+// Creates a linked row in the Mortgage Completions table (AutoCRM) for a
+// LeadGen lead when the "Enroll into AutoCRM" tickbox is ticked. Flags the
+// new row with "Enrolled via LeadGen" so it can be traced back to LeadGen.
+async function enrollLeadIntoAutoCrm(lead) {
+  const fields = {
+    [MC_NAME]: lead.name || '',
+    [MC_EMAIL]: lead.email || '',
+    'Enrolled via LeadGen': true
+  };
+  const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ records: [{ fields }], typecast: true })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error enrolling into AutoCRM');
+  return d.records[0];
 }
 
 // GET /api/leadgen-advisers — distinct Adviser values already present on the Leads table,
@@ -840,6 +861,7 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     if (b.brokerFeeValue !== undefined && b.brokerFeeValue !== '')         fields[LG_FEEVAL]  = Number(b.brokerFeeValue);
     if (b.source)        fields[LG_SOURCE]  = String(b.source);
     if (b.quality)       fields[LG_QUALITY] = String(b.quality);
+    if (b.enrollAutoCrm) fields[LG_AUTOCRM] = true;
 
     if (!fields[LG_NAME]) return res.status(400).json({ error: 'Name is required.' });
 
@@ -850,7 +872,11 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
-    res.json({ success: true, lead: leadGenRecordToLead(d.records[0]) });
+    const lead = leadGenRecordToLead(d.records[0]);
+    if (fields[LG_AUTOCRM]) {
+      try { await enrollLeadIntoAutoCrm(lead); } catch (e) { console.error('AutoCRM enroll error:', e); }
+    }
+    res.json({ success: true, lead });
   } catch (err) {
     console.error('LeadGen lead create error:', err);
     res.status(500).json({ error: 'Failed to create lead.' });
@@ -877,19 +903,24 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     if (b.brokerFeeValue !== undefined)     fields[LG_FEEVAL]  = b.brokerFeeValue === '' ? null : Number(b.brokerFeeValue);
     if (b.source !== undefined)             fields[LG_SOURCE]  = b.source === '' ? null : String(b.source);
     if (b.quality !== undefined)            fields[LG_QUALITY] = b.quality === '' ? null : String(b.quality);
+    if (b.enrollAutoCrm !== undefined)      fields[LG_AUTOCRM] = !!b.enrollAutoCrm;
 
     // First time a lead's status moves off "To Call", stamp Called At automatically
     // (used for the time-to-call stat on the Data page).
-    if (fields[LG_STATUS] && fields[LG_STATUS] !== 'To Call') {
+    let existingFields = null;
+    if ((fields[LG_STATUS] && fields[LG_STATUS] !== 'To Call') || fields[LG_AUTOCRM] === true) {
       try {
         const existing = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
           headers: { Authorization: `Bearer ${AT_KEY}` }
         }).then(r2 => r2.json());
-        if (existing && existing.fields && !existing.fields[LG_CALLEDAT]) {
+        existingFields = (existing && existing.fields) || null;
+        if (existingFields && fields[LG_STATUS] && fields[LG_STATUS] !== 'To Call' && !existingFields[LG_CALLEDAT]) {
           fields[LG_CALLEDAT] = new Date().toISOString();
         }
       } catch (_) { /* non-fatal — Called At stamp is best-effort */ }
     }
+    // Only enroll into AutoCRM the first time the tickbox flips on, not on every save
+    const isNewlyEnrolled = fields[LG_AUTOCRM] === true && existingFields && !existingFields[LG_AUTOCRM];
 
     const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
       method: 'PATCH',
@@ -898,7 +929,11 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
-    res.json({ success: true, lead: leadGenRecordToLead(d.records[0]) });
+    const lead = leadGenRecordToLead(d.records[0]);
+    if (isNewlyEnrolled) {
+      try { await enrollLeadIntoAutoCrm(lead); } catch (e) { console.error('AutoCRM enroll error:', e); }
+    }
+    res.json({ success: true, lead });
   } catch (err) {
     console.error('LeadGen lead update error:', err);
     res.status(500).json({ error: 'Failed to update lead.' });
