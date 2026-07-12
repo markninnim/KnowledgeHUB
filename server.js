@@ -111,6 +111,7 @@ const F_WHATSAPP             = 'fldhYhFc63htpAnHR'; // WhatsApp Number — shown
 const F_COMMISSION_SPLIT     = 'fldugIzgLk3INhuDF'; // Commission Split — shown on Licenced Adviser modal
 const F_SURVEYING            = 'fldwLzeKJxEpzHvrn'; // Surveying Licence
 const F_TRUSTS               = 'flda7udm9DghkQfuj'; // Trusts Licence
+const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown in My Account
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -412,7 +413,8 @@ function recordToUser(record) {
     whatsapp:            f[F_WHATSAPP]             || '',
     commissionSplit:     f[F_COMMISSION_SPLIT]     || '',
     surveying:           f[F_SURVEYING]            || false,
-    trusts:              f[F_TRUSTS]               || false
+    trusts:              f[F_TRUSTS]               || false,
+    avgPayaway:          f[F_AVG_PAYAWAY]          || ''
   };
 }
 
@@ -1576,7 +1578,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // ── Profile: current user self-edit ──────────────────────────
 app.put('/api/profile', requireAuth, async (req, res) => {
-  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, commissionSplit, password } = req.body;
+  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, commissionSplit, avgPayaway, password } = req.body;
   if (password && password.length < 12) {
     return res.status(400).json({ error: 'Password must be at least 12 characters' });
   }
@@ -1592,7 +1594,8 @@ app.put('/api/profile', requireAuth, async (req, res) => {
       [F_WEBSITE]:  website    || null,
       [F_ABOUT_ME]: aboutMe    || '',
       [F_WHATSAPP]: whatsapp   || '',
-      [F_COMMISSION_SPLIT]: commissionSplit || ''
+      [F_COMMISSION_SPLIT]: commissionSplit || '',
+      [F_AVG_PAYAWAY]: avgPayaway || ''
     };
     if (password) {
       fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
