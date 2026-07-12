@@ -1684,7 +1684,8 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
             avatarUrl: u.avatarUrl,
             aboutMe:   u.aboutMe,
             whatsapp:  u.whatsapp,
-            commissionSplit: u.commissionSplit
+            commissionSplit: u.commissionSplit,
+            avgPayaway: u.avgPayaway
           });
         }
       }

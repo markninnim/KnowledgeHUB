@@ -10107,20 +10107,24 @@ function oppOpenAdviserModal(email) {
   var contactRows = '';
   if (a.jobTitle) contactRows += '<div style="font-size:13px;color:#6b7c8f;margin-bottom:10px;">' + escHtml(a.jobTitle) + '</div>';
   if (a.email)    contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="mailto:' + escHtml(a.email) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.email) + '</a></div>';
-  if (a.mobile)   contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.mobile) + '</a></div>';
-  if (a.landline) contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
+  if (a.mobile)   contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.mobile) + '</a></div>';
+  if (a.landline) contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.landline) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.landline) + '</a></div>';
   if (a.whatsapp) {
     var waNumber = a.whatsapp.replace(/[^0-9+]/g, '').replace(/^0/, '44').replace(/^\+/, '');
-    contactRows += '<a href="https://wa.me/' + waNumber + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:#25D366;text-decoration:none;font-weight:700;">' +
+    contactRows += '<a href="https://wa.me/' + waNumber + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:var(--brand-navy);text-decoration:none;font-weight:700;">' +
       '<svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39c1.45.79 3.08 1.21 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01C17.19 3.03 14.7 2 12.04 2zm0 18.15h-.01c-1.48 0-2.94-.4-4.2-1.15l-.3-.18-3.14.82.84-3.06-.2-.31a8.19 8.19 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.27-8.24 2.21 0 4.28.86 5.84 2.42a8.18 8.18 0 0 1 2.42 5.83c0 4.55-3.7 8.23-8.26 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.24-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.24-.02-.37.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.24-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.4-.42-.56-.42-.14-.01-.31-.01-.47-.01a.9.9 0 0 0-.65.3c-.22.24-.86.84-.86 2.04 0 1.2.88 2.37 1 2.53.12.17 1.73 2.64 4.2 3.7.59.25 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28z"/></svg>' +
       'WhatsApp: ' + escHtml(a.whatsapp) +
     '</a>';
   }
   var about = a.aboutMe ? escHtml(a.aboutMe).replace(/\n/g, '<br>') : 'No profile paragraph has been added yet.';
-  var commissionRow = a.commissionSplit
-    ? '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 8px;padding-top:18px;border-top:1px solid #f0f2f5;">Commission Split</div>' +
-      '<div style="font-size:13.5px;color:#334155;font-weight:600;">' + escHtml(a.commissionSplit) + '</div>'
-    : '';
+  var splitRow = '';
+  if (a.commissionSplit || a.avgPayaway) {
+    splitRow += '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">Typical Split</div>';
+    splitRow += '<div style="display:flex;gap:24px;">';
+    if (a.commissionSplit) splitRow += '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Split</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + escHtml(a.commissionSplit) + '</div></div>';
+    if (a.avgPayaway)      splitRow += '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Average Payaway</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + escHtml(a.avgPayaway) + '</div></div>';
+    splitRow += '</div>';
+  }
   var html =
     '<div id="opp-adviser-modal" onclick="if(event.target===this)oppCloseAdviserModal()" style="display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2600;align-items:center;justify-content:center;padding:20px;">' +
       '<div style="background:#fff;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
@@ -10139,7 +10143,7 @@ function oppOpenAdviserModal(email) {
           contactRows +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">About ' + escHtml(a.firstName || name) + '</div>' +
           '<div style="font-size:13.5px;color:#334155;line-height:1.7;">' + about + '</div>' +
-          commissionRow +
+          splitRow +
         '</div>' +
       '</div>' +
     '</div>';
