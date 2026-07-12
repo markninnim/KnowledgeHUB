@@ -6032,7 +6032,7 @@ function switchTab(tab) {
   if (tab !== 'sales-process')   { stopMasTimer(); stopPasTimer(); }
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
-  if (tab === 'selling-zone') { if (typeof oppInitPages === 'function') oppInitPages(); }
+  if (tab === 'selling-zone') { if (typeof OPP_TITLES !== 'undefined') oppInitPages(); }
   if (tab === 'whereabouts')  { if (typeof loadWhereabouts === 'function') loadWhereabouts(); if (typeof loadWhereaboutsList === 'function') loadWhereaboutsList(); }
   if (tab === 'autocrm')      { if (typeof loadAutoCrm === 'function') loadAutoCrm(); }
   if (tab === 'muttuo') {
@@ -12017,6 +12017,15 @@ function pzFmt(n) {
   if (!n) return '0';
   return Math.round(n).toLocaleString('en-GB');
 }
+
+// If the page opened directly on #selling-zone, the hash-routing IIFE
+// earlier in this same script block already called switchTab('selling-zone')
+// — but that ran before OPP_TITLES/OPP_PAGE_SECTIONS (declared further down
+// in this block) were assigned, so it was skipped. Run it now that
+// everything in this block has finished loading.
+(function() {
+  if (window.location.hash === '#selling-zone' && !_OPP_INIT) { oppInitPages(); }
+})();
 
 </script>
 
