@@ -10055,6 +10055,29 @@ function oppOpenCard(cardKey) {
 // Generic loader for any "Licenced Advisers" section — used on the PMI
 // detail card and on main Opportunities pages (e.g. Lifetime Mortgage).
 // `type` must match one of the LICENCED_ADVISER_TYPES keys in server.js.
+// Renders 5 stars (filled/half/empty) for a 0-5 rating, e.g. from Feefo "Service Rating".
+function oppStarsHtml(avg, size) {
+  size = size || 13;
+  var full = Math.round((avg || 0) * 2) / 2; // nearest half star
+  var html = '<span style="display:inline-flex;align-items:center;gap:1px;vertical-align:middle;">';
+  for (var i = 1; i <= 5; i++) {
+    var pct = full >= i ? 100 : (full >= i - 0.5 ? 50 : 0);
+    if (pct === 100 || pct === 0) {
+      html += '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" style="flex-shrink:0;">' +
+        '<path fill="' + (pct === 100 ? '#f5a623' : '#e2e8f0') + '" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/>' +
+        '</svg>';
+    } else {
+      var gid = 'star-grad-' + i + '-' + Math.random().toString(36).slice(2);
+      html += '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" style="flex-shrink:0;">' +
+        '<defs><linearGradient id="' + gid + '"><stop offset="50%" stop-color="#f5a623"/><stop offset="50%" stop-color="#e2e8f0"/></linearGradient></defs>' +
+        '<path fill="url(#' + gid + ')" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/>' +
+        '</svg>';
+    }
+  }
+  html += '</span>';
+  return html;
+}
+
 var _oppAdvisersCache = {}; // email -> adviser object, used by the "Read more" modal
 function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
   var container = document.getElementById(containerId);
@@ -10078,6 +10101,7 @@ function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
           : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--brand-navy);color:#fff;font-weight:700;font-size:14px;">' + initials + '</div>';
         var rows = '';
         if (a.jobTitle) rows += '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + escHtml(a.jobTitle) + '</div>';
+        if (a.reviewCount) rows += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">' + oppStarsHtml(a.reviewAvg, 13) + '<span style="font-size:11.5px;color:#6b7c8f;">' + (a.reviewAvg != null ? a.reviewAvg : '—') + ' (' + a.reviewCount + ' review' + (a.reviewCount === 1 ? '' : 's') + ')</span></div>';
         if (a.email)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="mailto:' + escHtml(a.email) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.email) + '</a></div>';
         if (a.mobile)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.mobile) + '</a></div>';
         if (a.landline)  rows += '<div style="font-size:12px;margin-bottom:8px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
@@ -10148,10 +10172,15 @@ function oppOpenAdviserModal(email) {
               '<div style="font-size:17px;font-weight:700;color:#fff;">' + escHtml(name) + '</div>' +
               (a.jobTitle ? '<div style="font-size:12.5px;color:var(--brand-orange);font-weight:600;margin-top:2px;">' + escHtml(a.jobTitle) + '</div>' : '') +
               (licenceLabel ? '<div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:600;margin-top:2px;">' + escHtml(licenceLabel) + ' Specialist</div>' : '') +
+              (a.reviewCount ? '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;">' + oppStarsHtml(a.reviewAvg, 14) + '<span style="font-size:12px;color:rgba(255,255,255,.75);">' + (a.reviewAvg != null ? a.reviewAvg : '—') + ' (' + a.reviewCount + ' review' + (a.reviewCount === 1 ? '' : 's') + ')</span></div>' : '') +
             '</div>' +
           '</div>' +
         '</div>' +
         '<div style="padding:22px 28px 28px;">' +
+          (a.reviewCount ? '<div style="display:flex;gap:24px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #f0f2f5;">' +
+              '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Rating</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + oppStarsHtml(a.reviewAvg, 13) + ' ' + (a.reviewAvg != null ? a.reviewAvg : '—') + '</div></div>' +
+              (a.reviewNps != null ? '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">NPS</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + a.reviewNps + '</div></div>' : '') +
+            '</div>' : '') +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Contact Details</div>' +
           contactRows +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">About ' + escHtml(a.firstName || name) + '</div>' +

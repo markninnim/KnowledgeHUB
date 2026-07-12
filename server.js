@@ -1692,11 +1692,67 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
       offset = data.offset || '';
     } while (offset);
     advisers.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+
+    // Attach Feefo review stats (average star rating, review count, NPS) per adviser
+    try {
+      const feefoStats = await fetchFeefoStatsByAdviser();
+      advisers.forEach(a => {
+        const fullName = [a.firstName, a.lastName].filter(Boolean).join(' ').toLowerCase().trim();
+        const stats = feefoStats[fullName];
+        a.reviewCount  = stats ? stats.count : 0;
+        a.reviewAvg    = stats ? stats.avg   : null;
+        a.reviewNps    = stats ? stats.nps   : null;
+      });
+    } catch (feefoErr) {
+      console.error('licenced-advisers feefo stats error:', feefoErr);
+      // Non-fatal — advisers list still returns without review stats
+    }
+
     res.json({ advisers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Fetches all Feefo records (Adviser, Service Rating, NPS) and groups them by
+// adviser full name (lowercased, trimmed) so callers can look up per-adviser
+// average star rating, review count and NPS score in one pass.
+async function fetchFeefoStatsByAdviser() {
+  const records = [];
+  let offset = '';
+  do {
+    const formula = encodeURIComponent(`NOT({Adviser} = "")`);
+    const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Service Rating&fields[]=NPS&pageSize=100${offset ? '&offset=' + offset : ''}`;
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const b = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(b));
+    records.push(...(b.records || []));
+    offset = b.offset || '';
+  } while (offset);
+
+  const grouped = {};
+  records.forEach(r => {
+    const adv = (r.fields['Adviser'] || '').toLowerCase().trim();
+    if (!adv) return;
+    if (!grouped[adv]) grouped[adv] = { ratings: [], nps: [] };
+    if (r.fields['Service Rating'] != null) grouped[adv].ratings.push(r.fields['Service Rating']);
+    if (r.fields['NPS'] != null) grouped[adv].nps.push(r.fields['NPS']);
+  });
+
+  const result = {};
+  Object.keys(grouped).forEach(adv => {
+    const g = grouped[adv];
+    const avg = g.ratings.length ? (g.ratings.reduce((s, v) => s + v, 0) / g.ratings.length) : null;
+    let nps = null;
+    if (g.nps.length) {
+      const p = g.nps.filter(v => v >= 9).length;
+      const d = g.nps.filter(v => v <= 6).length;
+      nps = Math.round((p - d) / g.nps.length * 100);
+    }
+    result[adv] = { count: g.ratings.length, avg: avg != null ? Math.round(avg * 10) / 10 : null, nps };
+  });
+  return result;
+}
 
 app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
   try {
