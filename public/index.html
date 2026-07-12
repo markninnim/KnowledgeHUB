@@ -208,6 +208,9 @@ select:focus { outline:none; }
 .wb-doc .wb-editable { cursor:text; transition:background-color .12s, box-shadow .12s; }
 .wb-doc .wb-editable:hover { background-color:#eef4fb !important; }
 .wb-doc .wb-editing { background-color:#fff !important; box-shadow:inset 0 0 0 2px #2e99d5; outline:none; }
+.wb-card-editable { cursor:text; border-radius:5px; padding:1px 5px; margin:-1px -5px; transition:background-color .12s, box-shadow .12s; }
+.wb-card-editable:hover { background-color:#eef4fb; }
+.wb-card-editing { background-color:#fff !important; box-shadow:inset 0 0 0 2px #2e99d5; outline:none; }
 </style>
 </head>
 <body>
@@ -12677,6 +12680,7 @@ function payParseXlsxVitality(rows, filename) {
 
 var _wbLoaded = false;
 var _wbCurrentFile = null;
+var _wbCanEdit = false;
 function loadWhereabouts(file) {
   if (_wbLoaded && !file) return;
   var loadingEl  = document.getElementById('wb-loading');
@@ -12705,6 +12709,7 @@ function loadWhereabouts(file) {
     }
     _wbLoaded = true;
     _wbCurrentFile = d.filename;
+    _wbCanEdit = !!d.canEdit;
     if (subtitleEl) subtitleEl.textContent = (d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.') + (d.canEdit ? ' — click any cell to edit.' : '') + ' Where a day shows two lines, the top line is AM and the bottom line is PM.';
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
     wbFormatDoc(contentEl, d.filename, d.edits || {}, !!d.canEdit);
@@ -12808,18 +12813,32 @@ function wbBuildCards() {
         if (!head) continue;
         // Preserve row order — the AM row always comes before the PM row in
         // the source table, so line order naturally follows.
-        var lines = [];
+        var lineCells = [];
         block.rows.forEach(function(cells) {
-          var val = cells[i] ? cells[i].textContent.trim() : '';
-          if (val) lines.push(val);
+          if (cells[i]) lineCells.push(cells[i]);
         });
-        if (!lines.length) continue;
-        var uniqueLines = lines.filter(function(v, idx) { return lines.indexOf(v) === idx; });
-        var linesToShow = uniqueLines.length === 1 ? uniqueLines : lines;
-        var valueHtml = linesToShow.map(function(v) { return '<div>' + escHtml(v) + '</div>'; }).join('');
+        if (!_wbCanEdit) lineCells = lineCells.filter(function(c) { return c.textContent.trim(); });
+        if (!lineCells.length) continue;
+        // Read-only: collapse an identical AM/PM pair into a single line.
+        // Editable: always show every line separately so each one maps to
+        // exactly one cell and can be edited unambiguously.
+        var cellsToShow = lineCells;
+        if (!_wbCanEdit) {
+          var texts = lineCells.map(function(c) { return c.textContent.trim(); });
+          var uniqueTexts = texts.filter(function(v, idx) { return texts.indexOf(v) === idx; });
+          if (uniqueTexts.length === 1) cellsToShow = [lineCells[0]];
+        }
+        var valueHtml = cellsToShow.map(function(c) {
+          var key = c.getAttribute('data-wb-key') || '';
+          var text = c.textContent.trim();
+          if (_wbCanEdit && key) {
+            return '<div class="wb-card-editable" contenteditable="true" spellcheck="false" data-wb-key="' + escHtml(key) + '">' + escHtml(text) + '</div>';
+          }
+          return '<div>' + escHtml(text) + '</div>';
+        }).join('');
         rowsHtml += '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:12px;">'
-          + '<span style="color:#6b7c8f;font-weight:600;">' + escHtml(head) + '</span>'
-          + '<div style="color:var(--brand-navy);font-weight:600;text-align:right;line-height:1.5;">' + valueHtml + '</div>'
+          + '<span style="color:#6b7c8f;font-weight:600;flex-shrink:0;">' + escHtml(head) + '</span>'
+          + '<div style="color:var(--brand-navy);font-weight:600;text-align:right;line-height:1.5;flex:1;">' + valueHtml + '</div>'
           + '</div>';
       }
       html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">'
@@ -12830,6 +12849,22 @@ function wbBuildCards() {
     html += '</div>';
   });
   dest.innerHTML = html || '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">Nothing to show yet.</div>';
+  if (_wbCanEdit) {
+    dest.querySelectorAll('.wb-card-editable').forEach(function(el) {
+      el.addEventListener('focus', function() { el.classList.add('wb-card-editing'); });
+      el.addEventListener('blur', function() {
+        el.classList.remove('wb-card-editing');
+        var key = el.getAttribute('data-wb-key');
+        var text = el.textContent.trim();
+        if (!key) return;
+        // Mirror the edit into the Table view's matching cell too, so the
+        // two views stay in sync without needing a full reload.
+        var srcCell = src.querySelector('[data-wb-key="' + key + '"]');
+        if (srcCell) srcCell.textContent = text;
+        wbSaveCellEdit(_wbCurrentFile, key, text);
+      });
+    });
+  }
 }
 
 // Tidy up the raw HTML converted from the weekly .docx: strip the redundant
