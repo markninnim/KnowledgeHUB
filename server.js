@@ -1638,7 +1638,11 @@ const LICENCED_ADVISER_TYPES = {
   pmi:                 u => !!u.pmi,
   equityRelease:       u => !!u.equityRelease,
   commercialMortgages: u => !!u.commercialMortgages,
-  bridging:            u => !!u.bridging
+  bridging:            u => !!u.bridging,
+  // "Protection only" — sells protection but none of the other licensed
+  // product lines. Used on life-assurance-related opportunity cards (Life
+  // Cover, CI, IP, FIB, ASU, Children's Cover) to point to the right adviser.
+  protectionOnly:      u => !!u.sellsProtection && !u.sellsMortgages && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages
 };
 app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
   const type = req.query.type;

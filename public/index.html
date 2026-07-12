@@ -9535,7 +9535,8 @@ var OPP_DETAIL = {
       { heading: 'Common objections', items: [
         { q: '"I\'ve got it through work."', a: 'That\'s a good start — but most employer schemes are 2x or 4x salary, which may not be enough to cover the mortgage. And if you leave that job, the cover disappears. Let\'s check what you have and make sure there\'s no gap.' },
         { q: '"I\'m young and healthy — I don\'t need it yet."', a: 'That\'s actually the best time to get it. Premiums are based on your age and health at application — the longer you wait, the more expensive it becomes. Getting it now locks in a lower rate for the full term.' }
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   ci: {
@@ -9565,7 +9566,8 @@ var OPP_DETAIL = {
       { heading: 'Common objections', items: [
         { q: '"It\'s too expensive."', a: 'CI can seem more expensive than life cover — but you\'re statistically far more likely to be seriously ill during a mortgage term than to die during it. It\'s the protection people are more likely to actually use.' },
         { q: '"Insurance companies don\'t pay claims."', a: 'ABI data shows that across the industry, insurers pay over 90% of CI claims — and the best providers pay even higher. The key is making sure the policy definitions are right, which is exactly what I do.' }
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   ip: {
@@ -9596,7 +9598,8 @@ var OPP_DETAIL = {
       { heading: 'Common objections', items: [
         { q: '"I\'ll just rely on savings."', a: 'That works short-term, but a serious illness can mean years off work. The average IP claim lasts 6–8 years. Savings don\'t stretch that far — IP does, for as long as needed.' },
         { q: '"My employer has sick pay."', a: 'Great — how long does that last? Most employers pay full salary for a limited period, then statutory sick pay at around £116 a week, then nothing. IP takes over when employer cover runs out and carries on from there.' }
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   fib: {
@@ -9623,7 +9626,8 @@ var OPP_DETAIL = {
         '"If you weren\'t here, what would your family need each month to maintain their lifestyle?"',
         '"Would a regular monthly income be more useful to your partner than a lump sum they\'d have to invest and manage?"',
         '"We could cover the mortgage separately and the family income separately — often for less than one combined policy."'
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   asu: {
@@ -9650,7 +9654,8 @@ var OPP_DETAIL = {
         '"If your company made you redundant next month, how long could you cover your mortgage payments before it became a real problem?"',
         '"Your income protection covers long-term illness — but it doesn\'t cover redundancy. ASU fills that gap."',
         '"The underwriting is very straightforward and we can often get this in place quickly alongside the mortgage."'
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   childrens: {
@@ -9676,7 +9681,8 @@ var OPP_DETAIL = {
         '"Are you aware that your CI policy can include cover for your children? In some cases it\'s included at no extra cost."',
         '"If your child was seriously ill and you needed to take extended time off to care for them, what would that mean financially?"',
         '"The additional premium for children\'s cover is usually very small — I\'ll show you the difference when we look at the quote."'
-      ]}
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'protectionOnly' }
     ]
   },
   buildings: {
@@ -9733,7 +9739,7 @@ var OPP_DETAIL = {
         '"If you were diagnosed with something that needed investigation, would you want to control the timing and who treats you?"',
         '"For self-employed clients, being on a waiting list for six months can cost far more in lost work than the annual insurance premium."'
       ]},
-      { heading: 'Licenced Advisers', dynamic: 'pmiAdvisers' }
+      { heading: 'Licenced Advisers', dynamicType: 'pmi' }
     ]
   },
   wills: {
@@ -9966,8 +9972,8 @@ function oppDetailHtml(cardKey) {
   detail.sections.forEach(function(s) {
     h += '<div style="margin-bottom:28px;">';
     h += '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
-    if (s.dynamic === 'pmiAdvisers') {
-      h += '<div id="opp-pmi-advisers" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
+    if (s.dynamicType) {
+      h += '<div id="opp-detail-advisers" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
     }
     if (s.points) {
       h += '<ul style="margin:0;padding-left:18px;">';
@@ -9998,7 +10004,9 @@ function oppOpenCard(cardKey) {
   document.querySelectorAll('.opp-page').forEach(function(p){ p.style.display = 'none'; });
   detail.style.display = 'block';
   detail.scrollTop = 0;
-  if (cardKey === 'pmi') oppLoadLicencedAdvisers('pmi', 'opp-pmi-advisers');
+  var detailDef = OPP_DETAIL[cardKey];
+  var dynamicSection = detailDef && detailDef.sections.find(function(s) { return s.dynamicType; });
+  if (dynamicSection) oppLoadLicencedAdvisers(dynamicSection.dynamicType, 'opp-detail-advisers');
 }
 
 // Generic loader for any "Licenced Advisers" section — used on the PMI
