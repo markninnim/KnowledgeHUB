@@ -12705,7 +12705,7 @@ function loadWhereabouts(file) {
     }
     _wbLoaded = true;
     _wbCurrentFile = d.filename;
-    if (subtitleEl) subtitleEl.textContent = (d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.') + (d.canEdit ? ' — click any cell to edit.' : '');
+    if (subtitleEl) subtitleEl.textContent = (d.weekLabel ? 'Week commencing ' + d.weekLabel : 'Latest weekly team whereabouts schedule.') + (d.canEdit ? ' — click any cell to edit.' : '') + ' Where a day shows two lines, the top line is AM and the bottom line is PM.';
     contentEl.innerHTML = '<div class="wb-doc">' + d.html + '</div>';
     wbFormatDoc(contentEl, d.filename, d.edits || {}, !!d.canEdit);
     wbHighlightActiveWeek();
@@ -12806,21 +12806,20 @@ function wbBuildCards() {
         if (i === ampmCol) continue; // folded into the day value below, not its own line
         var head = headers[i] || '';
         if (!head) continue;
-        var parts = [];
+        // Preserve row order — the AM row always comes before the PM row in
+        // the source table, so line order naturally follows.
+        var lines = [];
         block.rows.forEach(function(cells) {
           var val = cells[i] ? cells[i].textContent.trim() : '';
-          if (!val) return;
-          var qualifier = (ampmCol > -1 && cells[ampmCol]) ? cells[ampmCol].textContent.trim() : '';
-          parts.push(qualifier ? (val + ' (' + qualifier + ')') : val);
+          if (val) lines.push(val);
         });
-        var uniqueVals = parts.filter(function(v, idx) { return parts.indexOf(v) === idx; });
-        var displayVal;
-        if (!parts.length) continue;
-        else if (uniqueVals.length === 1) displayVal = parts.length > 1 ? uniqueVals[0].replace(/\s*\((AM|PM)\)$/, '') : uniqueVals[0];
-        else displayVal = parts.join(' · ');
+        if (!lines.length) continue;
+        var uniqueLines = lines.filter(function(v, idx) { return lines.indexOf(v) === idx; });
+        var linesToShow = uniqueLines.length === 1 ? uniqueLines : lines;
+        var valueHtml = linesToShow.map(function(v) { return '<div>' + escHtml(v) + '</div>'; }).join('');
         rowsHtml += '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:12px;">'
           + '<span style="color:#6b7c8f;font-weight:600;">' + escHtml(head) + '</span>'
-          + '<span style="color:var(--brand-navy);font-weight:600;text-align:right;">' + escHtml(displayVal) + '</span>'
+          + '<div style="color:var(--brand-navy);font-weight:600;text-align:right;line-height:1.5;">' + valueHtml + '</div>'
           + '</div>';
       }
       html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">'
