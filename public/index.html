@@ -14545,6 +14545,20 @@ function lgRenderData() {
     return (!best || byAdviser[name].appointments > byAdviser[best].appointments) ? name : best;
   }, null) : null;
 
+  // ── Sales Funnel (Hot / Warm / Cold quality breakdown) ──
+  var hotLeads  = leads.filter(function(l) { return l.quality === 'Hot'; });
+  var warmLeads = leads.filter(function(l) { return l.quality === 'Warm'; });
+  var coldLeads = leads.filter(function(l) { return l.quality === 'Cold'; });
+  var hotPct  = total ? Math.round(hotLeads.length  / total * 100) : 0;
+  var warmPct = total ? Math.round(warmLeads.length / total * 100) : 0;
+  var coldPct = total ? Math.round(coldLeads.length / total * 100) : 0;
+  var salesFunnelCards = [
+    lgStatCard('Hot', hotLeads.length + ' <span style="font-size:14px;font-weight:700;color:#b91c1c;">(' + hotPct + '%)</span>', '#b91c1c'),
+    lgStatCard('Warm', warmLeads.length + ' <span style="font-size:14px;font-weight:700;color:#b45309;">(' + warmPct + '%)</span>', '#b45309'),
+    lgStatCard('Cold', coldLeads.length + ' <span style="font-size:14px;font-weight:700;color:#2e99d5;">(' + coldPct + '%)</span>', '#2e99d5'),
+    lgStatCard('Total', total, 'var(--brand-navy)')
+  ].join('');
+
   var pipelineCards = [
     lgStatCard('Number of Leads', total),
     lgStatCard('% of Leads Called', pctCalled + '%'),
@@ -14598,6 +14612,9 @@ function lgRenderData() {
   contentEl.innerHTML =
       lgSectionTitle('Pipeline')
     + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">' + pipelineCards + '</div>'
+
+    + lgSectionTitle('Sales Funnel')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">' + salesFunnelCards + '</div>'
 
     + lgSectionTitle('Conversion Funnel')
     + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;">'
