@@ -1637,7 +1637,8 @@ app.post('/api/profile/photo', requireAuth, async (req, res) => {
 const LICENCED_ADVISER_TYPES = {
   pmi:                 u => !!u.pmi,
   equityRelease:       u => !!u.equityRelease,
-  commercialMortgages: u => !!u.commercialMortgages
+  commercialMortgages: u => !!u.commercialMortgages,
+  bridging:            u => !!u.bridging
 };
 app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
   const type = req.query.type;
@@ -1749,7 +1750,8 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     _extraProducts[normEmail] = {
       equityRelease:       req.body.equityRelease       === true || req.body.equityRelease       === 'true',
       commercialMortgages: req.body.commercialMortgages === true || req.body.commercialMortgages === 'true',
-      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true'
+      pmi:                 req.body.pmi                 === true || req.body.pmi                 === 'true',
+      bridging:            req.body.bridging             === true || req.body.bridging             === 'true'
     };
     saveExtraProducts();
     auditLog('admin_user_created', { targetEmail: normEmail, admin: (req.session.user || {}).email }, req);

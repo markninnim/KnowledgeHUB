@@ -383,6 +383,9 @@ select:focus { outline:none; }
     <a href="#" id="opp-nav-remortgage" onclick="return oppShowPage('remortgage',this)">Remortgage</a>
     <a href="#" id="opp-nav-lifetime" onclick="return oppShowPage('lifetime',this)">Lifetime Mortgage</a>
     <a href="#" id="opp-nav-ftb" onclick="return oppShowPage('ftb',this)">FTB Mortgage</a>
+    <h2>Specialist Lending</h2>
+    <a href="#" id="opp-nav-commercial" onclick="return oppShowPage('commercial',this)">Commercial Mortgages</a>
+    <a href="#" id="opp-nav-bridging" onclick="return oppShowPage('bridging',this)">Bridging Finance</a>
   </div>
   <!-- Performance Zone sidebar -->
   <div id="sidebar-performance-zone" style="display:none">
@@ -3636,6 +3639,12 @@ select:focus { outline:none; }
     <!-- FTB Mortgage -->
     <div id="opp-page-ftb" class="opp-page" style="display:none;"></div>
 
+    <!-- Commercial Mortgages -->
+    <div id="opp-page-commercial" class="opp-page" style="display:none;"></div>
+
+    <!-- Bridging Finance -->
+    <div id="opp-page-bridging" class="opp-page" style="display:none;"></div>
+
   </div>
 
   <!-- ── Supervisor Zone tab ───────────────────────────────── -->
@@ -4673,6 +4682,9 @@ select:focus { outline:none; }
               </label>
               <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
                 <input id="uf-pmi" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">PMI
+              </label>
+              <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
+                <input id="uf-bridging" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Bridging Finance
               </label>
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f2f5;">
@@ -8310,6 +8322,7 @@ function openUserForm(userId) {
     document.getElementById('uf-equity-release').checked       = u.equityRelease      || false;
     document.getElementById('uf-commercial-mortgages').checked = u.commercialMortgages|| false;
     document.getElementById('uf-pmi').checked                  = u.pmi               || false;
+    document.getElementById('uf-bridging').checked              = u.bridging          || false;
     document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
     renderNavAccessToggles(u.navAccess);
@@ -8332,6 +8345,7 @@ function openUserForm(userId) {
     document.getElementById('uf-equity-release').checked       = false;
     document.getElementById('uf-commercial-mortgages').checked = false;
     document.getElementById('uf-pmi').checked                  = false;
+    document.getElementById('uf-bridging').checked              = false;
     document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false });
@@ -8374,6 +8388,7 @@ function saveUser() {
     equityRelease:       document.getElementById('uf-equity-release').checked,
     commercialMortgages: document.getElementById('uf-commercial-mortgages').checked,
     pmi:              document.getElementById('uf-pmi').checked,
+    bridging:         document.getElementById('uf-bridging').checked,
     cas:              document.getElementById('uf-cas').checked,
     isSupervisor:     document.getElementById('uf-issupervisor').checked,
     supervisorEmail:  document.getElementById('uf-supervisoremail').value.trim(),
@@ -9389,14 +9404,18 @@ var OPP_TITLES = {
   purchase:   'Purchase Mortgage',
   remortgage: 'Remortgage',
   lifetime:   'Lifetime Mortgage',
-  ftb:        'First-Time Buyer Mortgage'
+  ftb:        'First-Time Buyer Mortgage',
+  commercial: 'Commercial Mortgages',
+  bridging:   'Bridging Finance'
 };
 
 var OPP_SUBTITLES = {
   purchase:   'A purchase case is far more than a mortgage. Your client is making one of the biggest financial commitments of their life — and they are relying on your expertise to guide them through every part of it. From the day the offer is accepted there are products and services that protect their home, their income and their family. Every recommendation you make deepens the relationship, adds genuine value, and generates income for you and the business.',
   remortgage: 'Remortgage clients are often focused purely on rate — but this is your opportunity to lift the conversation. A lot can change between fixed rate periods: income, family size, health, employment status. Use this touchpoint to review protection, check insurance is still adequate, and ensure estate planning reflects their current situation. A thorough remortgage review builds loyalty and uncovers needs that have been sitting unmet.',
   lifetime:   'Lifetime mortgage clients are in a different financial chapter, with different priorities and pressures. They may want to release equity for home improvements, to help family, or to improve quality of life. This is a moment to think holistically about their estate, their care needs, their dependants and their legacy. Every product you introduce should be framed around their long-term security and wellbeing.',
-  ftb:        'First-time buyers are making the biggest financial decision of their lives — often without any frame of reference for what they actually need. They are relying on your expertise more than they realise. This is your opportunity to build a client for life: go beyond the mortgage, ensure they leave the process properly protected and legally prepared, and give them the confidence that everything is in place.'
+  ftb:        'First-time buyers are making the biggest financial decision of their lives — often without any frame of reference for what they actually need. They are relying on your expertise more than they realise. This is your opportunity to build a client for life: go beyond the mortgage, ensure they leave the process properly protected and legally prepared, and give them the confidence that everything is in place.',
+  commercial: 'Commercial mortgages are a specialist area outside most advisers\' day-to-day case load — which makes them easy to overlook. Clients who are self-employed, run a business, or are investing in property regularly have a commercial need sitting in plain sight. Recognising the trigger and referring promptly to a licensed specialist is often all that\'s required to turn a passing comment into a second case.',
+  bridging:   'Bridging finance solves a timing problem — a client needs to complete before a related transaction has finished, or needs short-term funding to secure or improve a property before refinancing. It rarely comes up unprompted, so the opportunity almost always starts with you spotting a client under time pressure and knowing who to bring in.'
 };
 
 var OPP_ICONS = {
@@ -9414,7 +9433,9 @@ var OPP_ICONS = {
   conveyancing:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
   survey:      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="15" y2="11"/></svg>',
   removals:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
-  reviews:     '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+  reviews:     '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  commercial:  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="9" y1="7" x2="9" y2="7.01"/><line x1="15" y1="7" x2="15" y2="7.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="15" y1="12" x2="15" y2="12.01"/><line x1="9" y1="17" x2="15" y2="17"/></svg>',
+  bridging:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20v-6a8 8 0 0 1 16 0v6"/><line x1="8" y1="20" x2="8" y2="14"/><line x1="16" y1="20" x2="16" y2="14"/></svg>'
 };
 
 var OPP_CARDS = {
@@ -9432,24 +9453,30 @@ var OPP_CARDS = {
   conveyancing:{ title: 'Conveyancing',                   desc: 'A smooth legal process is essential for any property transaction. Connecting clients with a trusted conveyancer is a valued part of the full service.' },
   survey:      { title: 'Survey',                         desc: 'Helps clients understand exactly what they\'re buying before they commit. The right survey protects them from expensive surprises and builds trust.' },
   removals:    { title: 'Removals',                       desc: 'A referral to a trusted removal company rounds off the client experience and keeps you front of mind long after completion day.' },
-  reviews:     { title: 'Reviews & Referrals',            desc: 'The most powerful source of new business. Ask every client to leave a Google review and refer a friend — the best time to ask is at offer stage.' }
+  reviews:     { title: 'Reviews & Referrals',            desc: 'The most powerful source of new business. Ask every client to leave a Google review and refer a friend — the best time to ask is at offer stage.' },
+  commercial:  { title: 'Commercial Mortgages',           desc: 'Lending secured on a property used for business purposes — offices, retail units, warehouses, or a mixed-use building. Spot the trigger, refer to a specialist adviser.' },
+  bridging:    { title: 'Bridging Finance',                desc: 'Short-term secured lending that covers a gap — a chain break, an auction purchase, or works needed before a property can be mortgaged conventionally.' }
 };
 
 var OPP_PAGE_SECTIONS = {
   purchase:   ['mortgage','protection','insurance','health','legal','move','referrals'],
   remortgage: ['mortgage','protection','insurance','health','legal','referrals'],
   lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
-  ftb:        ['mortgage','protection','insurance','health','legal','move','referrals']
+  ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
+  commercial: ['commercialLending'],
+  bridging:   ['bridgingLending']
 };
 
 var OPP_SECTIONS_DEF = {
-  mortgage:   { label: 'The Mortgage',           cards: ['residential'] },
-  protection: { label: 'Protection',             cards: ['life','ci','ip','fib','asu','childrens'] },
-  insurance:  { label: 'Home Insurance',         cards: ['buildings'] },
-  health:     { label: 'Health',                 cards: ['pmi'] },
-  legal:      { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
-  move:       { label: 'The Move',               cards: ['survey','removals'] },
-  referrals:  { label: 'Referrals',              cards: ['reviews'] }
+  mortgage:         { label: 'The Mortgage',           cards: ['residential'] },
+  protection:       { label: 'Protection',             cards: ['life','ci','ip','fib','asu','childrens'] },
+  insurance:        { label: 'Home Insurance',         cards: ['buildings'] },
+  health:           { label: 'Health',                 cards: ['pmi'] },
+  legal:            { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
+  move:             { label: 'The Move',               cards: ['survey','removals'] },
+  referrals:        { label: 'Referrals',              cards: ['reviews'] },
+  commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
+  bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
 };
 
 // ── Card detail content ──────────────────────────────────────
@@ -9866,6 +9893,62 @@ var OPP_DETAIL = {
         'Clients who feel genuinely looked after tell other people about it. Clients who feel forgotten do not.'
       ]}
     ]
+  },
+  commercial: {
+    overview: 'A commercial mortgage is lending secured against a property that is used, wholly or partly, for business purposes — an office, shop, warehouse, restaurant, or a block of flats held as an investment. It sits outside standard residential mortgage advice and is normally handled by a specialist, but the trigger for a referral often surfaces in an ordinary conversation. Recognising it is the adviser\'s job; the specialist takes it from there.',
+    sections: [
+      { heading: 'What counts as a commercial mortgage', points: [
+        'Owner-occupied trading premises — a business buying the building it operates from, such as a shop, salon, surgery or office',
+        'Commercial investment — a client purchasing a property to let to a business tenant, such as a retail unit or industrial unit',
+        'Semi-commercial / mixed-use property — a shop with a flat above is a common example, and is treated as commercial lending even though part of it is residential',
+        'Portfolio and multi-unit freehold blocks (MUFBs) — several self-contained flats within one freehold title, which fall outside standard buy-to-let criteria'
+      ]},
+      { heading: 'Common triggers to listen for', points: [
+        'A self-employed client mentions they are thinking about buying their business premises instead of renting',
+        'A client asks about buying a shop, pub, guest house or other property that includes a trading element',
+        'An existing landlord mentions expanding into semi-commercial or multi-unit property',
+        'A client mentions raising capital against a commercial property they already own, for business investment or expansion'
+      ]},
+      { heading: 'How it differs from residential lending', points: [
+        'Rates, fees and terms are individually underwritten — there is no rate-sheet in the way there is for residential — and lenders assess the strength of the business and its accounts as well as the property',
+        'Deposits are typically higher, commonly from 25% upwards depending on the property type and covenant strength',
+        'Valuations and legal work usually take longer, and lender arrangement fees are typically higher than on residential cases',
+        'Interest rates, terms and lending criteria vary far more between lenders — a specialist relationship with the right lender panel makes a material difference to outcome'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"You mentioned buying your premises rather than renting — that\'s actually a specific type of lending. Would it help to speak to one of our commercial specialists?"',
+        '"Since that property has a flat above the shop, it may need to be arranged as semi-commercial lending rather than a standard buy-to-let — worth a quick chat with a specialist to check."',
+        '"If you\'re thinking about raising money against the business property to fund the expansion, we have someone who deals specifically with that."'
+      ]}
+    ]
+  },
+  bridging: {
+    overview: 'Bridging finance is short-term, secured lending used to solve a timing gap — most commonly when a client needs to complete a purchase before a sale has gone through, needs to move fast on an auction property, or needs funds to carry out works before a property is mortgageable in the conventional way. It is not a substitute for a mainstream mortgage; it is a temporary solution with an agreed exit, and it should always be arranged by a specialist who can structure the exit correctly.',
+    sections: [
+      { heading: 'When bridging is the right tool', points: [
+        'Chain break — a client\'s onward purchase would otherwise collapse because their own sale has not completed in time',
+        'Auction purchases — completion is typically required within 28 days, far faster than most mortgage lenders can offer',
+        'Uninhabitable or unmortgageable property — a property lacking a kitchen or bathroom, or with significant disrepair, cannot usually be mortgaged conventionally until works are carried out',
+        'Downsizing or probate property — releasing equity from a property that is for sale but has not yet sold, to fund a related purchase'
+      ]},
+      { heading: 'Common triggers to listen for', points: [
+        'A client says their sale has fallen through but they still want, or need, to proceed with their onward purchase',
+        'A client is planning to buy at auction and asks how quickly a mortgage could complete',
+        'A client wants to buy a property that a mainstream lender would decline due to its condition, intending to renovate first',
+        'A client mentions needing to raise funds quickly against a property they already own, ahead of a longer-term refinance'
+      ]},
+      { heading: 'What every case needs — the exit', points: [
+        'Every bridging loan needs a clear, credible exit strategy — normally either the sale of a property or a remortgage onto a standard mortgage once works are complete or another property has sold',
+        'Lenders will want to understand and evidence the exit before agreeing the loan — a vague or unrealistic exit is the most common reason an application is declined',
+        'Interest is usually rolled up and paid at the end, rather than serviced monthly, but this varies by lender and by client circumstances',
+        'Because it is short-term and higher-cost than a mainstream mortgage, it should only ever be recommended by a specialist who can properly assess whether it is suitable and structure the exit correctly'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"If your sale has fallen through and you still want this property, there may be a short-term option that keeps things moving — let\'s get you in front of a specialist."',
+        '"Buying at auction usually means completing within 28 days — a standard mortgage won\'t move that fast, but bridging finance can. Worth a conversation."',
+        '"Because the property needs work before it can be mortgaged normally, there\'s a short-term lending option that can bridge that gap — I can introduce you to the right person."'
+      ]}
+    ]
   }
 };
 
@@ -9987,9 +10070,10 @@ function oppBuildPageHtml(pageKey) {
     });
     html += '</div>';
   });
-  if (pageKey === 'lifetime') {
+  var advisersContainerId = { lifetime: 'opp-lifetime-advisers', commercial: 'opp-commercial-advisers', bridging: 'opp-bridging-advisers' }[pageKey];
+  if (advisersContainerId) {
     html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-orange);margin-bottom:12px;">Licenced Advisers</div>';
-    html += '<div id="opp-lifetime-advisers" style="color:#6b7c8f;font-size:13px;margin-bottom:8px;">Loading…</div>';
+    html += '<div id="' + advisersContainerId + '" style="color:#6b7c8f;font-size:13px;margin-bottom:8px;">Loading…</div>';
   }
   html += '</div>';
   return html;
@@ -9998,11 +10082,13 @@ function oppBuildPageHtml(pageKey) {
 function oppInitPages() {
   if (_OPP_INIT) return;
   _OPP_INIT = true;
-  ['purchase','remortgage','lifetime','ftb'].forEach(function(key) {
+  ['purchase','remortgage','lifetime','ftb','commercial','bridging'].forEach(function(key) {
     var el = document.getElementById('opp-page-' + key);
     if (el) el.innerHTML = oppBuildPageHtml(key);
   });
   oppLoadLicencedAdvisers('equityRelease', 'opp-lifetime-advisers', 'No Lifetime Mortgage-licenced advisers are set up yet.');
+  oppLoadLicencedAdvisers('commercialMortgages', 'opp-commercial-advisers', 'No Commercial Mortgage-licenced advisers are set up yet.');
+  oppLoadLicencedAdvisers('bridging', 'opp-bridging-advisers', 'No Bridging Finance-licenced advisers are set up yet.');
 }
 
 function oppShowPage(page, el) {
