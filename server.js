@@ -1691,7 +1691,6 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
       }
       offset = data.offset || '';
     } while (offset);
-    advisers.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
 
     // Attach Feefo review stats (average star rating, review count, NPS) per adviser
     try {
@@ -1706,7 +1705,11 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
     } catch (feefoErr) {
       console.error('licenced-advisers feefo stats error:', feefoErr);
       // Non-fatal — advisers list still returns without review stats
+      advisers.forEach(a => { if (a.reviewCount === undefined) a.reviewCount = 0; });
     }
+
+    // Order by review count (most-reviewed first), then alphabetically as a tiebreaker
+    advisers.sort((a, b) => (b.reviewCount - a.reviewCount) || (a.firstName || '').localeCompare(b.firstName || ''));
 
     res.json({ advisers });
   } catch (err) {
