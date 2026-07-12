@@ -6015,7 +6015,7 @@ function switchTab(tab) {
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
   if (tab === 'selling-zone') { oppInitPages(); }
-  if (tab === 'whereabouts')  { loadWhereabouts(); loadWhereaboutsList(); }
+  if (tab === 'whereabouts')  { if (typeof loadWhereabouts === 'function') loadWhereabouts(); if (typeof loadWhereaboutsList === 'function') loadWhereaboutsList(); }
   if (tab === 'autocrm')      { loadAutoCrm(); }
   if (tab === 'muttuo') {
     if (typeof loadMuttuo === 'function') loadMuttuo();
@@ -15311,6 +15311,13 @@ function fpSubmit() {
 // Call it now if we're on pay and it hasn't run yet.
 (function() {
   if (window.location.hash === '#pay' && !_payLoaded) { loadPayData(); }
+})();
+
+// Same fix-up, for #whereabouts — loadWhereabouts/loadWhereaboutsList also
+// live in this block, so a direct refresh onto that hash couldn't call them
+// from the block-1 switchTab() the first time round.
+(function() {
+  if (window.location.hash === '#whereabouts' && !_wbLoaded) { loadWhereabouts(); loadWhereaboutsList(); }
 })();
 
 // ── Custom dropdown component ──────────────────────────────────────────
