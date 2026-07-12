@@ -4439,6 +4439,10 @@ select:focus { outline:none; }
         <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">WhatsApp Number</label>
         <input id="acc-whatsapp" type="tel" placeholder="e.g. +44 7700 900000" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
       </div>
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Commission Split</label>
+        <input id="acc-commission-split" type="text" placeholder="e.g. 70/30" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+      </div>
       <div style="margin-bottom:20px;">
         <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">About Me <span style="font-weight:400;">(shown to colleagues who view your profile)</span></label>
         <textarea id="acc-aboutme" rows="4" placeholder="A short paragraph about you…" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'"></textarea>
@@ -7790,6 +7794,7 @@ function openAccountModal() {
   document.getElementById('acc-landline').value = user.landline   || '';
   document.getElementById('acc-website').value  = user.website    || '';
   document.getElementById('acc-whatsapp').value = user.whatsapp   || '';
+  document.getElementById('acc-commission-split').value = user.commissionSplit || '';
   document.getElementById('acc-aboutme').value  = user.aboutMe    || '';
   document.getElementById('acc-current-password').value = '';
   document.getElementById('acc-password').value  = '';
@@ -7883,6 +7888,7 @@ function saveAccountDetails() {
     landline:   document.getElementById('acc-landline').value.trim(),
     website:    document.getElementById('acc-website').value.trim(),
     whatsapp:   document.getElementById('acc-whatsapp').value.trim(),
+    commissionSplit: document.getElementById('acc-commission-split').value.trim(),
     aboutMe:    document.getElementById('acc-aboutme').value.trim()
   };
 
@@ -10092,6 +10098,10 @@ function oppOpenAdviserModal(email) {
     '</a>';
   }
   var about = a.aboutMe ? escHtml(a.aboutMe).replace(/\n/g, '<br>') : 'No profile paragraph has been added yet.';
+  var commissionRow = a.commissionSplit
+    ? '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 8px;padding-top:18px;border-top:1px solid #f0f2f5;">Commission Split</div>' +
+      '<div style="font-size:13.5px;color:#334155;font-weight:600;">' + escHtml(a.commissionSplit) + '</div>'
+    : '';
   var html =
     '<div id="opp-adviser-modal" onclick="if(event.target===this)oppCloseAdviserModal()" style="display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2600;align-items:center;justify-content:center;padding:20px;">' +
       '<div style="background:#fff;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
@@ -10110,6 +10120,7 @@ function oppOpenAdviserModal(email) {
           contactRows +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">About ' + escHtml(a.firstName || name) + '</div>' +
           '<div style="font-size:13.5px;color:#334155;line-height:1.7;">' + about + '</div>' +
+          commissionRow +
         '</div>' +
       '</div>' +
     '</div>';

@@ -108,6 +108,7 @@ const F_BRIDGING             = 'fld2jngdHrczCcZSh'; // Bridging Finance Licence
 const F_BUSINESS_PROTECTION  = 'fldhe5XTYR7Amu4FS'; // Business Protection Licence
 const F_ABOUT_ME             = 'fldf6Nbs76yPYGwVO'; // About Me — profile paragraph shown on Licenced Adviser modal
 const F_WHATSAPP             = 'fldhYhFc63htpAnHR'; // WhatsApp Number — shown on Licenced Adviser modal
+const F_COMMISSION_SPLIT     = 'fldugIzgLk3INhuDF'; // Commission Split — shown on Licenced Adviser modal
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -406,7 +407,8 @@ function recordToUser(record) {
     bridging:            f[F_BRIDGING]             || false,
     businessProtection:  f[F_BUSINESS_PROTECTION]  || false,
     aboutMe:             f[F_ABOUT_ME]             || '',
-    whatsapp:            f[F_WHATSAPP]             || ''
+    whatsapp:            f[F_WHATSAPP]             || '',
+    commissionSplit:     f[F_COMMISSION_SPLIT]     || ''
   };
 }
 
@@ -1570,7 +1572,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // ── Profile: current user self-edit ──────────────────────────
 app.put('/api/profile', requireAuth, async (req, res) => {
-  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, password } = req.body;
+  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, commissionSplit, password } = req.body;
   if (password && password.length < 12) {
     return res.status(400).json({ error: 'Password must be at least 12 characters' });
   }
@@ -1585,7 +1587,8 @@ app.put('/api/profile', requireAuth, async (req, res) => {
       [F_LANDLINE]: landline   || '',
       [F_WEBSITE]:  website    || null,
       [F_ABOUT_ME]: aboutMe    || '',
-      [F_WHATSAPP]: whatsapp   || ''
+      [F_WHATSAPP]: whatsapp   || '',
+      [F_COMMISSION_SPLIT]: commissionSplit || ''
     };
     if (password) {
       fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
@@ -1671,7 +1674,8 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
             landline:  u.landline,
             avatarUrl: u.avatarUrl,
             aboutMe:   u.aboutMe,
-            whatsapp:  u.whatsapp
+            whatsapp:  u.whatsapp,
+            commissionSplit: u.commissionSplit
           });
         }
       }
