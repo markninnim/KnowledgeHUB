@@ -10166,25 +10166,26 @@ function oppOpenAdviserModal(email) {
       '<div style="background:#fff;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
         '<div style="background:var(--brand-navy);padding:24px 28px;border-radius:14px 14px 0 0;position:relative;">' +
           '<button onclick="oppCloseAdviserModal()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;">×</button>' +
-          '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;">' +
+          '<div style="display:flex;align-items:center;gap:14px;">' +
             '<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid rgba(255,255,255,.3);">' + photo + '</div>' +
-            '<div>' +
+            '<div style="text-align:left;">' +
               '<div style="font-size:17px;font-weight:700;color:#fff;">' + escHtml(name) + '</div>' +
               (a.jobTitle ? '<div style="font-size:12.5px;color:var(--brand-orange);font-weight:600;margin-top:2px;">' + escHtml(a.jobTitle) + '</div>' : '') +
               (licenceLabel ? '<div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:600;margin-top:2px;">' + escHtml(licenceLabel) + ' Specialist</div>' : '') +
-              (a.reviewCount ? '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;">' + oppStarsHtml(a.reviewAvg, 14) + '<span style="font-size:12px;color:rgba(255,255,255,.75);">' + (a.reviewAvg != null ? a.reviewAvg : '—') + ' (' + a.reviewCount + ' review' + (a.reviewCount === 1 ? '' : 's') + ')</span></div>' : '') +
             '</div>' +
           '</div>' +
         '</div>' +
         '<div style="padding:22px 28px 28px;">' +
-          (a.reviewCount ? '<div style="display:flex;gap:24px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #f0f2f5;">' +
-              '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Rating</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + oppStarsHtml(a.reviewAvg, 13) + ' ' + (a.reviewAvg != null ? a.reviewAvg : '—') + '</div></div>' +
-              (a.reviewNps != null ? '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">NPS</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + a.reviewNps + '</div></div>' : '') +
-            '</div>' : '') +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Contact Details</div>' +
           contactRows +
           '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">About ' + escHtml(a.firstName || name) + '</div>' +
           '<div style="font-size:13.5px;color:#334155;line-height:1.7;">' + about + '</div>' +
+          (a.reviewCount ? '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">Reviews</div>' +
+            '<div style="display:flex;gap:24px;">' +
+              '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Rating</div><div style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:#334155;font-weight:600;">' + oppStarsHtml(a.reviewAvg, 13) + (a.reviewAvg != null ? a.reviewAvg : '—') + '</div></div>' +
+              '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">Reviews</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + a.reviewCount + '</div></div>' +
+              (a.reviewNps != null ? '<div><div style="font-size:11px;color:#6b7c8f;margin-bottom:2px;">NPS</div><div style="font-size:13.5px;color:#334155;font-weight:600;">' + a.reviewNps + '</div></div>' : '') +
+            '</div>' : '') +
           splitRow +
         '</div>' +
       '</div>' +
