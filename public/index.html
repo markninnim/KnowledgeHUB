@@ -6029,9 +6029,9 @@ function switchTab(tab) {
   if (tab !== 'sales-process')   { stopMasTimer(); stopPasTimer(); }
   if (tab === 'performance-zone') { pzInit(); } else { var ov=document.getElementById('pz-overlay'); if(ov) ov.style.display='none'; var bp=document.getElementById('pz-broker-panel'); if(bp) bp.style.display='none'; }
   if (tab === 'pay') { loadPayData(); if (_payLoaded) { var pd=document.getElementById('pay-detail'); var pl=document.getElementById('pay-list'); if(pd&&pd.style.display!=='none'){pd.style.display='none'; if(pl)pl.style.display='block';} } }
-  if (tab === 'selling-zone') { oppInitPages(); }
+  if (tab === 'selling-zone') { if (typeof oppInitPages === 'function') oppInitPages(); }
   if (tab === 'whereabouts')  { if (typeof loadWhereabouts === 'function') loadWhereabouts(); if (typeof loadWhereaboutsList === 'function') loadWhereaboutsList(); }
-  if (tab === 'autocrm')      { loadAutoCrm(); }
+  if (tab === 'autocrm')      { if (typeof loadAutoCrm === 'function') loadAutoCrm(); }
   if (tab === 'muttuo') {
     if (typeof loadMuttuo === 'function') loadMuttuo();
     if (typeof mzStartPolling === 'function') mzStartPolling();
@@ -15495,6 +15495,31 @@ function fpSubmit() {
 // from the block-1 switchTab() the first time round.
 (function() {
   if (window.location.hash === '#whereabouts' && !_wbLoaded) { loadWhereabouts(); loadWhereaboutsList(); }
+})();
+
+// Same fix-up, for #selling-zone (Opportunities) — oppInitPages also lives
+// in this block.
+(function() {
+  if (window.location.hash === '#selling-zone' && !_OPP_INIT) { oppInitPages(); }
+})();
+
+// Same fix-up, for #autocrm — loadAutoCrm also lives in this block.
+(function() {
+  if (window.location.hash === '#autocrm' && !_acLoaded) { loadAutoCrm(); }
+})();
+
+// Same fix-up, for #muttuo and #leadgen — loadMuttuo/mzStartPolling and
+// loadLeadGen/lgStartPolling also live in this block.
+(function() {
+  if (window.location.hash === '#muttuo' && !_mzLoaded) {
+    if (typeof loadMuttuo === 'function') loadMuttuo();
+    if (typeof mzStartPolling === 'function') mzStartPolling();
+  }
+  if (window.location.hash === '#leadgen' && !_lgLoaded) {
+    if (typeof loadLeadGen === 'function') loadLeadGen();
+    if (typeof lgStartPolling === 'function') lgStartPolling();
+    if (typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
+  }
 })();
 
 // ── Custom dropdown component ──────────────────────────────────────────
