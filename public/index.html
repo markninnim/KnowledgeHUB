@@ -3845,6 +3845,12 @@ select:focus { outline:none; }
             <div id="bp-sales-process"></div>
           </div>
 
+          <!-- Row 4 Col 1-3: Sales Funnel -->
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:4;grid-column:1 / span 3;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Sales Funnel</div>
+            <div id="bp-sales-funnel"></div>
+          </div>
+
         </div>
 
         <!-- Consumer Duty expanded (full card, above Feefo) -->
@@ -9258,6 +9264,31 @@ function openBrokerProfile(email, name) {
             '</div>';
         } else {
           spEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No advice standards sessions logged yet</div>';
+        }
+      }
+
+      // ── Sales Funnel (Hot / Warm / Cold LeadGen breakdown) ──
+      var sfEl = document.getElementById('bp-sales-funnel');
+      if (sfEl) {
+        var sf = d.salesFunnel || { total: 0, hot: 0, warm: 0, cold: 0 };
+        if (sf.total) {
+          var hotPct  = Math.round(sf.hot  / sf.total * 100);
+          var warmPct = Math.round(sf.warm / sf.total * 100);
+          var coldPct = Math.round(sf.cold / sf.total * 100);
+          function bpFunnelCard(label, count, pct, color) {
+            return '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:14px 16px;">' +
+              '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>' +
+              '<div style="font-size:20px;font-weight:800;color:' + color + ';">' + count + ' <span style="font-size:13px;font-weight:700;">(' + pct + '%)</span></div>' +
+              '</div>';
+          }
+          sfEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">' +
+            bpFunnelCard('Hot', sf.hot, hotPct, '#b91c1c') +
+            bpFunnelCard('Warm', sf.warm, warmPct, '#b45309') +
+            bpFunnelCard('Cold', sf.cold, coldPct, '#2e99d5') +
+            bpFunnelCard('Total', sf.total, 100, 'var(--brand-navy)') +
+            '</div>';
+        } else {
+          sfEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No leads found for this adviser</div>';
         }
       }
 
