@@ -4431,9 +4431,17 @@ select:focus { outline:none; }
         <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Landline</label>
         <input id="acc-landline" type="tel" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
       </div>
-      <div style="margin-bottom:20px;">
+      <div style="margin-bottom:10px;">
         <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Website</label>
         <input id="acc-website" type="url" placeholder="https://…" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">WhatsApp Number</label>
+        <input id="acc-whatsapp" type="tel" placeholder="e.g. +44 7700 900000" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">About Me <span style="font-weight:400;">(shown to colleagues who view your profile)</span></label>
+        <textarea id="acc-aboutme" rows="4" placeholder="A short paragraph about you…" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'"></textarea>
       </div>
 
       <div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-top:16px;border-top:1px solid #f0f2f5;">Change Password</div>
@@ -7781,6 +7789,8 @@ function openAccountModal() {
   document.getElementById('acc-mobile').value   = user.mobile     || '';
   document.getElementById('acc-landline').value = user.landline   || '';
   document.getElementById('acc-website').value  = user.website    || '';
+  document.getElementById('acc-whatsapp').value = user.whatsapp   || '';
+  document.getElementById('acc-aboutme').value  = user.aboutMe    || '';
   document.getElementById('acc-current-password').value = '';
   document.getElementById('acc-password').value  = '';
   document.getElementById('acc-password2').value = '';
@@ -7871,7 +7881,9 @@ function saveAccountDetails() {
     jobTitle:   document.getElementById('acc-jobtitle').value.trim(),
     mobile:     document.getElementById('acc-mobile').value.trim(),
     landline:   document.getElementById('acc-landline').value.trim(),
-    website:    document.getElementById('acc-website').value.trim()
+    website:    document.getElementById('acc-website').value.trim(),
+    whatsapp:   document.getElementById('acc-whatsapp').value.trim(),
+    aboutMe:    document.getElementById('acc-aboutme').value.trim()
   };
 
   // Save profile details first, then handle password separately
@@ -10018,6 +10030,7 @@ function oppOpenCard(cardKey) {
 // Generic loader for any "Licenced Advisers" section — used on the PMI
 // detail card and on main Opportunities pages (e.g. Lifetime Mortgage).
 // `type` must match one of the LICENCED_ADVISER_TYPES keys in server.js.
+var _oppAdvisersCache = {}; // email -> adviser object, used by the "Read more" modal
 function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
   var container = document.getElementById(containerId);
   if (!container) return;
@@ -10031,15 +10044,24 @@ function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
     }
     container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">' +
       advisers.map(function(a) {
+        _oppAdvisersCache[a.email] = a;
         var name = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email;
+        var initials = ((a.firstName||'').charAt(0) + (a.lastName||'').charAt(0)).toUpperCase() || '?';
+        var photo = a.avatarUrl
+          ? '<img src="' + a.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--brand-navy);color:#fff;font-weight:700;font-size:14px;">' + initials + '</div>';
         var rows = '';
         if (a.jobTitle) rows += '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + escHtml(a.jobTitle) + '</div>';
         if (a.email)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="mailto:' + escHtml(a.email) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.email) + '</a></div>';
         if (a.mobile)    rows += '<div style="font-size:12px;margin-bottom:3px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.mobile) + '</a></div>';
-        if (a.landline)  rows += '<div style="font-size:12px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
+        if (a.landline)  rows += '<div style="font-size:12px;margin-bottom:8px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
         return '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:14px 16px;">' +
-          '<div style="font-size:13.5px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">' + escHtml(name) + '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;">' + photo + '</div>' +
+            '<div style="font-size:13.5px;font-weight:700;color:var(--brand-navy);">' + escHtml(name) + '</div>' +
+          '</div>' +
           rows +
+          '<button onclick="oppOpenAdviserModal(\'' + escHtml(a.email).replace(/'/g,"\\'") + '\')" style="margin-top:4px;background:none;border:none;color:var(--brand-orange);font-size:12px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;">Read more →</button>' +
           '</div>';
       }).join('') +
       '</div>';
@@ -10047,6 +10069,58 @@ function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
     var el = document.getElementById(containerId);
     if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Unable to load advisers — please try again.</div>';
   });
+}
+
+function oppOpenAdviserModal(email) {
+  var a = _oppAdvisersCache[email];
+  if (!a) return;
+  var name = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email;
+  var initials = ((a.firstName||'').charAt(0) + (a.lastName||'').charAt(0)).toUpperCase() || '?';
+  var photo = a.avatarUrl
+    ? '<img src="' + a.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;">'
+    : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);color:#fff;font-weight:700;font-size:26px;">' + initials + '</div>';
+  var contactRows = '';
+  if (a.jobTitle) contactRows += '<div style="font-size:13px;color:#6b7c8f;margin-bottom:10px;">' + escHtml(a.jobTitle) + '</div>';
+  if (a.email)    contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="mailto:' + escHtml(a.email) + '" style="color:var(--brand-navy);text-decoration:none;font-weight:600;">' + escHtml(a.email) + '</a></div>';
+  if (a.mobile)   contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.mobile) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.mobile) + '</a></div>';
+  if (a.landline) contactRows += '<div style="font-size:13px;margin-bottom:6px;"><a href="tel:' + escHtml(a.landline) + '" style="color:#6b7c8f;text-decoration:none;">' + escHtml(a.landline) + '</a></div>';
+  if (a.whatsapp) {
+    var waNumber = a.whatsapp.replace(/[^0-9+]/g, '').replace(/^0/, '44').replace(/^\+/, '');
+    contactRows += '<a href="https://wa.me/' + waNumber + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:#25D366;text-decoration:none;font-weight:700;">' +
+      '<svg width="17" height="17" viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39c1.45.79 3.08 1.21 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01C17.19 3.03 14.7 2 12.04 2zm0 18.15h-.01c-1.48 0-2.94-.4-4.2-1.15l-.3-.18-3.14.82.84-3.06-.2-.31a8.19 8.19 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.27-8.24 2.21 0 4.28.86 5.84 2.42a8.18 8.18 0 0 1 2.42 5.83c0 4.55-3.7 8.23-8.26 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.24-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.24-.02-.37.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.24-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.4-.42-.56-.42-.14-.01-.31-.01-.47-.01a.9.9 0 0 0-.65.3c-.22.24-.86.84-.86 2.04 0 1.2.88 2.37 1 2.53.12.17 1.73 2.64 4.2 3.7.59.25 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28z"/></svg>' +
+      'WhatsApp: ' + escHtml(a.whatsapp) +
+    '</a>';
+  }
+  var about = a.aboutMe ? escHtml(a.aboutMe).replace(/\n/g, '<br>') : 'No profile paragraph has been added yet.';
+  var html =
+    '<div id="opp-adviser-modal" onclick="if(event.target===this)oppCloseAdviserModal()" style="display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2600;align-items:center;justify-content:center;padding:20px;">' +
+      '<div style="background:#fff;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
+        '<div style="background:var(--brand-navy);padding:24px 28px;border-radius:14px 14px 0 0;position:relative;">' +
+          '<button onclick="oppCloseAdviserModal()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;">×</button>' +
+          '<div style="display:flex;align-items:center;gap:14px;">' +
+            '<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid rgba(255,255,255,.3);">' + photo + '</div>' +
+            '<div>' +
+              '<div style="font-size:17px;font-weight:700;color:#fff;">' + escHtml(name) + '</div>' +
+              (a.jobTitle ? '<div style="font-size:12.5px;color:var(--brand-orange);font-weight:600;margin-top:2px;">' + escHtml(a.jobTitle) + '</div>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="padding:22px 28px 28px;">' +
+          '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Contact Details</div>' +
+          contactRows +
+          '<div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-top:18px;border-top:1px solid #f0f2f5;">About ' + escHtml(a.firstName || name) + '</div>' +
+          '<div style="font-size:13.5px;color:#334155;line-height:1.7;">' + about + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  var existing = document.getElementById('opp-adviser-modal');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function oppCloseAdviserModal() {
+  var m = document.getElementById('opp-adviser-modal');
+  if (m) m.remove();
 }
 
 function oppCloseCard() {
