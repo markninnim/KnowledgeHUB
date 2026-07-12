@@ -10069,6 +10069,7 @@ function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
     }
     container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">' +
       advisers.map(function(a) {
+        a._licenceType = type;
         _oppAdvisersCache[a.email] = a;
         var name = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email;
         var initials = ((a.firstName||'').charAt(0) + (a.lastName||'').charAt(0)).toUpperCase() || '?';
@@ -10096,10 +10097,21 @@ function oppLoadLicencedAdvisers(type, containerId, emptyLabel) {
   });
 }
 
+var OPP_LICENCE_LABELS = {
+  pmi:                 'Private Medical Insurance',
+  equityRelease:       'Lifetime Mortgage',
+  commercialMortgages: 'Commercial Mortgage',
+  bridging:            'Bridging Finance',
+  businessProtection:  'Business Protection',
+  protectionOnly:      'Protection',
+  surveying:           'Surveying',
+  trusts:              'Trusts'
+};
 function oppOpenAdviserModal(email) {
   var a = _oppAdvisersCache[email];
   if (!a) return;
   var name = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email;
+  var licenceLabel = OPP_LICENCE_LABELS[a._licenceType] || '';
   var initials = ((a.firstName||'').charAt(0) + (a.lastName||'').charAt(0)).toUpperCase() || '?';
   var photo = a.avatarUrl
     ? '<img src="' + a.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;">'
@@ -10130,11 +10142,12 @@ function oppOpenAdviserModal(email) {
       '<div style="background:#fff;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
         '<div style="background:var(--brand-navy);padding:24px 28px;border-radius:14px 14px 0 0;position:relative;">' +
           '<button onclick="oppCloseAdviserModal()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;">×</button>' +
-          '<div style="display:flex;align-items:center;gap:14px;">' +
+          '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;">' +
             '<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid rgba(255,255,255,.3);">' + photo + '</div>' +
             '<div>' +
               '<div style="font-size:17px;font-weight:700;color:#fff;">' + escHtml(name) + '</div>' +
               (a.jobTitle ? '<div style="font-size:12.5px;color:var(--brand-orange);font-weight:600;margin-top:2px;">' + escHtml(a.jobTitle) + '</div>' : '') +
+              (licenceLabel ? '<div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:600;margin-top:2px;">' + escHtml(licenceLabel) + ' Specialist</div>' : '') +
             '</div>' +
           '</div>' +
         '</div>' +
