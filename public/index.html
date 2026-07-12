@@ -4199,7 +4199,12 @@ select:focus { outline:none; }
     </div>
     <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
       <input type="hidden" id="lg-id">
-      <div style="width:50%;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Name</label><input id="lg-name" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+      <div style="display:flex;align-items:flex-end;gap:12px;">
+        <div style="width:50%;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Name</label><input id="lg-name" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
+        <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--brand-navy);background:#fafbfc;white-space:nowrap;">
+          <input id="lg-autocrm" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Enroll into AutoCRM&trade;
+        </label>
+      </div>
       <div style="display:flex;gap:12px;">
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Phone Number</label><input id="lg-phone" type="text" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Email</label><input id="lg-email" type="email" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
@@ -4226,9 +4231,6 @@ select:focus { outline:none; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Broker Fee Value &pound;</label><input id="lg-feeval" type="number" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
       </div>
       <div><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Notes</label><textarea id="lg-notes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;resize:vertical;"></textarea></div>
-      <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--brand-navy);background:#fafbfc;">
-        <input id="lg-autocrm" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Enroll into AutoCRM&trade;
-      </label>
     </div>
     <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
       <span id="lg-modal-status" style="font-size:11px;font-weight:700;color:#b91c1c;margin-right:auto;"></span>
