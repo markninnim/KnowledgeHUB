@@ -12834,12 +12834,90 @@ function khMyClientsLookup(query) {
     });
 }
 
+// Does this look like a request about the logged-in broker's OWN leads
+// (LeadGEN Leads table)? SECURITY: answered via /api/help-my-leads, which the
+// server scopes strictly to the logged-in session's own name — never passed
+// to or answerable by the AI, and never exposes another broker's leads.
+function khIsMyLeadsQuery(q) {
+  return /\bmy (lead|leads)\b/i.test(q) ||
+    /\b(lead|leads)\b.*\b(do i have|i have|i've got)\b/i.test(q) ||
+    /\bhow many\b.*\b(lead|leads)\b/i.test(q);
+}
+function khIsLeadCountQuery(q) {
+  return /\bhow many\b/i.test(q) || /\b(do i have|i have|i've got)\b/i.test(q);
+}
+function khExtractLeadName(q) {
+  return q
+    .replace(/[’']s\b/gi, ' ')
+    .replace(/\bmy (lead|leads)\b/gi, ' ')
+    .replace(/\b(status|quality|follow|up|followup|details|of|for|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function khMyLeadsLookup(query) {
+  if (khIsLeadCountQuery(query)) {
+    khShowTyping();
+    fetch('/api/help-my-leads?count=1')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        khRemoveTyping();
+        var count = (d && typeof d.count === 'number') ? d.count : 0;
+        khAddBotMessage(count === 0
+          ? 'You don\'t have any leads assigned yet.'
+          : ('You have ' + count + ' lead' + (count === 1 ? '' : 's') + ' assigned to you.'));
+        khAddActionButton('View in Leads', 'leadgen');
+      })
+      .catch(function() {
+        khRemoveTyping();
+        khAddBotMessage('Something went wrong looking that up — please try again.');
+      });
+    return;
+  }
+  var name = khExtractLeadName(query);
+  khShowTyping();
+  fetch('/api/help-my-leads' + (name ? ('?name=' + encodeURIComponent(name)) : ''))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      var rows = (d && d.rows) || [];
+      if (!rows.length) {
+        if (name) {
+          khAddBotMessage('I couldn\'t find a lead matching "' + name + '" assigned to you. Check the spelling, or take a look at your full list under Leads.');
+        } else {
+          khAddBotMessage('You don\'t have any leads assigned right now. Your full list is under Leads.');
+        }
+        khAddActionButton('Go to Leads', 'leadgen');
+        return;
+      }
+      if (!d.filteredByName) {
+        khAddBotMessage('Here are your most recent leads:');
+      }
+      rows.forEach(function(l) {
+        var lines = [l.name];
+        if (l.status) lines.push('Status: ' + l.status);
+        if (l.quality) lines.push('Quality: ' + l.quality);
+        if (l.followUp) {
+          var d2 = new Date(l.followUp);
+          var dateStr = isNaN(d2) ? l.followUp : d2.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          lines.push('Follow up: ' + dateStr);
+        }
+        khAddBotMessage(lines.join('\n'));
+      });
+      khAddActionButton('View in Leads', 'leadgen');
+    })
+    .catch(function() {
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 // Instant, deterministic matches (nav shortcuts etc.) — used first so common
-// questions get an immediate answer with a "go there" button. Contact-detail
-// and "my clients" requests are handled by real database lookups, scoped to
-// the logged-in user, never the AI. Anything else is handed to the AI, which
-// is strictly ring-fenced to KnowledgeHUB's own content server-side (see the
-// Help KB in Airtable) and told to say so rather than guess if it doesn't know.
+// questions get an immediate answer with a "go there" button. Contact-detail,
+// "my clients" and "my leads" requests are handled by real database lookups,
+// scoped to the logged-in user, never the AI. Anything else is handed to the
+// AI, which is strictly ring-fenced to KnowledgeHUB's own content server-side
+// (see the Help KB in Airtable) and told to say so rather than guess if it
+// doesn't know.
 function khAnswer(query) {
   var entry = khMatch(query);
   if (entry) {
@@ -12851,6 +12929,10 @@ function khAnswer(query) {
   }
   if (khIsMyClientsQuery(query)) {
     khMyClientsLookup(query);
+    return;
+  }
+  if (khIsMyLeadsQuery(query)) {
+    khMyLeadsLookup(query);
     return;
   }
   if (khIsContactQuery(query)) {
