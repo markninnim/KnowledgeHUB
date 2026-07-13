@@ -8249,64 +8249,22 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Flat-icon avatar fallback (male/female, coloured background) ──
+// ── Placeholder avatar fallback (male/female) ──
 // Used whenever a person has no uploaded photo. Gender is inferred from
-// Salutation (Mr → male, Mrs/Ms/Miss/Dr-with-female-name fallback → female);
-// background colour is deterministic per-name so the same person always
-// gets the same colour.
-var AVATAR_PALETTE = ['#F2A65A','#5DA0A8','#8E7CC3','#E07A5F','#4E8098','#C9A66B','#7D9D6F','#B56576','#57768F','#D08C60'];
-function avatarColorFor(seed) {
-  var s = String(seed || '');
-  var hash = 0;
-  for (var i = 0; i < s.length; i++) { hash = (hash * 31 + s.charCodeAt(i)) >>> 0; }
-  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
-}
+// Salutation (Mrs/Ms/Miss → female, otherwise male). Uses the static
+// placeholder artwork in public/static/.
 function avatarIsFemale(salutation) {
   return salutation === 'Mrs' || salutation === 'Ms' || salutation === 'Miss';
 }
-// Head-and-shoulders silhouette, styled to match the reference placeholder-avatar
-// artwork: a slate/charcoal hair-and-garment tone, a pale lavender-grey face,
-// a soft darker neck shadow, and a thin light outline tracing the silhouette
-// edge. Female version has hair falling past the shoulders with a side-swept
-// fringe; male version has short, spiky, side-parted hair with visible ears.
-function avatarSvgIcon(isFemale) {
-  if (isFemale) {
-    return '<svg viewBox="0 0 100 100" style="width:92%;height:92%;display:block;margin:4% auto 0;" xmlns="http://www.w3.org/2000/svg">' +
-      // Hair + shoulders — one continuous silhouette, hair falling past the shoulders
-      '<path d="M50 15c12 0 20 8 20 20 0 7-2 13-6 18 11 5 21 13 21 23 0 3-3 5-6 5H21c-3 0-6-2-6-5 0-10 10-18 21-23-4-5-6-11-6-18 0-12 8-20 20-20z" ' +
-        'fill="rgba(0,0,0,.32)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>' +
-      // Neck shadow
-      '<path d="M50 58c-7 0-13-5-16-12-1 3-3 5-5 7 1 4 2 7 4 10 5 6 11 9 17 9s12-3 17-9c2-3 3-6 4-10-2-2-4-4-5-7-3 7-9 12-16 12z" fill="rgba(0,0,0,.16)"/>' +
-      // Face
-      '<path d="M50 28c-9 0-16 7-16 17 0 6 2 12 6 16 3 3 6 5 10 5s7-2 10-5c4-4 6-10 6-16 0-8-4-14-11-16-2 3-6 5-10 5-1-2-1-4 5-6z" fill="#dfe4ea"/>' +
-      // Side-swept fringe
-      '<path d="M38 32c2-3 6-6 11-6 4 0 7 1 10 4-3 0-6 1-8 3-3 3-5 8-6 13-2-5-3-9-7-14z" fill="rgba(0,0,0,.22)"/>' +
-      '</svg>';
-  }
-  return '<svg viewBox="0 0 100 100" style="width:92%;height:92%;display:block;margin:4% auto 0;" xmlns="http://www.w3.org/2000/svg">' +
-    // Shoulders / garment
-    '<path d="M50 60c-14 0-26 12-26 28 0 2 2 4 4 4h44c2 0 4-2 4-4 0-16-12-28-26-28z" fill="rgba(0,0,0,.32)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>' +
-    // Neck shadow
-    '<path d="M50 60c-6 0-11-4-14-10-1 3-3 5-4 7 1 3 2 6 3 9 4 5 9 8 15 8s11-3 15-8c1-3 2-6 3-9-1-2-3-4-4-7-3 6-8 10-14 10z" fill="rgba(0,0,0,.16)"/>' +
-    // Ears
-    '<circle cx="30" cy="45" r="4" fill="#dfe4ea"/><circle cx="70" cy="45" r="4" fill="#dfe4ea"/>' +
-    // Face
-    '<circle cx="50" cy="42" r="18" fill="#dfe4ea"/>' +
-    // Short spiky, side-parted hair
-    '<path d="M32 38c0-11 8-19 18-19s18 8 18 19c0 2 0 4-1 6-1-2-2-4-4-5 0 2 0 4-1 6-1-3-3-5-5-6 0 2 0 4-1 6-2-3-3-6-6-7 0 2-1 4-2 5-1-3-2-5-4-6-1 2-2 4-4 5-1-2 0-4 0-6-2 2-4 3-5 5-1-1-2-3-3-3z" fill="rgba(0,0,0,.32)"/>' +
-    '</svg>';
-}
-// personAvatarHtml(person, opts) — returns inner HTML for an avatar circle.
-// person: object with avatarUrl, salutation, firstName/lastName, email (for colour seed).
+// personAvatarHtml(person) — returns inner HTML for an avatar circle.
+// person: object with avatarUrl, salutation, firstName/lastName.
 function personAvatarHtml(person) {
   person = person || {};
   if (person.avatarUrl) {
     return '<img src="' + person.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;">';
   }
-  var seed = (person.email || (person.firstName || '') + (person.lastName || '')) || 'x';
-  var bg = avatarColorFor(seed);
-  var female = avatarIsFemale(person.salutation);
-  return '<div style="width:100%;height:100%;overflow:hidden;background:' + bg + ';">' + avatarSvgIcon(female) + '</div>';
+  var src = avatarIsFemale(person.salutation) ? '/static/female@2x.png' : '/static/male@2x.png';
+  return '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;">';
 }
 
 // Length-of-service text, e.g. "7 months service" or "2yr 3 months service"
