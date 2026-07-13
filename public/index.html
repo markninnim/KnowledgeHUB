@@ -12632,7 +12632,7 @@ var KH_KB = [
 // local KB for these and let the AI answer properly from its (now much
 // richer) reference material, which includes full process detail per topic.
 function khWantsRichAnswer(q) {
-  return /\b(what is|what's|what are|how does|how do .*work|why|explain|process|procedure|difference between|tell me about|details? (about|on)|what happens|how long|how many days|how much time|deadline|timescale|time limit|do i have to|am i required|is it mandatory|how soon|within how)\b/i.test(q);
+  return /\b(what is|what's|what are|how does|how do .*work|why|explain|process|procedure|difference between|tell me about|details? (about|on)|what happens|how long|how many days|how much time|deadline|timescale|time limit|do i have to|am i required|is it mandatory|how soon|within how|what should i do|what do i do|i (have|'ve) (had|got|received)|help me with|how do i handle|how should i)\b/i.test(q);
 }
 
 // Word-boundary match, not a raw substring search — a plain indexOf let short
