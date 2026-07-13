@@ -12756,12 +12756,67 @@ function khContactLookup(query) {
     });
 }
 
+// Does this look like a request about the logged-in adviser's OWN clients in
+// Mortgage Completions (renewals, benefit end dates, loan/lender details)?
+// SECURITY: answered via /api/help-my-clients, which the server scopes
+// strictly to the logged-in session's own email — this is never passed to
+// or answerable by the AI, and never exposes another adviser's customers.
+function khIsMyClientsQuery(q) {
+  return /\bmy (client|clients|customer|customers)\b/i.test(q);
+}
+function khExtractClientName(q) {
+  return q
+    .replace(/[’']s\b/gi, ' ')
+    .replace(/\bmy (client|clients|customer|customers)\b/gi, ' ')
+    .replace(/\b(renewal|renewals|renew|renews|when|does|do|mortgage|benefit|end|date|loan|lender|valuation|details|of|for|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function khMyClientsLookup(query) {
+  var name = khExtractClientName(query);
+  khShowTyping();
+  fetch('/api/help-my-clients' + (name ? ('?name=' + encodeURIComponent(name)) : ''))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      var rows = (d && d.rows) || [];
+      if (!rows.length) {
+        if (name) {
+          khAddBotMessage('I couldn\'t find a client matching "' + name + '" in your Mortgage Completions. Check the spelling, or take a look at your full list under AutoCRM™.');
+        } else {
+          khAddBotMessage('You don\'t have any upcoming renewals in the next 6 months. Your full client list is under AutoCRM™.');
+        }
+        khAddActionButton('Go to AutoCRM™', 'autocrm');
+        return;
+      }
+      if (!d.filteredByName) {
+        khAddBotMessage('Here are your soonest upcoming renewals:');
+      }
+      rows.forEach(function(c) {
+        var lines = [c.name];
+        if (c.lender) lines.push('Lender: ' + c.lender);
+        if (typeof c.loanAmount === 'number') lines.push('Loan amount: £' + c.loanAmount.toLocaleString('en-GB'));
+        if (c.benefitEnd) {
+          var d2 = new Date(c.benefitEnd);
+          var dateStr = isNaN(d2) ? c.benefitEnd : d2.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          lines.push('Renewal date: ' + dateStr);
+        }
+        khAddBotMessage(lines.join('\n'));
+      });
+      khAddActionButton('View in AutoCRM™', 'autocrm');
+    })
+    .catch(function() {
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 // Instant, deterministic matches (nav shortcuts etc.) — used first so common
 // questions get an immediate answer with a "go there" button. Contact-detail
-// requests are handled by a real database lookup, never the AI. Anything
-// else is handed to the AI, which is strictly ring-fenced to KnowledgeHUB's
-// own content server-side (see the Help KB in Airtable) and told to say so
-// rather than guess if it doesn't know.
+// and "my clients" requests are handled by real database lookups, scoped to
+// the logged-in user, never the AI. Anything else is handed to the AI, which
+// is strictly ring-fenced to KnowledgeHUB's own content server-side (see the
+// Help KB in Airtable) and told to say so rather than guess if it doesn't know.
 function khAnswer(query) {
   var entry = khMatch(query);
   if (entry) {
@@ -12769,6 +12824,10 @@ function khAnswer(query) {
     if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
     _khHistory.push({ role: 'user', content: query });
     _khHistory.push({ role: 'assistant', content: entry.answer });
+    return;
+  }
+  if (khIsMyClientsQuery(query)) {
+    khMyClientsLookup(query);
     return;
   }
   if (khIsContactQuery(query)) {

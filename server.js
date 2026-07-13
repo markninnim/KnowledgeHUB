@@ -865,7 +865,7 @@ You must answer ONLY using the reference material below. Do not use any outside 
 
 If the answer isn't contained in the reference material, say plainly that you don't have that information in KnowledgeHUB, and suggest the person contact their supervisor/admin or the office on 01444 449 200. Never invent an answer to seem helpful.
 
-You have no access to live data — no staff directory, no individual colleagues' contact details, no records, no real-time figures. If someone asks for a specific person's email, phone number, or any other personal/live detail, do not guess or fabricate one, even a plausible-looking one. Instead tell them where to look it up in KnowledgeHUB (their profile under My Team, or their card under Opportunities > Licenced Advisers if they're a specialist) or to ask an admin.
+You have no access to live data — no staff directory, no individual colleagues' contact details, no client/customer records, no mortgage completion data, no real-time figures. If someone asks for a specific person's email, phone number, or any other personal/live detail, do not guess or fabricate one, even a plausible-looking one. Instead tell them where to look it up in KnowledgeHUB (their profile under My Team, or their card under Opportunities > Licenced Advisers if they're a specialist) or to ask an admin. If someone asks about "my clients", a specific customer's renewal date, loan amount, or anything from Mortgage Completions/AutoCRM™, never guess or invent figures — tell them to check the AutoCRM™ tab, which only shows their own customers.
 
 Keep answers short, warm and conversational — 1 to 4 sentences, like a helpful colleague rather than a manual. You're speaking with ${firstName || 'the adviser'}${firstName ? ' — feel free to use their first name occasionally to keep it personal, but don\'t force it into every reply.' : '.'} When relevant, name the exact tab the person should go to (e.g. "under the Learning tab"), but you cannot navigate them there yourself.
 
@@ -1599,6 +1599,62 @@ app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
   } catch (err) {
     console.error('AutoCRM note save error:', err);
     res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// Help widget: deterministic "my clients" lookup against Mortgage Completions.
+// SECURITY: brokerEmail is taken ONLY from the logged-in session (req.session.user.email),
+// never from client input, and mirrors the exact same LOWER({Customer Ref Email})=...
+// scoping formula already proven in /api/mortgage-completions and /api/customer-birthdays.
+// This guarantees a user can only ever see their own customers' records — never another
+// adviser's — no matter what name/text they type into the Help widget.
+app.get('/api/help-my-clients', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  try {
+    const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
+    const formula = encodeURIComponent(`LOWER({Customer Ref Email})="${brokerEmail}"`);
+    const fieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_VALUATION, MC_DESC, MC_LENDER, MC_BENEFIT_END]
+      .map(f => `fields[]=${f}`).join('&');
+
+    let all = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${formula}&${fieldQs}` +
+        `&sort[0][field]=${MC_BENEFIT_END}&sort[0][direction]=asc` +
+        `&returnFieldsByFieldId=true&pageSize=100` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      all = all.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && all.length < 3000);
+
+    let rows = all.map(rec => {
+      const f = rec.fields || {};
+      return {
+        name: f[MC_NAME] || '',
+        loanAmount: (typeof f[MC_LOAN] === 'number') ? f[MC_LOAN] : null,
+        valuation: (typeof f[MC_VALUATION] === 'number') ? f[MC_VALUATION] : null,
+        lender: f[MC_LENDER] || '',
+        benefitEnd: f[MC_BENEFIT_END] || ''
+      };
+    });
+
+    const nameQuery = (req.query.name || '').toString().trim().toLowerCase();
+    if (nameQuery) {
+      rows = rows.filter(r => r.name.toLowerCase().includes(nameQuery));
+    } else {
+      // No name given — return the soonest upcoming renewals as a summary.
+      rows = rows.filter(r => r.benefitEnd).slice(0, 5);
+    }
+
+    res.json({ rows, filteredByName: !!nameQuery });
+  } catch (err) {
+    console.error('Help my-clients lookup error:', err);
+    res.status(500).json({ error: 'Unable to look that up right now.' });
   }
 });
 
