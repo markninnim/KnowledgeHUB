@@ -380,6 +380,7 @@ select:focus { outline:none; }
   <div id="sidebar-selling-zone" style="display:none">
     <h2 style="margin-top: 8px;">Opportunities</h2>
     <a href="#" id="opp-nav-purchase" class="active" onclick="return oppShowPage('purchase',this)">Purchase Mortgage</a>
+    <a href="#" id="opp-nav-btl" onclick="return oppShowPage('btl',this)">Buy to Let Mortgage</a>
     <a href="#" id="opp-nav-remortgage" onclick="return oppShowPage('remortgage',this)">Remortgage</a>
     <a href="#" id="opp-nav-lifetime" onclick="return oppShowPage('lifetime',this)">Lifetime Mortgage</a>
     <a href="#" id="opp-nav-ftb" onclick="return oppShowPage('ftb',this)">FTB Mortgage</a>
@@ -3627,6 +3628,9 @@ select:focus { outline:none; }
 
     <!-- Purchase Mortgage -->
     <div id="opp-page-purchase" class="opp-page"></div>
+
+    <!-- Buy to Let Mortgage -->
+    <div id="opp-page-btl" class="opp-page" style="display:none;"></div>
 
     <!-- Remortgage -->
     <div id="opp-page-remortgage" class="opp-page" style="display:none;"></div>
@@ -9558,6 +9562,7 @@ var _OPP_CURRENT_PAGE = 'purchase';
 
 var OPP_TITLES = {
   purchase:   'Purchase Mortgage',
+  btl:        'Buy to Let Mortgage',
   remortgage: 'Remortgage',
   lifetime:   'Lifetime Mortgage',
   ftb:        'First-Time Buyer Mortgage',
@@ -9567,6 +9572,7 @@ var OPP_TITLES = {
 
 var OPP_SUBTITLES = {
   purchase:   'A purchase case is far more than a mortgage. Your client is making one of the biggest financial commitments of their life — and they are relying on your expertise to guide them through every part of it. From the day the offer is accepted there are products and services that protect their home, their income and their family. Every recommendation you make deepens the relationship, adds genuine value, and generates income for you and the business.',
+  btl:        'A buy to let case is still a mortgage — and the same full-service approach applies. Your client is taking on a property, an income stream and a set of responsibilities as a landlord, and there are products and services that protect the property, their income and their own family alongside it. Every recommendation you make deepens the relationship, adds genuine value, and generates income for you and the business.',
   remortgage: 'Remortgage clients are often focused purely on rate — but this is your opportunity to lift the conversation. A lot can change between fixed rate periods: income, family size, health, employment status. Use this touchpoint to review protection, check insurance is still adequate, and ensure estate planning reflects their current situation. A thorough remortgage review builds loyalty and uncovers needs that have been sitting unmet.',
   lifetime:   'Lifetime mortgage clients are in a different financial chapter, with different priorities and pressures. They may want to release equity for home improvements, to help family, or to improve quality of life. This is a moment to think holistically about their estate, their care needs, their dependants and their legacy. Every product you introduce should be framed around their long-term security and wellbeing.',
   ftb:        'First-time buyers are making the biggest financial decision of their lives — often without any frame of reference for what they actually need. They are relying on your expertise more than they realise. This is your opportunity to build a client for life: go beyond the mortgage, ensure they leave the process properly protected and legally prepared, and give them the confidence that everything is in place.',
@@ -9618,6 +9624,7 @@ var OPP_CARDS = {
 
 var OPP_PAGE_SECTIONS = {
   purchase:   ['mortgage','protection','insurance','health','legal','move','referrals'],
+  btl:        ['mortgage','protection','insurance','health','legal','move','referrals'],
   remortgage: ['mortgage','protection','insurance','health','legal','referrals'],
   lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
   ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
@@ -10385,7 +10392,7 @@ function oppBuildPageHtml(pageKey) {
 function oppInitPages() {
   if (_OPP_INIT) return;
   _OPP_INIT = true;
-  ['purchase','remortgage','lifetime','ftb','commercial','bridging'].forEach(function(key) {
+  ['purchase','btl','remortgage','lifetime','ftb','commercial','bridging'].forEach(function(key) {
     var el = document.getElementById('opp-page-' + key);
     if (el) el.innerHTML = oppBuildPageHtml(key);
   });
