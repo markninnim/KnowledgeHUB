@@ -9971,6 +9971,10 @@ var OPP_DETAIL = {
         '"Have you thought about who will handle the legal side? I can recommend someone I know will keep things moving and keep you informed."',
         '"The legal process starts as soon as your offer is accepted — the sooner your conveyancer is instructed, the sooner the searches can go in."',
         '"A good conveyancer chases the other side proactively. A slow one can hold up the whole chain — yours or everyone else\'s."'
+      ]},
+      { heading: 'Our Referral Partners', partners: [
+        { name: 'Premier Property Lawyers', url: 'https://www.premierpropertylawyers.com/', logo: '/static/ppl.svg' },
+        { name: 'Alecto Legal', url: 'https://alectolegal.com/', logo: '/static/alecto.svg' }
       ]}
     ]
   },
@@ -10169,6 +10173,15 @@ function oppDetailHtml(cardKey) {
         h += '<div style="font-size:13px;color:#6b7c8f;line-height:1.7;">' + escHtml(item.a) + '</div>';
         h += '</div>';
       });
+    }
+    if (s.partners) {
+      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+      s.partners.forEach(function(p) {
+        h += '<a href="' + escHtml(p.url) + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:20px 28px;flex:1 1 200px;max-width:260px;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#e9f0f6\'">' +
+          '<img src="' + escHtml(p.logo) + '" alt="' + escHtml(p.name) + '" style="max-width:100%;max-height:44px;object-fit:contain;">' +
+          '</a>';
+      });
+      h += '</div>';
     }
     h += '</div>';
   });
