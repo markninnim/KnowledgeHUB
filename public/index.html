@@ -12768,8 +12768,16 @@ function khIsGenericContactPhrase(name) {
   if (!words.length) return true;
   return words.every(function(w) { return KH_GENERIC_CONTACT_WORDS.indexOf(w) !== -1; });
 }
+// "Who is X" is a real name lookup ("who is Dan Maskell"). "Who is the
+// best/funniest/tallest ___" is a subjective/joke question with no actual
+// name to search for — searching the Users table for "best looking director"
+// just produces a silly "couldn't find anyone matching" response. Treat
+// superlative/opinion phrasing as NOT a contact lookup so it reaches the AI,
+// which can respond warmly without literally trying to look someone up.
+var KH_SUBJECTIVE_WORD = /\b(best|worst|funniest|smartest|nicest|kindest|prettiest|best[- ]looking|most attractive|tallest|shortest|favou?rite|coolest|hottest|sexiest|weirdest|laziest|most annoying)\b/i;
 function khIsContactQuery(q) {
   if (khWantsRichAnswer(q)) return false; // "what is/explain/process" etc — not a name lookup
+  if (KH_SUBJECTIVE_WORD.test(q)) return false;
   var trigger = /\b(email|e-mail|phone|mobile|landline|number|contact)\b/i.test(q) ||
     // "details"/"info" alone are ambiguous, so only treat them as a colleague
     // lookup on short queries.
