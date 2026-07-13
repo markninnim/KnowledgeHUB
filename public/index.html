@@ -9987,15 +9987,13 @@ var OPP_DETAIL = {
   survey: {
     overview: 'A mortgage valuation tells the lender the property is worth what the client is paying. It tells the client almost nothing about the actual condition of the building. Recommending the right survey is an honest and practical service — one that protects clients from buying a property with significant defects they were never aware of.',
     sections: [
-      { heading: 'Products we offer', points: [
-        'We offer RICS Level 2 (HomeBuyer Report) alongside a range of purpose-built valuations. We do not offer Level 1 (Condition Report) or Level 3 (Building Survey / Full Structural) — for those, refer the client directly to one of our surveying partners.'
-      ], tiles: [
-        { title: 'RICS Level 2 (HomeBuyer Report)', desc: 'Our most popular option. An inspection of all accessible parts of the property, highlighting defects, risks and maintenance recommendations. Suitable for most conventional homes.' },
-        { title: 'Matrimonial Valuation', desc: 'An independent valuation for divorce or separation proceedings, providing a figure both parties and their solicitors can rely on.' },
-        { title: 'Independent Valuation', desc: 'A standalone valuation for a client who simply wants to know what a property is worth, outside of a mortgage application.' },
-        { title: 'Help to Buy Valuation', desc: 'The specific valuation required when a client is repaying or staircasing their Help to Buy equity loan.' },
-        { title: 'Shared Ownership Valuation', desc: 'The valuation required when a client is staircasing (buying further shares in) a shared ownership property.' },
-        { title: 'Probate Valuation', desc: 'A valuation of a property forming part of an estate, required for probate and Inheritance Tax purposes.' }
+      { heading: 'Products we offer', tiles: [
+        { title: 'RICS Level 2 (HomeBuyer Report)', desc: 'Our most popular option, suitable for most conventional homes built from standard materials in reasonable condition. Inspects all accessible parts of the property, highlighting defects, risks and maintenance recommendations, and gives an insurance reinstatement figure and market valuation. We do not offer Level 1 (Condition Report) or Level 3 (Building Survey) — refer those cases to one of our surveying partners.' },
+        { title: 'Matrimonial Valuation', desc: 'An independent, impartial valuation instructed during divorce or separation proceedings, providing a figure both parties and their solicitors can rely on when dividing assets. Because it must be seen as neutral, it should always come from a surveyor with no prior connection to either party.' },
+        { title: 'Independent Valuation', desc: 'A standalone market valuation for a client who wants to know what a property is worth outside of a mortgage application — for example before listing a property for sale, resolving a dispute, or simply for their own peace of mind.' },
+        { title: 'Help to Buy Valuation', desc: 'The specific valuation required by Homes England (or the relevant agent) when a client is repaying or staircasing their Help to Buy equity loan. It must be carried out by a RICS surveyor and follows a set format required by the scheme administrator.' },
+        { title: 'Shared Ownership Valuation', desc: 'The valuation required when a client is staircasing — buying further shares in a shared ownership property from the housing association. The figure determines the price of the additional share and must be prepared to the housing association\'s specification.' },
+        { title: 'Probate Valuation', desc: 'A formal valuation of a property forming part of a deceased person\'s estate, required by the executors for probate and to establish any Inheritance Tax liability. Timing matters here — HMRC expects a realistic, well-evidenced figure as at the date of death.' }
       ]},
       { heading: 'The value of getting it done', points: [
         'A survey can uncover issues that provide grounds for renegotiating the purchase price or requesting remedial work before exchange',
@@ -10186,9 +10184,9 @@ function oppRenderSections(sections, adviserContainerId) {
       h += '<div id="' + adviserContainerId + '" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
     }
     if (s.tiles) {
-      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">';
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;align-items:stretch;">';
       s.tiles.forEach(function(t) {
-        h += '<div class="ov-card">' +
+        h += '<div class="ov-card" style="cursor:default;height:100%;box-sizing:border-box;display:flex;flex-direction:column;">' +
           '<div class="ov-card-title">' + escHtml(t.title) + '</div>' +
           '<div class="ov-card-sub" style="margin-top:4px;">' + escHtml(t.desc) + '</div>' +
           '</div>';
