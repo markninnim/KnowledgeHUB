@@ -384,9 +384,10 @@ select:focus { outline:none; }
     <a href="#" id="opp-nav-remortgage" onclick="return oppShowPage('remortgage',this)">Remortgage</a>
     <a href="#" id="opp-nav-lifetime" onclick="return oppShowPage('lifetime',this)">Lifetime Mortgage</a>
     <a href="#" id="opp-nav-ftb" onclick="return oppShowPage('ftb',this)">FTB Mortgage</a>
-    <h2>Specialist Lending</h2>
+    <h2>Specialist</h2>
     <a href="#" id="opp-nav-commercial" onclick="return oppShowPage('commercial',this)">Commercial Mortgages</a>
     <a href="#" id="opp-nav-bridging" onclick="return oppShowPage('bridging',this)">Bridging Finance</a>
+    <a href="#" id="opp-nav-wealth" onclick="return oppShowPage('wealth',this)">Wealth</a>
   </div>
   <!-- Performance Zone sidebar -->
   <div id="sidebar-performance-zone" style="display:none">
@@ -3646,6 +3647,9 @@ select:focus { outline:none; }
 
     <!-- Bridging Finance -->
     <div id="opp-page-bridging" class="opp-page" style="display:none;"></div>
+
+    <!-- Wealth -->
+    <div id="opp-page-wealth" class="opp-page" style="display:none;"></div>
 
   </div>
 
@@ -9525,7 +9529,8 @@ var OPP_TITLES = {
   lifetime:   'Lifetime Mortgage',
   ftb:        'First-Time Buyer Mortgage',
   commercial: 'Commercial Mortgages',
-  bridging:   'Bridging Finance'
+  bridging:   'Bridging Finance',
+  wealth:     'Wealth'
 };
 
 var OPP_SUBTITLES = {
@@ -9535,7 +9540,8 @@ var OPP_SUBTITLES = {
   lifetime:   'Lifetime mortgage clients are in a different financial chapter, with different priorities and pressures. They may want to release equity for home improvements, to help family, or to improve quality of life. This is a moment to think holistically about their estate, their care needs, their dependants and their legacy. Every product you introduce should be framed around their long-term security and wellbeing.',
   ftb:        'First-time buyers are making the biggest financial decision of their lives — often without any frame of reference for what they actually need. They are relying on your expertise more than they realise. This is your opportunity to build a client for life: go beyond the mortgage, ensure they leave the process properly protected and legally prepared, and give them the confidence that everything is in place.',
   commercial: 'Commercial mortgages are a specialist area outside most advisers\' day-to-day case load — which makes them easy to overlook. Clients who are self-employed, run a business, or are investing in property regularly have a commercial need sitting in plain sight. Recognising the trigger and referring promptly to a licensed specialist is often all that\'s required to turn a passing comment into a second case.',
-  bridging:   'Bridging finance solves a timing problem — a client needs to complete before a related transaction has finished, or needs short-term funding to secure or improve a property before refinancing. It rarely comes up unprompted, so the opportunity almost always starts with you spotting a client under time pressure and knowing who to bring in.'
+  bridging:   'Bridging finance solves a timing problem — a client needs to complete before a related transaction has finished, or needs short-term funding to secure or improve a property before refinancing. It rarely comes up unprompted, so the opportunity almost always starts with you spotting a client under time pressure and knowing who to bring in.',
+  wealth:     'Wealth is a specialist area outside a mortgage and protection licence, but the opportunities sit inside almost every conversation you have — savings, pensions, lump sums and investments come up constantly, they just do not announce themselves. Recognising the trigger, asking the right question, and making a warm introduction to one of our investment advisers is all that is required. Done well, this protects the client, protects you, and keeps the relationship and the income in the business.'
 };
 
 var OPP_ICONS = {
@@ -9589,7 +9595,8 @@ var OPP_PAGE_SECTIONS = {
   lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
   ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
   commercial: ['commercialLending'],
-  bridging:   ['bridgingLending']
+  bridging:   ['bridgingLending'],
+  wealth:     ['wealthLending']
 };
 
 var OPP_SECTIONS_DEF = {
@@ -9603,7 +9610,8 @@ var OPP_SECTIONS_DEF = {
   moveBtl:          { label: 'The Move',               cards: ['survey'] },
   referrals:        { label: 'Referrals',              cards: ['reviews','wealth'] },
   commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
-  bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
+  bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] },
+  wealthLending:    { label: 'Wealth',                  cards: ['wealth'] }
 };
 
 // ── Card detail content ──────────────────────────────────────
@@ -10116,12 +10124,23 @@ var OPP_DETAIL = {
   wealth: {
     overview: 'Mortgage conversations often surface much wider financial questions — savings sitting in low-interest accounts, an old pension from a previous job, a lump sum from an inheritance or house sale, or simply "what should I be doing with my money?" These sit outside a mortgage and protection licence, but spotting them and referring on is a valuable part of the service you provide.',
     sections: [
-      { heading: 'Common triggers to listen for', points: [
+      { heading: 'The opportunities inside Wealth', points: [
+        'Cash savings — money sitting in a current account or easy-access savings account earning little or no interest',
+        'Workplace and personal pensions — old pensions from previous employers that have been forgotten about, or several small pots that could be consolidated',
+        'Pension consolidation and retirement planning — clients approaching retirement who are unsure how or when to start drawing an income',
+        'Investments and ISAs — Stocks & Shares ISAs, General Investment Accounts, and reviewing whether existing investments still match the client\'s goals and attitude to risk',
+        'Lump sums — inheritance, redundancy payments, bonuses, or proceeds from the sale of a business or another property',
+        'Inheritance Tax and estate planning — larger estates where IHT exposure or gifting strategy has never been reviewed',
+        'Protection-linked investment needs — clients with maturing endowments or investment bonds who are unsure what to do next'
+      ]},
+      { heading: 'How to spot the opportunity', points: [
         'A client mentions savings sitting in a current account earning little or no interest',
-        'A client has a pension with a previous employer they have not thought about in years',
+        'A client has a pension with a previous employer they have not thought about in years, or mentions several small pension pots',
         'A client has received, or is expecting, a lump sum — inheritance, bonus, sale of a business or another property',
         'A client asks general questions about ISAs, investments or "making their money work harder"',
-        'A client is approaching retirement and is unsure how to draw an income from their pensions'
+        'A client is approaching retirement and is unsure how to draw an income from their pensions',
+        'A client mentions being self-employed or a business owner — often a sign of ad hoc, unreviewed pension or investment arrangements',
+        'A client\'s income or family circumstances have changed significantly — a strong natural prompt to review their wider financial position'
       ]},
       { heading: 'Why refer rather than advise', points: [
         'Investment and pension advice is a distinct regulated activity — outside a mortgage and protection licence, and outside the scope of this business\'s permissions for advisers who do not hold it',
@@ -10132,6 +10151,13 @@ var OPP_DETAIL = {
         '"You mentioned some savings sitting in your current account — would it be helpful if I introduced you to one of our investment advisers to see if they could be working harder for you?"',
         '"Do you know where your old workplace pension is, or roughly what it\'s worth? Our investment team can help you track it down and check it\'s still right for you."',
         '"Now seems like a good time to make sure your wider finances are working well alongside your mortgage — I can put you in touch with one of our investment advisers, no obligation."'
+      ]},
+      { heading: 'Suggested closing questions', points: [
+        '"Would it be alright if I passed your details to one of our investment advisers so they can give you a call — no obligation at all?"',
+        '"Shall I get one of the team to reach out this week, or is there a better time that suits you?"',
+        '"If they could show you a way to make that money work harder for you, would that be worth 20 minutes of your time?"',
+        '"Is it alright if I let them know roughly what you\'ve mentioned today, so the conversation isn\'t starting from scratch?"',
+        '"Would you like me to make the introduction now while we\'re speaking, or would you rather I email you their details?"'
       ]},
       { heading: 'Common objections', items: [
         { q: '"I don\'t really have any investments."', a: 'That\'s exactly why it\'s worth a conversation — even modest savings sitting doing nothing, or an old pension you\'ve lost track of, can usually be put to better use. There\'s no cost or obligation in having a chat with one of our investment advisers.' },
@@ -10392,7 +10418,7 @@ function oppBuildPageHtml(pageKey) {
 function oppInitPages() {
   if (_OPP_INIT) return;
   _OPP_INIT = true;
-  ['purchase','btl','remortgage','lifetime','ftb','commercial','bridging'].forEach(function(key) {
+  ['purchase','btl','remortgage','lifetime','ftb','commercial','bridging','wealth'].forEach(function(key) {
     var el = document.getElementById('opp-page-' + key);
     if (el) el.innerHTML = oppBuildPageHtml(key);
   });
