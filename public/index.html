@@ -12635,6 +12635,14 @@ function khWantsRichAnswer(q) {
   return /\b(what is|what's|what are|how does|how do .*work|why|explain|process|procedure|difference between|tell me about|details? (about|on)|what happens|how long|how many days|how much time|deadline|timescale|time limit|do i have to|am i required|is it mandatory|how soon|within how)\b/i.test(q);
 }
 
+// Word-boundary match, not a raw substring search — a plain indexOf let short
+// keywords like "pos" match inside unrelated words (e.g. "social media
+// POSTS" wrongly matching the POS/Acre entry). \b...\b with spaces treated
+// as flexible whitespace stops that.
+function khKeywordRegex(k) {
+  var esc = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  return new RegExp('\\b' + esc + '\\b', 'i');
+}
 function khMatch(query) {
   var q = (query || '').toLowerCase().trim();
   if (!q) return null;
@@ -12642,7 +12650,7 @@ function khMatch(query) {
   var best = null, bestScore = 0;
   KH_KB.forEach(function(entry) {
     var score = 0;
-    entry.keywords.forEach(function(k) { if (q.indexOf(k) !== -1) score += k.length; });
+    entry.keywords.forEach(function(k) { if (khKeywordRegex(k).test(q)) score += k.length; });
     if (score > bestScore) { bestScore = score; best = entry; }
   });
   return bestScore > 0 ? best : null;
