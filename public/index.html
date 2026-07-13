@@ -6037,7 +6037,7 @@ function generateBrokerBrand() {
 
 // ── Tab switching ─────────────────────────────────────────────
 var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','muttuo','leadgen'];
-function switchTab(tab) {
+function switchTab(tab, skipLeadSeen) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
     var sidebar = document.getElementById('sidebar-' + t);
@@ -6074,7 +6074,10 @@ function switchTab(tab) {
   if (tab === 'leadgen') {
     if (typeof loadLeadGen === 'function') loadLeadGen();
     if (typeof lgStartPolling === 'function') lgStartPolling();
-    if (typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
+    // Don't auto-clear the "new lead" notification dot when the page just
+    // loaded directly onto this tab (e.g. via a reload after switching who
+    // you're viewing as) — only when the user actually clicks into it.
+    if (!skipLeadSeen && typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
   } else if (typeof lgStopPolling === 'function') { lgStopPolling(); }
 }
 
@@ -7763,7 +7766,7 @@ var _currentUser = null;
     var _initHash = window.location.hash.replace('#', '');
     if (_initHash === 'my-team') _initHash = 'supervisor-zone';
     var _initTab  = (TAB_IDS.indexOf(_initHash) !== -1) ? _initHash : 'home';
-    switchTab(_initTab);
+    switchTab(_initTab, true);
     loadHomeData();
     // Pre-load surveying so the tab button shows fees on arrival
     loadSurveying();
@@ -15789,7 +15792,8 @@ function fpSubmit() {
   if (window.location.hash === '#leadgen' && !_lgLoaded) {
     if (typeof loadLeadGen === 'function') loadLeadGen();
     if (typeof lgStartPolling === 'function') lgStartPolling();
-    if (typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
+    // Don't auto-clear the notification dot on a page-load fallback — same
+    // reasoning as the skipLeadSeen flag in switchTab().
   }
 })();
 
