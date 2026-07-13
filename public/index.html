@@ -10007,6 +10007,12 @@ var OPP_DETAIL = {
         '"Your lender will do a valuation — but that is for their benefit, not yours. It won\'t tell you much about the actual condition of the property."',
         '"Given the age of the property I would usually recommend at least a Level 2 survey. Would you like me to arrange a quote?"',
         '"A survey can actually save you money — it is not unusual for clients to negotiate a reduction based on what the surveyor flags."'
+      ]},
+      { heading: 'Our Surveying Partners', points: [
+        'We have two surveying partners you can use — the choice is entirely yours.'
+      ], logoCards: [
+        { name: 'FP Surveying', logo: '/static/1fpsurveying@3x.png', desc: 'Priced the cheapest of our two partners, helping attract work from comparison websites. This is achieved by not paying commission on referrals.' },
+        { name: 'Acre Surveying', logo: '/static/acre-surveying-logo.png', desc: 'Remains competitively priced while paying a £100 commission on referrals.', note: 'Use the refer button and the commission is paid instantly on booking.' }
       ]}
     ]
   },
@@ -10211,6 +10217,20 @@ function oppRenderSections(sections, adviserContainerId) {
         h += '<a href="' + escHtml(p.url) + '" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:20px 28px;flex:1 1 200px;max-width:260px;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#e9f0f6\'">' +
           '<img src="' + escHtml(p.logo) + '" alt="' + escHtml(p.name) + '" style="max-width:100%;max-height:44px;object-fit:contain;">' +
           '</a>';
+      });
+      h += '</div>';
+    }
+    if (s.logoCards) {
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">';
+      s.logoCards.forEach(function(p) {
+        h += '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:18px 20px;">' +
+          '<div style="display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;height:52px;">' +
+            '<img src="' + escHtml(p.logo) + '" alt="' + escHtml(p.name) + '" style="max-width:100%;max-height:100%;object-fit:contain;">' +
+          '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(p.name) + '</div>' +
+          '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.6;">' + escHtml(p.desc) + '</div>' +
+          (p.note ? '<div style="font-size:11.5px;color:var(--brand-orange);font-weight:600;margin-top:8px;">' + escHtml(p.note) + '</div>' : '') +
+          '</div>';
       });
       h += '</div>';
     }
