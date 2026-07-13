@@ -6503,7 +6503,7 @@ function openShareModal(doc) {
   // Load advisers if not already loaded
   if (_shareAdvisers.length === 0) {
     fetch('/api/share/advisers')
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
       .then(function(data) {
         _shareAdvisers = data;
         renderShareAdvisers(_shareAdvisers);
@@ -7408,7 +7408,7 @@ function loadHomeData() {
 
       Promise.all(behindTypes.map(function(t) {
         return fetch('/api/learning/catch-up?type=' + encodeURIComponent(t.key))
-          .then(function(r) { return r.json(); })
+          .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
           .then(function(d) { return { type: t, videos: d.videos || [] }; });
       })).then(function(results) {
         var listEl = document.getElementById('home-cpd-recs-list');
@@ -8673,13 +8673,13 @@ function adminForceReset(email) {
   if (isForced) {
     // Clear it
     fetch('/api/admin/force-reset/' + encodeURIComponent(email), { method: 'DELETE' })
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
       .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
       .catch(function() { alert('Network error'); });
   } else {
     if (!confirm('Force ' + email + ' to change their password on next login?')) return;
     fetch('/api/admin/force-reset', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email: email }) })
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
       .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
       .catch(function() { alert('Network error'); });
   }
@@ -12705,6 +12705,13 @@ function khAddActionButton(label, tab) {
 var _khHistory = [];
 var _khAiUnavailable = false; // set true after a 503, so we stop retrying pointlessly this session
 
+// A raw backend error like "Unauthorized" (session expired mid-conversation)
+// should never be shown verbatim — it means nothing to the person using the
+// widget. Show a clear, actionable message instead.
+function khAddSessionExpiredMessage() {
+  khAddBotMessage('Looks like your session has timed out. Please refresh the page and log back in, then ask me again.');
+}
+
 function khShowTyping() {
   var wrap = document.getElementById('kh-messages');
   if (!wrap) return;
@@ -12751,7 +12758,7 @@ function khContactLookup(query) {
   }
   khShowTyping();
   fetch('/api/help-contact-lookup?name=' + encodeURIComponent(name))
-    .then(function(r) { return r.json(); })
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
     .then(function(d) {
       khRemoveTyping();
       var matches = (d && d.matches) || [];
@@ -12767,7 +12774,8 @@ function khContactLookup(query) {
         khAddBotMessage(lines.join('\n'));
       });
     })
-    .catch(function() {
+    .catch(function(e) {
+      if (e === 'handled') return;
       khRemoveTyping();
       khAddBotMessage('Something went wrong looking that up — please try again.');
     });
@@ -12816,7 +12824,7 @@ function khMyClientsLookup(query) {
   if (khIsClientCountQuery(query)) {
     khShowTyping();
     fetch('/api/help-my-clients?count=1')
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
       .then(function(d) {
         khRemoveTyping();
         var count = (d && typeof d.count === 'number') ? d.count : 0;
@@ -12825,7 +12833,8 @@ function khMyClientsLookup(query) {
           : ('You have ' + count + ' customer' + (count === 1 ? '' : 's') + ' in Mortgage Completions.'));
         khAddActionButton('View in AutoCRM™', 'autocrm');
       })
-      .catch(function() {
+      .catch(function(e) {
+        if (e === 'handled') return;
         khRemoveTyping();
         khAddBotMessage('Something went wrong looking that up — please try again.');
       });
@@ -12834,7 +12843,7 @@ function khMyClientsLookup(query) {
   var name = khExtractClientName(query);
   khShowTyping();
   fetch('/api/help-my-clients' + (name ? ('?name=' + encodeURIComponent(name)) : ''))
-    .then(function(r) { return r.json(); })
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
     .then(function(d) {
       khRemoveTyping();
       var rows = (d && d.rows) || [];
@@ -12863,7 +12872,8 @@ function khMyClientsLookup(query) {
       });
       khAddActionButton('View in AutoCRM™', 'autocrm');
     })
-    .catch(function() {
+    .catch(function(e) {
+      if (e === 'handled') return;
       khRemoveTyping();
       khAddBotMessage('Something went wrong looking that up — please try again.');
     });
@@ -12894,7 +12904,7 @@ function khMyLeadsLookup(query) {
   if (khIsLeadCountQuery(query)) {
     khShowTyping();
     fetch('/api/help-my-leads?count=1')
-      .then(function(r) { return r.json(); })
+      .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
       .then(function(d) {
         khRemoveTyping();
         var count = (d && typeof d.count === 'number') ? d.count : 0;
@@ -12903,7 +12913,8 @@ function khMyLeadsLookup(query) {
           : ('You have ' + count + ' lead' + (count === 1 ? '' : 's') + ' assigned to you.'));
         khAddActionButton('View in Leads', 'leadgen');
       })
-      .catch(function() {
+      .catch(function(e) {
+        if (e === 'handled') return;
         khRemoveTyping();
         khAddBotMessage('Something went wrong looking that up — please try again.');
       });
@@ -12912,7 +12923,7 @@ function khMyLeadsLookup(query) {
   var name = khExtractLeadName(query);
   khShowTyping();
   fetch('/api/help-my-leads' + (name ? ('?name=' + encodeURIComponent(name)) : ''))
-    .then(function(r) { return r.json(); })
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
     .then(function(d) {
       khRemoveTyping();
       var rows = (d && d.rows) || [];
@@ -12941,7 +12952,8 @@ function khMyLeadsLookup(query) {
       });
       khAddActionButton('View in Leads', 'leadgen');
     })
-    .catch(function() {
+    .catch(function(e) {
+      if (e === 'handled') return;
       khRemoveTyping();
       khAddBotMessage('Something went wrong looking that up — please try again.');
     });
@@ -13006,6 +13018,7 @@ function khAskAi(query) {
   }).then(function(res) {
     khRemoveTyping();
     if (!res.ok) {
+      if (res.status === 401) { khAddSessionExpiredMessage(); return; }
       if (res.status === 503) _khAiUnavailable = true;
       khAddBotMessage((res.data && res.data.error) || 'Something went wrong reaching the AI. Please try again.');
       khAddSuggestions(['Log CPD', 'View my payslip', 'Compliance forms', 'Find an adviser', 'Contact number']);
