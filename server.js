@@ -1713,7 +1713,11 @@ const LICENCED_ADVISER_TYPES = {
   // "Protection only" — sells protection but none of the other licensed
   // product lines. Used on life-assurance-related opportunity cards (Life
   // Cover, CI, IP, FIB, ASU, Children's Cover) to point to the right adviser.
-  protectionOnly:      u => !!u.sellsProtection && !u.sellsMortgages && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages
+  protectionOnly:      u => !!u.sellsProtection && !u.sellsMortgages && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages,
+  // Every specialist across any licenced product line — used on the Wealth
+  // Referral card, which should surface the full team of licenced advisers
+  // rather than just those with the Wealth (investments) licence.
+  allLicenced:         u => !!(u.pmi || u.equityRelease || u.commercialMortgages || u.bridging || u.businessProtection || u.surveying || u.trusts || u.sellsInvestments)
 };
 app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
   const type = req.query.type;

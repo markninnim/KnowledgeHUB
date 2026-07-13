@@ -4698,7 +4698,7 @@ select:focus { outline:none; }
                 <input id="uf-protection" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Protection
               </label>
               <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
-                <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Investments
+                <input id="uf-investments" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Wealth
               </label>
               <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7c8f;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
                 <input id="uf-equity-release" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">Lifetime Mortgages
@@ -7300,7 +7300,7 @@ function loadHomeData() {
     var types = [];
     if (user.sellsMortgages  || noFlags) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
     if (user.sellsProtection || noFlags) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
-    if (user.sellsInvestments)           types.push({ key: 'Investment', color: hasTwoColors ? 'var(--brand-navy)' : '#2e99d5' });
+    if (user.sellsInvestments)           types.push({ key: 'Wealth', color: hasTwoColors ? 'var(--brand-navy)' : '#2e99d5' });
 
     var totalMins = cpd.ytdMins || 0;
 
@@ -8176,7 +8176,7 @@ function renderUserList(users) {
     var casBadge = u.cas ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">CAS</span>' : '<span style="background:#fef2f2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Non-CAS</span>';
     var mktBadge = u.isMarketing ? '<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Marketing</span>' : '';
     var products = [];
-    if (u.sellsInvestments)   products.push('<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Investments</span>');
+    if (u.sellsInvestments)   products.push('<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Wealth</span>');
     if (u.sellsMortgages)     products.push('<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Mortgages</span>');
     if (u.sellsProtection)    products.push('<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Protection</span>');
     if (u.equityRelease)      products.push('<span style="background:#dbeafe;color:var(--brand-navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Equity Release</span>');
@@ -9137,7 +9137,7 @@ function openBrokerProfile(email, name) {
       var types = [];
       if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
       if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
-      if (u.sellsInvestments) types.push({ key: 'Investment', color: '#2e99d5' });
+      if (u.sellsInvestments) types.push({ key: 'Wealth', color: '#2e99d5' });
       if (!types.length) types = [{ key: 'Mortgage', color: 'var(--brand-navy)' }, { key: 'Protection', color: 'var(--brand-orange)' }];
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
@@ -10126,7 +10126,7 @@ var OPP_DETAIL = {
         { q: '"I don\'t really have any investments."', a: 'That\'s exactly why it\'s worth a conversation — even modest savings sitting doing nothing, or an old pension you\'ve lost track of, can usually be put to better use. There\'s no cost or obligation in having a chat with one of our investment advisers.' },
         { q: '"I already have an adviser for that."', a: 'That\'s great to hear — it\'s just as important that your investments and pensions are aligned with your mortgage and protection planning, so do keep us updated on anything that changes.' }
       ]},
-      { heading: 'Licenced Advisers', dynamicType: 'investments' }
+      { heading: 'Licenced Advisers', dynamicType: 'allLicenced' }
     ]
   }
 };
@@ -10257,7 +10257,8 @@ var OPP_LICENCE_LABELS = {
   protectionOnly:      'Protection',
   surveying:           'Surveying',
   trusts:              'Trusts',
-  investments:         'Investment'
+  investments:         'Wealth',
+  allLicenced:         'Wealth'
 };
 function oppOpenAdviserModal(email) {
   var a = _oppAdvisersCache[email];
@@ -11482,7 +11483,7 @@ function parseCsvLine(line) {
 function showImportPreview(rows) {
   document.getElementById('import-count').textContent = rows.length + ' user' + (rows.length !== 1 ? 's' : '') + ' ready to import';
   var cols = ['email','firstName','lastName','jobTitle','isAdmin','sellsInvestments','sellsMortgages','sellsProtection','isSupervisor','supervisorEmail'];
-  var labels = ['Email','First Name','Last Name','Job Title','Admin','Investments','Mortgages','Protection','Supervisor','Supervisor Email'];
+  var labels = ['Email','First Name','Last Name','Job Title','Admin','Wealth','Mortgages','Protection','Supervisor','Supervisor Email'];
   var th = cols.map(function(c,i){ return '<th style="padding:6px 10px;text-align:left;color:#6b7c8f;font-weight:600;border-bottom:1px solid #d1d5db;">' + labels[i] + '</th>'; }).join('');
   var trs = rows.map(function(r, idx) {
     var bg = idx % 2 === 0 ? '#fff' : '#f9fafc';

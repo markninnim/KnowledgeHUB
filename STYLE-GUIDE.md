@@ -12,7 +12,7 @@ Font: **Plus Jakarta Sans** everywhere. Never hard-code another font-family; com
 | All body text (paragraphs, table cells, names, stats, JS-rendered copy, inline `<strong>`/links inside body copy) | `#6b7c8f` — no exceptions |
 | Names in the User Management admin list | `#003768` (navy) — approved exception to the body-text rule |
 | Page background | `#f5f7fa` |
-| CPD/product type colours | Mortgage `#003768` (navy), Protection `#fcb034` (amber), Investment `#2e99d5` (accent blue) — where Protection and Investment appear together (e.g. activity-type pills), Protection uses `#fcb034` and Investment `#2e99d5` to stay distinct |
+| CPD/product type colours | Mortgage `#003768` (navy), Protection `#fcb034` (amber), Wealth `#2e99d5` (accent blue) — where Protection and Wealth appear together (e.g. activity-type pills), Protection uses `#fcb034` and Wealth uses `#2e99d5` to stay distinct |
 | Borders (default) | `#d1d5db` everywhere — no exceptions. (Thin one-off dividers, hover-fill backgrounds, and chart/heatmap cell fills are not borders and keep their own light-grey `#e8ecf0`/similar — don't reclassify those as border colour just because they're grey.) |
 | Sidebar section labels | `#fcb034` (orange) |
 | Success / target met / CAS | `#22c55e` / `#166534` (pill bg `#dcfce7`) |
