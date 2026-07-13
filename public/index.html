@@ -4954,14 +4954,14 @@ select:focus { outline:none; }
 <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;"></div>
 
 <!-- ── KnowledgeHUB Help widget (rule-based, not AI) ─────────────────────── -->
-<div id="kh-bubble" onclick="khToggle()" title="KnowledgeHUB Help" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;">
+<div id="kh-bubble" onclick="khToggle()" title="KnowledgeHELPER" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
 </div>
 <div id="kh-panel" style="display:none;flex-direction:column;position:fixed;bottom:88px;right:24px;width:340px;max-width:92vw;max-height:70vh;background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.28);z-index:4001;overflow:hidden;">
   <div style="background:var(--brand-navy);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div>
-      <div style="font-size:14px;font-weight:700;">KnowledgeHUB Help</div>
-      <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Your KnowledgeHUB assistant</div>
+      <div style="font-size:14px;font-weight:700;">KnowledgeHELPER</div>
+      <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Your KnowledgeHUB assistant (on a short leash)</div>
     </div>
     <button onclick="khClose()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1;padding:4px;">&#x2715;</button>
   </div>
@@ -13201,7 +13201,8 @@ function khSubmit() {
 function khGreet() {
   var firstName = (_currentUser && _currentUser.firstName) || '';
   var hello = firstName ? ('Hi ' + firstName + '! ') : 'Hi! ';
-  khAddBotMessage(hello + 'I\'m your KnowledgeHUB assistant — ask me anything about the Hub and I\'ll do my best to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.');
+  khAddBotMessage(hello + 'I\'m KnowledgeHELPER — ask me anything about the Hub and I\'ll do my best to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.');
+  khAddBotMessage('Fair warning: Mark has been very strict about what I am and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
 }
 
 function khOpen() {
