@@ -13201,8 +13201,7 @@ function khSubmit() {
 function khGreet() {
   var firstName = (_currentUser && _currentUser.firstName) || '';
   var hello = firstName ? ('Hi ' + firstName + '! ') : 'Hi! ';
-  khAddBotMessage(hello + 'I\'m your KnowledgeHUB assistant — ask me anything about the Hub and I\'ll do my best to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess. Try typing a question, or tap one below:');
-  khAddSuggestions(['Log CPD', 'View my payslip', 'Find an adviser', 'Contact number']);
+  khAddBotMessage(hello + 'I\'m your KnowledgeHUB assistant — ask me anything about the Hub and I\'ll do my best to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.');
 }
 
 function khOpen() {
