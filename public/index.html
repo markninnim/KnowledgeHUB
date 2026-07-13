@@ -14147,6 +14147,32 @@ function lgIsGoldenHour(iso) {
   var t = new Date(iso).getTime();
   return (Date.now() - t) <= 3600000 && (Date.now() - t) >= 0;
 }
+// ── Per-lead "new" dot ──────────────────────────────────────────
+// Independent of the top-nav notification dot: shows on an individual lead's
+// row/card the moment it's allocated to the logged-in broker, and only
+// clears once THAT specific lead has been opened — not just by visiting the
+// Leads tab, so a broker can still spot which exact lead just came in.
+function lgOpenedLeadIdsKey() {
+  var email = (_currentUser && _currentUser.email) || 'anon';
+  return 'lgOpenedLeadIds:' + email.toLowerCase();
+}
+function lgGetOpenedLeadIds() {
+  try { return JSON.parse(localStorage.getItem(lgOpenedLeadIdsKey()) || '[]'); } catch (_) { return []; }
+}
+function lgMarkLeadOpened(id) {
+  if (!id) return;
+  var opened = lgGetOpenedLeadIds();
+  if (opened.indexOf(id) === -1) {
+    opened.push(id);
+    localStorage.setItem(lgOpenedLeadIdsKey(), JSON.stringify(opened));
+  }
+}
+function lgIsNewLead(lead, openedIds) {
+  return lead.adviser === lgCurrentUserName() && openedIds.indexOf(lead.id) === -1;
+}
+function lgNewLeadDotHtml() {
+  return '<span title="New — just allocated to you" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e5484d;margin-left:6px;vertical-align:middle;"></span>';
+}
 var _lgAdviserFilter = ''; // '' = all advisers, otherwise an exact adviser name
 function lgCurrentUserName() {
   var u = _currentUser || {};
@@ -14412,6 +14438,7 @@ function lgRenderLeads() {
   var filterWrap = document.getElementById('lg-adviser-filter-wrap');
   if (filterWrap) filterWrap.innerHTML = showAdviserFilter ? lgAdviserFilterHtml() : '';
   var leads = lgFilteredLeads();
+  var openedLeadIds = lgGetOpenedLeadIds();
   if (!leads.length) {
     contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' +
       (_lgLeads.length ? 'No leads match this view.' : 'No leads yet — click <strong>+ Add Lead</strong> to create one.') + '</div>';
@@ -14421,7 +14448,7 @@ function lgRenderLeads() {
     var cards = leads.map(function(lead) {
       return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
-          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + '</span>'
+          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</span>'
           + '<div style="display:flex;gap:6px;flex-shrink:0;">' + lgQualitySelectHtml(lead) + lgStatusSelectHtml(lead) + '</div>'
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
@@ -14450,7 +14477,7 @@ function lgRenderLeads() {
   var rows = leads.map(function(lead) {
     var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
-      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + '</td>'
+      + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? lgFmtDateTime(lead.createdTime) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
@@ -14773,6 +14800,7 @@ function lgUpdateQuality(id, quality) {
 }
 function lgOpenModal(id) {
   var lead = id ? _lgLeads.find(function(l) { return l.id === id; }) : null;
+  if (id) { lgMarkLeadOpened(id); lgRenderLeads(); } // clear this lead's "new" dot the moment it's opened
   document.getElementById('lg-modal-title').textContent = lead ? 'Edit Lead' : 'Add Lead';
   document.getElementById('lg-id').value      = lead ? lead.id : '';
   document.getElementById('lg-name').value    = lead ? lead.name    : '';
