@@ -9573,7 +9573,8 @@ var OPP_ICONS = {
   removals:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
   reviews:     '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   commercial:  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="9" y1="7" x2="9" y2="7.01"/><line x1="15" y1="7" x2="15" y2="7.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="15" y1="12" x2="15" y2="12.01"/><line x1="9" y1="17" x2="15" y2="17"/></svg>',
-  bridging:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20v-6a8 8 0 0 1 16 0v6"/><line x1="8" y1="20" x2="8" y2="14"/><line x1="16" y1="20" x2="16" y2="14"/></svg>'
+  bridging:    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20v-6a8 8 0 0 1 16 0v6"/><line x1="8" y1="20" x2="8" y2="14"/><line x1="16" y1="20" x2="16" y2="14"/></svg>',
+  wealth:      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
 };
 
 var OPP_CARDS = {
@@ -9593,7 +9594,8 @@ var OPP_CARDS = {
   removals:    { title: 'Removals',                       desc: 'A referral to a trusted removal company rounds off the client experience and keeps you front of mind long after completion day.' },
   reviews:     { title: 'Reviews & Referrals',            desc: 'The most powerful source of new business. Ask every client to leave a Google review and refer a friend — the best time to ask is at offer stage.' },
   commercial:  { title: 'Commercial Mortgages',           desc: 'Lending secured on a property used for business purposes — offices, retail units, warehouses, or a mixed-use building. Spot the trigger, refer to a specialist adviser.' },
-  bridging:    { title: 'Bridging Finance',                desc: 'Short-term secured lending that covers a gap — a chain break, an auction purchase, or works needed before a property can be mortgaged conventionally.' }
+  bridging:    { title: 'Bridging Finance',                desc: 'Short-term secured lending that covers a gap — a chain break, an auction purchase, or works needed before a property can be mortgaged conventionally.' },
+  wealth:      { title: 'Wealth Referral',                 desc: 'Clients often have savings, investments or pension queries outside your licence. Refer them to our team of investment advisers to make sure their wider finances are working as hard as their mortgage.' }
 };
 
 var OPP_PAGE_SECTIONS = {
@@ -9612,7 +9614,7 @@ var OPP_SECTIONS_DEF = {
   health:           { label: 'Health',                 cards: ['pmi'] },
   legal:            { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
   move:             { label: 'The Move',               cards: ['survey','removals'] },
-  referrals:        { label: 'Referrals',              cards: ['reviews'] },
+  referrals:        { label: 'Referrals',              cards: ['reviews','wealth'] },
   commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
   bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
 };
@@ -10094,6 +10096,33 @@ var OPP_DETAIL = {
         '"Because the property needs work before it can be mortgaged normally, there\'s a short-term lending option that can bridge that gap — I can introduce you to the right person."'
       ]}
     ]
+  },
+  wealth: {
+    overview: 'Mortgage conversations often surface much wider financial questions — savings sitting in low-interest accounts, an old pension from a previous job, a lump sum from an inheritance or house sale, or simply "what should I be doing with my money?" These sit outside a mortgage and protection licence, but spotting them and referring on is a valuable part of the service you provide.',
+    sections: [
+      { heading: 'Common triggers to listen for', points: [
+        'A client mentions savings sitting in a current account earning little or no interest',
+        'A client has a pension with a previous employer they have not thought about in years',
+        'A client has received, or is expecting, a lump sum — inheritance, bonus, sale of a business or another property',
+        'A client asks general questions about ISAs, investments or "making their money work harder"',
+        'A client is approaching retirement and is unsure how to draw an income from their pensions'
+      ]},
+      { heading: 'Why refer rather than advise', points: [
+        'Investment and pension advice is a distinct regulated activity — outside a mortgage and protection licence, and outside the scope of this business\'s permissions for advisers who do not hold it',
+        'Our team of investment advisers hold the right qualifications and permissions to give suitable, compliant advice on savings, investments and pensions',
+        'A warm introduction protects the client, protects you, and keeps the relationship and the income in the business rather than losing it elsewhere'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"You mentioned some savings sitting in your current account — would it be helpful if I introduced you to one of our investment advisers to see if they could be working harder for you?"',
+        '"Do you know where your old workplace pension is, or roughly what it\'s worth? Our investment team can help you track it down and check it\'s still right for you."',
+        '"Now seems like a good time to make sure your wider finances are working well alongside your mortgage — I can put you in touch with one of our investment advisers, no obligation."'
+      ]},
+      { heading: 'Common objections', items: [
+        { q: '"I don\'t really have any investments."', a: 'That\'s exactly why it\'s worth a conversation — even modest savings sitting doing nothing, or an old pension you\'ve lost track of, can usually be put to better use. There\'s no cost or obligation in having a chat with one of our investment advisers.' },
+        { q: '"I already have an adviser for that."', a: 'That\'s great to hear — it\'s just as important that your investments and pensions are aligned with your mortgage and protection planning, so do keep us updated on anything that changes.' }
+      ]},
+      { heading: 'Licenced Advisers', dynamicType: 'investments' }
+    ]
   }
 };
 
@@ -10222,7 +10251,8 @@ var OPP_LICENCE_LABELS = {
   businessProtection:  'Business Protection',
   protectionOnly:      'Protection',
   surveying:           'Surveying',
-  trusts:              'Trusts'
+  trusts:              'Trusts',
+  investments:         'Investment'
 };
 function oppOpenAdviserModal(email) {
   var a = _oppAdvisersCache[email];

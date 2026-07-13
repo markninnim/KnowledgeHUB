@@ -1709,6 +1709,7 @@ const LICENCED_ADVISER_TYPES = {
   businessProtection:  u => !!u.businessProtection,
   surveying:           u => !!u.surveying,
   trusts:              u => !!u.trusts,
+  investments:         u => !!u.sellsInvestments,
   // "Protection only" — sells protection but none of the other licensed
   // product lines. Used on life-assurance-related opportunity cards (Life
   // Cover, CI, IP, FIB, ASU, Children's Cover) to point to the right adviser.
