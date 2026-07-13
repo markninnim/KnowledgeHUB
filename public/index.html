@@ -8260,23 +8260,36 @@ function avatarColorFor(seed) {
 function avatarIsFemale(salutation) {
   return salutation === 'Mrs' || salutation === 'Ms' || salutation === 'Miss';
 }
-// Head-and-shoulders silhouette, edge-to-edge, styled to match the reference
-// placeholder-avatar artwork: darker hair, pale face, soft neck shadow, dark
-// garment across the shoulders. Female version has hair falling past the
-// shoulders with a side-swept fringe; male version has short textured hair.
+// Head-and-shoulders silhouette, styled to match the reference placeholder-avatar
+// artwork: a slate/charcoal hair-and-garment tone, a pale lavender-grey face,
+// a soft darker neck shadow, and a thin light outline tracing the silhouette
+// edge. Female version has hair falling past the shoulders with a side-swept
+// fringe; male version has short, spiky, side-parted hair with visible ears.
 function avatarSvgIcon(isFemale) {
   if (isFemale) {
-    return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">' +
-      '<path d="M50 12c17 0 27 13 27 30 0 10-2 19-6 26 14 5 27 13 32 24 3 7 5 14 5 19H-8c0-5 2-12 5-19 5-11 18-19 32-24-4-7-6-16-6-26 0-17 10-30 27-30z" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.35)" stroke-width="1"/>' +
-      '<path d="M50 60c-8 0-15-6-18-14-1 3-3 6-5 8 1 4 2 8 4 11 5 6 12 9 19 9s14-3 19-9c2-3 3-7 4-11-2-2-4-5-5-8-3 8-10 14-18 14z" fill="rgba(0,0,0,.15)"/>' +
-      '<path d="M50 24c-12 0-19 9-19 20 0 8 3 15 8 20 3 3 7 5 11 5s8-2 11-5c5-5 8-12 8-20 0-8-3-15-9-18-3 5-9 8-14 8-1-3-1-7 4-10z" fill="#dfe4ea"/>' +
+    return '<svg viewBox="0 0 100 100" style="width:92%;height:92%;display:block;margin:4% auto 0;" xmlns="http://www.w3.org/2000/svg">' +
+      // Hair + shoulders — one continuous silhouette, hair falling past the shoulders
+      '<path d="M50 15c12 0 20 8 20 20 0 7-2 13-6 18 11 5 21 13 21 23 0 3-3 5-6 5H21c-3 0-6-2-6-5 0-10 10-18 21-23-4-5-6-11-6-18 0-12 8-20 20-20z" ' +
+        'fill="rgba(0,0,0,.32)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>' +
+      // Neck shadow
+      '<path d="M50 58c-7 0-13-5-16-12-1 3-3 5-5 7 1 4 2 7 4 10 5 6 11 9 17 9s12-3 17-9c2-3 3-6 4-10-2-2-4-4-5-7-3 7-9 12-16 12z" fill="rgba(0,0,0,.16)"/>' +
+      // Face
+      '<path d="M50 28c-9 0-16 7-16 17 0 6 2 12 6 16 3 3 6 5 10 5s7-2 10-5c4-4 6-10 6-16 0-8-4-14-11-16-2 3-6 5-10 5-1-2-1-4 5-6z" fill="#dfe4ea"/>' +
+      // Side-swept fringe
+      '<path d="M38 32c2-3 6-6 11-6 4 0 7 1 10 4-3 0-6 1-8 3-3 3-5 8-6 13-2-5-3-9-7-14z" fill="rgba(0,0,0,.22)"/>' +
       '</svg>';
   }
-  return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="M22 88c0-19 12-33 28-33s28 14 28 33z" fill="rgba(0,0,0,.28)"/>' +
-    '<path d="M35 62c-2 3-4 6-4 6 1 4 2 8 4 11 5 6 10 9 15 9s10-3 15-9c2-3 3-7 4-11 0 0-2-3-4-6-3 6-9 10-15 10s-12-4-15-10z" fill="rgba(0,0,0,.15)"/>' +
-    '<circle cx="50" cy="42" r="20" fill="#dfe4ea"/>' +
-    '<path d="M30 40c1-11 9-19 20-19 8 0 15 4 18 11-2 0-4-1-5-2 1 2 3 4 4 5-3-1-5-1-7-3 0 2 1 3 1 5-3-2-6-2-8-5-1 2-1 4-3 5-1-3-2-5-5-6-1 2-2 4-4 5-1-3-1-5-3-6-1 3-3 6-6 7-1-3-1-6-1-8-2 3-1 8-1 11 0-1-1-2-1-2z" fill="rgba(0,0,0,.28)"/>' +
+  return '<svg viewBox="0 0 100 100" style="width:92%;height:92%;display:block;margin:4% auto 0;" xmlns="http://www.w3.org/2000/svg">' +
+    // Shoulders / garment
+    '<path d="M50 60c-14 0-26 12-26 28 0 2 2 4 4 4h44c2 0 4-2 4-4 0-16-12-28-26-28z" fill="rgba(0,0,0,.32)" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>' +
+    // Neck shadow
+    '<path d="M50 60c-6 0-11-4-14-10-1 3-3 5-4 7 1 3 2 6 3 9 4 5 9 8 15 8s11-3 15-8c1-3 2-6 3-9-1-2-3-4-4-7-3 6-8 10-14 10z" fill="rgba(0,0,0,.16)"/>' +
+    // Ears
+    '<circle cx="30" cy="45" r="4" fill="#dfe4ea"/><circle cx="70" cy="45" r="4" fill="#dfe4ea"/>' +
+    // Face
+    '<circle cx="50" cy="42" r="18" fill="#dfe4ea"/>' +
+    // Short spiky, side-parted hair
+    '<path d="M32 38c0-11 8-19 18-19s18 8 18 19c0 2 0 4-1 6-1-2-2-4-4-5 0 2 0 4-1 6-1-3-3-5-5-6 0 2 0 4-1 6-2-3-3-6-6-7 0 2-1 4-2 5-1-3-2-5-4-6-1 2-2 4-4 5-1-2 0-4 0-6-2 2-4 3-5 5-1-1-2-3-3-3z" fill="rgba(0,0,0,.32)"/>' +
     '</svg>';
 }
 // personAvatarHtml(person, opts) — returns inner HTML for an avatar circle.
