@@ -4779,13 +4779,6 @@ select:focus { outline:none; }
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can add and manage featured posts</div>
                 </div>
               </label>
-              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
-                <input id="uf-leadgen" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
-                <div>
-                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Leads access</div>
-                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can view and work the Leads tab</div>
-                </div>
-              </label>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">
               <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Top Nav Tabs</span>
@@ -8316,11 +8309,17 @@ var NAV_TOGGLE_LABELS = {
   performanceZone:  'Numbers',
   supervisorZone:   'My Team'
 };
-function renderNavAccessToggles(navAccess) {
+function renderNavAccessToggles(navAccess, isLeadGen) {
   var container = document.getElementById('uf-nav-toggles');
   if (!container) return;
   var nav = navAccess || {};
-  container.innerHTML = Object.keys(NAV_TOGGLE_LABELS).map(function(key) {
+  // "Leads" isn't part of navAccess (it's the separate isLeadGen flag), but
+  // lives visually with the other Top Nav Tabs toggles for consistency.
+  var leadsTile = '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;font-size:12.5px;font-weight:600;color:#6b7c8f;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
+    + '<input id="uf-leadgen" type="checkbox" ' + (isLeadGen ? 'checked' : '') + ' style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">'
+    + 'Leads'
+    + '</label>';
+  container.innerHTML = leadsTile + Object.keys(NAV_TOGGLE_LABELS).map(function(key) {
     var checked = nav[key] !== false;
     return '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;font-size:12.5px;font-weight:600;color:#6b7c8f;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
       + '<input type="checkbox" data-nav-key="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">'
@@ -8361,7 +8360,6 @@ function openUserForm(userId) {
     document.getElementById('uf-website').value        = u.website || '';
     document.getElementById('uf-admin').checked        = u.isAdmin || false;
     document.getElementById('uf-marketing').checked    = u.isMarketing || false;
-    document.getElementById('uf-leadgen').checked      = u.isLeadGen || false;
     document.getElementById('uf-investments').checked          = u.sellsInvestments   || false;
     document.getElementById('uf-mortgages').checked            = u.sellsMortgages     || false;
     document.getElementById('uf-protection').checked           = u.sellsProtection    || false;
@@ -8374,7 +8372,7 @@ function openUserForm(userId) {
     document.getElementById('uf-trusts').checked                 = u.trusts            || false;
     document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
-    renderNavAccessToggles(u.navAccess);
+    renderNavAccessToggles(u.navAccess, u.isLeadGen || false);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
     title.textContent = 'Add New User';
@@ -8387,7 +8385,6 @@ function openUserForm(userId) {
     });
     document.getElementById('uf-admin').checked           = false;
     document.getElementById('uf-marketing').checked       = false;
-    document.getElementById('uf-leadgen').checked         = false;
     document.getElementById('uf-investments').checked          = false;
     document.getElementById('uf-mortgages').checked            = false;
     document.getElementById('uf-protection').checked           = false;
@@ -8400,7 +8397,7 @@ function openUserForm(userId) {
     document.getElementById('uf-trusts').checked                 = false;
     document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
-    renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false });
+    renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false }, false);
     populateSupervisorDropdown('');
   }
   form.style.display = 'block';
