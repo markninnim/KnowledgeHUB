@@ -4955,12 +4955,12 @@ select:focus { outline:none; }
 
 <!-- ── KnowledgeHUB Help widget (rule-based, not AI) ─────────────────────── -->
 <div id="kh-bubble" onclick="khToggle()" title="KnowledgeHELPER" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;overflow:hidden;">
-  <img src="/static/knowledgeHELPER@2x.png" alt="KnowledgeHELPER" style="width:100%;height:100%;object-fit:cover;">
+  <img src="/static/knowledgeHELPER@2x.png" alt="KnowledgeHELPER" style="width:78%;height:78%;object-fit:contain;">
 </div>
 <div id="kh-panel" style="display:none;flex-direction:column;position:fixed;bottom:88px;right:24px;width:340px;max-width:92vw;max-height:70vh;background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.28);z-index:4001;overflow:hidden;">
   <div style="background:var(--brand-navy);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <img src="/static/knowledgeHELPER@2x.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+      <img src="/static/knowledgeHELPER@2x.png" alt="" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;">
       <div>
         <div style="font-size:14px;font-weight:700;">KnowledgeHELPER</div>
         <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Your AI assistant (on a short leash)</div>
@@ -13215,8 +13215,7 @@ function khSubmit() {
 function khGreet() {
   var firstName = (_currentUser && _currentUser.firstName) || '';
   var hello = firstName ? ('Hi ' + firstName + '! ') : 'Hi! ';
-  khAddBotMessage(hello + 'I\'m KnowledgeHELPER — ask me anything about the Hub and I\'ll do my best to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.');
-  khAddBotMessage('Fair warning: Mark has been very strict about what I am and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
+  khAddBotMessage(hello + 'I\'m KnowledgeHELPER - ask me anything about the Hub and I\'ll do my best* to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.\n\n*Fair warning: Mark has been very strict about what I am, and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
 }
 
 function khOpen() {
