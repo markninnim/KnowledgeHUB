@@ -4935,6 +4935,27 @@ select:focus { outline:none; }
 </div>
 <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;"></div>
 
+<!-- ── KnowledgeHUB Help widget (rule-based, not AI) ─────────────────────── -->
+<div id="kh-bubble" onclick="khToggle()" title="KnowledgeHUB Help" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</div>
+<div id="kh-panel" style="display:none;flex-direction:column;position:fixed;bottom:88px;right:24px;width:340px;max-width:92vw;max-height:70vh;background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.28);z-index:4001;overflow:hidden;">
+  <div style="background:var(--brand-navy);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div>
+      <div style="font-size:14px;font-weight:700;">KnowledgeHUB Help</div>
+      <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Not AI — just quick answers &amp; shortcuts</div>
+    </div>
+    <button onclick="khClose()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1;padding:4px;">&#x2715;</button>
+  </div>
+  <div id="kh-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:#f5f7fa;"></div>
+  <div style="padding:10px 12px;border-top:1px solid #e8ecf0;display:flex;gap:8px;background:#fff;flex-shrink:0;">
+    <input id="kh-input" type="text" placeholder="Ask a question…" style="flex:1;min-width:0;padding:9px 12px;border:1px solid #d1d5db;border-radius:20px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')khSubmit()">
+    <button onclick="khSubmit()" style="background:var(--brand-orange);color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
 <!-- ── Share Standards Modal ────────────────────────────────── -->
 <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.22);">
@@ -12403,6 +12424,213 @@ function pzFmt(n) {
 (function() {
   if (window.location.hash === '#selling-zone' && !_OPP_INIT) { oppInitPages(); }
 })();
+
+// ── KnowledgeHUB Help — a rule-based (non-AI) help widget ──────────────────
+// Matches typed questions or suggested-chip taps against a fixed knowledge
+// base by keyword overlap. No external API calls, no LLM — every answer is
+// pre-written, and the "action" button (where present) jumps straight to the
+// relevant tab via switchTab(), so it also doubles as a site navigation aid.
+var _khGreeted = false;
+
+var KH_KB = [
+  { keywords: ['cpd', 'autocpd', 'log cpd', 'cpd log', 'cpd minutes'],
+    question: 'How do I log CPD?',
+    answer: 'CPD is logged automatically as you watch Learning videos, complete Knowledge Tests, read Industry Reading articles, or attend a live session — it all feeds into your AutoCPD™ record. You can see your full CPD history and totals under Learning.',
+    action: { label: 'Go to Learning', tab: 'learning' } },
+  { keywords: ['payslip', 'pay statement', 'my pay', 'salary', 'commission statement'],
+    question: 'Where do I view my payslip?',
+    answer: 'Your pay statements are in the Pay tab.',
+    action: { label: 'Go to Pay', tab: 'pay' } },
+  { keywords: ['compliance form', 'complaint', 'breach', 'conflict of interest', 'gifts and hospitality', 'whistleblow', 'self sale', 'reporting form'],
+    question: 'Where do I submit a compliance report?',
+    answer: 'Complaint, Breach, Conflict of Interest, Gifts & Hospitality, Self Sale and Whistleblowing reports are all submitted from the Compliance tab.',
+    action: { label: 'Go to Compliance', tab: 'compliance' } },
+  { keywords: ['lead', 'leads', 'leadgen', 'new enquiry', 'hot lead'],
+    question: 'Where do I manage my leads?',
+    answer: 'Leads allocated to you (and Hot/Warm/Cold filtering) are in the Leads tab.',
+    action: { label: 'Go to Leads', tab: 'leadgen' } },
+  { keywords: ['my team', 'supervisor', 'broker profile', 'team cpd'],
+    question: 'Where can I see my team\'s CPD and activity?',
+    answer: 'Supervisors and admins can view adviser profiles, CPD progress and Sales Funnel stats under My Team.',
+    action: { label: 'Go to My Team', tab: 'supervisor-zone' } },
+  { keywords: ['opportunities', 'sales opportunities', 'wealth', 'licenced adviser', 'licensed adviser', 'referral', 'commercial mortgage', 'bridging finance'],
+    question: 'Where do I find sales opportunity guidance and specialist referrals?',
+    answer: 'Purchase, Buy to Let, Remortgage, Lifetime, FTB, Commercial, Bridging and Wealth are all covered under Opportunities, including who to refer to for each specialism.',
+    action: { label: 'Go to Opportunities', tab: 'selling-zone' } },
+  { keywords: ['whereabouts', 'out of office', 'diary', 'where is'],
+    question: 'How do I log my whereabouts?',
+    answer: 'Whereabouts lets you and your team log where you are — office, home, appointments or annual leave.',
+    action: { label: 'Go to Whereabouts', tab: 'whereabouts' } },
+  { keywords: ['numbers', 'performance', 'stats', 'targets', 'sales figures'],
+    question: 'Where do I see my performance numbers?',
+    answer: 'Your production stats and targets are under Numbers.',
+    action: { label: 'Go to Numbers', tab: 'performance-zone' } },
+  { keywords: ['autocrm', 'renewal', 'mortgage completion', 'remortgage reminder'],
+    question: 'Where do I track mortgage renewals?',
+    answer: 'AutoCRM™ tracks upcoming mortgage renewals for your clients so you never miss a repeat business opportunity.',
+    action: { label: 'Go to AutoCRM™', tab: 'autocrm' } },
+  { keywords: ['muttuo'],
+    question: 'What is Muttuo and where is it?',
+    answer: 'Muttuo has its own tab with its own workflow and Data/MI dashboard.',
+    action: { label: 'Go to Muttuo', tab: 'muttuo' } },
+  { keywords: ['surveying', 'survey booking', 'homebuyer report'],
+    question: 'Where do I book or refer a survey?',
+    answer: 'General surveying content lives under the Surveying tab. For guidance on which survey product to use and our two surveying partners, see the Survey card under Opportunities.',
+    action: { label: 'Go to Surveying', tab: 'surveying' } },
+  { keywords: ['advice standards', 'sales process', 'mrwl', 'suitability'],
+    question: 'Where is the Advice Standards / Sales Process material?',
+    answer: 'Advice Standards covers the Sales Process guidance, MRWL requirements and related reading.',
+    action: { label: 'Go to Advice Standards', tab: 'sales-process' } },
+  { keywords: ['marketing', 'brand asset', 'social media template', 'business card'],
+    question: 'Where do I find marketing templates and brand assets?',
+    answer: 'Business cards, social templates and other brand assets are in the Marketing tab.',
+    action: { label: 'Go to Marketing', tab: 'marketing' } },
+  { keywords: ['my account', 'profile', 'about me', 'commission split', 'whatsapp number', 'update my details'],
+    question: 'How do I update my profile / About Me / commission split?',
+    answer: 'Click your name/avatar in the top right to open My Account — you can update your photo, About Me, WhatsApp number, commission split and average payaway from there.' },
+  { keywords: ['contact', 'phone number', 'office number', 'landline', 'support', 'help desk', 'call fpg'],
+    question: 'What\'s the office contact number?',
+    answer: 'The main FPG office line is 01444 449 200.' },
+  { keywords: ['find an adviser', 'refer a client', 'specialist adviser', 'who do i refer'],
+    question: 'How do I find the right specialist to refer a client to?',
+    answer: 'Each specialist opportunity (PMI, Lifetime Mortgage, Commercial, Bridging, Surveying, Trusts, Wealth) shows its own list of licenced advisers, with contact details and reviews, right on the relevant Opportunities card.',
+    action: { label: 'Go to Opportunities', tab: 'selling-zone' } },
+  { keywords: ['password', 'forgotten password', 'reset password', 'locked out'],
+    question: 'I\'ve forgotten my password — what do I do?',
+    answer: 'Log out and use the "Forgotten your password?" link on the login screen — you\'ll get an email to reset it. If you\'re locked out entirely, ask an admin to help.' },
+  { keywords: ['2fa', 'two factor', 'authenticator', 'verification code'],
+    question: 'How does 2FA work?',
+    answer: 'Two-factor authentication is set up the first time you log in, using an authenticator app to generate a verification code. If you\'ve lost access to your authenticator, ask an admin to reset your 2FA.' },
+  { keywords: ['gifted deposit', 'gift deposit', 'third party gift'],
+    question: 'What\'s needed for a gifted deposit?',
+    answer: 'You need a signed letter confirming the relationship and that the gift is unencumbered (non-repayable), plus a recent bank/investment statement evidencing the funds. If the gift is from overseas, extra due diligence applies.' },
+  { keywords: ['ipid', 'when do i give ipid'],
+    question: 'When do I need to give a client an IPID?',
+    answer: 'An IPID (Insurance Product Information Document) is required whenever you recommend a Buildings & Contents policy.' },
+  { keywords: ['pos', 'point of sale', 'acre system'],
+    question: 'What is the POS system?',
+    answer: 'POS stands for Point of Sale — the system currently used to record and process sales is Acre.' },
+  { keywords: ['lpa', 'lasting power of attorney', 'power of attorney'],
+    question: 'When should a client set up an LPA?',
+    answer: 'An LPA can only be created while the client still has mental capacity — it\'s too late once capacity is lost, and the family would otherwise need a much slower, more expensive Court of Protection Deputyship.' }
+];
+
+function khMatch(query) {
+  var q = (query || '').toLowerCase().trim();
+  if (!q) return null;
+  var best = null, bestScore = 0;
+  KH_KB.forEach(function(entry) {
+    var score = 0;
+    entry.keywords.forEach(function(k) { if (q.indexOf(k) !== -1) score += 3; });
+    q.split(/[^a-z0-9']+/).filter(Boolean).forEach(function(w) {
+      if (w.length > 2 && entry.question.toLowerCase().indexOf(w) !== -1) score += 1;
+    });
+    if (score > bestScore) { bestScore = score; best = entry; }
+  });
+  return bestScore > 0 ? best : null;
+}
+
+function khScrollToBottom() {
+  var wrap = document.getElementById('kh-messages');
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+
+function khAddUserMessage(text) {
+  var wrap = document.getElementById('kh-messages');
+  if (!wrap) return;
+  var el = document.createElement('div');
+  el.style.cssText = 'align-self:flex-end;background:var(--brand-navy);color:#fff;padding:9px 13px;border-radius:14px 14px 3px 14px;font-size:13px;max-width:82%;line-height:1.5;';
+  el.textContent = text;
+  wrap.appendChild(el);
+  khScrollToBottom();
+}
+
+function khAddBotMessage(text) {
+  var wrap = document.getElementById('kh-messages');
+  if (!wrap) return;
+  var el = document.createElement('div');
+  el.style.cssText = 'align-self:flex-start;background:#fff;border:1px solid #e8ecf0;color:#3d4c5c;padding:9px 13px;border-radius:14px 14px 14px 3px;font-size:13px;max-width:82%;line-height:1.6;';
+  el.textContent = text;
+  wrap.appendChild(el);
+  khScrollToBottom();
+}
+
+function khAddSuggestions(labels) {
+  var wrap = document.getElementById('kh-messages');
+  if (!wrap) return;
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;max-width:100%;';
+  labels.forEach(function(label) {
+    var btn = document.createElement('button');
+    btn.textContent = label;
+    btn.style.cssText = 'background:#eef2f6;color:var(--brand-navy);border:1px solid #d1d5db;padding:6px 12px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;';
+    btn.onclick = function() { khAskSuggested(label); };
+    row.appendChild(btn);
+  });
+  wrap.appendChild(row);
+  khScrollToBottom();
+}
+
+function khAddActionButton(label, tab) {
+  var wrap = document.getElementById('kh-messages');
+  if (!wrap) return;
+  var btn = document.createElement('button');
+  btn.textContent = label + ' →';
+  btn.style.cssText = 'align-self:flex-start;background:var(--brand-orange);color:#fff;border:none;padding:8px 14px;border-radius:16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;';
+  btn.onclick = function() { khClose(); switchTab(tab); };
+  wrap.appendChild(btn);
+  khScrollToBottom();
+}
+
+function khAnswer(query) {
+  var entry = khMatch(query);
+  if (!entry) {
+    khAddBotMessage('I couldn\'t find anything for that — I only know about topics already covered in KnowledgeHUB. Try rephrasing, or pick one of these:');
+    khAddSuggestions(['Log CPD', 'View my payslip', 'Compliance forms', 'Find an adviser', 'Contact number']);
+    return;
+  }
+  khAddBotMessage(entry.answer);
+  if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
+}
+
+function khAskSuggested(label) {
+  khAddUserMessage(label);
+  khAnswer(label);
+}
+
+function khSubmit() {
+  var input = document.getElementById('kh-input');
+  if (!input) return;
+  var q = input.value.trim();
+  if (!q) return;
+  khAddUserMessage(q);
+  input.value = '';
+  khAnswer(q);
+}
+
+function khGreet() {
+  khAddBotMessage('Hi — I\'m the KnowledgeHUB Help bot. I\'m not AI, just a quick way to find things on the site or get a straight answer. Try typing a question, or tap one below:');
+  khAddSuggestions(['Log CPD', 'View my payslip', 'Find an adviser', 'Contact number']);
+}
+
+function khOpen() {
+  var panel = document.getElementById('kh-panel');
+  if (!panel) return;
+  panel.style.display = 'flex';
+  if (!_khGreeted) { khGreet(); _khGreeted = true; }
+  var input = document.getElementById('kh-input');
+  if (input) input.focus();
+}
+
+function khClose() {
+  var panel = document.getElementById('kh-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+function khToggle() {
+  var panel = document.getElementById('kh-panel');
+  if (panel && panel.style.display === 'flex') { khClose(); } else { khOpen(); }
+}
 
 </script>
 
