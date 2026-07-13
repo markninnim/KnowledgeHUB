@@ -800,47 +800,76 @@ async function enrollLeadIntoAutoCrm(lead) {
   return d.records[0];
 }
 
-// ── KnowledgeHUB Help — AI answers, strictly ring-fenced to this reference
-// material. No web browsing, no outside knowledge — if it isn't below, the
-// assistant is instructed to say so rather than guess.
-const HELP_KB_TEXT = `
-SITE NAVIGATION (tab names as they appear in the top nav):
-- Learning: CPD videos, Knowledge Tests, Industry Reading, live sessions, Fitness & Properness questionnaire. CPD (AutoCPD™) is logged automatically as you complete these.
-- Compliance: submit Complaint, Breach, Conflict of Interest, Gifts & Hospitality, Self Sale and Whistleblowing reports.
-- Advice Standards: Sales Process guidance, MRWL requirements and related reading.
-- Opportunities: guidance on Purchase, Buy to Let, Remortgage, Lifetime, FTB, Commercial Mortgages, Bridging Finance and Wealth cases, plus which licenced adviser to refer each specialism to.
-- Surveying: general surveying tab content. The Survey card under Opportunities covers our product range (RICS Level 2, Matrimonial, Independent, Help to Buy, Shared Ownership and Probate valuations — we do NOT offer Level 1 or Level 3, refer those to a partner) and our two surveying partners: FP Surveying (cheapest, no commission, aimed at comparison-site work) and Acre Surveying (competitively priced, pays £100 commission, paid instantly on booking if you use the refer button).
-- Pay: view pay statements.
-- Leads: leads allocated to you, filterable by Hot/Warm/Cold.
-- My Team (Supervisor Zone): supervisors/admins view adviser CPD, activity and Sales Funnel stats.
-- Numbers (Performance Zone): production stats and targets.
-- AutoCRM™: tracks upcoming mortgage renewal dates for clients (including a Buy to Let client's own residential mortgage) so nothing is missed.
-- Muttuo: its own tab with its own workflow and Data/MI dashboard.
-- Marketing: business cards, social templates and brand assets.
-- My Account (click your name/avatar top right): update photo, About Me, WhatsApp number, commission split, average payaway.
+// ── KnowledgeHUB Help — AI answers, strictly ring-fenced to an admin-editable
+// whitelist of content stored in Airtable (table "Help KB"). No web browsing,
+// no outside knowledge — if it isn't in an Active row below, the assistant is
+// instructed to say so rather than guess.
+const HELP_KB_BASE  = AT_BASE;
+const HELP_KB_TABLE = 'tbloUKLyLYMUpBRgY';
+const F_HELPKB_TITLE   = 'fld7FpXq53mMtJ8VV';
+const F_HELPKB_CONTENT = 'fldl6HxrZrawR6Y5J';
+const F_HELPKB_ACTIVE  = 'fldh7TihYSe0Wy4Tu';
+const F_HELPKB_ORDER   = 'fldot7JhV4jwpwaqJ';
 
-CONTACT: Main FPG office line is 01444 449 200.
+async function helpKbFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${HELP_KB_BASE}/${HELP_KB_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error && body.error.message || `Airtable ${res.status}`);
+  return body;
+}
 
-ACCOUNT: Forgotten password — use "Forgotten your password?" on the login screen, or ask an admin if locked out. 2FA is set up on first login via an authenticator app; ask an admin to reset it if lost.
+// Short in-memory cache so a burst of chat messages doesn't hit Airtable
+// every time — admin edits take effect within this window.
+let _helpKbCache = null;
+let _helpKbCacheAt = 0;
+const HELP_KB_CACHE_MS = 60 * 1000;
 
-COMPLIANCE / SALES PROCESS FACTS:
-- Gifted deposits: need a signed letter confirming the relationship and that the gift is unencumbered (non-repayable), plus a recent bank/investment statement evidencing the funds. Extra due diligence applies if the gift is from overseas.
-- IPID (Insurance Product Information Document): required whenever a Buildings & Contents policy is recommended.
-- POS (Point of Sale) system: currently Acre.
-- LPA (Lasting Power of Attorney): must be set up while the client still has mental capacity — once capacity is lost it is too late, and the family would need a slower, more expensive Court of Protection Deputyship instead. Property & Financial Affairs LPA and Health & Welfare LPA are the two types, and doing both together is usually recommended.
-- Wealth referrals: investment and pension advice is outside a mortgage/protection licence for advisers who don't hold one — refer to FPG's investment advisers rather than advise directly.
-`.trim();
+async function getHelpKbEntries(forceFresh) {
+  if (!forceFresh && _helpKbCache && (Date.now() - _helpKbCacheAt) < HELP_KB_CACHE_MS) return _helpKbCache;
+  let records = [];
+  let offset = '';
+  do {
+    const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+    const data = await helpKbFetch(qs);
+    records = records.concat(data.records || []);
+    offset = data.offset || '';
+  } while (offset);
+  const entries = records.map(r => ({
+    id: r.id,
+    title: r.fields[F_HELPKB_TITLE] || '',
+    content: r.fields[F_HELPKB_CONTENT] || '',
+    active: r.fields[F_HELPKB_ACTIVE] || false,
+    order: r.fields[F_HELPKB_ORDER] || 0
+  }));
+  _helpKbCache = entries;
+  _helpKbCacheAt = Date.now();
+  return entries;
+}
 
-const HELP_SYSTEM_PROMPT = `You are the KnowledgeHUB Help assistant for Finance Planning Group (FPG) mortgage and protection advisers.
+function buildHelpKbText(entries) {
+  return entries
+    .filter(e => e.active)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(e => `${e.title}:\n${e.content}`)
+    .join('\n\n');
+}
+
+function buildHelpSystemPrompt(kbText, firstName) {
+  return `You are the KnowledgeHUB Help assistant for Finance Planning Group (FPG) mortgage and protection advisers.
 
 You must answer ONLY using the reference material below. Do not use any outside knowledge, do not browse the web, and do not speculate or guess at policy, regulation, or product detail that isn't stated here.
 
 If the answer isn't contained in the reference material, say plainly that you don't have that information in KnowledgeHUB, and suggest the person contact their supervisor/admin or the office on 01444 449 200. Never invent an answer to seem helpful.
 
-Keep answers short and direct — 1 to 4 sentences. When relevant, name the exact tab the person should go to (e.g. "under the Learning tab"), but you cannot navigate them there yourself.
+Keep answers short, warm and conversational — 1 to 4 sentences, like a helpful colleague rather than a manual. You're speaking with ${firstName || 'the adviser'}${firstName ? ' — feel free to use their first name occasionally to keep it personal, but don\'t force it into every reply.' : '.'} When relevant, name the exact tab the person should go to (e.g. "under the Learning tab"), but you cannot navigate them there yourself.
 
 REFERENCE MATERIAL:
-${HELP_KB_TEXT}`;
+${kbText}`;
+}
 
 // POST /api/help-chat — { message, history: [{role,content}, ...] }
 app.post('/api/help-chat', requireAuth, async (req, res) => {
@@ -850,12 +879,14 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
   const message = (req.body && req.body.message || '').toString().trim();
   if (!message) return res.status(400).json({ error: 'Missing message.' });
   const history = Array.isArray(req.body && req.body.history) ? req.body.history : [];
-  // Keep the payload small and well-formed: only the last few turns, only role+content, roles limited to user/assistant.
   const safeHistory = history
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .slice(-6)
     .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
   try {
+    const entries = await getHelpKbEntries();
+    const kbText = buildHelpKbText(entries);
+    const firstName = (req.session.user && req.session.user.firstName) || '';
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -866,7 +897,7 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 400,
-        system: HELP_SYSTEM_PROMPT,
+        system: buildHelpSystemPrompt(kbText, firstName),
         messages: [...safeHistory, { role: 'user', content: message.slice(0, 2000) }]
       })
     });
@@ -877,6 +908,66 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('help-chat error:', err);
     res.status(500).json({ error: 'Something went wrong reaching the AI. Please try again.' });
+  }
+});
+
+// ── Help KB admin CRUD — admin-only, so the whitelist of content the AI can
+// draw from is editable without a code deploy, but only by admins.
+app.get('/api/admin/help-kb', requireAdmin, async (req, res) => {
+  try {
+    const entries = await getHelpKbEntries(true);
+    entries.sort((a, b) => (a.order || 0) - (b.order || 0));
+    res.json({ entries });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/help-kb', requireAdmin, async (req, res) => {
+  try {
+    const { title, content, active, order } = req.body;
+    if (!title || !content) return res.status(400).json({ error: 'Title and content are required.' });
+    await helpKbFetch('', {
+      method: 'POST',
+      body: JSON.stringify({
+        records: [{ fields: {
+          [F_HELPKB_TITLE]: title,
+          [F_HELPKB_CONTENT]: content,
+          [F_HELPKB_ACTIVE]: active !== false,
+          [F_HELPKB_ORDER]: Number(order) || 0
+        } }]
+      })
+    });
+    _helpKbCache = null; // invalidate so the next chat picks up the change immediately
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/help-kb/:id', requireAdmin, async (req, res) => {
+  try {
+    const { title, content, active, order } = req.body;
+    const fields = {};
+    if (title !== undefined)   fields[F_HELPKB_TITLE]   = title;
+    if (content !== undefined) fields[F_HELPKB_CONTENT] = content;
+    if (active !== undefined)  fields[F_HELPKB_ACTIVE]  = !!active;
+    if (order !== undefined)   fields[F_HELPKB_ORDER]   = Number(order) || 0;
+    await helpKbFetch(`/${req.params.id}`, { method: 'PATCH', body: JSON.stringify({ fields }) });
+    _helpKbCache = null;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/help-kb/:id', requireAdmin, async (req, res) => {
+  try {
+    await helpKbFetch(`?records[]=${req.params.id}`, { method: 'DELETE' });
+    _helpKbCache = null;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
