@@ -13030,6 +13030,58 @@ function khMyLeadsLookup(query) {
     });
 }
 
+// "What did I get on the X test?" / "have I passed my knowledge tests?" —
+// answered via /api/help-test-scores, scoped strictly to the logged-in
+// session's own email, same as every other Help widget data lookup.
+function khIsTestScoreQuery(q) {
+  return /\b(test score|my score|test result)\b/i.test(q) ||
+    (/\btest(s)?\b/i.test(q) && /\b(pass|passed|fail|failed|score|scored|result|get|got)\b/i.test(q)) ||
+    /\bhave i passed\b/i.test(q) ||
+    /\bwhat did i (get|score)\b/i.test(q);
+}
+function khExtractTestName(q) {
+  return q
+    .replace(/\b(knowledge|test|tests|score|scores|scored|result|results|pass|passed|fail|failed|my|what'?s|what is|did i get|have i|on the|on my|of|for|the|please|can|you|is)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function khMyTestScoresLookup(query) {
+  var name = khExtractTestName(query);
+  khShowTyping();
+  fetch('/api/help-test-scores' + (name ? ('?name=' + encodeURIComponent(name)) : ''))
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      var rows = (d && d.rows) || [];
+      if (!rows.length) {
+        if (name) {
+          khAddBotMessage('I couldn\'t find a test matching "' + name + '" in your record. Check the spelling, or take a look under Learning → Knowledge Tests.');
+        } else {
+          khAddBotMessage('I couldn\'t find any Knowledge Test results for you yet. They\'ll show here once you\'ve completed one under Learning.');
+        }
+        khAddActionButton('Go to Learning', 'learning');
+        return;
+      }
+      rows.forEach(function(t) {
+        var lines = [t.testName];
+        lines.push(t.passed ? 'Passed' : 'Not passed');
+        if (typeof t.score === 'number') lines.push('Score: ' + t.score + '%');
+        if (t.date) {
+          var d2 = new Date(t.date);
+          var dateStr = isNaN(d2) ? t.date : d2.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          lines.push('Date: ' + dateStr);
+        }
+        khAddBotMessage(lines.join('\n'));
+      });
+      khAddActionButton('Go to Learning', 'learning');
+    })
+    .catch(function(e) {
+      if (e === 'handled') return;
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 // Real, self-scoped data lookups (clients/leads/contacts) are checked FIRST,
 // ahead of the generic local KB — a generic nav entry like "AutoCRM™ tracks
 // renewals..." must never win over an actual "when is X's renewal" question
@@ -13042,6 +13094,10 @@ function khAnswer(query) {
   }
   if (khIsMyLeadsQuery(query)) {
     khMyLeadsLookup(query);
+    return;
+  }
+  if (khIsTestScoreQuery(query)) {
+    khMyTestScoresLookup(query);
     return;
   }
   // Vague follow-up ("who are they", "list them") referring back to the last
