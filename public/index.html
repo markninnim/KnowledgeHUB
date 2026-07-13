@@ -4943,7 +4943,7 @@ select:focus { outline:none; }
   <div style="background:var(--brand-navy);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div>
       <div style="font-size:14px;font-weight:700;">KnowledgeHUB Help</div>
-      <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Not AI — just quick answers &amp; shortcuts</div>
+      <div style="font-size:10.5px;opacity:.75;margin-top:1px;">AI, ring-fenced to KnowledgeHUB content only</div>
     </div>
     <button onclick="khClose()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1;padding:4px;">&#x2715;</button>
   </div>
@@ -12582,15 +12582,73 @@ function khAddActionButton(label, tab) {
   khScrollToBottom();
 }
 
+// Conversation history sent to the AI endpoint for short-term context (last
+// few turns only — capped server-side too).
+var _khHistory = [];
+var _khAiUnavailable = false; // set true after a 503, so we stop retrying pointlessly this session
+
+function khShowTyping() {
+  var wrap = document.getElementById('kh-messages');
+  if (!wrap) return;
+  var el = document.createElement('div');
+  el.id = 'kh-typing';
+  el.style.cssText = 'align-self:flex-start;background:#fff;border:1px solid #e8ecf0;color:#9aa7b3;padding:9px 13px;border-radius:14px 14px 14px 3px;font-size:13px;';
+  el.textContent = 'Thinking…';
+  wrap.appendChild(el);
+  khScrollToBottom();
+}
+
+function khRemoveTyping() {
+  var el = document.getElementById('kh-typing');
+  if (el) el.remove();
+}
+
+// Instant, deterministic matches (nav shortcuts etc.) — used first so common
+// questions get an immediate answer with a "go there" button. Anything that
+// doesn't hit a confident local match is handed to the AI, which is strictly
+// ring-fenced to KnowledgeHUB's own content server-side (see HELP_KB_TEXT in
+// server.js) and told to say so rather than guess if it doesn't know.
 function khAnswer(query) {
   var entry = khMatch(query);
-  if (!entry) {
-    khAddBotMessage('I couldn\'t find anything for that — I only know about topics already covered in KnowledgeHUB. Try rephrasing, or pick one of these:');
+  if (entry) {
+    khAddBotMessage(entry.answer);
+    if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
+    _khHistory.push({ role: 'user', content: query });
+    _khHistory.push({ role: 'assistant', content: entry.answer });
+    return;
+  }
+  khAskAi(query);
+}
+
+function khAskAi(query) {
+  if (_khAiUnavailable) {
+    khAddBotMessage('AI answers aren\'t switched on yet for anything outside these quick topics:');
     khAddSuggestions(['Log CPD', 'View my payslip', 'Compliance forms', 'Find an adviser', 'Contact number']);
     return;
   }
-  khAddBotMessage(entry.answer);
-  if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
+  khShowTyping();
+  fetch('/api/help-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: query, history: _khHistory })
+  }).then(function(r) {
+    return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; });
+  }).then(function(res) {
+    khRemoveTyping();
+    if (!res.ok) {
+      if (res.status === 503) _khAiUnavailable = true;
+      khAddBotMessage((res.data && res.data.error) || 'Something went wrong reaching the AI. Please try again.');
+      khAddSuggestions(['Log CPD', 'View my payslip', 'Compliance forms', 'Find an adviser', 'Contact number']);
+      return;
+    }
+    var reply = res.data.reply || 'Sorry, I wasn\'t able to generate a response.';
+    khAddBotMessage(reply);
+    _khHistory.push({ role: 'user', content: query });
+    _khHistory.push({ role: 'assistant', content: reply });
+  }).catch(function() {
+    khRemoveTyping();
+    khAddBotMessage('I couldn\'t reach the AI just now — please try again in a moment.');
+  });
 }
 
 function khAskSuggested(label) {
@@ -12609,7 +12667,7 @@ function khSubmit() {
 }
 
 function khGreet() {
-  khAddBotMessage('Hi — I\'m the KnowledgeHUB Help bot. I\'m not AI, just a quick way to find things on the site or get a straight answer. Try typing a question, or tap one below:');
+  khAddBotMessage('Hi — I\'m the KnowledgeHUB Help assistant. I only answer from KnowledgeHUB\'s own content — no outside knowledge — so if I don\'t know something, I\'ll say so. Try typing a question, or tap one below:');
   khAddSuggestions(['Log CPD', 'View my payslip', 'Find an adviser', 'Contact number']);
 }
 

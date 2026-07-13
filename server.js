@@ -33,6 +33,11 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
 
+// ── KnowledgeHUB Help (AI, ring-fenced) ────────────────────────
+// Set on Railway once available. Until then, /api/help-chat returns 503 and
+// the front-end widget falls back to its local, rule-based keyword matching.
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
 // ── Airtable config ──────────────────────────────────────────
 const AT_KEY      = process.env.AIRTABLE_API_KEY;
 const AT_BASE     = 'appqQv0Xog8yZMwI9';
@@ -794,6 +799,86 @@ async function enrollLeadIntoAutoCrm(lead) {
   if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error enrolling into AutoCRM');
   return d.records[0];
 }
+
+// ── KnowledgeHUB Help — AI answers, strictly ring-fenced to this reference
+// material. No web browsing, no outside knowledge — if it isn't below, the
+// assistant is instructed to say so rather than guess.
+const HELP_KB_TEXT = `
+SITE NAVIGATION (tab names as they appear in the top nav):
+- Learning: CPD videos, Knowledge Tests, Industry Reading, live sessions, Fitness & Properness questionnaire. CPD (AutoCPD™) is logged automatically as you complete these.
+- Compliance: submit Complaint, Breach, Conflict of Interest, Gifts & Hospitality, Self Sale and Whistleblowing reports.
+- Advice Standards: Sales Process guidance, MRWL requirements and related reading.
+- Opportunities: guidance on Purchase, Buy to Let, Remortgage, Lifetime, FTB, Commercial Mortgages, Bridging Finance and Wealth cases, plus which licenced adviser to refer each specialism to.
+- Surveying: general surveying tab content. The Survey card under Opportunities covers our product range (RICS Level 2, Matrimonial, Independent, Help to Buy, Shared Ownership and Probate valuations — we do NOT offer Level 1 or Level 3, refer those to a partner) and our two surveying partners: FP Surveying (cheapest, no commission, aimed at comparison-site work) and Acre Surveying (competitively priced, pays £100 commission, paid instantly on booking if you use the refer button).
+- Pay: view pay statements.
+- Leads: leads allocated to you, filterable by Hot/Warm/Cold.
+- My Team (Supervisor Zone): supervisors/admins view adviser CPD, activity and Sales Funnel stats.
+- Numbers (Performance Zone): production stats and targets.
+- AutoCRM™: tracks upcoming mortgage renewal dates for clients (including a Buy to Let client's own residential mortgage) so nothing is missed.
+- Muttuo: its own tab with its own workflow and Data/MI dashboard.
+- Marketing: business cards, social templates and brand assets.
+- My Account (click your name/avatar top right): update photo, About Me, WhatsApp number, commission split, average payaway.
+
+CONTACT: Main FPG office line is 01444 449 200.
+
+ACCOUNT: Forgotten password — use "Forgotten your password?" on the login screen, or ask an admin if locked out. 2FA is set up on first login via an authenticator app; ask an admin to reset it if lost.
+
+COMPLIANCE / SALES PROCESS FACTS:
+- Gifted deposits: need a signed letter confirming the relationship and that the gift is unencumbered (non-repayable), plus a recent bank/investment statement evidencing the funds. Extra due diligence applies if the gift is from overseas.
+- IPID (Insurance Product Information Document): required whenever a Buildings & Contents policy is recommended.
+- POS (Point of Sale) system: currently Acre.
+- LPA (Lasting Power of Attorney): must be set up while the client still has mental capacity — once capacity is lost it is too late, and the family would need a slower, more expensive Court of Protection Deputyship instead. Property & Financial Affairs LPA and Health & Welfare LPA are the two types, and doing both together is usually recommended.
+- Wealth referrals: investment and pension advice is outside a mortgage/protection licence for advisers who don't hold one — refer to FPG's investment advisers rather than advise directly.
+`.trim();
+
+const HELP_SYSTEM_PROMPT = `You are the KnowledgeHUB Help assistant for Finance Planning Group (FPG) mortgage and protection advisers.
+
+You must answer ONLY using the reference material below. Do not use any outside knowledge, do not browse the web, and do not speculate or guess at policy, regulation, or product detail that isn't stated here.
+
+If the answer isn't contained in the reference material, say plainly that you don't have that information in KnowledgeHUB, and suggest the person contact their supervisor/admin or the office on 01444 449 200. Never invent an answer to seem helpful.
+
+Keep answers short and direct — 1 to 4 sentences. When relevant, name the exact tab the person should go to (e.g. "under the Learning tab"), but you cannot navigate them there yourself.
+
+REFERENCE MATERIAL:
+${HELP_KB_TEXT}`;
+
+// POST /api/help-chat — { message, history: [{role,content}, ...] }
+app.post('/api/help-chat', requireAuth, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'AI help is not configured yet. Ask an admin to add an Anthropic API key.' });
+  }
+  const message = (req.body && req.body.message || '').toString().trim();
+  if (!message) return res.status(400).json({ error: 'Missing message.' });
+  const history = Array.isArray(req.body && req.body.history) ? req.body.history : [];
+  // Keep the payload small and well-formed: only the last few turns, only role+content, roles limited to user/assistant.
+  const safeHistory = history
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .slice(-6)
+    .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: HELP_SYSTEM_PROMPT,
+        messages: [...safeHistory, { role: 'user', content: message.slice(0, 2000) }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    const reply = (data.content && data.content[0] && data.content[0].text) || 'Sorry, I wasn\'t able to generate a response.';
+    res.json({ reply });
+  } catch (err) {
+    console.error('help-chat error:', err);
+    res.status(500).json({ error: 'Something went wrong reaching the AI. Please try again.' });
+  }
+});
 
 // GET /api/leadgen-advisers — all LeadGen-eligible advisers from the Users table,
 // alphabetical, regardless of whether they currently have any leads assigned.
