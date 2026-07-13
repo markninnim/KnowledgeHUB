@@ -13056,8 +13056,12 @@ function khMyLeadsLookup(query) {
 // answered via /api/help-test-scores, scoped strictly to the logged-in
 // session's own email, same as every other Help widget data lookup.
 function khIsTestScoreQuery(q) {
-  return /\b(test score|my score|test result)\b/i.test(q) ||
-    (/\btest(s)?\b/i.test(q) && /\b(pass|passed|fail|failed|score|scored|result|get|got)\b/i.test(q)) ||
+  // Must be personal ("my"/"I") — a general policy question like "what is
+  // the pass mark for tests" is a fact, not a request for the asker's own
+  // record, and must reach the AI/KB rather than a doomed name-search lookup.
+  var personal = /\b(i|i've|ive|my|me)\b/i.test(q);
+  return /\b(my score|my test result)\b/i.test(q) ||
+    (personal && /\btest(s)?\b/i.test(q) && /\b(pass|passed|fail|failed|score|scored|result|get|got)\b/i.test(q)) ||
     /\bhave i passed\b/i.test(q) ||
     /\bwhat did i (get|score)\b/i.test(q);
 }
