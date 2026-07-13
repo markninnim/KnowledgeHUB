@@ -875,6 +875,40 @@ REFERENCE MATERIAL:
 ${kbText}`;
 }
 
+// GET /api/help-contact-lookup?name=... — a real, deterministic lookup against
+// the Users table (not the AI). Used by the Help widget so a request like
+// "Dan Maskell's email address" gets a verified answer from Airtable rather
+// than the AI guessing or refusing. Matches on first/last/full name,
+// case-insensitive, partial match.
+app.get('/api/help-contact-lookup', requireAuth, async (req, res) => {
+  const q = (req.query.name || '').toString().trim().toLowerCase();
+  if (!q || q.length < 2) return res.json({ matches: [] });
+  try {
+    let records = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+    const matches = records
+      .map(r => {
+        const f = r.fields;
+        const firstName = f[F_FIRST] || '';
+        const lastName = f[F_LAST] || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        return { fullName, firstName, lastName, email: f[F_EMAIL] || '', mobile: f[F_MOBILE] || '', landline: f[F_LANDLINE] || '', jobTitle: f[F_TITLE] || '' };
+      })
+      .filter(u => u.fullName.toLowerCase().includes(q) || q.includes(u.firstName.toLowerCase()) && q.includes(u.lastName.toLowerCase()))
+      .slice(0, 5);
+    res.json({ matches });
+  } catch (err) {
+    console.error('help-contact-lookup error:', err);
+    res.status(500).json({ error: 'Unable to search right now.' });
+  }
+});
+
 // POST /api/help-chat — { message, history: [{role,content}, ...] }
 app.post('/api/help-chat', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
