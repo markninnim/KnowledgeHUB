@@ -12515,16 +12515,20 @@ var KH_KB = [
     answer: 'An LPA can only be created while the client still has mental capacity — it\'s too late once capacity is lost, and the family would otherwise need a much slower, more expensive Court of Protection Deputyship.' }
 ];
 
+// Only exact keyword-phrase hits count here (each is a specific, curated
+// phrase like "gifted deposit" or "log cpd") — no loose word-overlap scoring.
+// That loose scoring used to let something like "commission" weakly match an
+// unrelated entry just because the word appeared in its question text, which
+// silently swallowed the query before it ever reached the AI. Requiring a
+// real keyword-phrase match means anything not confidently covered here
+// correctly falls through to the AI instead of guessing locally.
 function khMatch(query) {
   var q = (query || '').toLowerCase().trim();
   if (!q) return null;
   var best = null, bestScore = 0;
   KH_KB.forEach(function(entry) {
     var score = 0;
-    entry.keywords.forEach(function(k) { if (q.indexOf(k) !== -1) score += 3; });
-    q.split(/[^a-z0-9']+/).filter(Boolean).forEach(function(w) {
-      if (w.length > 2 && entry.question.toLowerCase().indexOf(w) !== -1) score += 1;
-    });
+    entry.keywords.forEach(function(k) { if (q.indexOf(k) !== -1) score += k.length; });
     if (score > bestScore) { bestScore = score; best = entry; }
   });
   return bestScore > 0 ? best : null;
