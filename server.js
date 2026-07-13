@@ -137,29 +137,31 @@ async function casPathFetch(endpoint, options = {}) {
   return body;
 }
 
-// ── Marketing users (local, no Airtable field needed) ─────────
-const MARKETING_USERS_PATH = path.join(__dirname, 'marketing-users.json');
-let _marketingUsers = new Set();
-try { _marketingUsers = new Set(JSON.parse(fs.readFileSync(MARKETING_USERS_PATH, 'utf8'))); } catch(_) {}
-
-// ── LeadGen users (local, no Airtable field needed) — opt-in per user ──
-const LEADGEN_USERS_PATH = path.join(__dirname, 'leadgen-users.json');
-let _leadGenUsers = new Set();
-try { _leadGenUsers = new Set(JSON.parse(fs.readFileSync(LEADGEN_USERS_PATH, 'utf8'))); } catch(_) {}
-
-// ── Per-user top-nav tab access (local, no Airtable field needed) ──────
-// Every top-nav tab is individually toggleable per user from the admin
-// "Access" panel. Only explicit overrides are stored here; a user/key not
-// present falls back to computeNavDefaults() below, which mirrors the
-// original hardcoded visibility rules so nobody loses access on rollout.
-const NAV_ACCESS_PATH = path.join(__dirname, 'nav-access.json');
-let _navOverrides = {}; // { "email": { compliance: true, muttuo: false, ... } }
-try { _navOverrides = JSON.parse(fs.readFileSync(NAV_ACCESS_PATH, 'utf8')) || {}; } catch(_) {}
-function saveNavOverrides() { fs.writeFileSync(NAV_ACCESS_PATH, JSON.stringify(_navOverrides, null, 2)); }
+// ── Marketing / LeadGen / per-tab Access — stored permanently in Airtable ──
+// (previously local JSON files, which don't survive a redeploy on Railway's
+// ephemeral filesystem — every admin edit is now written straight to the
+// Users table so it's permanent.)
+const F_IS_MARKETING       = 'fldzlNzW2l0kAcK4v'; // Is Marketing
+const F_IS_LEADGEN         = 'fldpnrV5krN03XAjN'; // Is LeadGen
+const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'adviceStandards', 'compliance', 'learning', 'surveying', 'sellingZone',
   'pay', 'autocrm', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
 ];
+// Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
+const F_ACCESS = {
+  adviceStandards: 'fldIJRt8q4amPz0RX',
+  compliance:       'fldEr8JXW2GFqV6xm',
+  learning:         'fldL0XxZ7ZX4bbjQe',
+  surveying:        'fld8rOdqE8N8oC554',
+  sellingZone:      'fldwb7b8bQyvYBTX0',
+  pay:              'fldQfKu8q4d1FwZ1s',
+  autocrm:          'fldO1nIvILmgnAbYi',
+  muttuo:           'fld43JfbHdXVVRICX',
+  whereabouts:      'fld55LR2YmiAoar8I',
+  performanceZone:  'fldCXyV5roVcw8hQv',
+  supervisorZone:   'fldA5LN46IfVgo00Q'
+};
 function computeNavDefaults(f) {
   const isAdmin = f[F_ADMIN] || false;
   const isSupervisor = f[F_IS_SUPERVISOR] || false;
@@ -179,13 +181,14 @@ function computeNavDefaults(f) {
     supervisorZone:  supervisorOrAdmin
   };
 }
-function computeNavAccess(f, email) {
-  const defaults = computeNavDefaults(f);
-  const overrides = _navOverrides[(email || '').toLowerCase()] || {};
+// `f` is the raw Airtable fields object (returnFieldsByFieldId=true) for this
+// user. If an admin has never saved this user's Access panel (Access
+// Configured is unticked), fall back to the computed role-based defaults so
+// nobody loses access. Once configured, the literal stored checkboxes win.
+function computeNavAccess(f) {
+  if (!f[F_ACCESS_CONFIGURED]) return computeNavDefaults(f);
   const result = {};
-  NAV_TOGGLE_KEYS.forEach(key => {
-    result[key] = overrides[key] !== undefined ? !!overrides[key] : defaults[key];
-  });
+  NAV_TOGGLE_KEYS.forEach(key => { result[key] = !!f[F_ACCESS[key]]; });
   return result;
 }
 
@@ -397,14 +400,14 @@ function recordToUser(record) {
     isSupervisor:     f[F_IS_SUPERVISOR]    || false,
     supervisorEmail:  f[F_SUPERVISOR_EMAIL] || '',
     avatarUrl:        f[F_AVATAR]           || '',
-    isMarketing:      _marketingUsers.has((f[F_EMAIL] || '').toLowerCase()),
-    isLeadGen:        _leadGenUsers.has((f[F_EMAIL] || '').toLowerCase()),
+    isMarketing:      f[F_IS_MARKETING]     || false,
+    isLeadGen:        f[F_IS_LEADGEN]       || false,
     cas:              f[F_CAS]              || false,
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     birthday:         f[F_BIRTHDAY]           || null,
     startDate:        f[F_START_DATE]         || null,
     business:         f[F_BUSINESS]           || '',
-    navAccess:        computeNavAccess(f, f[F_EMAIL] || ''),
+    navAccess:        computeNavAccess(f),
     equityRelease:       f[F_EQUITY_RELEASE]       || false,
     commercialMortgages: f[F_COMMERCIAL_MORTGAGES] || false,
     pmi:                 f[F_PMI]                  || false,
@@ -940,19 +943,38 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
   }
 });
 
-// ── LeadGen users management (admin only) ──────────────────────
-app.get('/api/leadgen-users', requireAdmin, (req, res) => {
-  res.json([..._leadGenUsers]);
+// ── LeadGen users management (admin only) — reads/writes Airtable directly ──
+app.get('/api/leadgen-users', requireAdmin, async (req, res) => {
+  try {
+    const emails = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${encodeURIComponent(`{${'Is LeadGen'}} = TRUE()`)}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        const email = (r.fields[F_EMAIL] || '').toLowerCase();
+        if (email) emails.push(email);
+      }
+      offset = data.offset || '';
+    } while (offset);
+    res.json(emails);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.post('/api/leadgen-users', requireAdmin, (req, res) => {
+app.post('/api/leadgen-users', requireAdmin, async (req, res) => {
   const { email, remove } = req.body;
   if (!email) return res.status(400).json({ error: 'Missing email' });
-  const e = email.toLowerCase();
-  if (remove) _leadGenUsers.delete(e); else _leadGenUsers.add(e);
+  const e = email.trim().toLowerCase();
   try {
-    fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
-    res.json({ ok: true, leadGenUsers: [..._leadGenUsers] });
-  } catch(err) { res.status(500).json({ error: err.message }); }
+    const uf = encodeURIComponent(`LOWER({Email}) = "${e.replace(/"/g, '\\"')}"`);
+    const data = await atFetch(`?filterByFormula=${uf}&pageSize=1`);
+    const record = (data.records || [])[0];
+    if (!record) return res.status(404).json({ error: 'User not found' });
+    await atFetch(`/${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_IS_LEADGEN]: !remove } })
+    });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 
@@ -1850,30 +1872,23 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
       [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
       [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
-      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true'
+      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
+      [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
+      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true'
     };
+    // Per-user top-nav tab Access — permanently recorded in Airtable so it
+    // survives redeploys. Marks Access Configured so future reads use these
+    // literal values instead of falling back to role-based defaults.
+    if (req.body.navAccess && typeof req.body.navAccess === 'object') {
+      fields[F_ACCESS_CONFIGURED] = true;
+      NAV_TOGGLE_KEYS.forEach(key => { fields[F_ACCESS[key]] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
+    }
     const data = await atFetch('', {
       method: 'POST',
       body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
     });
-    // Handle marketing role
-    const mktFlag = isMarketing === true || isMarketing === 'true';
-    if (mktFlag) _marketingUsers.add(normEmail);
-    else _marketingUsers.delete(normEmail);
-    fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
-    // Handle LeadGen toggle
-    const lgFlag = isLeadGen === true || isLeadGen === 'true';
-    if (lgFlag) _leadGenUsers.add(normEmail);
-    else _leadGenUsers.delete(normEmail);
-    fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
-    // Handle per-user top-nav tab access
-    if (req.body.navAccess && typeof req.body.navAccess === 'object') {
-      const nav = {};
-      NAV_TOGGLE_KEYS.forEach(key => { nav[key] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
-      _navOverrides[normEmail] = nav;
-      saveNavOverrides();
-    }
-    // Product licences are now written directly to Airtable above (F_EQUITY_RELEASE etc.)
+    // Product licences, marketing/leadgen flags, and Access toggles are all
+    // now written directly to Airtable above (F_EQUITY_RELEASE etc.)
     auditLog('admin_user_created', { targetEmail: normEmail, admin: (req.session.user || {}).email }, req);
     res.json(recordToUser(data.records[0]));
   } catch (err) {
@@ -1978,8 +1993,17 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
       [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
       [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
-      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true'
+      [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
+      [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
+      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true'
     };
+    // Per-user top-nav tab Access — permanently recorded in Airtable so it
+    // survives redeploys. Marks Access Configured so future reads use these
+    // literal values instead of falling back to role-based defaults.
+    if (req.body.navAccess && typeof req.body.navAccess === 'object') {
+      fields[F_ACCESS_CONFIGURED] = true;
+      NAV_TOGGLE_KEYS.forEach(key => { fields[F_ACCESS[key]] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
+    }
     if (password) {
       if (password.length < 12) return res.status(400).json({ error: 'Password must be at least 12 characters' });
       fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
@@ -1991,25 +2015,8 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true })
     });
-    // Handle marketing role + extra products (keyed by email; cas now in Airtable)
-    if (email !== undefined) {
-      const normEmail = email.trim().toLowerCase();
-      const mktFlag = isMarketing === true || isMarketing === 'true';
-      if (mktFlag) _marketingUsers.add(normEmail);
-      else _marketingUsers.delete(normEmail);
-      fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
-      const lgFlag = isLeadGen === true || isLeadGen === 'true';
-      if (lgFlag) _leadGenUsers.add(normEmail);
-      else _leadGenUsers.delete(normEmail);
-      fs.writeFileSync(LEADGEN_USERS_PATH, JSON.stringify([..._leadGenUsers], null, 2));
-      if (req.body.navAccess && typeof req.body.navAccess === 'object') {
-        const nav = {};
-        NAV_TOGGLE_KEYS.forEach(key => { nav[key] = req.body.navAccess[key] === true || req.body.navAccess[key] === 'true'; });
-        _navOverrides[normEmail] = nav;
-        saveNavOverrides();
-      }
-      // Product licences are now written directly to Airtable above (F_EQUITY_RELEASE etc.)
-    }
+    // Marketing/LeadGen flags, Access toggles, and product licences are all
+    // now written directly to Airtable above (F_EQUITY_RELEASE etc.)
     res.json(recordToUser(data));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3361,20 +3368,38 @@ app.get('/download-post/:post/:filename', requireAuth, (req, res) => {
   res.download(filePath, safeFile);
 });
 
-// ── Marketing users management (admin only) ───────────────────
-app.get('/api/marketing-users', requireAdmin, (req, res) => {
-  res.json([..._marketingUsers]);
+// ── Marketing users management (admin only) — reads/writes Airtable directly ──
+app.get('/api/marketing-users', requireAdmin, async (req, res) => {
+  try {
+    const emails = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${encodeURIComponent(`{${'Is Marketing'}} = TRUE()`)}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        const email = (r.fields[F_EMAIL] || '').toLowerCase();
+        if (email) emails.push(email);
+      }
+      offset = data.offset || '';
+    } while (offset);
+    res.json(emails);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.post('/api/marketing-users', requireAdmin, (req, res) => {
+app.post('/api/marketing-users', requireAdmin, async (req, res) => {
   const { email, remove } = req.body;
   if (!email) return res.status(400).json({ error: 'Missing email' });
-  const e = email.toLowerCase();
-  if (remove) _marketingUsers.delete(e); else _marketingUsers.add(e);
+  const e = email.trim().toLowerCase();
   try {
-    fs.writeFileSync(MARKETING_USERS_PATH, JSON.stringify([..._marketingUsers], null, 2));
-    // refresh session if this user is logged in
-    res.json({ ok: true, marketingUsers: [..._marketingUsers] });
-  } catch(err) { res.status(500).json({ error: err.message }); }
+    const uf = encodeURIComponent(`LOWER({Email}) = "${e.replace(/"/g, '\\"')}"`);
+    const data = await atFetch(`?filterByFormula=${uf}&pageSize=1`);
+    const record = (data.records || [])[0];
+    if (!record) return res.status(404).json({ error: 'User not found' });
+    await atFetch(`/${record.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_IS_MARKETING]: !remove } })
+    });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Featured social posts ──────────────────────────────────────
