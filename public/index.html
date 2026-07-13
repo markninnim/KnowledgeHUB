@@ -9595,8 +9595,7 @@ var OPP_PAGE_SECTIONS = {
   lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
   ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
   commercial: ['commercialLending'],
-  bridging:   ['bridgingLending'],
-  wealth:     ['wealthLending']
+  bridging:   ['bridgingLending']
 };
 
 var OPP_SECTIONS_DEF = {
@@ -9610,8 +9609,7 @@ var OPP_SECTIONS_DEF = {
   moveBtl:          { label: 'The Move',               cards: ['survey'] },
   referrals:        { label: 'Referrals',              cards: ['reviews','wealth'] },
   commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
-  bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] },
-  wealthLending:    { label: 'Wealth',                  cards: ['wealth'] }
+  bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
 };
 
 // ── Card detail content ──────────────────────────────────────
@@ -10124,14 +10122,14 @@ var OPP_DETAIL = {
   wealth: {
     overview: 'Mortgage conversations often surface much wider financial questions — savings sitting in low-interest accounts, an old pension from a previous job, a lump sum from an inheritance or house sale, or simply "what should I be doing with my money?" These sit outside a mortgage and protection licence, but spotting them and referring on is a valuable part of the service you provide.',
     sections: [
-      { heading: 'The opportunities inside Wealth', points: [
-        'Cash savings — money sitting in a current account or easy-access savings account earning little or no interest',
-        'Workplace and personal pensions — old pensions from previous employers that have been forgotten about, or several small pots that could be consolidated',
-        'Pension consolidation and retirement planning — clients approaching retirement who are unsure how or when to start drawing an income',
-        'Investments and ISAs — Stocks & Shares ISAs, General Investment Accounts, and reviewing whether existing investments still match the client\'s goals and attitude to risk',
-        'Lump sums — inheritance, redundancy payments, bonuses, or proceeds from the sale of a business or another property',
-        'Inheritance Tax and estate planning — larger estates where IHT exposure or gifting strategy has never been reviewed',
-        'Protection-linked investment needs — clients with maturing endowments or investment bonds who are unsure what to do next'
+      { heading: 'The opportunities inside Wealth', tiles: [
+        { title: 'Cash Savings', desc: 'Money sitting in a current account or easy-access savings account earning little or no interest.' },
+        { title: 'Workplace & Personal Pensions', desc: 'Old pensions from previous employers that have been forgotten about, or several small pots that could be consolidated.' },
+        { title: 'Retirement Planning', desc: 'Clients approaching retirement who are unsure how or when to start drawing an income from their pensions.' },
+        { title: 'Investments & ISAs', desc: 'Stocks & Shares ISAs and General Investment Accounts — including reviewing whether existing investments still match the client\'s goals and attitude to risk.' },
+        { title: 'Lump Sums', desc: 'Inheritance, redundancy payments, bonuses, or proceeds from the sale of a business or another property.' },
+        { title: 'Inheritance Tax & Estate Planning', desc: 'Larger estates where IHT exposure or gifting strategy has never been reviewed.' },
+        { title: 'Maturing Plans', desc: 'Clients with maturing endowments or investment bonds who are unsure what to do next.' }
       ]},
       { heading: 'How to spot the opportunity', points: [
         'A client mentions savings sitting in a current account earning little or no interest',
@@ -10168,22 +10166,29 @@ var OPP_DETAIL = {
   }
 };
 
-function oppDetailHtml(cardKey) {
-  var card = OPP_CARDS[cardKey];
-  var detail = OPP_DETAIL[cardKey];
-  if (!card || !detail) return '<p style="padding:32px;color:#6b7c8f;">No detail available.</p>';
-  var h = '<div style="max-width:780px;padding:32px 32px 60px;">';
-  h += '<button onclick="oppCloseCard()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--brand-navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:24px;padding:0;">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back' +
-    '</button>';
-  h += '<div style="margin-bottom:12px;">' + (OPP_ICONS[cardKey] || '') + '</div>';
-  h += '<h1 style="font-size:20px;font-weight:800;color:var(--brand-navy);margin:0 0 4px;">' + escHtml(card.title) + '</h1>';
-  h += '<p style="font-size:13.5px;color:#6b7c8f;line-height:1.6;margin:0 0 32px;">' + escHtml(detail.overview) + '</p>';
-  detail.sections.forEach(function(s) {
+// Renders the reusable "sections" content shared by the card-detail overlay
+// and any full-page opportunity view (e.g. Wealth). `adviserContainerId` lets
+// each context give its "Licenced Advisers" loading placeholder a unique id,
+// since a card-detail overlay and a full opportunity page can exist in the
+// DOM at the same time.
+function oppRenderSections(sections, adviserContainerId) {
+  adviserContainerId = adviserContainerId || 'opp-detail-advisers';
+  var h = '';
+  (sections || []).forEach(function(s) {
     h += '<div style="margin-bottom:28px;">';
     h += '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e9f0f6;">' + escHtml(s.heading) + '</div>';
     if (s.dynamicType) {
-      h += '<div id="opp-detail-advisers" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
+      h += '<div id="' + adviserContainerId + '" style="color:#6b7c8f;font-size:13px;">Loading…</div>';
+    }
+    if (s.tiles) {
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">';
+      s.tiles.forEach(function(t) {
+        h += '<div class="ov-card">' +
+          '<div class="ov-card-title">' + escHtml(t.title) + '</div>' +
+          '<div class="ov-card-sub" style="margin-top:4px;">' + escHtml(t.desc) + '</div>' +
+          '</div>';
+      });
+      h += '</div>';
     }
     if (s.points) {
       h += '<ul style="margin:0;padding-left:18px;">';
@@ -10211,6 +10216,21 @@ function oppDetailHtml(cardKey) {
     }
     h += '</div>';
   });
+  return h;
+}
+
+function oppDetailHtml(cardKey) {
+  var card = OPP_CARDS[cardKey];
+  var detail = OPP_DETAIL[cardKey];
+  if (!card || !detail) return '<p style="padding:32px;color:#6b7c8f;">No detail available.</p>';
+  var h = '<div style="max-width:780px;padding:32px 32px 60px;">';
+  h += '<button onclick="oppCloseCard()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--brand-navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:24px;padding:0;">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back' +
+    '</button>';
+  h += '<div style="margin-bottom:12px;">' + (OPP_ICONS[cardKey] || '') + '</div>';
+  h += '<h1 style="font-size:20px;font-weight:800;color:var(--brand-navy);margin:0 0 4px;">' + escHtml(card.title) + '</h1>';
+  h += '<p style="font-size:13.5px;color:#6b7c8f;line-height:1.6;margin:0 0 32px;">' + escHtml(detail.overview) + '</p>';
+  h += oppRenderSections(detail.sections, 'opp-detail-advisers');
   h += '</div>';
   return h;
 }
@@ -10226,6 +10246,18 @@ function oppOpenCard(cardKey) {
   var detailDef = OPP_DETAIL[cardKey];
   var dynamicSection = detailDef && detailDef.sections.find(function(s) { return s.dynamicType; });
   if (dynamicSection) oppLoadLicencedAdvisers(dynamicSection.dynamicType, 'opp-detail-advisers');
+}
+
+// Wealth gets its own full-page view (rather than a page of teaser cards you
+// have to click into) so it opens directly from the nav in a single click.
+function oppBuildWealthPageHtml() {
+  var detail = OPP_DETAIL.wealth;
+  var h = '<div style="max-width:960px;padding:32px 32px 48px;">';
+  h += '<h1 style="font-size:20px;font-weight:800;color:var(--brand-navy);margin:0 0 4px;">' + escHtml(OPP_TITLES.wealth) + ' — Sales Opportunities</h1>';
+  h += '<p style="font-size:13.5px;color:#6b7c8f;line-height:1.6;margin:0 0 32px;">' + escHtml(OPP_SUBTITLES.wealth) + '</p>';
+  h += oppRenderSections(detail.sections, 'opp-wealth-advisers');
+  h += '</div>';
+  return h;
 }
 
 // Generic loader for any "Licenced Advisers" section — used on the PMI
@@ -10418,13 +10450,16 @@ function oppBuildPageHtml(pageKey) {
 function oppInitPages() {
   if (_OPP_INIT) return;
   _OPP_INIT = true;
-  ['purchase','btl','remortgage','lifetime','ftb','commercial','bridging','wealth'].forEach(function(key) {
+  ['purchase','btl','remortgage','lifetime','ftb','commercial','bridging'].forEach(function(key) {
     var el = document.getElementById('opp-page-' + key);
     if (el) el.innerHTML = oppBuildPageHtml(key);
   });
+  var wealthEl = document.getElementById('opp-page-wealth');
+  if (wealthEl) wealthEl.innerHTML = oppBuildWealthPageHtml();
   oppLoadLicencedAdvisers('equityRelease', 'opp-lifetime-advisers', 'No Lifetime Mortgage-licenced advisers are set up yet.');
   oppLoadLicencedAdvisers('commercialMortgages', 'opp-commercial-advisers', 'No Commercial Mortgage-licenced advisers are set up yet.');
   oppLoadLicencedAdvisers('bridging', 'opp-bridging-advisers', 'No Bridging Finance-licenced advisers are set up yet.');
+  oppLoadLicencedAdvisers('investments', 'opp-wealth-advisers', 'No Wealth-licenced advisers are set up yet.');
 }
 
 function oppShowPage(page, el) {
