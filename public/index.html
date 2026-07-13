@@ -3778,6 +3778,7 @@ select:focus { outline:none; }
             <div id="bp-tenure" style="font-size:12px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px;"></div>
           </div>
         </div>
+        <button id="bp-view-leads" onclick="bpViewLeads()" style="display:none;align-items:center;gap:6px;background:var(--brand-navy);border:1px solid var(--brand-navy);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">Leads</button>
       </div>
 
       <!-- Loading / error state -->
@@ -9017,6 +9018,17 @@ function savePredictedCasDate() {
 }
 
 // ── Broker Profile ────────────────────────────────────────────
+var _bpCurrentBrokerName = '';
+// Jumps to the top-nav Leads tab, pre-filtered to the broker whose profile is
+// currently open (admins/supervisors only — see the "Leads" button shown in
+// the broker profile header).
+function bpViewLeads() {
+  if (!_bpCurrentBrokerName) return;
+  switchTab('leadgen');
+  var mineLink = document.getElementById('lg-nav-mine');
+  if (mineLink) lgFilterBy('mine', mineLink);
+  if (typeof lgSetAdviserFilter === 'function') lgSetAdviserFilter(_bpCurrentBrokerName);
+}
 function openBrokerProfile(email, name) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   var panel = document.getElementById('sv-broker-profile');
@@ -9035,6 +9047,9 @@ function openBrokerProfile(email, name) {
       // Header meta
       var u = d.user || {};
       document.getElementById('bp-name').textContent = u.fullName || name || email;
+      _bpCurrentBrokerName = u.fullName || name || '';
+      var viewLeadsBtn = document.getElementById('bp-view-leads');
+      if (viewLeadsBtn) viewLeadsBtn.style.display = (_bpCurrentBrokerName && _currentUser && (_currentUser.isAdmin || _currentUser.isSupervisor) && (_currentUser.isAdmin || _currentUser.isLeadGen)) ? 'flex' : 'none';
       var metaParts = [u.jobTitle, u.email, u.mobile].filter(Boolean).join(' · ');
       var metaEl = document.getElementById('bp-meta');
       metaEl.textContent = metaParts;
@@ -14285,23 +14300,24 @@ function lgPollRefresh() {
   }).catch(function() {});
 }
 
-// ── New-lead notification dot on the top-nav "Leads" tab ──────
+// ── New/allocated-lead notification dot on the top-nav "Leads" tab ──
 // Runs in the background regardless of which tab is open, so a broker sees
-// the red dot as soon as a lead lands, without needing the Leads tab loaded.
+// the red dot as soon as a lead lands OR is (re)allocated to them — not just
+// on brand-new leads — without needing the Leads tab loaded.
 var _lgNewLeadTimer = null;
-function lgLastSeenKey() {
+function lgSeenLeadIdsKey() {
   var email = (_currentUser && _currentUser.email) || 'anon';
-  return 'lgLeadsLastSeen:' + email.toLowerCase();
+  return 'lgSeenLeadIds:' + email.toLowerCase();
 }
 function lgCheckNewLeads() {
   fetch('/api/leadgen-leads').then(function(r) { return r.json(); }).then(function(d) {
     if (d.error) return;
     var leads = d.leads || [];
     var me = lgCurrentUserName();
-    var lastSeen = Number(localStorage.getItem(lgLastSeenKey())) || 0;
-    var hasNew = leads.some(function(l) {
-      return l.adviser === me && l.createdTime && new Date(l.createdTime).getTime() > lastSeen;
-    });
+    var myIds = leads.filter(function(l) { return l.adviser === me; }).map(function(l) { return l.id; });
+    var seen = [];
+    try { seen = JSON.parse(localStorage.getItem(lgSeenLeadIdsKey()) || '[]'); } catch (_) {}
+    var hasNew = myIds.some(function(id) { return seen.indexOf(id) === -1; });
     var dot = document.getElementById('lg-nav-dot');
     if (dot) dot.style.display = hasNew ? 'block' : 'none';
   }).catch(function() {});
@@ -14312,9 +14328,16 @@ function lgStartNewLeadWatch() {
   _lgNewLeadTimer = setInterval(lgCheckNewLeads, 60000);
 }
 function lgMarkLeadsSeen() {
-  localStorage.setItem(lgLastSeenKey(), String(Date.now()));
-  var dot = document.getElementById('lg-nav-dot');
-  if (dot) dot.style.display = 'none';
+  // Fetch fresh rather than relying on _lgLeads, which may not be loaded yet
+  // the first time this runs (called right alongside loadLeadGen()).
+  fetch('/api/leadgen-leads').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) return;
+    var leads = d.leads || [];
+    var myIds = leads.filter(function(l) { return l.adviser === lgCurrentUserName(); }).map(function(l) { return l.id; });
+    localStorage.setItem(lgSeenLeadIdsKey(), JSON.stringify(myIds));
+    var dot = document.getElementById('lg-nav-dot');
+    if (dot) dot.style.display = 'none';
+  }).catch(function() {});
 }
 var _lgView = 'table';
 function lgSetView(view) {
