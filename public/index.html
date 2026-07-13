@@ -12627,9 +12627,18 @@ var KH_KB = [
 // silently swallowed the query before it ever reached the AI. Requiring a
 // real keyword-phrase match means anything not confidently covered here
 // correctly falls through to the AI instead of guessing locally.
+// Open-ended "what/how/why/explain the process" style questions want a real,
+// detailed answer — not a one-line "go to this tab" pointer. Skip the instant
+// local KB for these and let the AI answer properly from its (now much
+// richer) reference material, which includes full process detail per topic.
+function khWantsRichAnswer(q) {
+  return /\b(what is|what's|what are|how does|how do .*work|why|explain|process|procedure|difference between|tell me about|details? (about|on)|what happens)\b/i.test(q);
+}
+
 function khMatch(query) {
   var q = (query || '').toLowerCase().trim();
   if (!q) return null;
+  if (khWantsRichAnswer(q)) return null;
   var best = null, bestScore = 0;
   KH_KB.forEach(function(entry) {
     var score = 0;
