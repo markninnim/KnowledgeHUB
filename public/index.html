@@ -9540,6 +9540,7 @@ var OPP_SUBTITLES = {
 
 var OPP_ICONS = {
   residential: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  residentialRemortgage: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/><path d="M14 4l3 2-3 2"/></svg>',
   life:        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
   ci:          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
   ip:          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
@@ -9561,6 +9562,7 @@ var OPP_ICONS = {
 
 var OPP_CARDS = {
   residential: { title: 'Residential Mortgage',           desc: 'The cornerstone of every case. Finding the right mortgage — rate, term, lender and structure — that genuinely fits your client\'s circumstances and long-term goals.' },
+  residentialRemortgage: { title: 'Residential Remortgage', desc: 'Most Buy to Let clients also have their own residential mortgage sitting in the background. Capture the fix end date and log it in AutoCRM™ so you never miss the renewal.' },
   life:        { title: 'Life Cover',                     desc: 'Ensures the mortgage is repaid and the family is protected if the worst happens. One of the most important conversations you can have with a client.' },
   ci:          { title: 'Critical Illness Cover',         desc: 'Pays a lump sum on diagnosis of a serious illness. Vital cover that brings financial breathing space at an already difficult time.' },
   ip:          { title: 'Income Protection',              desc: 'Replaces a portion of income if your client cannot work through illness or injury. Often overlooked, but arguably the most important protection of all.' },
@@ -9582,7 +9584,7 @@ var OPP_CARDS = {
 
 var OPP_PAGE_SECTIONS = {
   purchase:   ['mortgage','protection','insurance','health','legal','move','referrals'],
-  btl:        ['mortgage','protection','insurance','health','legal','move','referrals'],
+  btl:        ['mortgageBtl','protection','insurance','health','legal','moveBtl','referrals'],
   remortgage: ['mortgage','protection','insurance','health','legal','referrals'],
   lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
   ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
@@ -9592,11 +9594,13 @@ var OPP_PAGE_SECTIONS = {
 
 var OPP_SECTIONS_DEF = {
   mortgage:         { label: 'The Mortgage',           cards: ['residential'] },
+  mortgageBtl:      { label: 'The Mortgage',           cards: ['residentialRemortgage'] },
   protection:       { label: 'Protection',             cards: ['life','ci','ip','fib','asu','childrens'] },
   insurance:        { label: 'Home Insurance',         cards: ['buildings'] },
   health:           { label: 'Health',                 cards: ['pmi'] },
   legal:            { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
   move:             { label: 'The Move',               cards: ['survey','removals'] },
+  moveBtl:          { label: 'The Move',               cards: ['survey'] },
   referrals:        { label: 'Referrals',              cards: ['reviews','wealth'] },
   commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
   bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
@@ -9604,6 +9608,30 @@ var OPP_SECTIONS_DEF = {
 
 // ── Card detail content ──────────────────────────────────────
 var OPP_DETAIL = {
+  residentialRemortgage: {
+    overview: 'A Buy to Let case is rarely just a Buy to Let case. The overwhelming majority of landlords are homeowners too, with their own residential mortgage sitting quietly in the background — often on a fixed rate that will end long before they think to call you about it. Spotting this and acting on it is one of the simplest ways to generate a second piece of business from a single conversation.',
+    sections: [
+      { heading: 'Why this matters', points: [
+        'A client remortgaging or purchasing a Buy to Let almost always has a residential mortgage of their own — ask about it as a matter of course',
+        'Their residential fix rarely ends on the same date as the Buy to Let, so it is easy for it to be forgotten about entirely if you do not capture it now',
+        'A client who feels looked after across their whole portfolio, not just the property in front of you, is far more likely to stay loyal and refer others'
+      ]},
+      { heading: 'What to capture', points: [
+        'Their residential mortgage lender and current rate',
+        'The fix end date — this is the single most important piece of information to get right',
+        'Whether they are likely to want to move, raise capital, or simply switch rate when the time comes'
+      ]},
+      { heading: 'Log it in AutoCRM™', points: [
+        'Add the residential mortgage and its renewal date to AutoCRM™ as soon as you have it — this is exactly what the system is there for',
+        'AutoCRM™ will then prompt you as the renewal approaches, so the second case comes to you rather than relying on memory',
+        'This takes moments during the Buy to Let conversation but can be the difference between winning and losing a case 12, 24 or 60 months down the line'
+      ]},
+      { heading: 'Starting the conversation', points: [
+        '"While we\'re looking at the Buy to Let, can I just check — when does your own mortgage fix end? I\'ll make a note so we don\'t lose track of it."',
+        '"It\'s easy for your own mortgage to slip down the priority list once you\'re juggling a rental property too — let me keep an eye on the renewal date for you."'
+      ]}
+    ]
+  },
   residential: {
     overview: 'The mortgage is the foundation, but the way you approach it shapes the entire client relationship. Your role is not just to find the best rate — it\'s to structure a mortgage that genuinely fits your client\'s life, now and in the years ahead.',
     sections: [
