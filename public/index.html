@@ -12833,6 +12833,63 @@ function khIsFollowUpListQuery(q) {
   return words <= 6 && /\b(who|list|show|name)\b/i.test(q) && /\b(they|them|those|that)\b/i.test(q);
 }
 
+// "Who are our wealth advisers/specialists?" — this is a real, non-secret
+// staff directory question (which colleagues hold which licence), the exact
+// same list already shown on the Opportunities cards. Answer it with a real
+// lookup against /api/licenced-advisers, never a generic "go look under
+// Opportunities" nav pointer. adv?is[eo]rs? tolerates typos like "avisers".
+var KH_SPECIALIST_TYPES = [
+  { type: 'investments',         topic: /\bwealth\b/i },
+  { type: 'trusts',               topic: /\btrusts?\b/i },
+  { type: 'commercialMortgages',  topic: /\bcommercial\b/i },
+  { type: 'bridging',             topic: /\bbridging\b/i },
+  { type: 'equityRelease',        topic: /\b(equity release|lifetime mortgage)\b/i },
+  { type: 'businessProtection',   topic: /\bbusiness protection\b/i },
+  { type: 'surveying',            topic: /\bsurveying\b/i },
+  { type: 'pmi',                  topic: /\b(pmi|private medical)\b/i }
+];
+var KH_ADVISER_WORD = /ad?vis[eo]rs?\b|specialists?\b|who (does|handles|deals with)\b/i;
+function khMatchSpecialistType(q) {
+  var found = null;
+  KH_SPECIALIST_TYPES.forEach(function(entry) {
+    if (!found && entry.topic.test(q)) found = entry;
+  });
+  return found;
+}
+function khIsSpecialistAdviserQuery(q) {
+  return KH_ADVISER_WORD.test(q) && !!khMatchSpecialistType(q);
+}
+function khSpecialistAdvisersLookup(query) {
+  var match = khMatchSpecialistType(query);
+  if (!match) { khAskAi(query); return; }
+  khShowTyping();
+  fetch('/api/licenced-advisers?type=' + encodeURIComponent(match.type))
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      var advisers = (d && d.advisers) || [];
+      if (!advisers.length) {
+        khAddBotMessage('I couldn\'t find any licenced advisers for that specialism right now — check the relevant Opportunities card, or ask an admin.');
+        khAddActionButton('Go to Opportunities', 'selling-zone');
+        return;
+      }
+      advisers.forEach(function(a) {
+        var name = [a.firstName, a.lastName].filter(Boolean).join(' ');
+        var lines = [name + (a.jobTitle ? ' — ' + a.jobTitle : '')];
+        if (a.email) lines.push('Email: ' + a.email);
+        if (a.mobile) lines.push('Mobile: ' + a.mobile);
+        else if (a.landline) lines.push('Landline: ' + a.landline);
+        khAddBotMessage(lines.join('\n'));
+      });
+      khAddActionButton('Go to Opportunities', 'selling-zone');
+    })
+    .catch(function(e) {
+      if (e === 'handled') return;
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 function khMyClientsLookup(query) {
   _khLastTopic = 'clients';
   if (khIsClientCountQuery(query)) {
@@ -12996,6 +13053,13 @@ function khAnswer(query) {
   }
   if (khIsFollowUpListQuery(query) && _khLastTopic === 'leads') {
     khMyLeadsLookup('');
+    return;
+  }
+  // "Who are our wealth advisers?" etc — real, non-secret staff-directory
+  // data, must win over the generic "Opportunities" nav pointer.
+  if (khIsSpecialistAdviserQuery(query)) {
+    _khLastTopic = null;
+    khSpecialistAdvisersLookup(query);
     return;
   }
   // Contact-detail lookups (real staff-directory data) must win over a
