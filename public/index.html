@@ -9987,21 +9987,20 @@ var OPP_DETAIL = {
   survey: {
     overview: 'A mortgage valuation tells the lender the property is worth what the client is paying. It tells the client almost nothing about the actual condition of the building. Recommending the right survey is an honest and practical service — one that protects clients from buying a property with significant defects they were never aware of.',
     sections: [
-      { heading: 'Three levels of survey', points: [
-        'RICS Level 1 (Condition Report): a brief traffic-light assessment of condition. Suitable only for modern, well-maintained, standard-construction properties — rarely recommended for anything else',
-        'RICS Level 2 (HomeBuyer Report): the most popular option. An inspection of all accessible parts of the property, highlighting defects, risks and maintenance recommendations. Suitable for most conventional homes',
-        'RICS Level 3 (Building Survey / Full Structural): a comprehensive inspection with detailed assessment of construction, materials and defects. Recommended for older, larger or unusual properties and any property where significant work is planned'
-      ]},
-      { heading: 'When to recommend a Level 3', points: [
-        'Properties over approximately 80–100 years old',
-        'Any property with visible signs of movement, damp, cracking or significant wear',
-        'Non-standard construction: timber frame, thatched roof, converted barn or farm building, listed property',
-        'Where the client plans a major renovation or extension — the survey informs the scope and can uncover issues that would affect planning'
+      { heading: 'Products we offer', points: [
+        'We offer RICS Level 2 (HomeBuyer Report) alongside a range of purpose-built valuations. We do not offer Level 1 (Condition Report) or Level 3 (Building Survey / Full Structural) — for those, refer the client directly to one of our surveying partners.'
+      ], tiles: [
+        { title: 'RICS Level 2 (HomeBuyer Report)', desc: 'Our most popular option. An inspection of all accessible parts of the property, highlighting defects, risks and maintenance recommendations. Suitable for most conventional homes.' },
+        { title: 'Matrimonial Valuation', desc: 'An independent valuation for divorce or separation proceedings, providing a figure both parties and their solicitors can rely on.' },
+        { title: 'Independent Valuation', desc: 'A standalone valuation for a client who simply wants to know what a property is worth, outside of a mortgage application.' },
+        { title: 'Help to Buy Valuation', desc: 'The specific valuation required when a client is repaying or staircasing their Help to Buy equity loan.' },
+        { title: 'Shared Ownership Valuation', desc: 'The valuation required when a client is staircasing (buying further shares in) a shared ownership property.' },
+        { title: 'Probate Valuation', desc: 'A valuation of a property forming part of an estate, required for probate and Inheritance Tax purposes.' }
       ]},
       { heading: 'The value of getting it done', points: [
         'A survey can uncover issues that provide grounds for renegotiating the purchase price or requesting remedial work before exchange',
         'Knowing about a defect in advance means the client can budget for it — rather than face an expensive surprise after moving in',
-        'The cost of a Level 2 or Level 3 survey is small relative to the cost of undetected structural or damp issues discovered after purchase'
+        'The cost of a Level 2 survey is small relative to the cost of undetected structural or damp issues discovered after purchase'
       ]},
       { heading: 'Starting the conversation', points: [
         '"Your lender will do a valuation — but that is for their benefit, not yours. It won\'t tell you much about the actual condition of the property."',
@@ -10011,8 +10010,8 @@ var OPP_DETAIL = {
       { heading: 'Our Surveying Partners', points: [
         'We have two surveying partners you can use — the choice is entirely yours.'
       ], logoCards: [
-        { name: 'FP Surveying', logo: '/static/1fpsurveying@3x.png', desc: 'Priced the cheapest of our two partners, helping attract work from comparison websites. This is achieved by not paying commission on referrals.' },
-        { name: 'Acre Surveying', logo: '/static/acre-surveying-logo.png', desc: 'Remains competitively priced while paying a £100 commission on referrals.', note: 'Use the refer button and the commission is paid instantly on booking.' }
+        { name: 'FP Surveying', url: 'https://fpsurveying.co.uk/', logo: '/static/1fpsurveying@3x.png', desc: 'Priced the cheapest of our two partners, helping attract work from comparison websites. This is achieved by not paying commission on referrals.' },
+        { name: 'Acre Surveying', url: 'https://acresurveying.co.uk/', logo: '/static/acre-surveying-logo.png', desc: 'Remains competitively priced while paying a £100 commission on referrals.', note: 'Use the refer button and the commission is paid instantly on booking.' }
       ]}
     ]
   },
@@ -10223,11 +10222,14 @@ function oppRenderSections(sections, adviserContainerId) {
     if (s.logoCards) {
       h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">';
       s.logoCards.forEach(function(p) {
+        var nameHtml = p.url
+          ? '<a href="' + escHtml(p.url) + '" target="_blank" rel="noopener" style="color:var(--brand-navy);text-decoration:none;">' + escHtml(p.name) + ' ↗</a>'
+          : escHtml(p.name);
         h += '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:18px 20px;">' +
           '<div style="display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;height:52px;">' +
             '<img src="' + escHtml(p.logo) + '" alt="' + escHtml(p.name) + '" style="max-width:100%;max-height:100%;object-fit:contain;">' +
           '</div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(p.name) + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + nameHtml + '</div>' +
           '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.6;">' + escHtml(p.desc) + '</div>' +
           (p.note ? '<div style="font-size:11.5px;color:var(--brand-orange);font-weight:600;margin-top:8px;">' + escHtml(p.note) + '</div>' : '') +
           '</div>';
