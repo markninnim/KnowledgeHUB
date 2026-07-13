@@ -12762,7 +12762,12 @@ function khContactLookup(query) {
 // strictly to the logged-in session's own email — this is never passed to
 // or answerable by the AI, and never exposes another adviser's customers.
 function khIsMyClientsQuery(q) {
-  return /\bmy (client|clients|customer|customers)\b/i.test(q);
+  return /\bmy (client|clients|customer|customers)\b/i.test(q) ||
+    /\b(client|clients|customer|customers)\b.*\b(do i have|i have|i've got)\b/i.test(q) ||
+    /\bhow many\b.*\b(client|clients|customer|customers)\b/i.test(q);
+}
+function khIsClientCountQuery(q) {
+  return /\bhow many\b/i.test(q) || /\b(do i have|i have|i've got)\b/i.test(q);
 }
 function khExtractClientName(q) {
   return q
@@ -12773,6 +12778,24 @@ function khExtractClientName(q) {
     .trim();
 }
 function khMyClientsLookup(query) {
+  if (khIsClientCountQuery(query)) {
+    khShowTyping();
+    fetch('/api/help-my-clients?count=1')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        khRemoveTyping();
+        var count = (d && typeof d.count === 'number') ? d.count : 0;
+        khAddBotMessage(count === 0
+          ? 'You don\'t have any customers in Mortgage Completions yet.'
+          : ('You have ' + count + ' customer' + (count === 1 ? '' : 's') + ' in Mortgage Completions.'));
+        khAddActionButton('View in AutoCRM™', 'autocrm');
+      })
+      .catch(function() {
+        khRemoveTyping();
+        khAddBotMessage('Something went wrong looking that up — please try again.');
+      });
+    return;
+  }
   var name = khExtractClientName(query);
   khShowTyping();
   fetch('/api/help-my-clients' + (name ? ('?name=' + encodeURIComponent(name)) : ''))

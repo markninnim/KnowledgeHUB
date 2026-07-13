@@ -1632,7 +1632,7 @@ app.get('/api/help-my-clients', requireAuth, async (req, res) => {
       offset = body.offset || '';
     } while (offset && all.length < 3000);
 
-    let rows = all.map(rec => {
+    const rawRows = all.map(rec => {
       const f = rec.fields || {};
       return {
         name: f[MC_NAME] || '',
@@ -1642,6 +1642,32 @@ app.get('/api/help-my-clients', requireAuth, async (req, res) => {
         benefitEnd: f[MC_BENEFIT_END] || ''
       };
     });
+
+    // Joint applicants each get their own row with identical case details —
+    // group them into a single case so counts/names reflect real customers,
+    // not raw Airtable rows (mirrors /api/mortgage-completions grouping).
+    const groups = new Map();
+    rawRows.forEach(row => {
+      const key = [row.benefitEnd, row.loanAmount, row.valuation].join('|');
+      if (!groups.has(key)) {
+        groups.set(key, { ...row, names: [row.name].filter(Boolean) });
+      } else {
+        const g = groups.get(key);
+        if (row.name && !g.names.includes(row.name)) g.names.push(row.name);
+      }
+    });
+    let rows = Array.from(groups.values()).map(g => ({
+      name: g.names.join(' & '),
+      loanAmount: g.loanAmount,
+      valuation: g.valuation,
+      lender: g.lender,
+      benefitEnd: g.benefitEnd
+    }));
+
+    // "How many clients/customers do I have" — a plain total count, no AI guessing.
+    if (req.query.count) {
+      return res.json({ count: rows.length });
+    }
 
     const nameQuery = (req.query.name || '').toString().trim().toLowerCase();
     if (nameQuery) {
