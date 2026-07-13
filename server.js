@@ -1730,6 +1730,7 @@ app.get('/api/licenced-advisers', requireAuth, async (req, res) => {
           advisers.push({
             firstName: u.firstName,
             lastName:  u.lastName,
+            salutation: u.salutation,
             jobTitle:  u.jobTitle,
             email:     u.email,
             mobile:    u.mobile,
