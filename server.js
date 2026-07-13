@@ -1638,6 +1638,23 @@ app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
   }
 });
 
+// Loose name matching for Help widget lookups: rather than requiring the
+// user's extracted text to appear as one exact substring (which breaks on
+// word order like "liam and lorraines" vs a stored "Lorraine & Liam"), split
+// into significant words, strip a trailing "s" (simple plural/possessive
+// tolerance), and require every remaining word to appear somewhere in the
+// row's name.
+function nameWordsMatch(rowName, query) {
+  const name = (rowName || '').toLowerCase();
+  const stop = new Set(['and', 'the', 'a', 'an', 'of', 'for', 'to']);
+  const words = (query || '').toLowerCase().split(/\s+/)
+    .map(w => w.replace(/[^a-z]/g, ''))
+    .map(w => (w.length > 3 && w.endsWith('s')) ? w.slice(0, -1) : w)
+    .filter(w => w.length > 1 && !stop.has(w));
+  if (!words.length) return false;
+  return words.every(w => name.includes(w));
+}
+
 // Help widget: deterministic "my clients" lookup against Mortgage Completions.
 // SECURITY: brokerEmail is taken ONLY from the logged-in session (req.session.user.email),
 // never from client input, and mirrors the exact same LOWER({Customer Ref Email})=...
@@ -1707,7 +1724,7 @@ app.get('/api/help-my-clients', requireAuth, async (req, res) => {
 
     const nameQuery = (req.query.name || '').toString().trim().toLowerCase();
     if (nameQuery) {
-      rows = rows.filter(r => r.name.toLowerCase().includes(nameQuery));
+      rows = rows.filter(r => nameWordsMatch(r.name, nameQuery));
     } else {
       // No name given — return the soonest upcoming renewals as a summary.
       rows = rows.filter(r => r.benefitEnd).slice(0, 5);
@@ -1755,7 +1772,7 @@ app.get('/api/help-my-leads', requireAuth, async (req, res) => {
 
     const nameQuery = (req.query.name || '').toString().trim().toLowerCase();
     if (nameQuery) {
-      rows = rows.filter(r => (r.name || '').toLowerCase().includes(nameQuery));
+      rows = rows.filter(r => nameWordsMatch(r.name, nameQuery));
     } else {
       // No name given — most recent leads first, capped to a short summary.
       rows = rows

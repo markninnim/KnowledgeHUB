@@ -12781,7 +12781,11 @@ function khContactLookup(query) {
 function khIsMyClientsQuery(q) {
   return /\bmy (client|clients|customer|customers)\b/i.test(q) ||
     /\b(client|clients|customer|customers)\b.*\b(do i have|i have|i've got)\b/i.test(q) ||
-    /\bhow many\b.*\b(client|clients|customer|customers)\b/i.test(q);
+    /\bhow many\b.*\b(client|clients|customer|customers)\b/i.test(q) ||
+    // "when is/does X('s) [mortgage] up for renewal" etc — a specific renewal
+    // date question, even without the word "client"/"customer". ren\w*al
+    // tolerates common typos like "renwal"/"renewel".
+    (/\bren\w*al\b/i.test(q) && /\b(when|due|up for|coming up|renews?|expir)\b/i.test(q));
 }
 function khIsClientCountQuery(q) {
   return /\bhow many\b/i.test(q) || /\b(do i have|i have|i've got)\b/i.test(q);
@@ -12790,7 +12794,8 @@ function khExtractClientName(q) {
   return q
     .replace(/[’']s\b/gi, ' ')
     .replace(/\bmy (client|clients|customer|customers)\b/gi, ' ')
-    .replace(/\b(renewal|renewals|renew|renews|when|does|do|mortgage|benefit|end|date|loan|lender|valuation|details|of|for|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
+    .replace(/\bren\w*al\b/gi, ' ') // renewal/renewals/renwal (typo) etc
+    .replace(/\b(renew|renews|when|does|do|mortgage|benefit|end|date|loan|lender|valuation|details|due|up|coming|expir\w*|of|for|and|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -12942,23 +12947,12 @@ function khMyLeadsLookup(query) {
     });
 }
 
-// Instant, deterministic matches (nav shortcuts etc.) — used first so common
-// questions get an immediate answer with a "go there" button. Contact-detail,
-// "my clients" and "my leads" requests are handled by real database lookups,
-// scoped to the logged-in user, never the AI. Anything else is handed to the
-// AI, which is strictly ring-fenced to KnowledgeHUB's own content server-side
-// (see the Help KB in Airtable) and told to say so rather than guess if it
-// doesn't know.
+// Real, self-scoped data lookups (clients/leads/contacts) are checked FIRST,
+// ahead of the generic local KB — a generic nav entry like "AutoCRM™ tracks
+// renewals..." must never win over an actual "when is X's renewal" question
+// just because it also contains the word "renewal". Instant nav shortcuts and
+// the AI (ring-fenced to KnowledgeHUB's own content server-side) come after.
 function khAnswer(query) {
-  var entry = khMatch(query);
-  if (entry) {
-    _khLastTopic = null;
-    khAddBotMessage(entry.answer);
-    if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
-    _khHistory.push({ role: 'user', content: query });
-    _khHistory.push({ role: 'assistant', content: entry.answer });
-    return;
-  }
   if (khIsMyClientsQuery(query)) {
     khMyClientsLookup(query);
     return;
@@ -12976,6 +12970,15 @@ function khAnswer(query) {
   }
   if (khIsFollowUpListQuery(query) && _khLastTopic === 'leads') {
     khMyLeadsLookup('');
+    return;
+  }
+  var entry = khMatch(query);
+  if (entry) {
+    _khLastTopic = null;
+    khAddBotMessage(entry.answer);
+    if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
+    _khHistory.push({ role: 'user', content: query });
+    _khHistory.push({ role: 'assistant', content: entry.answer });
     return;
   }
   if (khIsContactQuery(query)) {
@@ -13009,6 +13012,10 @@ function khAskAi(query) {
       return;
     }
     var reply = res.data.reply || 'Sorry, I wasn\'t able to generate a response.';
+    // Belt-and-suspenders: the system prompt tells the model not to use
+    // markdown, but strip any stray **bold**/__bold__/*italic* markers that
+    // slip through anyway, since this chat only renders plain text.
+    reply = reply.replace(/\*\*(.*?)\*\*/g, '$1').replace(/__(.*?)__/g, '$1').replace(/(?<!\w)\*(?!\s)(.*?)(?<!\s)\*(?!\w)/g, '$1');
     khAddBotMessage(reply);
     _khHistory.push({ role: 'user', content: query });
     _khHistory.push({ role: 'assistant', content: reply });
