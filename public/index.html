@@ -4755,7 +4755,7 @@ select:focus { outline:none; }
               <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Access</span>
               <div style="flex:1;height:1px;background:#e8ecf0;"></div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
                 <input id="uf-issupervisor" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
@@ -4777,6 +4777,13 @@ select:focus { outline:none; }
                 <div>
                   <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Marketing access</div>
                   <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can add and manage featured posts</div>
+                </div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--brand-navy)'" onmouseout="this.style.borderColor='#d1d5db'">
+                <input id="uf-leadgenmember" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">LeadGEN member</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Eligible for direct leads</div>
                 </div>
               </label>
             </div>
@@ -8313,13 +8320,9 @@ function renderNavAccessToggles(navAccess, isLeadGen) {
   var container = document.getElementById('uf-nav-toggles');
   if (!container) return;
   var nav = navAccess || {};
-  // "Leads" isn't part of navAccess (it's the separate isLeadGen flag), but
-  // lives visually with the other Top Nav Tabs toggles for consistency.
-  var leadsTile = '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;font-size:12.5px;font-weight:600;color:#6b7c8f;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
-    + '<input id="uf-leadgen" type="checkbox" ' + (isLeadGen ? 'checked' : '') + ' style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">'
-    + 'Leads'
-    + '</label>';
-  container.innerHTML = leadsTile + Object.keys(NAV_TOGGLE_LABELS).map(function(key) {
+  // "Leads" nav-tab access now lives on the "LeadGEN member" checkbox in the
+  // ACCESS card above (isLeadGen), so it's no longer duplicated here.
+  container.innerHTML = Object.keys(NAV_TOGGLE_LABELS).map(function(key) {
     var checked = nav[key] !== false;
     return '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;background:#fafbfc;font-size:12.5px;font-weight:600;color:#6b7c8f;" onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
       + '<input type="checkbox" data-nav-key="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">'
@@ -8372,6 +8375,7 @@ function openUserForm(userId) {
     document.getElementById('uf-trusts').checked                 = u.trusts            || false;
     document.getElementById('uf-cas').checked                  = u.cas               || false;
     document.getElementById('uf-issupervisor').checked     = u.isSupervisor     || false;
+    document.getElementById('uf-leadgenmember').checked     = u.isLeadGen        || false;
     renderNavAccessToggles(u.navAccess, u.isLeadGen || false);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
@@ -8397,6 +8401,7 @@ function openUserForm(userId) {
     document.getElementById('uf-trusts').checked                 = false;
     document.getElementById('uf-cas').checked                  = false;
     document.getElementById('uf-issupervisor').checked    = false;
+    document.getElementById('uf-leadgenmember').checked    = false;
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false }, false);
     populateSupervisorDropdown('');
   }
@@ -8430,7 +8435,7 @@ function saveUser() {
     website:          document.getElementById('uf-website').value.trim(),
     isAdmin:          document.getElementById('uf-admin').checked,
     isMarketing:      document.getElementById('uf-marketing').checked,
-    isLeadGen:        document.getElementById('uf-leadgen').checked,
+    isLeadGen:        document.getElementById('uf-leadgenmember').checked,
     sellsInvestments:    document.getElementById('uf-investments').checked,
     sellsMortgages:      document.getElementById('uf-mortgages').checked,
     sellsProtection:     document.getElementById('uf-protection').checked,

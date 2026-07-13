@@ -795,25 +795,21 @@ async function enrollLeadIntoAutoCrm(lead) {
   return d.records[0];
 }
 
-// GET /api/leadgen-advisers — distinct Adviser values already present on the Leads table,
-// for the Adviser dropdown (reflects who's actually been assigned leads, not who has the toggle on).
+// GET /api/leadgen-advisers — all LeadGen-eligible advisers from the Users table,
+// alphabetical, regardless of whether they currently have any leads assigned.
 app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) => {
   try {
     let records = [];
     let offset;
     do {
-      const qs = `?returnFieldsByFieldId=true&pageSize=100&fields[]=${LG_ADVISER}` +
+      const qs = `?filterByFormula=${encodeURIComponent('{Is LeadGen} = TRUE()')}&returnFieldsByFieldId=true&pageSize=100` +
         (offset ? `&offset=${offset}` : '');
-      const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}${qs}`, {
-        headers: { Authorization: `Bearer ${AT_KEY}` }
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
-      records = records.concat(d.records || []);
-      offset = d.offset;
+      const data = await atFetch(qs);
+      records = records.concat(data.records || []);
+      offset = data.offset;
     } while (offset);
     const advisers = [...new Set(
-      records.map(r => (r.fields[LG_ADVISER] || '').trim()).filter(Boolean)
+      records.map(r => [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ').trim()).filter(Boolean)
     )].sort((a, b) => a.localeCompare(b));
     res.json({ advisers });
   } catch (err) {
