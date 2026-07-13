@@ -12777,7 +12777,20 @@ function khExtractClientName(q) {
     .replace(/\s+/g, ' ')
     .trim();
 }
+// Tracks whether the last deterministic lookup was about the user's own
+// clients or leads, so a vague follow-up like "who are they" / "list them"
+// re-queries the SAME safe, self-scoped endpoint instead of falling through
+// to the AI (which has no visibility into real data and would otherwise
+// have to guess what "they" refers to).
+var _khLastTopic = null;
+
+function khIsFollowUpListQuery(q) {
+  var words = q.trim().split(/\s+/).length;
+  return words <= 6 && /\b(who|list|show|name)\b/i.test(q) && /\b(they|them|those|that)\b/i.test(q);
+}
+
 function khMyClientsLookup(query) {
+  _khLastTopic = 'clients';
   if (khIsClientCountQuery(query)) {
     khShowTyping();
     fetch('/api/help-my-clients?count=1')
@@ -12855,6 +12868,7 @@ function khExtractLeadName(q) {
     .trim();
 }
 function khMyLeadsLookup(query) {
+  _khLastTopic = 'leads';
   if (khIsLeadCountQuery(query)) {
     khShowTyping();
     fetch('/api/help-my-leads?count=1')
@@ -12921,6 +12935,7 @@ function khMyLeadsLookup(query) {
 function khAnswer(query) {
   var entry = khMatch(query);
   if (entry) {
+    _khLastTopic = null;
     khAddBotMessage(entry.answer);
     if (entry.action) khAddActionButton(entry.action.label, entry.action.tab);
     _khHistory.push({ role: 'user', content: query });
@@ -12935,10 +12950,23 @@ function khAnswer(query) {
     khMyLeadsLookup(query);
     return;
   }
+  // Vague follow-up ("who are they", "list them") referring back to the last
+  // clients/leads lookup — re-query the same safe endpoint rather than
+  // handing an ambiguous pronoun to the AI, which has no idea what it means.
+  if (khIsFollowUpListQuery(query) && _khLastTopic === 'clients') {
+    khMyClientsLookup('');
+    return;
+  }
+  if (khIsFollowUpListQuery(query) && _khLastTopic === 'leads') {
+    khMyLeadsLookup('');
+    return;
+  }
   if (khIsContactQuery(query)) {
+    _khLastTopic = null;
     khContactLookup(query);
     return;
   }
+  _khLastTopic = null;
   khAskAi(query);
 }
 
