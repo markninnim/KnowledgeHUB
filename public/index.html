@@ -13015,7 +13015,8 @@ function khExtractClientName(q) {
     .replace(/[’']s\b/gi, ' ')
     .replace(/\bmy (client|clients|customer|customers)\b/gi, ' ')
     .replace(/\bren\w*al\b/gi, ' ') // renewal/renewals/renwal (typo) etc
-    .replace(/\b(renew|renews|when|does|do|mortgage|benefit|end|date|loan|lender|valuation|details|due|up|coming|expir\w*|of|for|and|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
+    .replace(/\b(renew|renews|when|does|do|mortgage|benefit|end|date|loan|lender|valuation|details|due|up|coming|expir\w*|of|for|and|what'?s|what is|the|find|get|me|my|next|please|can|you|is|about)\b/gi, ' ')
+    .replace(/[^a-z0-9\s]/gi, ' ') // drop stray punctuation like "?" left over after stripping
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -13165,7 +13166,8 @@ function khExtractLeadName(q) {
   return q
     .replace(/[’']s\b/gi, ' ')
     .replace(/\bmy (lead|leads)\b/gi, ' ')
-    .replace(/\b(status|quality|follow|up|followup|details|of|for|what'?s|what is|the|find|get|me|please|can|you|is|about)\b/gi, ' ')
+    .replace(/\b(status|quality|follow|up|followup|details|of|for|what'?s|what is|the|find|get|me|my|next|please|can|you|is|about)\b/gi, ' ')
+    .replace(/[^a-z0-9\s]/gi, ' ') // drop stray punctuation like "?" left over after stripping
     .replace(/\s+/g, ' ')
     .trim();
 }
