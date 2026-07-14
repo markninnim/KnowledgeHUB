@@ -4578,14 +4578,23 @@ select:focus { outline:none; }
   <div style="background:#fff;border-radius:12px;width:100%;max-width:760px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #d1d5db;">
       <div>
-        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">AI Help Content</h2>
-        <p style="color:#6b7c8f;font-size:13px;margin:0;">The whitelist of content the KnowledgeHUB Help assistant is allowed to answer from. Nothing outside this list is used.</p>
+        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">AI KnowledgeHELPER&#8482; Parameters</h2>
+        <p style="color:#6b7c8f;font-size:13px;margin:0;" id="help-kb-modal-subtitle">The whitelist of content the KnowledgeHELPER&#8482; is allowed to answer from. Nothing outside this list is used.</p>
       </div>
       <button onclick="closeHelpKbAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
     </div>
-    <div style="padding:20px 28px;">
+    <div style="display:flex;gap:4px;padding:14px 28px 0;border-bottom:1px solid #d1d5db;">
+      <button id="help-kb-tab-btn" onclick="helpKbSwitchTab('kb')" style="background:none;border:none;border-bottom:2px solid var(--brand-navy);color:var(--brand-navy);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Reference Content</button>
+      <button id="help-personality-tab-btn" onclick="helpKbSwitchTab('personality')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Personality &amp; Tone</button>
+    </div>
+    <div id="help-kb-tab-content" style="padding:20px 28px;">
       <button onclick="helpKbAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Topic</button>
       <div id="help-kb-list" style="display:flex;flex-direction:column;gap:14px;"></div>
+    </div>
+    <div id="help-personality-tab-content" style="display:none;padding:20px 28px;">
+      <p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Editable tone/sarcasm rules for KnowledgeHELPER™ — off-topic handling, inappropriate-request handling, jokey questions, general personality. The core safety rule (never disclosing personal/customer/lead data) is fixed in code and can't be changed here.</p>
+      <button onclick="helpPersonalityAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Section</button>
+      <div id="help-personality-list" style="display:flex;flex-direction:column;gap:14px;"></div>
     </div>
   </div>
 </div>
@@ -8156,6 +8165,7 @@ function closeAdminPanel() {
 var _helpKbEntries = [];
 function openHelpKbAdmin() {
   document.getElementById('help-kb-modal').style.display = 'flex';
+  helpKbSwitchTab('kb');
   helpKbLoad();
 }
 function closeHelpKbAdmin() {
@@ -8231,6 +8241,102 @@ function helpKbDelete(btn) {
   fetch('/api/admin/help-kb/' + id, { method: 'DELETE' }).then(function(r){ return r.json(); }).then(function(d) {
     if (d && d.error) { alert(d.error); return; }
     helpKbLoad();
+  }).catch(function() { alert('Unable to delete — please try again.'); });
+}
+
+// ── AI Help Content modal: tab switching between Reference Content / Personality ──
+function helpKbSwitchTab(tab) {
+  var kbBtn = document.getElementById('help-kb-tab-btn');
+  var pBtn = document.getElementById('help-personality-tab-btn');
+  var kbContent = document.getElementById('help-kb-tab-content');
+  var pContent = document.getElementById('help-personality-tab-content');
+  var subtitle = document.getElementById('help-kb-modal-subtitle');
+  if (tab === 'personality') {
+    kbBtn.style.borderBottomColor = 'transparent'; kbBtn.style.color = '#6b7c8f';
+    pBtn.style.borderBottomColor = 'var(--brand-navy)'; pBtn.style.color = 'var(--brand-navy)';
+    kbContent.style.display = 'none'; pContent.style.display = 'block';
+    subtitle.textContent = "Tone, sarcasm and personality rules for KnowledgeHELPER™. The core data-privacy safety rule is fixed in code and isn't shown here.";
+    helpPersonalityLoad();
+  } else {
+    pBtn.style.borderBottomColor = 'transparent'; pBtn.style.color = '#6b7c8f';
+    kbBtn.style.borderBottomColor = 'var(--brand-navy)'; kbBtn.style.color = 'var(--brand-navy)';
+    pContent.style.display = 'none'; kbContent.style.display = 'block';
+    subtitle.textContent = 'The whitelist of content the KnowledgeHELPER™ is allowed to answer from. Nothing outside this list is used.';
+  }
+}
+
+// ── Help Personality (admin only) — editable tone/sarcasm rules ────────────
+var _helpPersonalityEntries = [];
+function helpPersonalityLoad() {
+  var list = document.getElementById('help-personality-list');
+  list.innerHTML = '<div style="color:#6b7c8f;font-size:13px;">Loading…</div>';
+  fetch('/api/admin/help-personality').then(function(r){ return r.json(); }).then(function(d) {
+    _helpPersonalityEntries = (d && d.entries) || [];
+    helpPersonalityRenderList();
+  }).catch(function() {
+    list.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Unable to load — please try again.</div>';
+  });
+}
+function helpPersonalityRowHtml(entry) {
+  var idAttr = entry.id || '';
+  return '<div class="help-personality-row" data-id="' + idAttr + '" style="border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">' +
+    '<div style="display:flex;gap:10px;margin-bottom:8px;">' +
+      '<input class="hpp-section" value="' + escHtml(entry.section || '') + '" placeholder="Section label" style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;font-weight:700;color:var(--brand-navy);box-sizing:border-box;">' +
+      '<input class="hpp-order" type="number" value="' + (entry.order || 0) + '" title="Display order" style="width:64px;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+      '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7c8f;white-space:nowrap;"><input class="hpp-active" type="checkbox" ' + (entry.active !== false ? 'checked' : '') + '>Active</label>' +
+    '</div>' +
+    '<textarea class="hpp-text" rows="5" placeholder="Tone/personality instruction text…" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:vertical;color:#3d4c5c;line-height:1.6;">' + escHtml(entry.text || '') + '</textarea>' +
+    '<div style="display:flex;gap:8px;margin-top:10px;">' +
+      '<button onclick="helpPersonalitySave(this)" style="background:var(--brand-navy);color:#fff;border:none;padding:7px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>' +
+      (entry.id ? '<button onclick="helpPersonalityDelete(this)" style="background:transparent;color:#b91c1c;border:1px solid #f3c6c6;padding:7px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+    '</div>' +
+    '</div>';
+}
+function helpPersonalityRenderList() {
+  var list = document.getElementById('help-personality-list');
+  if (!_helpPersonalityEntries.length) {
+    list.innerHTML = '<div style="color:#6b7c8f;font-size:13px;">No sections yet — add one to shape the assistant\'s tone.</div>';
+    return;
+  }
+  var sorted = _helpPersonalityEntries.slice().sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+  list.innerHTML = sorted.map(helpPersonalityRowHtml).join('');
+}
+function helpPersonalityAddNew() {
+  var list = document.getElementById('help-personality-list');
+  if (_helpPersonalityEntries.length === 0) list.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.innerHTML = helpPersonalityRowHtml({ section: '', text: '', active: true, order: (_helpPersonalityEntries.length + 1) * 10 });
+  list.insertBefore(wrap.firstElementChild, list.firstChild);
+}
+function helpPersonalityRowValues(rowEl) {
+  return {
+    section: rowEl.querySelector('.hpp-section').value.trim(),
+    text: rowEl.querySelector('.hpp-text').value.trim(),
+    active: rowEl.querySelector('.hpp-active').checked,
+    order: Number(rowEl.querySelector('.hpp-order').value) || 0
+  };
+}
+function helpPersonalitySave(btn) {
+  var row = btn.closest('.help-personality-row');
+  var id = row.dataset.id;
+  var body = helpPersonalityRowValues(row);
+  if (!body.section || !body.text) { alert('Please fill in both the section label and the text.'); return; }
+  var req = id
+    ? fetch('/api/admin/help-personality/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    : fetch('/api/admin/help-personality', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  req.then(function(r){ return r.json(); }).then(function(d) {
+    if (d && d.error) { alert(d.error); return; }
+    helpPersonalityLoad();
+  }).catch(function() { alert('Unable to save — please try again.'); });
+}
+function helpPersonalityDelete(btn) {
+  var row = btn.closest('.help-personality-row');
+  var id = row.dataset.id;
+  if (!id) { row.remove(); return; }
+  if (!confirm('Remove this personality section?')) return;
+  fetch('/api/admin/help-personality/' + id, { method: 'DELETE' }).then(function(r){ return r.json(); }).then(function(d) {
+    if (d && d.error) { alert(d.error); return; }
+    helpPersonalityLoad();
   }).catch(function() { alert('Unable to delete — please try again.'); });
 }
 
