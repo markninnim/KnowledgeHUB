@@ -12912,9 +12912,9 @@ function khContactLookup(query) {
       }
       matches.forEach(function(m) {
         var lines = [m.fullName + (m.jobTitle ? ' — ' + m.jobTitle : '')];
-        if (m.email) lines.push('Email: ' + m.email);
-        if (m.mobile) lines.push('Mobile: ' + m.mobile);
-        if (m.landline) lines.push('Landline: ' + m.landline);
+        if (m.email) lines.push(m.email);
+        if (m.mobile) lines.push(m.mobile);
+        if (m.landline) lines.push(m.landline);
         khAddBotMessage(lines.join('\n'));
       });
     })
