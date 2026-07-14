@@ -13042,10 +13042,11 @@ function khSpecialistAdvisersLookup(query) {
       }
       advisers.forEach(function(a) {
         var name = [a.firstName, a.lastName].filter(Boolean).join(' ');
-        var lines = [name + (a.jobTitle ? ' — ' + a.jobTitle : '')];
-        if (a.email) lines.push('Email: ' + a.email);
-        if (a.mobile) lines.push('Mobile: ' + a.mobile);
-        else if (a.landline) lines.push('Landline: ' + a.landline);
+        var jobTitle = (a.jobTitle || '').replace(/ /g, ' '); // keep the title on one line, never mid-wrap
+        var lines = [name + (jobTitle ? ' — ' + jobTitle : '')];
+        if (a.email) lines.push(a.email);
+        if (a.mobile) lines.push(a.mobile);
+        else if (a.landline) lines.push(a.landline);
         khAddBotMessage(lines.join('\n'));
       });
       khAddActionButton('Go to Opportunities', 'selling-zone');
