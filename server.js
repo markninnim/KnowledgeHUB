@@ -1039,6 +1039,50 @@ app.get('/api/help-contact-lookup', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/help-review-leaderboard — "who has the most Feefo reviews" etc.
+// This is aggregate performance data already shown publicly on each adviser's
+// Opportunities card (review count + average rating), not personal/private
+// data, so it's safe for any logged-in user to see via the Help widget.
+app.get('/api/help-review-leaderboard', requireAuth, async (req, res) => {
+  try {
+    const records = [];
+    let offset = '';
+    do {
+      const formula = encodeURIComponent(`NOT({Adviser} = "")`);
+      const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Service Rating&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const b = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(b));
+      records.push(...(b.records || []));
+      offset = b.offset || '';
+    } while (offset);
+
+    const grouped = {};
+    records.forEach(r => {
+      const adv = (r.fields['Adviser'] || '').trim();
+      if (!adv) return;
+      const key = adv.toLowerCase();
+      if (!grouped[key]) grouped[key] = { name: adv, ratings: [] };
+      if (r.fields['Service Rating'] != null) grouped[key].ratings.push(r.fields['Service Rating']);
+    });
+
+    const leaderboard = Object.values(grouped)
+      .map(g => ({
+        name: g.name,
+        count: g.ratings.length,
+        avg: g.ratings.length ? Math.round((g.ratings.reduce((s, v) => s + v, 0) / g.ratings.length) * 10) / 10 : null
+      }))
+      .filter(a => a.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    res.json({ leaderboard });
+  } catch (err) {
+    console.error('help-review-leaderboard error:', err);
+    res.status(500).json({ error: 'Unable to look that up right now.' });
+  }
+});
+
 // GET /api/help-broker-count — a real, deterministic headcount of advisers/
 // brokers in the Users table. This is firm-wide aggregate data (not any
 // individual's personal data), so it's fine for any logged-in user to see —

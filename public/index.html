@@ -12928,6 +12928,37 @@ function khContactLookup(query) {
     });
 }
 
+// "Who has the most reviews?" / "who's top rated?" — real, aggregate Feefo
+// performance stats already shown publicly on Opportunities cards, so this is
+// safe to answer directly rather than deflecting. Answered via
+// /api/help-review-leaderboard.
+function khIsReviewLeaderboardQuery(q) {
+  return /\b(review|reviews|feefo|rating|ratings|rated)\b/i.test(q) &&
+    /\b(most|top|highest|best|who has|who's|leaderboard|ranking)\b/i.test(q);
+}
+function khReviewLeaderboardLookup() {
+  khShowTyping();
+  fetch('/api/help-review-leaderboard')
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      var board = (d && d.leaderboard) || [];
+      if (!board.length) {
+        khAddBotMessage('I couldn\'t pull the Feefo review stats just now — please try again.');
+        return;
+      }
+      var lines = board.map(function(a, i) {
+        return (i + 1) + '. ' + a.name + ' — ' + a.count + ' review' + (a.count === 1 ? '' : 's') + (a.avg != null ? (', ' + a.avg + '/5 avg') : '');
+      });
+      khAddBotMessage('Top by Feefo review count:\n' + lines.join('\n'));
+    })
+    .catch(function(e) {
+      if (e === 'handled') return;
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 // "How many brokers/advisers do we have?" — a firm-wide headcount, not any
 // individual's personal data, so this is safe to answer directly rather than
 // pointing to User Management. Answered via /api/help-broker-count.
@@ -13281,6 +13312,12 @@ function khAnswer(query) {
   }
   if (khIsFollowUpListQuery(query) && _khLastTopic === 'leads') {
     khMyLeadsLookup('');
+    return;
+  }
+  // "Who has the most reviews?" — real, aggregate Feefo performance data.
+  if (khIsReviewLeaderboardQuery(query)) {
+    _khLastTopic = null;
+    khReviewLeaderboardLookup();
     return;
   }
   // "How many brokers do we have?" — real, non-secret firm-wide headcount.
