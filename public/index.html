@@ -4611,7 +4611,7 @@ select:focus { outline:none; }
         <label id="admin-modal-import-csv" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import CSV</span><input type="file" accept=".csv" onchange="importCsv(this)" style="display:none;"></label>
         <label id="admin-modal-import-excel" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import Excel</span><input type="file" accept=".xlsx" onchange="importUsersExcel(this)" style="display:none;"></label>
         <button id="admin-audit-btn" onclick="toggleAuditLog()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">Audit Log</button>
-        <button id="admin-helpkb-btn" onclick="openHelpKbAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">AI Help Content</button>
+        <button id="admin-helpkb-btn" onclick="openHelpKbAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">AI Parameters</button>
         <button id="admin-modal-add-user" onclick="openUserForm()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
       </div>
@@ -12923,6 +12923,32 @@ function khContactLookup(query) {
     });
 }
 
+// "How many brokers/advisers do we have?" — a firm-wide headcount, not any
+// individual's personal data, so this is safe to answer directly rather than
+// pointing to User Management. Answered via /api/help-broker-count.
+function khIsBrokerCountQuery(q) {
+  return /\bhow many\b/i.test(q) && /\b(broker|brokers|adviser|advisers|advisor|advisors)\b/i.test(q) &&
+    /\b(do we have|are there|we have|work here|are at fpg|does fpg have)\b/i.test(q);
+}
+function khBrokerCountLookup() {
+  khShowTyping();
+  fetch('/api/help-broker-count')
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
+    .then(function(d) {
+      khRemoveTyping();
+      if (!d || typeof d.count !== 'number') {
+        khAddBotMessage('I wasn\'t able to pull that figure just now — please try again.');
+        return;
+      }
+      khAddBotMessage('We currently have ' + d.count + ' broker' + (d.count === 1 ? '' : 's') + ' set up in KnowledgeHUB.');
+    })
+    .catch(function(e) {
+      if (e === 'handled') return;
+      khRemoveTyping();
+      khAddBotMessage('Something went wrong looking that up — please try again.');
+    });
+}
+
 // Does this look like a request about the logged-in adviser's OWN clients in
 // Mortgage Completions (renewals, benefit end dates, loan/lender details)?
 // SECURITY: answered via /api/help-my-clients, which the server scopes
@@ -13249,6 +13275,12 @@ function khAnswer(query) {
   }
   if (khIsFollowUpListQuery(query) && _khLastTopic === 'leads') {
     khMyLeadsLookup('');
+    return;
+  }
+  // "How many brokers do we have?" — real, non-secret firm-wide headcount.
+  if (khIsBrokerCountQuery(query)) {
+    _khLastTopic = null;
+    khBrokerCountLookup();
     return;
   }
   // "Who are our wealth advisers?" etc — real, non-secret staff-directory

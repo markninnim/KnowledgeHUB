@@ -268,16 +268,32 @@ function saveForceReset() {
 }
 
 // ── Audit log ─────────────────────────────────────────────────────
-// Appends one JSON line per event to audit.log.
-const AUDIT_LOG_PATH = path.join(__dirname, 'audit.log');
+// Writes one row per event to the Airtable "Audit Log" table, so the
+// history survives Railway redeploys (a local file on Railway's disk does
+// not — it's wiped on every deploy, same issue as in-memory sessions).
+const AUDIT_TABLE = 'tblSQwMwPjhg65CtS';
+const F_AUDIT_TIMESTAMP = 'fld34BhtUUMuh7q1P';
+const F_AUDIT_ACTION    = 'fldsJtribIq3gsHBS';
+const F_AUDIT_EMAIL     = 'fldR28bE0b4XBtIK9';
+const F_AUDIT_IP        = 'fldAtV8ICWslsCbXu';
+const F_AUDIT_DETAILS   = 'fld5BBzc95Vdkl8TL';
+
 function auditLog(action, details, req) {
-  const entry = JSON.stringify({
-    t:  new Date().toISOString(),
-    ip: req ? (req.ip || 'unknown') : 'system',
-    action,
-    ...details
-  });
-  try { fs.appendFileSync(AUDIT_LOG_PATH, entry + '\n'); } catch(_) {}
+  const { email, ...rest } = details || {};
+  const fields = {
+    [F_AUDIT_TIMESTAMP]: new Date().toISOString(),
+    [F_AUDIT_ACTION]: action,
+    [F_AUDIT_IP]: req ? (req.ip || 'unknown') : 'system'
+  };
+  if (email) fields[F_AUDIT_EMAIL] = email;
+  if (Object.keys(rest).length) fields[F_AUDIT_DETAILS] = JSON.stringify(rest);
+  // Fire-and-forget — never let a slow/failed Airtable write block or crash
+  // the request that triggered it (login, password change, etc).
+  fetch(`https://api.airtable.com/v0/${AT_BASE}/${AUDIT_TABLE}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ records: [{ fields }] })
+  }).catch(err => console.error('Audit log write error:', err.message));
 }
 
 // ── TOTP device trust cookie ──────────────────────────────────────
@@ -1018,6 +1034,31 @@ app.get('/api/help-contact-lookup', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('help-contact-lookup error:', err);
     res.status(500).json({ error: 'Unable to search right now.' });
+  }
+});
+
+// GET /api/help-broker-count — a real, deterministic headcount of advisers/
+// brokers in the Users table. This is firm-wide aggregate data (not any
+// individual's personal data), so it's fine for any logged-in user to see —
+// mirrors how /api/help-contact-lookup already exposes the non-secret
+// colleague directory. Excludes marketing-only accounts, which aren't brokers.
+app.get('/api/help-broker-count', requireAuth, async (req, res) => {
+  try {
+    let records = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+    const brokers = records
+      .map(recordToUser)
+      .filter(u => u.firstName && !u.isMarketing);
+    res.json({ count: brokers.length });
+  } catch (err) {
+    console.error('help-broker-count error:', err);
+    res.status(500).json({ error: 'Unable to look that up right now.' });
   }
 });
 
@@ -2653,15 +2694,38 @@ app.delete('/api/admin/force-reset/:email', requireAdmin, (req, res) => {
 });
 
 // ── Admin: audit log ──────────────────────────────────────────────
-app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
+app.get('/api/admin/audit-log', requireAdmin, async (req, res) => {
   try {
-    const raw = fs.readFileSync(AUDIT_LOG_PATH, 'utf8');
-    const lines = raw.trim().split('\n').filter(Boolean);
-    const entries = lines.slice(-500).reverse()
-      .map(l => { try { return JSON.parse(l); } catch(_) { return null; } })
-      .filter(Boolean);
+    let records = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100` +
+        `&sort[0][field]=${F_AUDIT_TIMESTAMP}&sort[0][direction]=desc` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AUDIT_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(body.error && body.error.message || `Airtable ${r.status}`);
+      records = records.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && records.length < 500);
+
+    const entries = records.slice(0, 500).map(r => {
+      const f = r.fields;
+      let details = {};
+      if (f[F_AUDIT_DETAILS]) { try { details = JSON.parse(f[F_AUDIT_DETAILS]); } catch(_) {} }
+      return {
+        t: f[F_AUDIT_TIMESTAMP] || '',
+        ip: f[F_AUDIT_IP] || 'unknown',
+        action: f[F_AUDIT_ACTION] || '',
+        email: f[F_AUDIT_EMAIL] || undefined,
+        ...details
+      };
+    });
     res.json(entries);
-  } catch(_) {
+  } catch(err) {
+    console.error('Audit log read error:', err);
     res.json([]);
   }
 });
