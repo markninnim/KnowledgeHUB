@@ -12907,7 +12907,7 @@ function khContactLookup(query) {
       khRemoveTyping();
       var matches = (d && d.matches) || [];
       if (!matches.length) {
-        khAddBotMessage('I couldn\'t find anyone matching "' + name + '". Try checking My Team, or Opportunities → Licenced Advisers if they\'re a specialist, or ask an admin.');
+        khAddBotMessage('I couldn\'t find anyone matching "' + name + '" — worth double-checking the spelling? Otherwise try My Team, or Opportunities → Licenced Advisers if they\'re a specialist, or ask an admin.');
         return;
       }
       matches.forEach(function(m) {
