@@ -12860,7 +12860,8 @@ function khRemoveTyping() {
 function khExtractPersonName(q) {
   return q
     .replace(/[’']s\b/gi, ' ')
-    .replace(/\b(email|e-mail|address|phone|mobile|landline|number|contact|details|info|information|of|for|what'?s|what is|who's|who is|who|the|find|get|me|my|please|can|you|is|i|need|to|update|'?s)\b/gi, ' ')
+    .replace(/\bde\w?ails?\b/gi, ' ') // "details" + common typos (deyails, detials, etc)
+    .replace(/\b(email|e-mail|address|phone|mobile|landline|number|contact|info|information|of|for|what'?s|what is|who's|who is|who|the|find|get|me|my|please|can|you|is|i|need|to|update|'?s)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -12886,8 +12887,9 @@ function khIsContactQuery(q) {
   if (KH_SUBJECTIVE_WORD.test(q)) return false;
   var trigger = /\b(email|e-mail|phone|mobile|landline|number|contact)\b/i.test(q) ||
     // "details"/"info" alone are ambiguous, so only treat them as a colleague
-    // lookup on short queries.
-    (/\b(details|info|information)\b/i.test(q) && q.trim().split(/\s+/).length <= 6) ||
+    // lookup on short queries. de\w?ails? tolerates common typos of "details"
+    // (e.g. "deyails", "detials") — a real one, caught after a user hit this.
+    ((/\b(details|info|information)\b/i.test(q) || /\bde\w?ails?\b/i.test(q)) && q.trim().split(/\s+/).length <= 6) ||
     /^\s*who('?s| is)\b/i.test(q);
   if (!trigger) return false;
   return !khIsGenericContactPhrase(khExtractPersonName(q));
