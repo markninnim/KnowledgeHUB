@@ -12861,7 +12861,7 @@ function khExtractPersonName(q) {
   return q
     .replace(/[’']s\b/gi, ' ')
     .replace(/\bde\w?ails?\b/gi, ' ') // "details" + common typos (deyails, detials, etc)
-    .replace(/\b(email|e-mail|address|phone|mobile|landline|number|contact|info|information|of|for|what'?s|what is|who's|who is|who|the|find|get|me|my|please|can|you|is|i|need|to|update|'?s)\b/gi, ' ')
+    .replace(/\b(email|e-mail|address|phone|mobile|landline|number|contact|info|information|of|for|what'?s|what is|who's|who is|who|the|find|get|me|my|please|can|you|is|i|need|to|update|'?s|yes|a|an|broker|adviser|advisor|colleague|someone|person|called|named)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -12890,7 +12890,10 @@ function khIsContactQuery(q) {
     // lookup on short queries. de\w?ails? tolerates common typos of "details"
     // (e.g. "deyails", "detials") — a real one, caught after a user hit this.
     ((/\b(details|info|information)\b/i.test(q) || /\bde\w?ails?\b/i.test(q)) && q.trim().split(/\s+/).length <= 6) ||
-    /^\s*who('?s| is)\b/i.test(q);
+    /^\s*who('?s| is)\b/i.test(q) ||
+    // "a broker/adviser/colleague called Adeel", "someone named Dan" — a real
+    // introduction of a specific person, not a policy/general question.
+    /\b(broker|adviser|advisor|colleague|someone|person)\b.*\b(called|named)\b/i.test(q);
   if (!trigger) return false;
   return !khIsGenericContactPhrase(khExtractPersonName(q));
 }
