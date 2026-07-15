@@ -6061,22 +6061,28 @@ app.post('/api/admin/features', requireAdmin, async (req, res) => {
     const allowed = Object.keys(FEATURES_DEFAULT);
     const changedKeys = allowed.filter(k => (k in updates) && !!updates[k] !== _features[k]);
     allowed.forEach(k => { if (k in updates) _features[k] = !!updates[k]; });
-    // Persist each changed key to its Airtable row (PATCH by known record id,
-    // or create the row on the fly if a key was added after the table was
-    // first seeded and has no row yet).
-    for (const k of changedKeys) {
-      const recId = _featureFlagRecordIds[k];
-      if (recId) {
-        await featureFlagsFetch(`/${recId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ fields: { [F_FF_ENABLED]: _features[k] } })
+    // Persist via Airtable's native upsert (matching on the Key field) rather
+    // than "check our in-memory record-id cache, then PATCH-or-create" — that
+    // cache is per-process and goes stale across Railway's rolling/parallel
+    // app instances during a redeploy, which was silently creating duplicate
+    // blank rows for the same key every time two instances raced each other.
+    // Upserting lets Airtable itself guarantee one row per key, no race possible.
+    if (changedKeys.length) {
+      const result = await featureFlagsFetch('', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          performUpsert: { fieldsToMergeOn: [F_FF_KEY] },
+          returnFieldsByFieldId: true,
+          records: changedKeys.map(k => ({ fields: { [F_FF_KEY]: k, [F_FF_ENABLED]: _features[k] } }))
+        })
+      });
+      if (Array.isArray(result.records)) {
+        result.records.forEach(r => {
+          const k = r.fields && r.fields[F_FF_KEY];
+          if (k) _featureFlagRecordIds[k] = r.id;
         });
       } else {
-        const created = await featureFlagsFetch('', {
-          method: 'POST',
-          body: JSON.stringify({ fields: { [F_FF_KEY]: k, [F_FF_ENABLED]: _features[k] } })
-        });
-        _featureFlagRecordIds[k] = created.id;
+        await loadFeatureFlagsFromAirtable();
       }
     }
     res.json({ ok: true, features: _features });
