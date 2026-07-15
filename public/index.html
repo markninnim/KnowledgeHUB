@@ -4430,7 +4430,11 @@ select:focus { outline:none; }
         <span id="lv-cpd-status-strip" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5);">CPD logging…</span>
       </div>
       <!-- Presentation downloads -->
-      <div id="lv-presentations" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;"></div>
+      <div id="lv-presentations-wrap" style="display:none;margin-top:14px;">
+        <div style="color:#fff;font-size:17px;font-weight:700;">Download slide decks</div>
+        <div style="color:rgba(255,255,255,.6);font-size:13px;margin-top:2px;margin-bottom:10px;">Download the presenters slides direct to your computer.</div>
+        <div id="lv-presentations" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
     </div>
 
     <!-- 50/50 split layout (hidden by default) -->
@@ -4451,7 +4455,11 @@ select:focus { outline:none; }
             <span id="lv-cpd-status-strip-s" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5);">CPD logging…</span>
           </div>
           <!-- Presentation downloads -->
-          <div id="lv-presentations-s" style="display:none;gap:8px;flex-wrap:wrap;"></div>
+          <div id="lv-presentations-s-wrap" style="display:none;">
+            <div style="color:#fff;font-size:16px;font-weight:700;">Download slide decks</div>
+            <div style="color:rgba(255,255,255,.6);font-size:13px;margin-top:2px;margin-bottom:10px;">Download the presenters slides direct to your computer.</div>
+            <div id="lv-presentations-s" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -7235,11 +7243,11 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
   document.getElementById('lv-split-desc').textContent   = desc  || '';
   // Presentation downloads
   var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2');
-  ['lv-presentations', 'lv-presentations-s'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = presHtml;
-    el.style.display = presHtml ? 'flex' : 'none';
+  [['lv-presentations', 'lv-presentations-wrap'], ['lv-presentations-s', 'lv-presentations-s-wrap']].forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    var wrap = document.getElementById(pair[1]);
+    if (el) el.innerHTML = presHtml;
+    if (wrap) wrap.style.display = presHtml ? 'block' : 'none';
   });
   // Show CPD type badge and reset status
   var typeLabel = cpdType === '50/50' ? 'Mortgage + Protection' : (cpdType || 'Mortgage');
