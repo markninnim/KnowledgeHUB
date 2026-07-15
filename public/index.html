@@ -220,10 +220,12 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervise</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
-    <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
-    <button class="tab-btn"        id="tab-btn-reengage"      onclick="switchTab('reengage')" style="display:none;">ReEngage&#8482;</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
-    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Engage&#8482;<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
+    <div id="tab-group-crm" style="display:flex;align-items:center;gap:2px;border:1px solid #d1d5db;border-radius:22px;padding:2px;margin-left:2px;">
+      <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
+      <button class="tab-btn"        id="tab-btn-reengage"      onclick="switchTab('reengage')" style="display:none;">ReEngage&#8482;</button>
+      <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Engage&#8482;<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
+    </div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
