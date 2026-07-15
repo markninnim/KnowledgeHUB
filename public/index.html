@@ -1339,6 +1339,12 @@ select:focus { outline:none; }
           <div id="cpd-pie-content" style="display:flex;flex-direction:column;align-items:center;gap:10px;"></div>
         </div>
 
+        <!-- Specialist CPD card — only shown for advisers with a specialist licence -->
+        <div id="cpd-specialist-card" style="flex:1;background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 2px 12px rgba(0,0,0,.07);min-width:0;display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">Specialist CPD</div>
+          <div id="cpd-specialist-bars"></div>
+        </div>
+
       </div>
 
       <!-- Add entry form -->
@@ -11410,6 +11416,7 @@ function loadCpd() {
     _cpdTargets    = data.targets || { Mortgage: 900, Protection: 900 };
     renderCpdProgress();
     renderCpdPie();
+    renderSpecialistCpd();
     renderCpdEntries(_cpdAllEntries);
   }).catch(function() {
     document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log.</div>';
@@ -11444,6 +11451,7 @@ function setCpdPeriod(p) {
   });
   renderCpdProgress();
   renderCpdPie();
+  renderSpecialistCpd();
 }
 
 function _cpdEntriesForPeriod(period) {
@@ -11525,6 +11533,67 @@ function renderCpdProgress() {
     '</div>';
   }
   container.innerHTML = barsHtml;
+}
+
+// Specialist CPD — breaks Mortgage/Protection CPD down by the specific
+// specialist licence tagged on each entry (e.g. how much of Mortgage CPD is
+// Lifetime Mortgages vs Commercial Mortgages vs Bridging). Wealth isn't part
+// of Mortgage or Protection CPD, so it's shown as its own standalone total
+// rather than a percentage of a parent category. Only shown for advisers who
+// actually hold the relevant licence; a licence with zero matching entries
+// still shows (at 0) so the adviser can see the gap.
+function renderSpecialistCpd() {
+  var card = document.getElementById('cpd-specialist-card');
+  var container = document.getElementById('cpd-specialist-bars');
+  var user = _currentUser || {};
+  var specialistConf = [
+    { key: 'Lifetime Mortgages',   parentType: 'Mortgage',   flag: user.equityRelease },
+    { key: 'Commercial Mortgages', parentType: 'Mortgage',   flag: user.commercialMortgages },
+    { key: 'Bridging Finance',     parentType: 'Mortgage',   flag: user.bridging },
+    { key: 'PMI',                  parentType: 'Protection', flag: user.pmi },
+    { key: 'Business Protection',  parentType: 'Protection', flag: user.businessProtection },
+    { key: 'Wealth',               parentType: null,         flag: user.sellsInvestments }
+  ];
+  var visible = specialistConf.filter(function(c) { return c.flag; });
+  if (!visible.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  var periodEntries = _cpdEntriesForPeriod(_cpdPeriod);
+  var parentMins = { Mortgage: 0, Protection: 0 };
+  periodEntries.forEach(function(e) {
+    if (e.cpdType && parentMins[e.cpdType] !== undefined) parentMins[e.cpdType] += e.minutes || 0;
+  });
+
+  container.innerHTML = visible.map(function(c) {
+    var specMins = periodEntries.filter(function(e) {
+      if (e.specialist !== c.key) return false;
+      return c.parentType ? e.cpdType === c.parentType : true;
+    }).reduce(function(s, e) { return s + (e.minutes || 0); }, 0);
+
+    if (!c.parentType) {
+      // Wealth — standalone, no parent-category percentage.
+      return '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + c.key + '</div>' +
+          '<div style="font-size:13px;color:#6b7c8f;font-weight:600;">' + fmtMins(specMins) + '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#6b7c8f;">Logged independently of Mortgage/Protection CPD</div>' +
+      '</div>';
+    }
+
+    var parentTotal = parentMins[c.parentType] || 0;
+    var pct = parentTotal > 0 ? Math.min(100, Math.round((specMins / parentTotal) * 100)) : 0;
+    return '<div style="margin-bottom:14px;">' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
+        '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + c.key + '</div>' +
+        '<div style="font-size:13px;color:#6b7c8f;font-weight:600;">' + fmtMins(specMins) + ' of ' + fmtMins(parentTotal) + ' ' + c.parentType + '</div>' +
+      '</div>' +
+      '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
+        '<div style="background:var(--brand-orange);height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + pct + '% of ' + c.parentType + ' CPD</div>' +
+    '</div>';
+  }).join('');
 }
 
 function renderCpdPie() {
