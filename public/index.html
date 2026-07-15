@@ -4277,7 +4277,7 @@ select:focus { outline:none; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Status</label><select id="lg-status" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option>To Call</option><option>No Answer</option><option>Appointment</option><option>Signed Up</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="lg-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
+        <div id="lg-adviser-field" style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Adviser</label><select id="lg-adviser" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="lg-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
       </div>
       <div style="display:flex;gap:12px;">
@@ -16340,15 +16340,26 @@ function lgOpenModal(id) {
   document.getElementById('lg-deposit').value = lead ? lead.deposit : '';
   document.getElementById('lg-salary').value  = lead ? (lead.salary || '') : '';
   document.getElementById('lg-status').value  = lead ? lead.status  : 'To Call';
+  // Only managers (admin/supervisor) get to pick an adviser from a dropdown —
+  // an ordinary broker's own leads are always assigned to themselves, since
+  // they can only ever see/manage their own leads anyway.
+  var adviserFieldWrap = document.getElementById('lg-adviser-field');
   var adviserSel = document.getElementById('lg-adviser');
-  var currentAdviser = lead ? lead.adviser : '';
-  var adviserOptions = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
-    _lgAdvisers.map(function(name) { return '<option' + (name === currentAdviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
-  );
-  if (currentAdviser && _lgAdvisers.indexOf(currentAdviser) === -1) {
-    adviserOptions.push('<option selected>' + escHtml(currentAdviser) + '</option>');
+  if (lgIsManager()) {
+    if (adviserFieldWrap) adviserFieldWrap.style.display = '';
+    var currentAdviser = lead ? lead.adviser : '';
+    var adviserOptions = ['<option value="">&mdash; Unassigned &mdash;</option>'].concat(
+      _lgAdvisers.map(function(name) { return '<option' + (name === currentAdviser ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+    );
+    if (currentAdviser && _lgAdvisers.indexOf(currentAdviser) === -1) {
+      adviserOptions.push('<option selected>' + escHtml(currentAdviser) + '</option>');
+    }
+    adviserSel.innerHTML = adviserOptions.join('');
+  } else {
+    if (adviserFieldWrap) adviserFieldWrap.style.display = 'none';
+    var selfName = lgCurrentUserName();
+    adviserSel.innerHTML = '<option selected>' + escHtml(selfName) + '</option>';
   }
-  adviserSel.innerHTML = adviserOptions.join('');
   document.getElementById('lg-followup').value = lead ? (lead.followUp || '') : '';
   document.getElementById('lg-source').value  = lead ? (lead.source || '') : '';
   document.getElementById('lg-quality').value = lead ? (lead.quality || '') : '';
