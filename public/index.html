@@ -1393,6 +1393,7 @@ select:focus { outline:none; }
             <select id="cpdf-cpdtype" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
               <option value="Mortgage">Mortgage (15hr target)</option>
               <option value="Protection">Protection (15hr target)</option>
+              <option value="Investment">Wealth (35hr target)</option>
             </select>
           </div>
           <div>
@@ -11471,9 +11472,9 @@ function fmtMins(m) {
 }
 
 function renderCpdProgress() {
-  var annualTargets = _cpdTargets || { Mortgage: 900, Protection: 900 };
+  var annualTargets = _cpdTargets || { Mortgage: 900, Protection: 900, Investment: 2100 };
   var periodEntries = _cpdEntriesForPeriod(_cpdPeriod);
-  var byType = { Mortgage: 0, Protection: 0 };
+  var byType = { Mortgage: 0, Protection: 0, Investment: 0 };
   periodEntries.forEach(function(e) {
     if (e.cpdType && byType[e.cpdType] !== undefined) byType[e.cpdType] += e.minutes || 0;
   });
@@ -11482,10 +11483,11 @@ function renderCpdProgress() {
   document.getElementById('cpd-total-display').textContent = fmtMins(totalAllTime) + ' total all time';
 
   var user = _currentUser || {};
-  var noFlags = !user.sellsMortgages && !user.sellsProtection;
+  var noFlags = !user.sellsMortgages && !user.sellsProtection && !user.sellsInvestments;
   var typeConf = [
     { key: 'Mortgage',   label: 'Mortgage',   color: 'var(--brand-navy)', show: user.sellsMortgages  || noFlags },
-    { key: 'Protection', label: 'Protection', color: 'var(--brand-orange)', show: user.sellsProtection || noFlags }
+    { key: 'Protection', label: 'Protection', color: 'var(--brand-orange)', show: user.sellsProtection || noFlags },
+    { key: 'Investment', label: 'Wealth',     color: '#2e99d5', show: user.sellsInvestments || noFlags }
   ];
   var visible = typeConf.filter(function(t){ return t.show; });
   if (!visible.length) visible = typeConf;
