@@ -212,12 +212,12 @@ select:focus { outline:none; }
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-btn-home"          onclick="switchTab('home')">Home</button>
     <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
-    <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
+    <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learn</button>
     <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
-    <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Opportunities</button>
+    <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Earn</button>
     <button class="tab-btn"        id="tab-btn-pay"           onclick="switchTab('pay')" style="display:none;">Pay</button>
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
-    <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervisor Zone</button>
+    <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervise</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
@@ -247,7 +247,7 @@ select:focus { outline:none; }
     <h2 style="margin-top:8px;">KnowledgeHUB&#8482;</h2>
     <a href="#" onclick="switchTab('marketing');return false;">Marketing</a>
     <a href="#" onclick="switchTab('compliance');return false;">Compliance</a>
-    <a href="#" onclick="switchTab('learning');return false;">Learning</a>
+    <a href="#" onclick="switchTab('learning');return false;">Learn</a>
     <a href="#" onclick="switchTab('surveying');return false;">Surveying</a>
     <a href="#" id="sidebar-home-whereabouts" style="display:none" onclick="switchTab('whereabouts');return false;">Whereabouts</a>
   </div>
@@ -288,7 +288,7 @@ select:focus { outline:none; }
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
-    <h2 style="margin-top: 8px;">Learning</h2>
+    <h2 style="margin-top: 8px;">Learn</h2>
     <a href="#" id="lv-nav-cas-path" style="display:none;color:#b91c1c;font-weight:700;" onclick="return showLvSection('lv-cas-path-section',this)">My CAS Path</a>
     <a href="https://us02web.zoom.us/j/97481803945#success" id="lv-nav-live" target="_blank" rel="noopener" onclick="lvLogLiveCpd()" style="text-decoration:none;">View Live</a>
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
@@ -328,7 +328,7 @@ select:focus { outline:none; }
   </div>
   <!-- Selling Zone sidebar -->
   <div id="sidebar-selling-zone" style="display:none">
-    <h2 style="margin-top: 8px;">Opportunities</h2>
+    <h2 style="margin-top: 8px;">Earn</h2>
     <a href="#" id="opp-nav-purchase" class="active" onclick="return oppShowPage('purchase',this)">Purchase Mortgage</a>
     <a href="#" id="opp-nav-btl" onclick="return oppShowPage('btl',this)">Buy to Let Mortgage</a>
     <a href="#" id="opp-nav-remortgage" onclick="return oppShowPage('remortgage',this)">Remortgage</a>
@@ -399,7 +399,7 @@ select:focus { outline:none; }
   </div>
   <!-- Supervisor Zone sidebar -->
   <div id="sidebar-supervisor-zone" style="display:none">
-    <h2 style="margin-top: 8px;">My Team</h2>
+    <h2 style="margin-top: 8px;">Supervise</h2>
     <a href="#" id="sv-sb-all" class="active" onclick="return svSidebarSelect('all',this)">View All <span id="sv-sidebar-count" style="float:right;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;"></span></a>
     <div id="sv-sb-supervisors" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>
@@ -7895,7 +7895,7 @@ var _currentUser = null;
         if (btn) btn.style.display = nav[key] ? '' : 'none';
       });
       var sbtn = document.getElementById('tab-btn-supervisor-zone');
-      if (sbtn && nav.supervisorZone) sbtn.textContent = 'My Team';
+      if (sbtn && nav.supervisorZone) sbtn.textContent = 'Supervise';
       var wbsb = document.getElementById('sidebar-home-whereabouts');
       if (wbsb) wbsb.style.display = nav.whereabouts ? '' : 'none';
     }
@@ -8191,11 +8191,11 @@ var FEATURE_LABELS = {
   marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing',         pane: 'tab-marketing' },
   compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance',        pane: 'tab-compliance' },
   adviceStandards: { label: 'Advice Standards',  tab: 'compliance-advice-standards-block', pane: 'tab-sales-process' },
-  learning:        { label: 'Learning',          tab: 'tab-btn-learning',          pane: 'tab-learning' },
+  learning:        { label: 'Learn',             tab: 'tab-btn-learning',          pane: 'tab-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
-  sellingZone:     { label: 'Opportunities',     tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
+  sellingZone:     { label: 'Earn',               tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
   performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
-  supervisorZone:  { label: 'My Team',            tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
+  supervisorZone:  { label: 'Supervise',          tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
   pay:             { label: 'Pay',                tab: 'tab-btn-pay',               pane: 'tab-pay' },
   autocrm:         { label: 'AutoCRM™',           tab: 'tab-btn-autocrm',           pane: 'tab-autocrm' },
   reEngage:        { label: 'ReEngage™',          tab: 'tab-btn-reengage',          pane: 'tab-reengage' },
@@ -8747,16 +8747,16 @@ function populateSupervisorDropdown(selected) {
 var NAV_TOGGLE_LABELS = {
   adviceStandards: 'Advice Standards',
   compliance:       'Compliance',
-  learning:         'Learning',
+  learning:         'Learn',
   surveying:        'Surveying',
-  sellingZone:      'Opportunities',
+  sellingZone:      'Earn',
   pay:              'Pay',
   autocrm:          'AutoCRM™',
   reEngage:         'ReEngage™',
   muttuo:           'Muttuo',
   whereabouts:      'Whereabouts',
   performanceZone:  'Numbers',
-  supervisorZone:   'My Team'
+  supervisorZone:   'Supervise'
 };
 function renderNavAccessToggles(navAccess, isLeadGen) {
   var container = document.getElementById('uf-nav-toggles');
@@ -13981,7 +13981,7 @@ var QL_DESTINATIONS = {
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
   hangouts:      { label: 'Hangouts',         tab: 'learning',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>' },
-  learning:      { label: 'Learning',         tab: 'learning',
+  learning:      { label: 'Learn',            tab: 'learning',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>' },
   advice:        { label: 'Advice Standards', tab: 'sales-process',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
@@ -13989,13 +13989,13 @@ var QL_DESTINATIONS = {
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>' },
   compliance:    { label: 'Compliance',       tab: 'compliance',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><polyline points="9 12 11 14 15 10"/></svg>' },
-  opportunities: { label: 'Opportunities',    tab: 'selling-zone',
+  opportunities: { label: 'Earn',             tab: 'selling-zone',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>' },
   pay:           { label: 'Pay',              tab: 'pay',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' },
   surveying:     { label: 'Surveying',        tab: 'surveying',
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M9 22V12h6v10"/></svg>' },
-  myteam:        { label: 'My Team',          tab: 'supervisor-zone', adminOnly: true,
+  myteam:        { label: 'Supervise',        tab: 'supervisor-zone', adminOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   numbers:       { label: 'Numbers',          tab: 'performance-zone', adminOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' },
@@ -14177,14 +14177,14 @@ function toggleQlMenu(e) {
   var items = [
     { label: 'Advice Standards', tab: 'sales-process' },
     { label: 'Compliance',       tab: 'compliance' },
-    { label: 'Learning',         tab: 'learning' },
+    { label: 'Learn',            tab: 'learning' },
     { label: 'Marketing',        tab: 'marketing' },
-    { label: 'Opportunities',    tab: 'selling-zone' },
+    { label: 'Earn',             tab: 'selling-zone' },
     { label: 'Pay',              tab: 'pay' },
     { label: 'Surveying',        tab: 'surveying' },
   ];
   var adminItems = isSvAdmin ? [
-    { label: 'My Team',  tab: 'supervisor-zone' },
+    { label: 'Supervise',  tab: 'supervisor-zone' },
     { label: 'Numbers',  tab: 'performance-zone' },
   ] : [];
 
