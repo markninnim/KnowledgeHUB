@@ -1311,15 +1311,18 @@ app.delete('/api/admin/help-personality/:id', requireAdmin, async (req, res) => 
   }
 });
 
-// GET /api/leadgen-advisers — all LeadGen-eligible advisers from the Users table,
-// alphabetical, regardless of whether they currently have any leads assigned.
+// GET /api/leadgen-advisers — every adviser in the Users table, alphabetical,
+// regardless of whether they currently have any leads assigned. Used to
+// populate the manager-only Adviser reassignment dropdown. This used to be
+// filtered to {Is LeadGen} = TRUE() ("LeadGen members"), but Engage™ is now
+// open to every adviser, not just that legacy opt-in group, so the dropdown
+// must list everyone or a valid buddy/colleague could be unselectable here.
 app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) => {
   try {
     let records = [];
     let offset;
     do {
-      const qs = `?filterByFormula=${encodeURIComponent('{Is LeadGen} = TRUE()')}&returnFieldsByFieldId=true&pageSize=100` +
-        (offset ? `&offset=${offset}` : '');
+      const qs = `?returnFieldsByFieldId=true&pageSize=100` + (offset ? `&offset=${offset}` : '');
       const data = await atFetch(qs);
       records = records.concat(data.records || []);
       offset = data.offset;

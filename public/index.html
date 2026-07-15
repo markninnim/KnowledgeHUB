@@ -4560,7 +4560,7 @@ select:focus { outline:none; }
 
       <div id="acc-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px;"></div>
       <div id="acc-success" style="display:none;background:#f0fff4;border:1px solid #bbf7d0;color:#166534;border-radius:7px;padding:8px 12px;font-size:13px;margin-bottom:12px;">✓ Details saved successfully</div>
-      <button onclick="saveAccountDetails()" style="width:100%;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Save Changes</button>
+      <button id="acc-save-btn" onclick="saveAccountDetails()" style="width:100%;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,color .15s,border-color .15s;">Save Changes</button>
     </div>
     <!-- 2FA section -->
     <div style="padding:16px 28px 20px;border-top:1px solid #f0f2f5;">
@@ -7965,6 +7965,7 @@ function openAccountModal() {
   document.getElementById('acc-password2').value = '';
   document.getElementById('acc-error').style.display   = 'none';
   document.getElementById('acc-success').style.display = 'none';
+  accResetDirty();
   var modal = document.getElementById('account-modal');
   modal.style.display = 'flex';
   // Animate slide-in
@@ -7974,6 +7975,40 @@ function openAccountModal() {
     panel.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1)';
     panel.style.transform  = 'translateX(0)';
   });
+}
+
+// ── My Account "unsaved changes" indicator — Save button turns navy once
+// anything in the form changes, so it's obvious there's something to save.
+var _accDirty = false;
+var _accDirtyListenersBound = false;
+function accMarkDirty() {
+  if (_accDirty) return;
+  _accDirty = true;
+  var btn = document.getElementById('acc-save-btn');
+  if (btn) {
+    btn.style.background = 'var(--brand-navy)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--brand-navy)';
+  }
+}
+function accResetDirty() {
+  _accDirty = false;
+  var btn = document.getElementById('acc-save-btn');
+  if (btn) {
+    btn.style.background = 'transparent';
+    btn.style.color = '#6b7c8f';
+    btn.style.borderColor = '#d1d5db';
+  }
+  if (!_accDirtyListenersBound) {
+    var modal = document.getElementById('account-modal');
+    if (modal) {
+      // Delegated listeners catch every input/select/textarea in the form
+      // without needing an onchange/oninput handler on each individual field.
+      modal.addEventListener('input', accMarkDirty, true);
+      modal.addEventListener('change', accMarkDirty, true);
+      _accDirtyListenersBound = true;
+    }
+  }
 }
 
 function handlePhotoUpload(input) {
@@ -8079,6 +8114,7 @@ function accSelectBuddy(name, email) {
   document.getElementById('acc-buddy-search').value = '';
   document.getElementById('acc-buddy-results').style.display = 'none';
   document.getElementById('acc-buddy-selected').textContent = 'Current buddy: ' + name;
+  accMarkDirty(); // programmatic value set — no native input event to catch this
 }
 
 function saveAccountDetails() {
@@ -8117,6 +8153,7 @@ function saveAccountDetails() {
       document.getElementById('acc-full-name').textContent = ((res.data.salutation ? res.data.salutation+' ' : '') + res.data.firstName + ' ' + res.data.lastName).trim();
       document.getElementById('acc-title').textContent = res.data.jobTitle || '';
       updateNavUser(res.data);
+      accResetDirty();
       // Change password separately if provided
       if (!pw1) { okEl.textContent = '✓ Details saved successfully'; okEl.style.display = 'block'; return; }
       return fetch('/api/change-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ currentPassword: currentPw, newPassword: pw1 }) })
