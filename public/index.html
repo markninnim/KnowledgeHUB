@@ -218,7 +218,6 @@ select:focus { outline:none; }
   <img id="nav-logo-img" src="/public-logo" alt="Finance Planning Group" onclick="switchTab('home')" style="cursor:pointer;">
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-btn-home"          onclick="switchTab('home')">Home</button>
-    <button class="tab-btn"        id="tab-btn-sales-process" onclick="switchTab('sales-process')">Advice Standards</button>
     <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
     <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learning</button>
     <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
@@ -255,7 +254,6 @@ select:focus { outline:none; }
     <h2 style="margin-top:8px;">KnowledgeHUB&#8482;</h2>
     <a href="#" onclick="switchTab('marketing');return false;">Marketing</a>
     <a href="#" onclick="switchTab('compliance');return false;">Compliance</a>
-    <a href="#" onclick="switchTab('sales-process');return false;">Advice Standards</a>
     <a href="#" onclick="switchTab('learning');return false;">Learning</a>
     <a href="#" onclick="switchTab('surveying');return false;">Surveying</a>
     <a href="#" id="sidebar-home-whereabouts" style="display:none" onclick="switchTab('whereabouts');return false;">Whereabouts</a>
@@ -288,6 +286,12 @@ select:focus { outline:none; }
     <a href="#" id="cr-nav-gifts" onclick="return showCrForm('Gifts & Hospitality', this)">Gifts &amp; Hospitality</a>
     <a href="#" id="cr-nav-selfsale" onclick="return showCrForm('Self Sale', this)">Self Sale</a>
     <a href="#" id="cr-nav-whistle" onclick="return showCrForm('Whistleblowing', this)">Whistleblowing</a>
+    <div id="compliance-advice-standards-block">
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">ADVICE STANDARDS</span></div>
+      <a href="#" onclick="goToAdviceStandards('sp-overview');return false;">Overview</a>
+      <a href="#" onclick="goToAdviceStandards('mortgage-advice-standards');return false;">Mortgage Advice Standards</a>
+      <a href="#" onclick="goToAdviceStandards('protection-advice-standards');return false;">Protection Advice Standards</a>
+    </div>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -6347,6 +6351,17 @@ function spGoTo(spSection, subId) {
   }
 }
 
+// Entry point from the Compliance sidebar's "Advice Standards" block —
+// full tab switch to sales-process, then select the requested sub-section.
+function goToAdviceStandards(section) {
+  switchTab('sales-process');
+  setTimeout(function() {
+    var el = document.querySelector('#sidebar-sales-process a[onclick*="' + section + '"]');
+    showSpSection(section, el);
+  }, 0);
+  return false;
+}
+
 function showSpSection(id, el) {
   ['sp-overview','mortgage-advice-standards','protection-advice-standards'].forEach(function(s) {
     var div = document.getElementById(s);
@@ -7909,7 +7924,7 @@ var _currentUser = null;
     // management → Access). navAccess is computed server-side with sensible
     // defaults (see computeNavDefaults in server.js) and can be overridden.
     var NAV_TAB_IDS = {
-      adviceStandards: 'tab-btn-sales-process',
+      adviceStandards: 'compliance-advice-standards-block',
       compliance:       'tab-btn-compliance',
       learning:         'tab-btn-learning',
       surveying:        'tab-btn-surveying',
@@ -8224,7 +8239,7 @@ var _features = {};
 var FEATURE_LABELS = {
   marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing',         pane: 'tab-marketing' },
   compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance',        pane: 'tab-compliance' },
-  adviceStandards: { label: 'Advice Standards',  tab: 'tab-btn-sales-process',     pane: 'tab-sales-process' },
+  adviceStandards: { label: 'Advice Standards',  tab: 'compliance-advice-standards-block', pane: 'tab-sales-process' },
   learning:        { label: 'Learning',          tab: 'tab-btn-learning',          pane: 'tab-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
   sellingZone:     { label: 'Opportunities',     tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
