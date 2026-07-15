@@ -281,9 +281,9 @@ select:focus { outline:none; }
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
     <div id="compliance-advice-standards-block">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">ADVICE STANDARDS</span></div>
-      <a href="#" onclick="goToAdviceStandards('sp-overview');return false;">Overview</a>
-      <a href="#" onclick="goToAdviceStandards('mortgage-advice-standards');return false;">Mortgage Advice Standards</a>
-      <a href="#" onclick="goToAdviceStandards('protection-advice-standards');return false;">Protection Advice Standards</a>
+      <a href="#" onclick="return goToAdviceStandards('sp-overview',this);">Overview</a>
+      <a href="#" onclick="return goToAdviceStandards('mortgage-advice-standards',this);">Mortgage Advice Standards</a>
+      <a href="#" onclick="return goToAdviceStandards('protection-advice-standards',this);">Protection Advice Standards</a>
     </div>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">REPORTING</span></div>
     <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
@@ -6352,13 +6352,13 @@ function spGoTo(spSection, subId) {
 }
 
 // Entry point from the Compliance sidebar's "Advice Standards" block —
-// full tab switch to sales-process, then select the requested sub-section.
-function goToAdviceStandards(section) {
-  switchTab('sales-process');
-  setTimeout(function() {
-    var el = document.querySelector('#sidebar-sales-process a[onclick*="' + section + '"]');
-    showSpSection(section, el);
-  }, 0);
+// swaps in the Advice Standards content pane in place, without leaving the
+// Compliance tab/sidebar (so the nav stays put, only the content changes).
+function goToAdviceStandards(section, el) {
+  document.getElementById('tab-compliance').classList.remove('active');
+  document.getElementById('tab-sales-process').classList.add('active');
+  if (!el) el = document.querySelector('#sidebar-compliance a[onclick*="' + section + '"]');
+  showSpSection(section, el);
   return false;
 }
 
@@ -6367,7 +6367,7 @@ function showSpSection(id, el) {
     var div = document.getElementById(s);
     if (div) div.style.display = s === id ? '' : 'none';
   });
-  document.querySelectorAll('#sidebar-sales-process a').forEach(function(a) { a.classList.remove('active'); });
+  document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
   if (id === 'mortgage-advice-standards') {
     masClearSearch(); _masSeconds = 0; startMasTimer();
@@ -11406,6 +11406,9 @@ var _cpdLoaded = false;
 
 function showCpdSection(e) {
   if (e) e.preventDefault();
+  document.getElementById('tab-sales-process').classList.remove('active');
+  document.getElementById('tab-compliance').classList.add('active');
+  document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
   document.getElementById('section-cr').style.display  = 'none';
   document.getElementById('section-cpd').style.display = '';
   if (!_cpdLoaded) loadCpd();
@@ -11499,6 +11502,9 @@ var CR_CONFIG = {
 function showCrForm(type, el) {
   _crType = type;
   var cfg = CR_CONFIG[type];
+  document.getElementById('tab-sales-process').classList.remove('active');
+  document.getElementById('tab-compliance').classList.add('active');
+  document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
   document.getElementById('section-cpd').style.display = 'none';
   document.getElementById('section-cr').style.display  = '';
   document.getElementById('cr-title').textContent    = type === 'Complaint' ? 'Complaint Notification' : type === 'Breach' ? 'Breach Report' : type;
