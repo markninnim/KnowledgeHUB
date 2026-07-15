@@ -4164,7 +4164,7 @@ select:focus { outline:none; }
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
         <div>
           <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Engage&#8482;</h2>
-          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Engage&#8482; — add, track, and update leads through the pipeline.</p>
+          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Add, track, and update leads through cold, warm to hot before converting to business and putting on Acre. Alternatively, share with a colleague.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
           <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
@@ -15900,10 +15900,25 @@ function lgPossessive(name) {
   if (!name) return '';
   return name + (name.slice(-1).toLowerCase() === 's' ? '’' : '’s');
 }
+// Resolves the current adviser's buddy name for the subtitle copy — falls
+// back to "a colleague" if no buddy is set yet, or while the name list is
+// still loading (accLoadAllUsers is the same lazily-cached loader used by
+// the My Account Buddy picker, so this doesn't trigger a duplicate fetch).
+function lgBuddyLabel() {
+  if (_currentUser && _currentUser.buddyEmail && _accAllUsers) {
+    var match = _accAllUsers.find(function(u) { return u.email === _currentUser.buddyEmail; });
+    if (match) return match.name;
+  }
+  return 'a colleague';
+}
 function lgUpdateLeadsTitle() {
+  if (_currentUser && _currentUser.buddyEmail && !_accAllUsers) {
+    accLoadAllUsers().then(function() { lgUpdateLeadsTitle(); }); // re-render once the buddy's name resolves
+  }
+  var pipelineSubtitle = 'Add, track, and update leads through cold, warm to hot before converting to business and putting on Acre. Alternatively, share with ' + lgBuddyLabel() + '.';
   var MY_LEADS_FILTERS = ['all', 'mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
-  var titles = { all: ['Engage™', 'Engage™ — add, track, and update leads through the pipeline.'],
-    mine:     ['Engage™', 'Leads assigned to you.'],
+  var titles = { all: ['Engage™', pipelineSubtitle],
+    mine:     ['Engage™', pipelineSubtitle],
     golden:   ['Golden Hour Leads', 'You only get one opportunity to make a killer first impression. If you get a lead, calling it within the first hour is a proven recipe for creating that wow factor.'],
     today:    ["Today's Leads", 'Leads created today.'],
     followup: ['Follow Up Leads', 'Leads with a follow-up date of today.'],
