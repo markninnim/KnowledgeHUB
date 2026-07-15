@@ -119,6 +119,7 @@ const F_SURVEYING            = 'fldwLzeKJxEpzHvrn'; // Surveying Licence
 const F_TRUSTS               = 'flda7udm9DghkQfuj'; // Trusts Licence
 const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown in My Account
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
+const F_BUDDY_EMAIL          = 'fldhw8BOP43FdBePg'; // Buddy Email — colleague chosen for lead-sharing in Engage™
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -478,7 +479,8 @@ function recordToUser(record) {
     commissionSplit:     f[F_COMMISSION_SPLIT]     || '',
     surveying:           f[F_SURVEYING]            || false,
     trusts:              f[F_TRUSTS]               || false,
-    avgPayaway:          f[F_AVG_PAYAWAY]          || ''
+    avgPayaway:          f[F_AVG_PAYAWAY]          || '',
+    buddyEmail:          f[F_BUDDY_EMAIL]          || ''
   };
 }
 
@@ -1515,6 +1517,52 @@ app.delete('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, re
   }
 });
 
+// POST /api/leadgen-leads/:id/swap-to-buddy — reassign one of the caller's
+// own leads to their chosen Buddy (set in My Account). Deliberately narrower
+// than the general adviser-reassign in PATCH: a non-manager can only ever
+// move a lead they currently own, and only ever TO their own buddy — never
+// to an arbitrary adviser — so this can't be used to route leads anywhere else.
+app.post('/api/leadgen-leads/:id/swap-to-buddy', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    const user = req.session.user;
+    const isManager = !!(user.isAdmin || user.isSupervisor);
+    const ownName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim().toLowerCase();
+
+    const check = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
+      headers: { Authorization: `Bearer ${AT_KEY}` }
+    }).then(r2 => r2.json());
+    const currentAdviser = ((check && check.fields) || {})[LG_ADVISER] || '';
+    if (!isManager && currentAdviser.trim().toLowerCase() !== ownName) return res.status(403).json({ error: 'Forbidden' });
+
+    // Look up the caller's buddy fresh from Airtable (not the session, which
+    // may be stale if they only just set a buddy in My Account).
+    const uf = encodeURIComponent(`LOWER({Email}) = "${(user.email || '').toLowerCase().replace(/"/g, '\\"')}"`);
+    const ur = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=${uf}&returnFieldsByFieldId=true&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const ud = await ur.json();
+    const buddyEmail = (((ud.records || [])[0] || {}).fields || {})[F_BUDDY_EMAIL] || '';
+    if (!buddyEmail) return res.status(400).json({ error: 'No buddy set — pick one in My Account first.' });
+
+    const bf = encodeURIComponent(`LOWER({Email}) = "${buddyEmail.toLowerCase().replace(/"/g, '\\"')}"`);
+    const br = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=${bf}&returnFieldsByFieldId=true&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const bd = await br.json();
+    const buddyFields = ((bd.records || [])[0] || {}).fields || {};
+    const buddyName = [buddyFields[F_FIRST], buddyFields[F_LAST]].filter(Boolean).join(' ').trim();
+    if (!buddyName) return res.status(400).json({ error: 'Your buddy could not be found — please re-select them in My Account.' });
+
+    const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [LG_ADVISER]: buddyName } }], typecast: true, returnFieldsByFieldId: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true, lead: leadGenRecordToLead(d.records[0]) });
+  } catch (err) {
+    console.error('LeadGen swap-to-buddy error:', err);
+    res.status(500).json({ error: 'Failed to swap lead to buddy.' });
+  }
+});
+
 // ── LeadGen users management (admin only) — reads/writes Airtable directly ──
 app.get('/api/leadgen-users', requireAdmin, async (req, res) => {
   try {
@@ -2502,7 +2550,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // ── Profile: current user self-edit ──────────────────────────
 app.put('/api/profile', requireAuth, async (req, res) => {
-  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, commissionSplit, avgPayaway, password } = req.body;
+  const { salutation, firstName, lastName, jobTitle, mobile, landline, website, aboutMe, whatsapp, commissionSplit, avgPayaway, buddyEmail, password } = req.body;
   if (password && password.length < 12) {
     return res.status(400).json({ error: 'Password must be at least 12 characters' });
   }
@@ -2519,7 +2567,8 @@ app.put('/api/profile', requireAuth, async (req, res) => {
       [F_ABOUT_ME]: aboutMe    || '',
       [F_WHATSAPP]: whatsapp   || '',
       [F_COMMISSION_SPLIT]: commissionSplit || '',
-      [F_AVG_PAYAWAY]: avgPayaway || ''
+      [F_AVG_PAYAWAY]: avgPayaway || '',
+      [F_BUDDY_EMAIL]: buddyEmail || null
     };
     if (password) {
       fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
@@ -2536,6 +2585,32 @@ app.put('/api/profile', requireAuth, async (req, res) => {
     // Refresh session
     req.session.user = { ...req.session.user, ...updated };
     res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/users/names — lightweight name+email list of every user, for the
+// Buddy picker typeahead in My Account. Deliberately minimal (no admin gate,
+// no sensitive fields) so any signed-in adviser can search colleagues by name.
+app.get('/api/users/names', requireAuth, async (req, res) => {
+  try {
+    let records = [], offset = '';
+    do {
+      const qs = `?fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+    const ownEmail = (req.session.user.email || '').toLowerCase();
+    const names = records
+      .map(r => ({
+        name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ').trim(),
+        email: (r.fields[F_EMAIL] || '').toLowerCase()
+      }))
+      .filter(u => u.name && u.email && u.email !== ownEmail)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    res.json({ users: names });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
