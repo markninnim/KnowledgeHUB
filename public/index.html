@@ -63,13 +63,6 @@ html { height: 100%; }
 .ov-card-sub { font-size:12px; color:#6b7c8f; margin-bottom:0; }
 .fp-yn-btn { padding:7px 22px; border-radius:7px; border:1px solid #d1d5db; background:#fff; color:#6b7c8f; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .12s; }
 .fp-yn-btn:hover { border-color:var(--brand-navy); color:var(--brand-navy); }
-.kd-acc-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 18px; border:none; background:none; cursor:pointer; color:rgba(255,255,255,.7); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-family:inherit; text-align:left; margin:12px 0 2px; }
-.kd-acc-btn:hover { color:#fff; }
-.kd-acc-btn svg { transition:transform .2s; flex-shrink:0; }
-.kd-acc-btn.open svg { transform:rotate(180deg); }
-.kd-acc-body a { padding-left:30px; font-size:12.5px; }
-.kd-test-num { display:block; font-size:9px; font-weight:700; color:rgba(255,255,255,.35); letter-spacing:.08em; text-transform:uppercase; margin-bottom:1px; }
-.kd-test-line { display:block; line-height:1.35; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid var(--brand-orange); }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
@@ -305,58 +298,10 @@ select:focus { outline:none; }
     <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters</a>
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
     <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">KNOWLEDGE TESTS</span></div>
-
-    <!-- Induction accordion -->
-    <button class="kd-acc-btn" id="kd-btn-induction" onclick="kdToggle('kd-induction','kd-btn-induction')">
-      <span>Induction</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div id="kd-induction" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-ind-1" onclick="return ktNavLoad('ind-1',this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Complaints</span><span class="kd-test-line">Conduct Rules</span></a>
-      <a href="#" id="lv-nav-ind-2" onclick="return ktNavLoad('ind-2',this)"><span class="kd-test-num">Test 2</span><span class="kd-test-line">Consumer Duty</span><span class="kd-test-line">Financial Crime</span></a>
-      <a href="#" id="lv-nav-ind-3" onclick="return ktNavLoad('ind-3',this)"><span class="kd-test-num">Test 3</span><span class="kd-test-line">Vulnerable Customers</span><span class="kd-test-line">Information Security</span></a>
-      <a href="#" id="lv-nav-ind-4" onclick="return ktNavLoad('ind-4',this)"><span class="kd-test-num">Test 4</span><span class="kd-test-line">Record Keeping</span><span class="kd-test-line">Sales Process</span></a>
-    </div>
-
-    <!-- Revalidation accordion (same tests) -->
-    <button class="kd-acc-btn" id="kd-btn-revalidation" onclick="kdToggle('kd-revalidation','kd-btn-revalidation')">
-      <span>Revalidation</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div id="kd-revalidation" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-rv-ind-1" onclick="return ktNavLoad('ind-1',this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Complaints</span><span class="kd-test-line">Conduct Rules</span></a>
-      <a href="#" id="lv-nav-rv-ind-2" onclick="return ktNavLoad('ind-2',this)"><span class="kd-test-num">Test 2</span><span class="kd-test-line">Consumer Duty</span><span class="kd-test-line">Financial Crime</span></a>
-      <a href="#" id="lv-nav-rv-ind-3" onclick="return ktNavLoad('ind-3',this)"><span class="kd-test-num">Test 3</span><span class="kd-test-line">Vulnerable Customers</span><span class="kd-test-line">Information Security</span></a>
-      <a href="#" id="lv-nav-rv-ind-4" onclick="return ktNavLoad('ind-4',this)"><span class="kd-test-num">Test 4</span><span class="kd-test-line">Record Keeping</span><span class="kd-test-line">Sales Process</span></a>
-    </div>
-
-    <!-- Fitness & Properness accordion -->
-    <button class="kd-acc-btn" id="kd-btn-fitproper" onclick="kdToggle('kd-fitproper','kd-btn-fitproper')">
-      <span>Fitness &amp; Properness</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div id="kd-fitproper" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-fp" onclick="return showFpForm(this)"><span class="kd-test-num">Test 1</span><span class="kd-test-line">Fitness &amp; Properness</span></a>
-    </div>
-
-    <!-- General accordion -->
-    <button class="kd-acc-btn" id="kd-btn-general" onclick="kdToggle('kd-general','kd-btn-general')">
-      <span>Quizzes</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div id="kd-general" class="kd-acc-body" style="display:none;">
-      <a href="#" id="lv-nav-mas" onclick="return ktNavLoad('mas',this)">Mortgage Advice Standards</a>
-      <a href="#" id="lv-nav-mas-app1" onclick="return ktNavLoad('mas-app1',this)">App 1 – Lifetime Mortgages</a>
-      <a href="#" id="lv-nav-pas" onclick="return ktNavLoad('pas',this)">Protection Advice Standards</a>
-      <a href="#" id="lv-nav-pas-app1" onclick="return ktNavLoad('pas-app1',this)">App 1 – Serious Illness Cover</a>
-      <a href="#" id="lv-nav-pas-app2" onclick="return ktNavLoad('pas-app2',this)">App 2 – Income Protection</a>
-      <a href="#" id="lv-nav-pas-app3" onclick="return ktNavLoad('pas-app3',this)">App 3 – Relevant Life Plan</a>
-      <a href="#" id="lv-nav-pas-app4" onclick="return ktNavLoad('pas-app4',this)">App 4 – Business Protection</a>
-      <a href="#" id="lv-nav-pas-app5" onclick="return ktNavLoad('pas-app5',this)">App 5 – Whole of Life</a>
-      <a href="#" id="lv-nav-pas-app6" onclick="return ktNavLoad('pas-app6',this)">App 6 – Over 50s Plan</a>
-      <a href="#" id="lv-nav-pas-app7" onclick="return ktNavLoad('pas-app7',this)">App 7 – PMI</a>
-      <a href="#" id="lv-nav-pas-app8" onclick="return ktNavLoad('pas-app8',this)">App 8 – Self Sale Policy</a>
-    </div>
+    <a href="#" id="kd-nav-induction" onclick="return ktShowGroup('induction',this)">Induction</a>
+    <a href="#" id="kd-nav-revalidation" onclick="return ktShowGroup('revalidation',this)">Revalidation</a>
+    <a href="#" id="kd-nav-fitproper" onclick="return showFpForm(this)">Fitness &amp; Properness</a>
+    <a href="#" id="kd-nav-quizzes" onclick="return ktShowGroup('quizzes',this)">Quizzes</a>
   </div>
   <!-- Sales Process sidebar -->
   <div id="sidebar-sales-process" style="display:none">
@@ -1755,12 +1700,18 @@ select:focus { outline:none; }
       <div id="kt-landing">
         <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Knowledge Tests</h2>
         <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 28px;line-height:1.6;">75% passmark · Pass logs 30 minutes CPD</p>
-        <div style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Induction Tests</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-induction"></div>
-        <div style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-mortgage"></div>
-        <div style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Protection</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;" id="kt-grid-protection"></div>
+        <div id="kt-group-induction">
+          <div id="kt-group-induction-title" style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Induction Tests</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-induction"></div>
+        </div>
+        <div id="kt-group-mortgage">
+          <div style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Mortgage</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;margin-bottom:28px;" id="kt-grid-mortgage"></div>
+        </div>
+        <div id="kt-group-protection">
+          <div style="font-size:10px;font-weight:800;color:var(--brand-navy);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">Protection</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:780px;" id="kt-grid-protection"></div>
+        </div>
       </div>
 
       <!-- Active test UI (replaces landing) -->
@@ -12538,7 +12489,6 @@ function ktNavLoad(id, el) {
   // Mark active in sidebar
   document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
   if(el) el.classList.add('active');
-  if(el) kdEnsureOpen(el.id);
   // Ensure the knowledge-tests section is visible (hide all other Learning sections)
   ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests','lv-cas-path-section'].forEach(function(s){
     var d=document.getElementById(s);if(d) d.style.display=s==='knowledge-tests'?'':'none';
@@ -12547,8 +12497,13 @@ function ktNavLoad(id, el) {
   return false;
 }
 
-function ktShowLanding() {
+// which: null/undefined = show every group (used by the combined landing);
+// 'induction' or 'revalidation' = Induction tests only (same 4 tests, just a
+// different entry point/label); 'quizzes' = Mortgage + Protection only.
+var _ktLastGroupView = null;
+function ktShowLanding(which) {
   _kt = { id: null, cur: 0, answers: {}, phase: 'landing' };
+  _ktLastGroupView = which || null;
   ['kt-landing','kt-test-wrap','kt-review-wrap','kt-results-wrap'].forEach(function(id,i){
     var el = document.getElementById(id);
     if(el) el.style.display = i===0 ? '' : 'none';
@@ -12567,6 +12522,32 @@ function ktShowLanding() {
       grid.appendChild(card);
     });
   });
+  // Show only the group(s) relevant to the sidebar entry point clicked
+  var showAll = !which;
+  var showInduction = showAll || which === 'induction' || which === 'revalidation';
+  var showQuizzes   = showAll || which === 'quizzes';
+  var indEl = document.getElementById('kt-group-induction');
+  if (indEl) indEl.style.display = showInduction ? '' : 'none';
+  var mortEl = document.getElementById('kt-group-mortgage');
+  if (mortEl) mortEl.style.display = showQuizzes ? '' : 'none';
+  var protEl = document.getElementById('kt-group-protection');
+  if (protEl) protEl.style.display = showQuizzes ? '' : 'none';
+  var titleEl = document.getElementById('kt-group-induction-title');
+  if (titleEl) titleEl.textContent = which === 'revalidation' ? 'Revalidation Tests' : 'Induction Tests';
+}
+
+// Sidebar entry point — "Induction" / "Revalidation" / "Quizzes" each open
+// their tests as tiles instead of an expanding accordion list.
+function ktShowGroup(which, el) {
+  document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
+  if (el) el.classList.add('active');
+  ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests','lv-cas-path-section'].forEach(function(s){
+    var d = document.getElementById(s); if (d) d.style.display = s === 'knowledge-tests' ? '' : 'none';
+  });
+  var fpWrap = document.getElementById('fp-wrap');
+  if (fpWrap) fpWrap.style.display = 'none';
+  ktShowLanding(which);
+  return false;
 }
 
 function ktLoadTest(id) {
@@ -12610,7 +12591,7 @@ function ktRenderQ() {
 
 function ktSelect(qi,ai){_kt.answers[qi]=ai;ktRenderQ();}
 function ktNav(dir){_kt.cur=Math.max(0,Math.min(KT_TESTS.find(function(t){return t.id===_kt.id;}).questions.length-1,_kt.cur+dir));ktRenderQ();}
-function ktBackToLanding(){ktShowLanding();}
+function ktBackToLanding(){ktShowLanding(_ktLastGroupView);}
 function ktBackToTest(){document.getElementById('kt-review-wrap').style.display='none';document.getElementById('kt-test-wrap').style.display='';}
 
 function ktShowReview() {
@@ -17473,44 +17454,12 @@ function payShowYear(yi) {
     if (spans[1]) spans[1].style.color = active ? 'rgba(255,255,255,.65)' : '#6b7c8f';
   });
 }
-// ── Knowledge Demonstration accordion ────────────────────────
-function kdToggle(bodyId, btnId) {
-  var body = document.getElementById(bodyId);
-  var btn  = document.getElementById(btnId);
-  if (!body) return;
-  var opening = body.style.display === 'none';
-  body.style.display = opening ? 'block' : 'none';
-  if (btn) { opening ? btn.classList.add('open') : btn.classList.remove('open'); }
-}
-
-// Ensure the correct accordion panel is open for a given nav link id
-function kdEnsureOpen(navId) {
-  var induction  = ['lv-nav-ind-1','lv-nav-ind-2','lv-nav-ind-3','lv-nav-ind-4'];
-  var revalidate = ['lv-nav-rv-ind-1','lv-nav-rv-ind-2','lv-nav-rv-ind-3','lv-nav-rv-ind-4'];
-  var general    = ['lv-nav-mas','lv-nav-mas-app1','lv-nav-pas','lv-nav-pas-app1','lv-nav-pas-app2','lv-nav-pas-app3','lv-nav-pas-app4','lv-nav-pas-app5','lv-nav-pas-app6','lv-nav-pas-app7','lv-nav-pas-app8'];
-  var fitproper  = ['lv-nav-fp'];
-  var map = {};
-  induction.forEach(function(id){ map[id]='kd-induction'; });
-  revalidate.forEach(function(id){ map[id]='kd-revalidation'; });
-  general.forEach(function(id){ map[id]='kd-general'; });
-  fitproper.forEach(function(id){ map[id]='kd-fitproper'; });
-  var target = map[navId];
-  if (!target) return;
-  var body = document.getElementById(target);
-  var btn  = document.getElementById(target.replace('kd-','kd-btn-'));
-  if (body && body.style.display === 'none') {
-    body.style.display = 'block';
-    if (btn) btn.classList.add('open');
-  }
-}
-
 // ── Fitness & Properness Form ─────────────────────────────────
 var _fpAnswers = {};
 
 function showFpForm(el) {
   document.querySelectorAll('#sidebar-learning a').forEach(function(a){a.classList.remove('active');});
   if (el) el.classList.add('active');
-  if (el) kdEnsureOpen(el.id);
   ['weekly-recordings','induction-recordings','revalidation-recordings','reading-mortgage-strategy','monthly-newsletters','knowledge-tests','lv-cas-path-section'].forEach(function(s){
     var d = document.getElementById(s); if (d) d.style.display = s === 'knowledge-tests' ? '' : 'none';
   });
