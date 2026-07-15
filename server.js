@@ -5411,7 +5411,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
         const formula = encodeURIComponent(`LOWER({${MC_CUST_REF_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
         let records = [], offset = '';
         do {
-          const qs = `?filterByFormula=${formula}&fields[]=${MC_BENEFIT_END}&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const qs = `?filterByFormula=${formula}&fields[]=${MC_BENEFIT_END}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
           const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
           const b  = await r.json();
           if (!r.ok) break;
