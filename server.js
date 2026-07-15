@@ -374,15 +374,52 @@ let _featuredSocial = [];
 try { _featuredSocial = JSON.parse(fs.readFileSync(FEATURED_SOCIAL_PATH, 'utf8')); } catch(_) {}
 
 // ── Feature flags ─────────────────────────────────────────────
-const FEATURES_PATH = path.join(__dirname, 'features.json');
+// Stored in Airtable (base appqQv0Xog8yZMwI9, table "Feature Flags",
+// tblMUgxkEbVgg7FMU) rather than a local features.json file — the Railway
+// filesystem is ephemeral, so anything written to a local JSON file is
+// wiped on every redeploy. One row per key: Key (fldH8hsfwBN7BmwHe, text),
+// Enabled (fldsAR1VDJfitNqq9, checkbox), Label (fld0Ib0sacD7qa2ka, text).
+const FEATURE_FLAGS_TABLE = 'tblMUgxkEbVgg7FMU';
+const F_FF_KEY     = 'fldH8hsfwBN7BmwHe';
+const F_FF_ENABLED = 'fldsAR1VDJfitNqq9';
 const FEATURES_DEFAULT = {
   marketing: true, compliance: true, adviceStandards: true,
   learning: true, surveying: true, sellingZone: true,
   performanceZone: true, supervisorZone: true,
-  pay: true, autocrm: true, muttuo: true, whereabouts: true, leadgen: true
+  pay: true, autocrm: true, reEngage: true, muttuo: true, whereabouts: true, leadgen: true
 };
 let _features = { ...FEATURES_DEFAULT };
-try { _features = { ...FEATURES_DEFAULT, ...JSON.parse(fs.readFileSync(FEATURES_PATH, 'utf8')) }; } catch(_) {}
+let _featureFlagRecordIds = {}; // key -> Airtable record id, so writes PATCH the right row
+
+async function featureFlagsFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${FEATURE_FLAGS_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+async function loadFeatureFlagsFromAirtable() {
+  try {
+    const data = await featureFlagsFetch('');
+    const loaded = { ...FEATURES_DEFAULT };
+    const ids = {};
+    (data.records || []).forEach(r => {
+      const key = r.fields[F_FF_KEY];
+      if (!key) return;
+      loaded[key] = r.fields[F_FF_ENABLED] !== false;
+      ids[key] = r.id;
+    });
+    _features = loaded;
+    _featureFlagRecordIds = ids;
+  } catch (err) {
+    console.error('Failed to load feature flags from Airtable, using defaults:', err.message);
+  }
+}
+loadFeatureFlagsFromAirtable();
 
 async function atFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${endpoint}`;
@@ -5757,12 +5794,30 @@ app.get('/api/admin/features', requireAuth, (req, res) => {
   res.json(_features);
 });
 
-app.post('/api/admin/features', requireAdmin, (req, res) => {
+app.post('/api/admin/features', requireAdmin, async (req, res) => {
   try {
     const updates = req.body;
     const allowed = Object.keys(FEATURES_DEFAULT);
+    const changedKeys = allowed.filter(k => (k in updates) && !!updates[k] !== _features[k]);
     allowed.forEach(k => { if (k in updates) _features[k] = !!updates[k]; });
-    fs.writeFileSync(FEATURES_PATH, JSON.stringify(_features, null, 2), 'utf8');
+    // Persist each changed key to its Airtable row (PATCH by known record id,
+    // or create the row on the fly if a key was added after the table was
+    // first seeded and has no row yet).
+    for (const k of changedKeys) {
+      const recId = _featureFlagRecordIds[k];
+      if (recId) {
+        await featureFlagsFetch(`/${recId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ fields: { [F_FF_ENABLED]: _features[k] } })
+        });
+      } else {
+        const created = await featureFlagsFetch('', {
+          method: 'POST',
+          body: JSON.stringify({ fields: { [F_FF_KEY]: k, [F_FF_ENABLED]: _features[k] } })
+        });
+        _featureFlagRecordIds[k] = created.id;
+      }
+    }
     res.json({ ok: true, features: _features });
   } catch (err) {
     res.status(500).json({ error: err.message });
