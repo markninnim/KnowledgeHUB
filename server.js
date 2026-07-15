@@ -5410,8 +5410,9 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       (async () => {
         const formula = encodeURIComponent(`LOWER({${MC_CUST_REF_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
         let records = [], offset = '';
+        const mcFieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_LENDER, MC_BENEFIT_END].map(f => `&fields[]=${f}`).join('');
         do {
-          const qs = `?filterByFormula=${formula}&fields[]=${MC_BENEFIT_END}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const qs = `?filterByFormula=${formula}${mcFieldQs}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
           const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
           const b  = await r.json();
           if (!r.ok) break;
@@ -5502,16 +5503,31 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       if (months < 0) months = 0;
       return { years: Math.floor(months / 12), months: months % 12 };
     }
-    function countBucket(years, months) {
+    function mcRowInfo(r) {
+      const f = r.fields || {};
+      return {
+        name: f[MC_NAME] || 'Unnamed',
+        email: f[MC_EMAIL] || '',
+        loanAmount: (typeof f[MC_LOAN] === 'number') ? f[MC_LOAN] : null,
+        lender: f[MC_LENDER] || '',
+        benefitEnd: f[MC_BENEFIT_END] || ''
+      };
+    }
+    function bucketRows(years, months) {
       return mcRecs.filter(r => {
         const p = elapsedParts(r.fields[MC_BENEFIT_END]);
         return p && p.years === years && p.months === months;
-      }).length;
+      }).map(mcRowInfo);
     }
+    const reEngageRows = {
+      '4y6m': bucketRows(4, 6),
+      '4y3m': bucketRows(4, 3),
+      '5y':   bucketRows(5, 0)
+    };
     const reEngageBuckets = {
-      '4y6m': countBucket(4, 6),
-      '4y3m': countBucket(4, 3),
-      '5y':   countBucket(5, 0)
+      '4y6m': reEngageRows['4y6m'].length,
+      '4y3m': reEngageRows['4y3m'].length,
+      '5y':   reEngageRows['5y'].length
     };
 
     // AutoCRM™ Renewals — same Mortgage Completions rows, bucketed forward by
@@ -5526,10 +5542,12 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       return (bucket >= 1 && bucket <= 6) ? bucket : null;
     }
     const autoCrmMonths = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    const autoCrmRows = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
     mcRecs.forEach(r => {
       const b = monthsAway(r.fields[MC_BENEFIT_END]);
-      if (b) autoCrmMonths[b]++;
+      if (b) { autoCrmMonths[b]++; autoCrmRows[b].push(mcRowInfo(r)); }
     });
+    Object.keys(autoCrmRows).forEach(k => autoCrmRows[k].sort((a, b) => (a.benefitEnd || '').localeCompare(b.benefitEnd || '')));
     const autoCrmTotal = Object.values(autoCrmMonths).reduce((s, v) => s + v, 0);
 
     res.json({
@@ -5540,7 +5558,9 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       quiz:          quizResults,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
       reEngage:      reEngageBuckets,
-      autoCrm:       { months: autoCrmMonths, total: autoCrmTotal }
+      reEngageRows:  reEngageRows,
+      autoCrm:       { months: autoCrmMonths, total: autoCrmTotal },
+      autoCrmRows:   autoCrmRows
     });
   } catch (err) {
     console.error('broker-profile error:', err);

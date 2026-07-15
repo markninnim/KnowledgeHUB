@@ -3848,22 +3848,22 @@ select:focus { outline:none; }
             <div id="bp-sales-process"></div>
           </div>
 
-          <!-- Row 4 Col 1-3: AutoCRM™ Renewals (next 6 months, by month bucket) -->
-          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:4;grid-column:1 / span 3;">
+          <!-- Row 4 Col 1-2: AutoCRM™ Renewals (next 6 months, by month bucket) -->
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:4;grid-column:1 / span 2;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">AutoCRM&#8482; Renewals</div>
             <div id="bp-autocrm"></div>
+          </div>
+
+          <!-- Row 4 Col 3: ReEngage™ (past-completion buckets) -->
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:4;grid-column:3;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">ReEngage&#8482;</div>
+            <div id="bp-reengage"></div>
           </div>
 
           <!-- Row 5 Col 1-3: Engage™ (Hot/Warm/Cold lead counts) -->
           <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:5;grid-column:1 / span 3;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Engage&#8482;</div>
             <div id="bp-engage"></div>
-          </div>
-
-          <!-- Row 6 Col 1-3: ReEngage™ (past-completion buckets) -->
-          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:6;grid-column:1 / span 3;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">ReEngage&#8482;</div>
-            <div id="bp-reengage"></div>
           </div>
 
         </div>
@@ -9731,20 +9731,65 @@ function openBrokerProfile(email, name) {
         }
       }
 
-      // ── AutoCRM™ Renewals (next 6 months, by month bucket) ──
+      // ── AutoCRM™ / ReEngage™ bucket → client list expander ──
+      window.bpToggleBucket = function(kind, bucket) {
+        var detailId = kind === 'ac' ? 'bp-ac-detail' : 'bp-re-detail';
+        var rowsSrc = kind === 'ac' ? window._bpAcRows : window._bpReRows;
+        var detailEl = document.getElementById(detailId);
+        if (!detailEl) return;
+        var key = kind + bucket;
+        document.querySelectorAll('[data-bp-bucket]').forEach(function(el) {
+          if (el.closest('#' + (kind === 'ac' ? 'bp-autocrm' : 'bp-reengage'))) el.style.background = '';
+        });
+        if (detailEl.getAttribute('data-open') === key) {
+          detailEl.style.display = 'none';
+          detailEl.removeAttribute('data-open');
+          return;
+        }
+        var el = document.querySelector('[data-bp-bucket="' + key + '"]');
+        if (el) el.style.background = '#eef4fb';
+        var rows = (rowsSrc && rowsSrc[bucket]) || [];
+        detailEl.setAttribute('data-open', key);
+        detailEl.style.display = 'block';
+        if (!rows.length) {
+          detailEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No clients in this bucket</div>';
+          return;
+        }
+        detailEl.innerHTML = rows.map(function(r) {
+          var dt = r.benefitEnd ? new Date(r.benefitEnd) : null;
+          var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : (r.benefitEnd || '');
+          var loanStr = (typeof r.loanAmount === 'number') ? '£' + r.loanAmount.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : '';
+          return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f0f2f5;font-size:12.5px;">' +
+            '<div style="min-width:0;">' +
+              '<div style="color:var(--brand-navy);font-weight:700;">' + escHtml(r.name || 'Unnamed') + '</div>' +
+              (r.email ? '<div style="color:#6b7c8f;font-size:11.5px;">' + escHtml(r.email) + '</div>' : '') +
+            '</div>' +
+            '<div style="text-align:right;color:#6b7c8f;flex-shrink:0;">' +
+              (dateStr ? '<div>' + dateStr + '</div>' : '') +
+              (loanStr || r.lender ? '<div>' + [loanStr, r.lender].filter(Boolean).join(' · ') + '</div>' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      };
+
+      window._bpAcRows = (d.autoCrmRows || {});
       var acEl = document.getElementById('bp-autocrm');
       if (acEl) {
         var ac = d.autoCrm || { months: {1:0,2:0,3:0,4:0,5:0,6:0}, total: 0 };
         if (ac.total) {
-          acEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;max-width:520px;">' +
+          acEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;">' +
             [1,2,3,4,5,6].map(function(n) {
-              return '<div style="text-align:center;">' +
-                '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);line-height:1;">' + (ac.months[n] || 0) + '</div>' +
+              var count = ac.months[n] || 0;
+              var clickable = count > 0;
+              return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'ac\',' + n + ')" style="cursor:pointer;"' : '') +
+                ' data-bp-bucket="ac' + n + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;">' +
+                '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);line-height:1;">' + count + '</div>' +
                 '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + n + ' Month</div>' +
               '</div>';
             }).join('') +
           '</div>' +
-          '<div style="margin-top:12px;font-size:12px;color:#6b7c8f;">Total: <strong style="color:var(--brand-navy);">' + ac.total + '</strong></div>';
+          '<div style="margin-top:10px;font-size:12px;color:#6b7c8f;">Total: <strong style="color:var(--brand-navy);">' + ac.total + '</strong></div>' +
+          '<div id="bp-ac-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>';
         } else {
           acEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No renewals due in the next 6 months for this adviser</div>';
         }
@@ -9772,16 +9817,27 @@ function openBrokerProfile(email, name) {
       }
 
       // ── ReEngage™ (past-completion elapsed-time buckets) ──
+      window._bpReRows = (d.reEngageRows || {});
       var reEl = document.getElementById('bp-reengage');
       if (reEl) {
         var re = d.reEngage || { '4y6m': 0, '4y3m': 0, '5y': 0 };
         var reTotal = (re['4y6m'] || 0) + (re['4y3m'] || 0) + (re['5y'] || 0);
         if (reTotal) {
-          reEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">' +
-            bpStatCard('4 years 6 months', re['4y6m'], 'var(--brand-navy)') +
-            bpStatCard('4 years 3 months', re['4y3m'], 'var(--brand-navy)') +
-            bpStatCard('5 years', re['5y'], 'var(--brand-navy)') +
-            '</div>';
+          function bpReCard(label, key) {
+            var count = re[key] || 0;
+            var clickable = count > 0;
+            return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'re\',\'' + key + '\')" style="cursor:pointer;"' : '') +
+              ' data-bp-bucket="re' + key + '" style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:12px 14px;transition:background .12s;">' +
+              '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>' +
+              '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);">' + count + '</div>' +
+              '</div>';
+          }
+          reEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
+            bpReCard('4y 6m', '4y6m') +
+            bpReCard('4y 3m', '4y3m') +
+            bpReCard('5 years', '5y') +
+            '</div>' +
+            '<div id="bp-re-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>';
         } else {
           reEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No past completions in these windows for this adviser</div>';
         }
