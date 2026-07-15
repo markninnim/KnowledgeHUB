@@ -5514,6 +5514,24 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       '5y':   countBucket(5, 0)
     };
 
+    // AutoCRM™ Renewals — same Mortgage Completions rows, bucketed forward by
+    // months until Benefit End (1-6 months from now), mirroring the Home page
+    // widget's acMonthsAway() logic client-side.
+    function monthsAway(dateStr) {
+      const dt = new Date(dateStr);
+      if (isNaN(dt.getTime())) return null;
+      const now = new Date();
+      const diff = (dt.getFullYear() - now.getFullYear()) * 12 + (dt.getMonth() - now.getMonth());
+      const bucket = diff + 1;
+      return (bucket >= 1 && bucket <= 6) ? bucket : null;
+    }
+    const autoCrmMonths = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    mcRecs.forEach(r => {
+      const b = monthsAway(r.fields[MC_BENEFIT_END]);
+      if (b) autoCrmMonths[b]++;
+    });
+    const autoCrmTotal = Object.values(autoCrmMonths).reduce((s, v) => s + v, 0);
+
     res.json({
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
@@ -5521,7 +5539,8 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
-      reEngage:      reEngageBuckets
+      reEngage:      reEngageBuckets,
+      autoCrm:       { months: autoCrmMonths, total: autoCrmTotal }
     });
   } catch (err) {
     console.error('broker-profile error:', err);
