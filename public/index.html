@@ -279,6 +279,12 @@ select:focus { outline:none; }
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
+    <div id="compliance-advice-standards-block">
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">ADVICE STANDARDS</span></div>
+      <a href="#" onclick="goToAdviceStandards('sp-overview');return false;">Overview</a>
+      <a href="#" onclick="goToAdviceStandards('mortgage-advice-standards');return false;">Mortgage Advice Standards</a>
+      <a href="#" onclick="goToAdviceStandards('protection-advice-standards');return false;">Protection Advice Standards</a>
+    </div>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">REPORTING</span></div>
     <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
     <a href="#" id="cr-nav-breach" onclick="return showCrForm('Breach', this)">Breach Report</a>
@@ -286,12 +292,6 @@ select:focus { outline:none; }
     <a href="#" id="cr-nav-gifts" onclick="return showCrForm('Gifts & Hospitality', this)">Gifts &amp; Hospitality</a>
     <a href="#" id="cr-nav-selfsale" onclick="return showCrForm('Self Sale', this)">Self Sale</a>
     <a href="#" id="cr-nav-whistle" onclick="return showCrForm('Whistleblowing', this)">Whistleblowing</a>
-    <div id="compliance-advice-standards-block">
-      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">ADVICE STANDARDS</span></div>
-      <a href="#" onclick="goToAdviceStandards('sp-overview');return false;">Overview</a>
-      <a href="#" onclick="goToAdviceStandards('mortgage-advice-standards');return false;">Mortgage Advice Standards</a>
-      <a href="#" onclick="goToAdviceStandards('protection-advice-standards');return false;">Protection Advice Standards</a>
-    </div>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
