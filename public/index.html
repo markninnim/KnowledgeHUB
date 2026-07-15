@@ -7879,8 +7879,10 @@ var _currentUser = null;
       var wbsb = document.getElementById('sidebar-home-whereabouts');
       if (wbsb) wbsb.style.display = nav.whereabouts ? '' : 'none';
     }
-    // Leads tab — only users with the per-user LeadGen toggle on (and admins)
-    if (user && (user.isAdmin || user.isLeadGen)) {
+    // Engage™ tab — visible to every adviser (own leads only, unless they're
+    // an admin/supervisor), regardless of the per-user LeadGen "member" toggle
+    // and regardless of whether they currently have any leads assigned.
+    if (user) {
       var lgbtn = document.getElementById('tab-btn-leadgen');
       if (lgbtn) lgbtn.style.display = '';
       if (typeof lgStartNewLeadWatch === 'function') lgStartNewLeadWatch();
@@ -8116,10 +8118,12 @@ function applyFeatureFlags() {
       if (btn) btn.style.display = (enabled && userAllowed && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
       if (!enabled && cfg.pane === activePaneId) activeDisabled = true;
     });
-    // Leads — site-wide flag plus the per-user isLeadGen toggle (or admin)
+    // Engage™ — site-wide flag only; every adviser gets the tab (own leads
+    // only, unless admin/supervisor) regardless of the per-user LeadGen
+    // "member" toggle or whether they have any leads yet.
     var lgbtn = document.getElementById('tab-btn-leadgen');
     if (lgbtn) {
-      var leadsEnabled = f.leadgen !== false && _currentUser && (_currentUser.isAdmin || _currentUser.isLeadGen);
+      var leadsEnabled = f.leadgen !== false && !!_currentUser;
       lgbtn.style.display = leadsEnabled ? '' : 'none';
     }
     // If the currently-visible tab was disabled, jump to the first enabled one

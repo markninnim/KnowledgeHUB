@@ -635,14 +635,14 @@ function requireFitchAndFitch(req, res, next) {
   res.status(403).json({ error: 'Forbidden' });
 }
 
-// LeadGen Leads tab: only users with the isLeadGen toggle on (admins allowed through for support)
+// Engage™ (LeadGen) tab: available to every authenticated adviser now — the
+// per-user isLeadGen "member" toggle used to gate this entirely, but a broker
+// should always be able to see/log their own leads regardless of that toggle
+// or whether they have any leads yet. Kept as a named middleware (rather than
+// just requireAuth) so the gate can be tightened again in one place if needed.
 function requireLeadGen(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
-  const u = req.session.user;
-  const orig = req.session.originalUser;
-  const effective = orig || u;
-  if (effective && (effective.isLeadGen || effective.isAdmin)) return next();
-  res.status(403).json({ error: 'Forbidden' });
+  return next();
 }
 
 function muttuoRecordToLead(record) {
@@ -1331,7 +1331,13 @@ app.get('/api/leadgen-advisers', requireAuth, requireLeadGen, async (req, res) =
   }
 });
 
-// GET /api/leadgen-leads — list all leads
+// GET /api/leadgen-leads — list leads
+// SECURITY: now that every authenticated adviser can reach this route (not
+// just isLeadGen "members"), an ordinary broker must only ever receive their
+// own leads from the server — the UI's client-side filtering used to be the
+// only thing hiding other advisers' names/phones/emails/deposit amounts,
+// which is not safe once the route itself is open company-wide. Admins and
+// supervisors still get the full company list, same as before.
 app.get('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
   try {
     let records = [];
@@ -1346,7 +1352,13 @@ app.get('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
       records = records.concat(d.records || []);
       offset = d.offset;
     } while (offset);
-    res.json({ leads: records.map(leadGenRecordToLead) });
+    let leads = records.map(leadGenRecordToLead);
+    const user = req.session.user;
+    if (!user.isAdmin && !user.isSupervisor) {
+      const ownName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim().toLowerCase();
+      leads = leads.filter(l => (l.adviser || '').trim().toLowerCase() === ownName);
+    }
+    res.json({ leads });
   } catch (err) {
     console.error('LeadGen leads load error:', err);
     res.status(500).json({ error: 'Failed to load leads.' });
@@ -1354,8 +1366,13 @@ app.get('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
 });
 
 // POST /api/leadgen-leads — create a new lead
+// SECURITY: a non-manager can only ever create a lead assigned to themselves
+// — any adviser value they send is ignored and replaced with their own name,
+// since the Adviser dropdown is hidden from them client-side for this reason.
 app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => {
   try {
+    const user = req.session.user;
+    const isManager = !!(user.isAdmin || user.isSupervisor);
     const b = req.body || {};
     const fields = {};
     if (b.name)          fields[LG_NAME]    = String(b.name);
@@ -1366,7 +1383,11 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
     if (b.propertyValue) fields[LG_PROPVAL] = String(b.propertyValue);
     if (b.deposit)       fields[LG_DEPOSIT] = String(b.deposit);
     if (b.salary !== undefined && b.salary !== '') fields[LG_SALARY] = Number(b.salary);
-    if (b.adviser)       fields[LG_ADVISER] = String(b.adviser);
+    if (isManager) {
+      if (b.adviser) fields[LG_ADVISER] = String(b.adviser);
+    } else {
+      fields[LG_ADVISER] = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    }
     if (b.followUp)      fields[LG_FOLLOWUP] = String(b.followUp);
     if (b.mortgageSaleValue !== undefined && b.mortgageSaleValue !== '')   fields[LG_MORTVAL] = Number(b.mortgageSaleValue);
     if (b.insuranceSaleValue !== undefined && b.insuranceSaleValue !== '') fields[LG_INSVAL]  = Number(b.insuranceSaleValue);
@@ -1396,8 +1417,22 @@ app.post('/api/leadgen-leads', requireAuth, requireLeadGen, async (req, res) => 
 });
 
 // PATCH /api/leadgen-leads/:id — update an existing lead
+// SECURITY: this route is now reachable by every authenticated adviser (not
+// just isLeadGen "members" or admins), so a non-manager must be blocked from
+// editing another adviser's lead by guessing/enumerating IDs, and must never
+// be able to reassign a lead away from themselves.
 app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res) => {
   try {
+    const user = req.session.user;
+    const isManager = !!(user.isAdmin || user.isSupervisor);
+    if (!isManager) {
+      const ownName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim().toLowerCase();
+      const check = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      }).then(r2 => r2.json());
+      const currentAdviser = ((check && check.fields) || {})[LG_ADVISER] || '';
+      if (currentAdviser.trim().toLowerCase() !== ownName) return res.status(403).json({ error: 'Forbidden' });
+    }
     const b = req.body || {};
     const fields = {};
     if (b.name !== undefined)          fields[LG_NAME]    = String(b.name);
@@ -1408,7 +1443,7 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
     if (b.propertyValue !== undefined) fields[LG_PROPVAL] = String(b.propertyValue);
     if (b.deposit !== undefined)       fields[LG_DEPOSIT] = String(b.deposit);
     if (b.salary !== undefined)        fields[LG_SALARY]  = b.salary === '' ? null : Number(b.salary);
-    if (b.adviser !== undefined)       fields[LG_ADVISER] = String(b.adviser);
+    if (b.adviser !== undefined && isManager) fields[LG_ADVISER] = String(b.adviser);
     if (b.followUp !== undefined)      fields[LG_FOLLOWUP] = b.followUp === '' ? null : String(b.followUp);
     if (b.mortgageSaleValue !== undefined)  fields[LG_MORTVAL] = b.mortgageSaleValue === '' ? null : Number(b.mortgageSaleValue);
     if (b.insuranceSaleValue !== undefined) fields[LG_INSVAL]  = b.insuranceSaleValue === '' ? null : Number(b.insuranceSaleValue);
