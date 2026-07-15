@@ -4429,6 +4429,8 @@ select:focus { outline:none; }
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;opacity:.5;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
         <span id="lv-cpd-status-strip" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5);">CPD logging…</span>
       </div>
+      <!-- Presentation downloads -->
+      <div id="lv-presentations" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;"></div>
     </div>
 
     <!-- 50/50 split layout (hidden by default) -->
@@ -4448,6 +4450,8 @@ select:focus { outline:none; }
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;opacity:.5;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
             <span id="lv-cpd-status-strip-s" style="font-size:12px;font-weight:600;color:rgba(255,255,255,.5);">CPD logging…</span>
           </div>
+          <!-- Presentation downloads -->
+          <div id="lv-presentations-s" style="display:none;gap:8px;flex-wrap:wrap;"></div>
         </div>
       </div>
     </div>
@@ -4945,6 +4949,18 @@ select:focus { outline:none; }
               <option value="Protection">Protection</option>
               <option value="50/50">50/50 (Mortgage &amp; Protection)</option>
             </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Presentation 1 <span style="font-weight:400;">(optional)</span></label>
+              <input id="lvf-pres1" type="file" accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="width:100%;font-size:12.5px;font-family:inherit;">
+              <div id="lvf-pres1-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Presentation 2 <span style="font-weight:400;">(optional)</span></label>
+              <input id="lvf-pres2" type="file" accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="width:100%;font-size:12.5px;font-family:inherit;">
+              <div id="lvf-pres2-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
+            </div>
           </div>
         </div>
         <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
@@ -6281,7 +6297,7 @@ function buildModuleCards(videos, gridId, label) {
     var thumb = makeLvThumb(v.title);
     var vmMatch = v.url.match(/vimeo\.com\/(\d+)/);
     var embedUrl = vmMatch ? 'https://player.vimeo.com/video/' + vmMatch[1] + '?autoplay=1' : v.url;
-    return '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(embedUrl) + '\',\'' + escAttr(v.title) + '\',\'\',\'\')" ' +
+    return '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(embedUrl) + '\',\'' + escAttr(v.title) + '\',\'\',\'\',null,null)" ' +
       'style="box-shadow:0 2px 12px rgba(0,0,0,.1);">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
@@ -7085,8 +7101,10 @@ function renderLvGrid(containerId, videos, isFeatured) {
   // Real video cards
   items.forEach(function(v) {
     var thumb = makeLvThumb(v.title);
+    var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
+    var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
     cards.push(
-      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
         '</div>' +
@@ -7197,7 +7215,16 @@ var _lvCurrentTitle  = '';
 var _lvCurrentCpdType = 'Mortgage';
 var _lvSplit = false;
 
-function openLvPlayer(url, title, desc, cpdType) {
+function lvPresentationBtn(pres, label) {
+  if (!pres || !pres.url) return '';
+  return '<a href="' + escAttr(pres.url) + '" target="_blank" rel="noopener" download="' + escAttr(pres.filename || label) + '" ' +
+    'style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;">' +
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>' +
+    escHtml(label) +
+    '</a>';
+}
+
+function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
   _lvCurrentTitle   = title   || 'Learning video';
   _lvCurrentCpdType = cpdType || 'Mortgage';
   var embedUrl = getEmbedUrl(url);
@@ -7206,6 +7233,14 @@ function openLvPlayer(url, title, desc, cpdType) {
   document.getElementById('lv-player-title').textContent = title || '';
   document.getElementById('lv-split-title').textContent  = title || '';
   document.getElementById('lv-split-desc').textContent   = desc  || '';
+  // Presentation downloads
+  var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2');
+  ['lv-presentations', 'lv-presentations-s'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = presHtml;
+    el.style.display = presHtml ? 'flex' : 'none';
+  });
   // Show CPD type badge and reset status
   var typeLabel = cpdType === '50/50' ? 'Mortgage + Protection' : (cpdType || 'Mortgage');
   ['lv-cpd-status-strip', 'lv-cpd-status-strip-s'].forEach(function(id) {
@@ -7509,7 +7544,9 @@ function loadHomeData() {
               var title = escAttr(v.title || '');
               var desc  = escAttr(v.description || '');
               var type  = escAttr(res.type.key);
-              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\')" '
+              var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
+              var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
+              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ')" '
                 + 'style="display:flex;align-items:center;gap:10px;width:100%;background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s;" '
                 + 'onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
                 + '<div style="width:28px;height:28px;background:var(--brand-navy);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
@@ -11930,6 +11967,8 @@ function openLvForm(id) {
   _lvEditingId = id || null;
   var errEl = document.getElementById('lv-form-error');
   errEl.style.display = 'none';
+  document.getElementById('lvf-pres1').value = '';
+  document.getElementById('lvf-pres2').value = '';
   if (id) {
     var v = _lvAdminVideos.find(function(x){ return x.id === id; });
     document.getElementById('lv-form-title').textContent = 'Edit Video';
@@ -11937,15 +11976,37 @@ function openLvForm(id) {
     document.getElementById('lvf-desc').value    = v.description || '';
     document.getElementById('lvf-url').value     = v.url || '';
     document.getElementById('lvf-cpdtype').value = v.cpdType || 'Mortgage';
+    document.getElementById('lvf-pres1-current').textContent = v.presentation1 ? ('Current: ' + v.presentation1.filename + ' (uploading a new file replaces it)') : '';
+    document.getElementById('lvf-pres2-current').textContent = v.presentation2 ? ('Current: ' + v.presentation2.filename + ' (uploading a new file replaces it)') : '';
   } else {
     document.getElementById('lv-form-title').textContent = 'Add Video';
     document.getElementById('lvf-title').value   = '';
     document.getElementById('lvf-desc').value    = '';
     document.getElementById('lvf-url').value     = '';
     document.getElementById('lvf-cpdtype').value = 'Mortgage';
+    document.getElementById('lvf-pres1-current').textContent = '';
+    document.getElementById('lvf-pres2-current').textContent = '';
   }
   document.getElementById('admin-lv-form').style.display = 'block';
   document.getElementById('lvf-title').focus();
+}
+
+// Reads a <input type="file"> into { filename, contentType, base64 } (base64
+// only, no "data:...;base64," prefix — the server passes it straight to
+// Airtable's uploadAttachment API, which wants the raw base64 payload).
+function lvReadFileAsUpload(input) {
+  var file = input.files && input.files[0];
+  if (!file) return Promise.resolve(null);
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() {
+      var result = reader.result || '';
+      var base64 = result.substring(result.indexOf(',') + 1);
+      resolve({ filename: file.name, contentType: file.type || 'application/octet-stream', base64: base64 });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function cancelLvForm() {
@@ -11964,7 +12025,16 @@ function saveLvVideo() {
   if (!url)   { errEl.textContent = 'URL is required.';   errEl.style.display = 'block'; return; }
   var endpoint = _lvEditingId ? '/api/admin/learning/' + _lvEditingId : '/api/admin/learning';
   var method   = _lvEditingId ? 'PUT' : 'POST';
-  fetch(endpoint, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, description: desc, url, cpdType }) })
+  Promise.all([
+    lvReadFileAsUpload(document.getElementById('lvf-pres1')),
+    lvReadFileAsUpload(document.getElementById('lvf-pres2'))
+  ]).then(function(files) {
+    return fetch(endpoint, {
+      method: method,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ title, description: desc, url, cpdType, presentation1: files[0], presentation2: files[1] })
+    });
+  })
     .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
