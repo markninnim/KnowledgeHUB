@@ -5124,7 +5124,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     const safeName   = fullName.toLowerCase().trim().replace(/"/g, '\\"');
 
     // 2. Parallel data fetches
-    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs] = await Promise.all([
+    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs, mcRecs] = await Promise.all([
 
       // CPD Log — all entries for this email
       (async () => {
@@ -5182,6 +5182,21 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
         do {
           const qs = `?filterByFormula=${formula}&fields[]=Lead Quality&pageSize=100${offset ? '&offset=' + offset : ''}`;
           const r  = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+          const b  = await r.json();
+          if (!r.ok) break;
+          records = records.concat(b.records || []);
+          offset  = b.offset || '';
+        } while (offset);
+        return records;
+      })(),
+
+      // Mortgage Completions — for ReEngage™ past-completion buckets, by broker email
+      (async () => {
+        const formula = encodeURIComponent(`LOWER({${MC_CUST_REF_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        let records = [], offset = '';
+        do {
+          const qs = `?filterByFormula=${formula}&fields[]=${MC_BENEFIT_END}&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
           const b  = await r.json();
           if (!r.ok) break;
           records = records.concat(b.records || []);
@@ -5260,13 +5275,37 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     const warmCount = leadRecs.filter(r => selectNameLead(r.fields['Lead Quality']) === 'Warm').length;
     const coldCount = leadRecs.filter(r => selectNameLead(r.fields['Lead Quality']) === 'Cold').length;
 
+    // Process Mortgage Completions — ReEngage™ exact elapsed-time buckets
+    // (same years/months-since-benefit-end calendar math as the ReEngage™ page).
+    function elapsedParts(dateStr) {
+      const dt = new Date(dateStr);
+      if (isNaN(dt.getTime())) return null;
+      const now = new Date();
+      let months = (now.getFullYear() - dt.getFullYear()) * 12 + (now.getMonth() - dt.getMonth());
+      if (now.getDate() < dt.getDate()) months--;
+      if (months < 0) months = 0;
+      return { years: Math.floor(months / 12), months: months % 12 };
+    }
+    function countBucket(years, months) {
+      return mcRecs.filter(r => {
+        const p = elapsedParts(r.fields[MC_BENEFIT_END]);
+        return p && p.years === years && p.months === months;
+      }).length;
+    }
+    const reEngageBuckets = {
+      '4y6m': countBucket(4, 6),
+      '4y3m': countBucket(4, 3),
+      '5y':   countBucket(5, 0)
+    };
+
     res.json({
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
       consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults,
-      salesFunnel:  { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount }
+      engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
+      reEngage:      reEngageBuckets
     });
   } catch (err) {
     console.error('broker-profile error:', err);
