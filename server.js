@@ -1487,6 +1487,34 @@ app.patch('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res
   }
 });
 
+// DELETE /api/leadgen-leads/:id — delete a lead
+// SECURITY: same ownership check as PATCH — a non-manager can only delete
+// their own leads, never another adviser's, even by guessing an ID.
+app.delete('/api/leadgen-leads/:id', requireAuth, requireLeadGen, async (req, res) => {
+  try {
+    const user = req.session.user;
+    const isManager = !!(user.isAdmin || user.isSupervisor);
+    if (!isManager) {
+      const ownName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim().toLowerCase();
+      const check = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}/${req.params.id}?returnFieldsByFieldId=true`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      }).then(r2 => r2.json());
+      const currentAdviser = ((check && check.fields) || {})[LG_ADVISER] || '';
+      if (currentAdviser.trim().toLowerCase() !== ownName) return res.status(403).json({ error: 'Forbidden' });
+    }
+    const r = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}?records[]=${encodeURIComponent(req.params.id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${AT_KEY}` }
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error && d.error.message || 'Airtable error');
+    res.json({ success: true });
+  } catch (err) {
+    console.error('LeadGen lead delete error:', err);
+    res.status(500).json({ error: 'Failed to delete lead.' });
+  }
+});
+
 // ── LeadGen users management (admin only) — reads/writes Airtable directly ──
 app.get('/api/leadgen-users', requireAdmin, async (req, res) => {
   try {

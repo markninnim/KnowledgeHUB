@@ -4172,6 +4172,7 @@ select:focus { outline:none; }
             <button id="lg-view-table" onclick="lgSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
             <button id="lg-view-card" onclick="lgSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
           </div>
+          <button id="lg-delete-btn" onclick="lgDeleteSelected()" style="display:none;height:100%;box-sizing:border-box;background:#fff;border:1px solid #d1443f;outline:none;color:#d1443f;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Delete<span id="lg-delete-count"></span></button>
           <button onclick="lgOpenModal()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
         </div>
       </div>
@@ -15660,6 +15661,49 @@ var _lgLoaded = false;
 var _lgLeads  = [];
 var _lgAdvisers = []; // LeadGen-enabled users, for the Adviser dropdown
 var _lgFilter = 'mine'; // 'mine' | 'golden' | 'today' | 'followup' | 'hot' | 'warm' | 'cold'
+var _lgSelectedIds = {}; // id -> true, for the bulk-delete checkbox selection
+
+function lgToggleSelected(id, checked) {
+  if (checked) _lgSelectedIds[id] = true;
+  else delete _lgSelectedIds[id];
+  lgUpdateDeleteButton();
+}
+
+function lgUpdateDeleteButton() {
+  var count = Object.keys(_lgSelectedIds).length;
+  var btn = document.getElementById('lg-delete-btn');
+  var countEl = document.getElementById('lg-delete-count');
+  if (!btn) return;
+  btn.style.display = count ? 'inline-flex' : 'none';
+  if (countEl) countEl.textContent = count ? ' (' + count + ')' : '';
+}
+
+function lgDeleteSelected() {
+  var ids = Object.keys(_lgSelectedIds);
+  if (!ids.length) return;
+  if (!confirm('Delete ' + ids.length + ' lead' + (ids.length === 1 ? '' : 's') + '? This cannot be undone.')) return;
+  var btn = document.getElementById('lg-delete-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/leadgen-leads/' + id, { method: 'DELETE' }).then(function(r) { return r.json().then(function(d){ return {ok:r.ok,id:id,data:d}; }); });
+  })).then(function(results) {
+    var failed = results.filter(function(r) { return !r.ok; });
+    results.forEach(function(r) {
+      if (r.ok) {
+        delete _lgSelectedIds[r.id];
+        var idx = _lgLeads.findIndex(function(l) { return l.id === r.id; });
+        if (idx > -1) _lgLeads.splice(idx, 1);
+      }
+    });
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    lgUpdateDeleteButton();
+    lgRenderLeads();
+    if (failed.length) alert('Could not delete ' + failed.length + ' lead(s): ' + (failed[0].data && failed[0].data.error || 'unknown error'));
+  }).catch(function() {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    alert('Network error while deleting leads.');
+  });
+}
 function lgFmtDateTime(iso) {
   if (!iso) return '';
   var d = new Date(iso);
@@ -15982,7 +16026,10 @@ function lgRenderLeads() {
     var cards = leads.map(function(lead) {
       return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;">'
         + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">'
-          + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</span>'
+          + '<div style="display:flex;align-items:center;gap:8px;min-width:0;">'
+            + '<input type="checkbox" ' + (_lgSelectedIds[lead.id] ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="lgToggleSelected(\'' + lead.id + '\', this.checked)" style="flex-shrink:0;cursor:pointer;">'
+            + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</span>'
+          + '</div>'
           + '<div style="display:flex;gap:6px;flex-shrink:0;">' + lgQualitySelectHtml(lead) + lgStatusSelectHtml(lead) + '</div>'
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
@@ -16011,6 +16058,7 @@ function lgRenderLeads() {
   var rows = leads.map(function(lead) {
     var td = 'padding:10px 12px;font-size:12.5px;color:#6b7c8f;cursor:pointer;white-space:nowrap;';
     return '<tr style="border-bottom:1px solid #d1d5db;">'
+      + '<td style="padding:10px 0 10px 12px;"><input type="checkbox" ' + (_lgSelectedIds[lead.id] ? 'checked' : '') + ' onchange="lgToggleSelected(\'' + lead.id + '\', this.checked)" style="cursor:pointer;"></td>'
       + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? lgFmtDateTime(lead.createdTime) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
@@ -16024,7 +16072,7 @@ function lgRenderLeads() {
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
-  var headers = ['Name','Created','Phone','Email','Property Value','Deposit','Salary','Source'].concat(showAdviserFilter ? ['Adviser'] : []).concat(['Quality','Status']);
+  var headers = ['','Name','Created','Phone','Email','Property Value','Deposit','Salary','Source'].concat(showAdviserFilter ? ['Adviser'] : []).concat(['Quality','Status']);
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
       + headers.map(function(h) {
