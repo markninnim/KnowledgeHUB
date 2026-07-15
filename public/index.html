@@ -10997,6 +10997,33 @@ function loadSupervisorZone() {
   });
 }
 
+// Small licence badge icons for the Supervise broker cards — one per
+// specialist licence, all dark navy, shown only for licences a broker holds.
+var LICENCE_ICONS = {
+  lifetime:  { label: 'Lifetime Mortgages',   svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+  commercial:{ label: 'Commercial Mortgages', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="9" y1="7" x2="9" y2="7.01"/><line x1="15" y1="7" x2="15" y2="7.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="15" y1="12" x2="15" y2="12.01"/><line x1="9" y1="17" x2="15" y2="17"/></svg>' },
+  bridging:  { label: 'Bridging Finance',     svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20v-6a8 8 0 0 1 16 0v6"/><line x1="8" y1="20" x2="8" y2="14"/><line x1="16" y1="20" x2="16" y2="14"/></svg>' },
+  pmi:       { label: 'PMI',                  svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' },
+  businessProtection: { label: 'Business Protection', svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>' },
+  wealth:    { label: 'Wealth',                svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' }
+};
+function svLicenceIconsHtml(m) {
+  var items = [
+    { flag: m.equityRelease,       icon: LICENCE_ICONS.lifetime },
+    { flag: m.commercialMortgages, icon: LICENCE_ICONS.commercial },
+    { flag: m.bridging,            icon: LICENCE_ICONS.bridging },
+    { flag: m.pmi,                 icon: LICENCE_ICONS.pmi },
+    { flag: m.businessProtection,  icon: LICENCE_ICONS.businessProtection },
+    { flag: m.sellsInvestments,    icon: LICENCE_ICONS.wealth }
+  ].filter(function(x) { return x.flag; });
+  if (!items.length) return '';
+  return '<div style="display:flex;justify-content:flex-start;gap:8px;padding:10px 20px;border-top:1px solid #f0f2f5;">' +
+    items.map(function(x) {
+      return '<span title="' + escAttr(x.icon.label) + '" style="display:inline-flex;">' + x.icon.svg + '</span>';
+    }).join('') +
+  '</div>';
+}
+
 function renderSvDashboard(data) {
   var members     = data.members     || [];
   var cpdByMember = data.cpdByMember || {};
@@ -11167,6 +11194,7 @@ function renderSvDashboard(data) {
         '</div>' +
         barsHtml +
       '</div>' +
+      svLicenceIconsHtml(m) +
       '<div id="' + drillId + '" style="display:none;border-top:1px solid #f0f2f5;background:#f9fafb;padding:0;"></div>' +
     '</div>';
   }
