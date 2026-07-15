@@ -2597,7 +2597,7 @@ app.get('/api/users/names', requireAuth, async (req, res) => {
   try {
     let records = [], offset = '';
     do {
-      const qs = `?fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const qs = `?fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
       const data = await atFetch(qs);
       records = records.concat(data.records || []);
       offset = data.offset || '';
