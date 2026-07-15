@@ -231,7 +231,7 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
     <button class="tab-btn"        id="tab-btn-reengage"      onclick="switchTab('reengage')" style="display:none;">ReEngage&#8482;</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
-    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Leads<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
+    <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Engage&#8482;<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -435,9 +435,9 @@ select:focus { outline:none; }
     <h2>MI Area</h2>
     <a href="#" id="mz-nav-data"       onclick="mzShowPage('data',this);return false;">Data</a>
   </div>
-  <!-- Leads sidebar -->
+  <!-- Engage™ sidebar -->
   <div id="sidebar-leadgen" style="display:none">
-    <h2 style="margin-top: 8px;">Lead Manager</h2>
+    <h2 style="margin-top: 8px;">Engage&#8482;</h2>
     <a href="#" id="lg-nav-mine"       class="active" onclick="lgFilterBy('mine',this);return false;">All Leads</a>
     <a href="#" id="lg-nav-hot"        style="padding-left:34px;font-size:12.5px;" onclick="lgFilterBy('hot',this);return false;">Hot</a>
     <a href="#" id="lg-nav-warm"       style="padding-left:34px;font-size:12.5px;" onclick="lgFilterBy('warm',this);return false;">Warm</a>
@@ -3799,7 +3799,7 @@ select:focus { outline:none; }
             <div id="bp-tenure" style="font-size:12px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px;"></div>
           </div>
         </div>
-        <button id="bp-view-leads" onclick="bpViewLeads()" style="display:none;align-items:center;gap:6px;background:var(--brand-navy);border:1px solid var(--brand-navy);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">Leads</button>
+        <button id="bp-view-leads" onclick="bpViewLeads()" style="display:none;align-items:center;gap:6px;background:var(--brand-navy);border:1px solid var(--brand-navy);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">Engage&#8482;</button>
       </div>
 
       <!-- Loading / error state -->
@@ -4139,8 +4139,8 @@ select:focus { outline:none; }
     <div id="lg-leads-page" style="padding:32px 32px 0;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
         <div>
-          <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Leads</h2>
-          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Leads — add, track, and update leads through the pipeline.</p>
+          <h2 id="lg-leads-title" style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Engage&#8482;</h2>
+          <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Engage&#8482; — add, track, and update leads through the pipeline.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
           <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
@@ -4174,7 +4174,7 @@ select:focus { outline:none; }
         </div>
       </div>
       <div id="lg-data-print-header" style="display:none;margin-bottom:20px;">
-        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Leads — Data Report</h2>
+        <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Engage&#8482; — Data Report</h2>
         <p id="lg-data-print-meta" style="color:#6b7c8f;font-size:12.5px;margin:0;"></p>
       </div>
       <div id="lg-data-content" style="padding-bottom:32px;"></div>
@@ -8107,8 +8107,8 @@ function applyFeatureFlags() {
 }
 
 // Rollout-panel-only entries that aren't nav-tab toggles managed by
-// applyFeatureFlags() directly (Leads has its own combined gating logic).
-var FEATURE_TOGGLE_EXTRA_LABELS = { leadgen: 'Leads' };
+// applyFeatureFlags() directly (Engage™ has its own combined gating logic).
+var FEATURE_TOGGLE_EXTRA_LABELS = { leadgen: 'Engage™' };
 function renderFeatureToggles() {
   var container = document.getElementById('admin-feature-toggles');
   if (!container) return;
@@ -12706,8 +12706,9 @@ var KH_KB = [
     action: { label: 'Go to Compliance', tab: 'compliance' } },
   { keywords: ['lead', 'leads', 'leadgen', 'new enquiry', 'hot lead'],
     question: 'Where do I manage my leads?',
-    answer: 'Leads allocated to you (and Hot/Warm/Cold filtering) are in the Leads tab.',
-    action: { label: 'Go to Leads', tab: 'leadgen' } },
+    answer: 'Leads allocated to you (and Hot/Warm/Cold filtering) are in the Engage™ tab.',
+    action: { label: 'Go to Engage™', tab: 'leadgen' } },
+
   { keywords: ['my team', 'supervisor', 'broker profile', 'team cpd'],
     question: 'Where can I see my team\'s CPD and activity?',
     answer: 'Supervisors and admins can view adviser profiles, CPD progress and Sales Funnel stats under My Team.',
@@ -13228,7 +13229,7 @@ function khMyLeadsLookup(query) {
         khAddBotMessage(count === 0
           ? 'You don\'t have any leads assigned yet.'
           : ('You have ' + count + ' lead' + (count === 1 ? '' : 's') + ' assigned to you.'));
-        khAddActionButton('View in Leads', 'leadgen');
+        khAddActionButton('View in Engage™', 'leadgen');
       })
       .catch(function(e) {
         if (e === 'handled') return;
@@ -13246,11 +13247,11 @@ function khMyLeadsLookup(query) {
       var rows = (d && d.rows) || [];
       if (!rows.length) {
         if (name) {
-          khAddBotMessage('I couldn\'t find a lead matching "' + name + '" assigned to you. Check the spelling, or take a look at your full list under Leads.');
+          khAddBotMessage('I couldn\'t find a lead matching "' + name + '" assigned to you. Check the spelling, or take a look at your full list under Engage™.');
         } else {
-          khAddBotMessage('You don\'t have any leads assigned right now. Your full list is under Leads.');
+          khAddBotMessage('You don\'t have any leads assigned right now. Your full list is under Engage™.');
         }
-        khAddActionButton('Go to Leads', 'leadgen');
+        khAddActionButton('Go to Engage™', 'leadgen');
         return;
       }
       if (!d.filteredByName) {
@@ -13267,7 +13268,7 @@ function khMyLeadsLookup(query) {
         }
         khAddBotMessage(lines.join('\n'));
       });
-      khAddActionButton('View in Leads', 'leadgen');
+      khAddActionButton('View in Engage™', 'leadgen');
     })
     .catch(function(e) {
       if (e === 'handled') return;
@@ -13721,7 +13722,7 @@ var QL_DESTINATIONS = {
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' },
   muttuo:        { label: 'Muttuo',           tab: 'muttuo', fitchOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  leads:         { label: 'Leads',            tab: 'leadgen', leadGenOnly: true,
+  leads:         { label: 'Engage™',          tab: 'leadgen', leadGenOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
 };
 // Same destination list offered in the "Main Menu" popover — what a tile can be reassigned to
@@ -15664,8 +15665,8 @@ function lgPossessive(name) {
 }
 function lgUpdateLeadsTitle() {
   var MY_LEADS_FILTERS = ['all', 'mine', 'golden', 'today', 'followup', 'hot', 'warm', 'cold'];
-  var titles = { all: ['Leads', 'Leads — add, track, and update leads through the pipeline.'],
-    mine:     ['Leads', 'Leads assigned to you.'],
+  var titles = { all: ['Engage™', 'Engage™ — add, track, and update leads through the pipeline.'],
+    mine:     ['Engage™', 'Leads assigned to you.'],
     golden:   ['Golden Hour Leads', 'You only get one opportunity to make a killer first impression. If you get a lead, calling it within the first hour is a proven recipe for creating that wow factor.'],
     today:    ["Today's Leads", 'Leads created today.'],
     followup: ['Follow Up Leads', 'Leads with a follow-up date of today.'],
