@@ -420,6 +420,7 @@ select:focus { outline:none; }
     <a href="#" id="re-nav-y3" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(3,this);return false;">3 Years</a>
     <a href="#" id="re-nav-y4" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(4,this);return false;">4 Years</a>
     <a href="#" id="re-nav-y5" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(5,this);return false;">5 Years</a>
+    <a href="#" id="re-nav-y4-6m" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByExact(4,6,this);return false;">4 Years 6 Months</a>
   </div>
   <!-- Muttuo sidebar -->
   <div id="sidebar-muttuo" style="display:none">
@@ -4081,6 +4082,7 @@ select:focus { outline:none; }
 
   <div id="tab-reengage" class="tab-pane">
     <div style="padding:32px 32px 0;">
+      <h1 style="color:var(--brand-orange);font-size:22px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin:0 0 10px;">REENGAGE PROSPECTS</h1>
       <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">ReEngage&#8482;</h2>
       <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases whose benefit end date has already passed &#8212; your own past clients, grouped by how many years ago the case completed, so you can proactively reach out about a new deal.</p>
       <div id="re-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading&hellip;</div>
@@ -14804,23 +14806,39 @@ function reYearLabel(bucket) {
 // Precise elapsed time since the renewal/benefit-end date, e.g. "2 years, 3
 // months ago" — calendar-based (not a crude /365 divide), so it lines up
 // with how a person would actually describe the gap.
-function reElapsedLabel(s) {
+// Precise {years, months} elapsed since the benefit-end date — the basis
+// for both the on-card label and the exact "4 years 6 months" sidebar filter.
+function reElapsedParts(s) {
   var dt = new Date(s);
-  if (isNaN(dt.getTime())) return '';
+  if (isNaN(dt.getTime())) return null;
   var now = new Date();
   var months = (now.getFullYear() - dt.getFullYear()) * 12 + (now.getMonth() - dt.getMonth());
   if (now.getDate() < dt.getDate()) months--;
   if (months < 0) months = 0;
-  var years = Math.floor(months / 12);
-  var remMonths = months % 12;
+  return { years: Math.floor(months / 12), months: months % 12 };
+}
+function reElapsedLabel(s) {
+  var p = reElapsedParts(s);
+  if (!p) return '';
   var parts = [];
-  if (years) parts.push(years + (years === 1 ? ' year' : ' years'));
-  if (remMonths || !years) parts.push(remMonths + (remMonths === 1 ? ' month' : ' months'));
+  if (p.years) parts.push(p.years + (p.years === 1 ? ' year' : ' years'));
+  if (p.months || !p.years) parts.push(p.months + (p.months === 1 ? ' month' : ' months'));
   return parts.join(', ') + ' ago';
 }
 
+var _reExactFilter = null; // { years, months } — exact elapsed-time filter, or null
+
 function reFilterByYear(bucket, el) {
   _reYearFilter = bucket;
+  _reExactFilter = null;
+  document.querySelectorAll('#sidebar-reengage a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  reRenderRows();
+}
+
+function reFilterByExact(years, months, el) {
+  _reYearFilter = null;
+  _reExactFilter = { years: years, months: months };
   document.querySelectorAll('#sidebar-reengage a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
   reRenderRows();
@@ -14829,10 +14847,14 @@ function reFilterByYear(bucket, el) {
 function reRenderRows() {
   var contentEl = document.getElementById('re-content');
   var rows = _reAllRows.filter(function(row) {
+    if (_reExactFilter) {
+      var p = reElapsedParts(row.benefitEnd);
+      return p && p.years === _reExactFilter.years && p.months === _reExactFilter.months;
+    }
     return _reYearFilter == null || reYearsAgo(row.benefitEnd) === _reYearFilter;
   });
   if (!rows.length) {
-    contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No past completions' + (_reYearFilter ? ' in that period.' : ' found yet.') + '</div>';
+    contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No past completions' + (_reYearFilter || _reExactFilter ? ' in that period.' : ' found yet.') + '</div>';
     return;
   }
 
