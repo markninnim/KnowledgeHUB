@@ -229,6 +229,7 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-autocrm"       onclick="switchTab('autocrm')" style="display:none;">AutoCRM&#8482;</button>
+    <button class="tab-btn"        id="tab-btn-reengage"      onclick="switchTab('reengage')" style="display:none;">ReEngage&#8482;</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
     <button class="tab-btn"        id="tab-btn-leadgen"       onclick="switchTab('leadgen')" style="display:none;position:relative;">Leads<span id="lg-nav-dot" style="display:none;position:absolute;top:4px;right:6px;width:8px;height:8px;border-radius:50%;background:#e5484d;"></span></button>
   </div>
@@ -409,6 +410,16 @@ select:focus { outline:none; }
     <a href="#" id="ac-nav-m3" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(3,this);return false;">3 Month</a>
     <a href="#" id="ac-nav-m2" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(2,this);return false;">2 Month</a>
     <a href="#" id="ac-nav-m1" style="padding-left:34px;font-size:12.5px;" onclick="acFilterByMonth(1,this);return false;">1 Month</a>
+  </div>
+  <!-- ReEngage sidebar -->
+  <div id="sidebar-reengage" style="display:none">
+    <h2 style="margin-top: 8px;">ReEngage&#8482;</h2>
+    <a href="#" id="re-nav-all" class="active" onclick="reFilterByYear(null,this);return false;">Past Completions</a>
+    <a href="#" id="re-nav-y1" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(1,this);return false;">1 Year</a>
+    <a href="#" id="re-nav-y2" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(2,this);return false;">2 Years</a>
+    <a href="#" id="re-nav-y3" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(3,this);return false;">3 Years</a>
+    <a href="#" id="re-nav-y4" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(4,this);return false;">4 Years</a>
+    <a href="#" id="re-nav-y5" style="padding-left:34px;font-size:12.5px;" onclick="reFilterByYear(5,this);return false;">5 Years</a>
   </div>
   <!-- Muttuo sidebar -->
   <div id="sidebar-muttuo" style="display:none">
@@ -4068,6 +4079,15 @@ select:focus { outline:none; }
     </div>
   </div>
 
+  <div id="tab-reengage" class="tab-pane">
+    <div style="padding:32px 32px 0;">
+      <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">ReEngage&#8482;</h2>
+      <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases whose benefit end date has already passed &#8212; your own past clients, grouped by how many years ago the case completed, so you can proactively reach out about a new deal.</p>
+      <div id="re-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading&hellip;</div>
+      <div id="re-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+  </div>
+
   <div id="tab-muttuo" class="tab-pane">
     <div id="mz-leads-page" style="padding:32px 32px 0;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;">
@@ -4268,6 +4288,25 @@ select:focus { outline:none; }
       <span id="ac-notes-status" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;margin-right:auto;">Saved</span>
       <button onclick="acCloseNotes()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Close</button>
       <button onclick="acSaveNotes()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
+    </div>
+  </div>
+</div>
+<div id="re-notes-modal" onclick="if(event.target===this)reCloseNotes()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;margin:0 20px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #d1d5db;">
+      <div>
+        <h2 id="re-notes-title" style="color:var(--brand-navy);font-size:16px;margin:0 0 2px;">Notes</h2>
+        <p style="color:#6b7c8f;font-size:12.5px;margin:0;">Private notes for this past client — only visible to you.</p>
+      </div>
+      <button onclick="reCloseNotes()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <textarea id="re-notes-textarea" rows="6" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:#6b7c8f;resize:vertical;" placeholder="Add a note about re-engaging this client…"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
+      <span id="re-notes-status" style="font-size:11px;font-weight:700;color:#22c55e;opacity:0;transition:opacity .2s;margin-right:auto;">Saved</span>
+      <button onclick="reCloseNotes()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Close</button>
+      <button onclick="reSaveNotes()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
     </div>
   </div>
 </div>
@@ -6095,7 +6134,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','muttuo','leadgen'];
+var TAB_IDS = ['home','marketing','compliance','learning','surveying','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','reengage','muttuo','leadgen'];
 function switchTab(tab, skipLeadSeen) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -6126,6 +6165,7 @@ function switchTab(tab, skipLeadSeen) {
   if (tab === 'selling-zone') { if (typeof OPP_TITLES !== 'undefined') oppInitPages(); }
   if (tab === 'whereabouts')  { if (typeof loadWhereabouts === 'function') loadWhereabouts(); if (typeof loadWhereaboutsList === 'function') loadWhereaboutsList(); }
   if (tab === 'autocrm')      { if (typeof loadAutoCrm === 'function') loadAutoCrm(); }
+  if (tab === 'reengage')     { if (typeof loadReEngage === 'function') loadReEngage(); }
   if (tab === 'muttuo') {
     if (typeof loadMuttuo === 'function') loadMuttuo();
     if (typeof mzStartPolling === 'function') mzStartPolling();
@@ -7796,6 +7836,7 @@ var _currentUser = null;
       sellingZone:      'tab-btn-selling-zone',
       pay:              'tab-btn-pay',
       autocrm:          'tab-btn-autocrm',
+      reEngage:         'tab-btn-reengage',
       muttuo:           'tab-btn-muttuo',
       whereabouts:      'tab-btn-whereabouts',
       performanceZone:  'tab-btn-performance-zone',
@@ -8021,6 +8062,7 @@ var FEATURE_LABELS = {
   supervisorZone:  { label: 'My Team',            tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
   pay:             { label: 'Pay',                tab: 'tab-btn-pay',               pane: 'tab-pay' },
   autocrm:         { label: 'AutoCRM™',           tab: 'tab-btn-autocrm',           pane: 'tab-autocrm' },
+  reEngage:        { label: 'ReEngage™',          tab: 'tab-btn-reengage',          pane: 'tab-reengage' },
   muttuo:          { label: 'Muttuo',             tab: 'tab-btn-muttuo',            pane: 'tab-muttuo' },
   whereabouts:     { label: 'Whereabouts',        tab: 'tab-btn-whereabouts',       pane: 'tab-whereabouts' }
 };
@@ -8572,6 +8614,7 @@ var NAV_TOGGLE_LABELS = {
   sellingZone:      'Opportunities',
   pay:              'Pay',
   autocrm:          'AutoCRM™',
+  reEngage:         'ReEngage™',
   muttuo:           'Muttuo',
   whereabouts:      'Whereabouts',
   performanceZone:  'Numbers',
@@ -14733,6 +14776,169 @@ function loadAutoCrm() {
   });
 }
 
+// ── ReEngage™ — past mortgage completions, grouped by years since expiry ──
+var _reLoaded = false;
+var _reAllRows = [];
+var _reYearFilter = null; // null = show all, 1-5 = show only that "years ago" bucket (5 = 5+ years)
+
+function reFmtCurrency(n) { return (typeof n === 'number') ? '£' + n.toLocaleString('en-GB', { maximumFractionDigits: 0 }) : ''; }
+function reFmtDate(s) {
+  if (!s) return '';
+  var dt = new Date(s);
+  return isNaN(dt.getTime()) ? escHtml(s) : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+// "Years ago" bucket: 1 = benefit end passed within the last 12 months, up to
+// 5 = 5 or more years ago (everything older is lumped into the 5 bucket).
+function reYearsAgo(s) {
+  var dt = new Date(s);
+  if (isNaN(dt.getTime())) return null;
+  var now = new Date();
+  var diffDays = Math.floor((now - dt) / 86400000);
+  if (diffDays < 0) return null; // not actually in the past — shouldn't happen given the server-side filter
+  return Math.max(1, Math.min(5, Math.floor(diffDays / 365) + 1));
+}
+function reYearLabel(bucket) {
+  if (bucket >= 5) return '5+ years ago';
+  return bucket + (bucket === 1 ? ' year ago' : ' years ago');
+}
+
+function reFilterByYear(bucket, el) {
+  _reYearFilter = bucket;
+  document.querySelectorAll('#sidebar-reengage a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  reRenderRows();
+}
+
+function reRenderRows() {
+  var contentEl = document.getElementById('re-content');
+  var rows = _reAllRows.filter(function(row) {
+    return _reYearFilter == null || reYearsAgo(row.benefitEnd) === _reYearFilter;
+  });
+  if (!rows.length) {
+    contentEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#6b7c8f;font-size:13px;">No past completions' + (_reYearFilter ? ' in that period.' : ' found yet.') + '</div>';
+    return;
+  }
+
+  // Group by "years ago" bucket, in the same chronological order the server
+  // already sorted the rows (most recently expired first).
+  var groups = [];
+  var groupByKey = {};
+  rows.forEach(function(row) {
+    var bucket = reYearsAgo(row.benefitEnd);
+    var key = reYearLabel(bucket || 1);
+    if (!groupByKey[key]) {
+      groupByKey[key] = { label: key, rows: [] };
+      groups.push(groupByKey[key]);
+    }
+    groupByKey[key].rows.push(row);
+  });
+
+  contentEl.innerHTML = groups.map(function(group) {
+    var cards = group.rows.map(function(row) {
+      var wonAttr = row.won ? ' data-re-won="1"' : '';
+      var cardStyle = 'background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;cursor:pointer;transition:opacity .15s;' + (row.won ? 'opacity:.45;' : '');
+      return '<div class="re-card"' + wonAttr + ' data-re-key="' + escHtml(row.key) + '" style="' + cardStyle + '" onclick="reOpenNotes(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\')">' +
+          '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">' +
+            '<span style="color:var(--brand-navy);font-size:14px;font-weight:700;">' + escHtml(row.name || 'Unnamed') + '</span>' +
+            '<span style="color:#6b7c8f;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Completed: ' + reFmtDate(row.benefitEnd) + '</span>' +
+          '</div>' +
+          '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.7;">' +
+            (row.email ? '<div>' + escHtml(row.email) + '</div>' : '') +
+            '<div>Loan Amount: <strong style="color:#6b7c8f;">' + reFmtCurrency(row.loanAmount) + '</strong></div>' +
+            '<div>Valuation: <strong style="color:#6b7c8f;">' + reFmtCurrency(row.valuation) + '</strong></div>' +
+            (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
+          '</div>' +
+          '<label style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #d1d5db;font-size:11.5px;font-weight:700;color:#6b7c8f;cursor:pointer;" onclick="event.stopPropagation();">' +
+            '<input type="checkbox" ' + (row.won ? 'checked' : '') + ' onchange="reToggleWon(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\', this.checked)"> Business Won' +
+          '</label>' +
+        '</div>';
+    }).join('');
+    return '<div style="margin-bottom:28px;">' +
+      '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 12px;">' + escHtml(group.label) + ' <span style="color:#6b7c8f;font-weight:600;font-size:12px;">(' + group.rows.length + ')</span></h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">' + cards + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function reToggleWon(key, won) {
+  var row = _reAllRows.find(function(r) { return r.key === key; });
+  if (row) row.won = won;
+  reRenderRows();
+  fetch('/api/mortgage-completions/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: key, won: won })
+  }).catch(function() {});
+}
+
+var _reNotesKey = null;
+function reOpenNotes(key) {
+  var row = _reAllRows.find(function(r) { return r.key === key; });
+  if (!row) return;
+  _reNotesKey = key;
+  document.getElementById('re-notes-title').textContent = row.name || 'Notes';
+  document.getElementById('re-notes-textarea').value = row.notes || '';
+  document.getElementById('re-notes-modal').style.display = 'flex';
+}
+function reCloseNotes() {
+  document.getElementById('re-notes-modal').style.display = 'none';
+  _reNotesKey = null;
+}
+function reSaveNotes() {
+  if (!_reNotesKey) return;
+  var text = document.getElementById('re-notes-textarea').value;
+  var row = _reAllRows.find(function(r) { return r.key === _reNotesKey; });
+  if (row) row.notes = text;
+  var badge = document.getElementById('re-notes-status');
+  if (badge) { badge.textContent = 'Saving…'; badge.style.opacity = '1'; }
+  fetch('/api/mortgage-completions/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: _reNotesKey, notes: text })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (badge) {
+      badge.textContent = d && d.success ? 'Saved' : 'Failed to save';
+      setTimeout(function() { badge.style.opacity = '0'; }, 1500);
+    }
+  }).catch(function() {
+    if (badge) { badge.textContent = 'Failed to save'; setTimeout(function() { badge.style.opacity = '0'; }, 1500); }
+  });
+}
+
+function loadReEngage() {
+  if (_reLoaded) return;
+  var loadingEl = document.getElementById('re-loading');
+  var contentEl = document.getElementById('re-content');
+  loadingEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timedOut = false;
+  var timer = setTimeout(function() { timedOut = true; if (ctrl) ctrl.abort(); }, 15000);
+  fetch('/api/reengage-completions', ctrl ? { signal: ctrl.signal } : {}).then(function(r) {
+    clearTimeout(timer);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(d) {
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    if (d.error) {
+      contentEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:24px 0;text-align:center;">' + escHtml(d.error) + '</div>';
+      return;
+    }
+    _reLoaded = true;
+    _reAllRows = d.rows || [];
+    reRenderRows();
+  }).catch(function() {
+    clearTimeout(timer);
+    _reLoaded = false;
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:24px 0;text-align:center;">' +
+      (timedOut ? 'Taking too long to load — please refresh the page and try again.' : 'Unable to load past completions. Please refresh and try again.') +
+      '</div>';
+  });
+}
+
 // ── Muttuo (Fitch and Fitch leads) ────────────────────────────
 var _mzLoaded = false;
 var _mzLeads  = [];
@@ -17010,6 +17216,11 @@ function fpSubmit() {
 // Same fix-up, for #autocrm — loadAutoCrm also lives in this block.
 (function() {
   if (window.location.hash === '#autocrm' && !_acLoaded) { loadAutoCrm(); }
+})();
+
+// Same fix-up, for #reengage — loadReEngage also lives in this block.
+(function() {
+  if (window.location.hash === '#reengage' && !_reLoaded) { loadReEngage(); }
 })();
 
 // Same fix-up, for #muttuo and #leadgen — loadMuttuo/mzStartPolling and

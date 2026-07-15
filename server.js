@@ -151,7 +151,7 @@ const F_IS_LEADGEN         = 'fldpnrV5krN03XAjN'; // Is LeadGen
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'adviceStandards', 'compliance', 'learning', 'surveying', 'sellingZone',
-  'pay', 'autocrm', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
+  'pay', 'autocrm', 'reEngage', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
 ];
 // Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
 const F_ACCESS = {
@@ -162,6 +162,7 @@ const F_ACCESS = {
   sellingZone:      'fldwb7b8bQyvYBTX0',
   pay:              'fldQfKu8q4d1FwZ1s',
   autocrm:          'fldO1nIvILmgnAbYi',
+  reEngage:         'fldmKXQipCzEuTBVG',
   muttuo:           'fld43JfbHdXVVRICX',
   whereabouts:      'fld55LR2YmiAoar8I',
   performanceZone:  'fldCXyV5roVcw8hQv',
@@ -180,6 +181,7 @@ function computeNavDefaults(f) {
     sellingZone:     true,
     pay:             true,
     autocrm:         true,
+    reEngage:        true,
     muttuo:          isAdmin || business === 'fitch and fitch',
     whereabouts:     supervisorOrAdmin,
     performanceZone: supervisorOrAdmin,
@@ -1859,6 +1861,94 @@ app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
   } catch (err) {
     console.error('AutoCRM note save error:', err);
     res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// ── ReEngage™ — past mortgage completions, grouped by how many years ago
+// the benefit end date passed, so a broker can proactively reach out to old
+// clients whose deal has already ended rather than only ones coming up.
+// SECURITY: scoped to the logged-in broker's own email exactly like
+// /api/mortgage-completions — never another adviser's past clients.
+app.get('/api/reengage-completions', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  try {
+    const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
+    const formula = encodeURIComponent(
+      `AND(IS_BEFORE({Benefit End (Date)}, TODAY()), LOWER({Customer Ref Email})="${brokerEmail}")`
+    );
+    const fieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_VALUATION, MC_DESC, MC_LENDER, MC_BENEFIT_END]
+      .map(f => `fields[]=${f}`).join('&');
+
+    let all = [];
+    let offset = '';
+    do {
+      const qs = `?filterByFormula=${formula}&${fieldQs}` +
+        `&sort[0][field]=${MC_BENEFIT_END}&sort[0][direction]=desc` +
+        `&returnFieldsByFieldId=true&pageSize=100` +
+        (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      all = all.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && all.length < 5000);
+
+    const rawRows = all.map(rec => {
+      const f = rec.fields || {};
+      return {
+        name: f[MC_NAME] || '',
+        email: f[MC_EMAIL] || '',
+        loanAmount: (typeof f[MC_LOAN] === 'number') ? f[MC_LOAN] : null,
+        valuation: (typeof f[MC_VALUATION] === 'number') ? f[MC_VALUATION] : null,
+        description: f[MC_DESC] || '',
+        lender: f[MC_LENDER] || '',
+        benefitEnd: f[MC_BENEFIT_END] || ''
+      };
+    });
+
+    // Joint applicants each get their own row with identical case details —
+    // group them into a single case, same as /api/mortgage-completions.
+    const groups = new Map();
+    rawRows.forEach(row => {
+      const key = [row.benefitEnd, row.loanAmount, row.valuation].join('|');
+      if (!groups.has(key)) {
+        groups.set(key, { ...row, names: [row.name].filter(Boolean), emails: [row.email].filter(Boolean) });
+      } else {
+        const g = groups.get(key);
+        if (row.name && !g.names.includes(row.name)) g.names.push(row.name);
+        if (row.email && !g.emails.includes(row.email)) g.emails.push(row.email);
+        if (!g.description && row.description) g.description = row.description;
+        if (!g.lender && row.lender) g.lender = row.lender;
+      }
+    });
+
+    // Notes/Business-Won state is shared with AutoCRM's store — the row key
+    // (benefitEnd|loanAmount|valuation) can never collide between the two
+    // views, since a single case's benefit end date is either in the future
+    // (AutoCRM) or in the past (ReEngage), never both.
+    const brokerNotes = _autoCrmNotes[brokerEmail] || {};
+    const rows = Array.from(groups.entries()).map(([key, g]) => {
+      const saved = brokerNotes[key] || {};
+      return {
+        key,
+        name: g.names.join(' & '),
+        email: g.emails.join(', '),
+        loanAmount: g.loanAmount,
+        valuation: g.valuation,
+        description: g.description,
+        lender: g.lender,
+        benefitEnd: g.benefitEnd,
+        notes: saved.notes || '',
+        won: !!saved.won
+      };
+    });
+
+    res.json({ rows });
+  } catch (err) {
+    console.error('ReEngage completions error:', err);
+    res.status(500).json({ error: 'Failed to load past completions.' });
   }
 });
 
