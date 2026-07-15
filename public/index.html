@@ -14859,12 +14859,17 @@ function reRenderRows() {
   }
 
   // Group by "years ago" bucket, in the same chronological order the server
-  // already sorted the rows (most recently expired first).
+  // already sorted the rows (most recently expired first). When an exact
+  // elapsed-time filter (e.g. "4 years, 6 months") is active, every row in
+  // the list matches that exact window, so use one group labelled with the
+  // exact window rather than the coarser year bucket (which would otherwise
+  // wrongly show "5+ years ago" for a 4y6m case).
   var groups = [];
   var groupByKey = {};
   rows.forEach(function(row) {
-    var bucket = reYearsAgo(row.benefitEnd);
-    var key = reYearLabel(bucket || 1);
+    var key = _reExactFilter
+      ? (_reExactFilter.years + (_reExactFilter.years === 1 ? ' year' : ' years')) + ', ' + (_reExactFilter.months + (_reExactFilter.months === 1 ? ' month' : ' months')) + ' ago'
+      : reYearLabel(reYearsAgo(row.benefitEnd) || 1);
     if (!groupByKey[key]) {
       groupByKey[key] = { label: key, rows: [] };
       groups.push(groupByKey[key]);
