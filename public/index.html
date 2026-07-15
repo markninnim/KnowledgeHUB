@@ -4172,7 +4172,7 @@ select:focus { outline:none; }
             <button id="lg-view-table" onclick="lgSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
             <button id="lg-view-card" onclick="lgSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
           </div>
-          <button id="lg-swap-buddy-btn" onclick="lgSwapSelectedToBuddy()" style="display:none;align-items:center;justify-content:center;height:100%;box-sizing:border-box;background:#fff;border:1px solid var(--brand-navy);outline:none;color:var(--brand-navy);padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;line-height:1;">Swap to Buddy<span id="lg-swap-count"></span></button>
+          <button id="lg-swap-buddy-btn" onclick="lgSwapSelectedToBuddy()" style="display:none;align-items:center;justify-content:center;height:100%;box-sizing:border-box;background:#fff;border:1px solid var(--brand-navy);outline:none;color:var(--brand-navy);padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;line-height:1;"><span id="lg-swap-label">Swap to Buddy</span><span id="lg-swap-count"></span></button>
           <button id="lg-delete-btn" onclick="lgDeleteSelected()" style="display:none;align-items:center;justify-content:center;height:100%;box-sizing:border-box;background:#fff;border:1px solid #d1443f;outline:none;color:#d1443f;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;line-height:1;">Delete<span id="lg-delete-count"></span></button>
           <button onclick="lgOpenModal()" style="height:100%;box-sizing:border-box;background:var(--brand-navy);border:1px solid var(--brand-navy);outline:none;color:#fff;padding:0 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Lead</button>
         </div>
@@ -15739,10 +15739,15 @@ function lgUpdateDeleteButton() {
   // Swap to Buddy — only ever offered if the adviser has actually set a
   // buddy in My Account; otherwise there's nothing sensible to swap to.
   var swapBtn = document.getElementById('lg-swap-buddy-btn');
+  var swapLabelEl = document.getElementById('lg-swap-label');
   var swapCountEl = document.getElementById('lg-swap-count');
   if (swapBtn) {
     var hasBuddy = !!(_currentUser && _currentUser.buddyEmail);
     swapBtn.style.display = (count && hasBuddy) ? 'inline-flex' : 'none';
+    if (count && hasBuddy) {
+      if (!_accAllUsers) accLoadAllUsers().then(lgUpdateDeleteButton); // resolve name, then re-run to fill it in
+      if (swapLabelEl) swapLabelEl.textContent = 'Swap to ' + lgBuddyLabel();
+    }
     if (swapCountEl) swapCountEl.textContent = count ? ' (' + count + ')' : '';
   }
 }

@@ -120,6 +120,7 @@ const F_TRUSTS               = 'flda7udm9DghkQfuj'; // Trusts Licence
 const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown in My Account
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 const F_BUDDY_EMAIL          = 'fldhw8BOP43FdBePg'; // Buddy Email — colleague chosen for lead-sharing in Engage™
+const F_BUDDY_LINK           = 'fldSWadRr1KAZTrzE'; // Buddy — linked record mirror of Buddy Email, readable in Airtable
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -2556,6 +2557,18 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   }
   const id = req.session.user.id;
   try {
+    // Buddy is stored two ways: F_BUDDY_EMAIL (plain text, used by the app's
+    // own lookups) and F_BUDDY_LINK (a proper linked record, so the buddy's
+    // name/profile is readable directly in Airtable rather than just an
+    // email address). Resolve the linked record id from the email here.
+    let buddyLinkIds = [];
+    if (buddyEmail) {
+      const bf = encodeURIComponent(`LOWER({Email}) = "${buddyEmail.toLowerCase().replace(/"/g, '\\"')}"`);
+      const br = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=${bf}&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const bd = await br.json();
+      const buddyRec = (bd.records || [])[0];
+      if (buddyRec) buddyLinkIds = [buddyRec.id];
+    }
     const fields = {
       [F_SAL]:      salutation || null,
       [F_FIRST]:    firstName  || '',
@@ -2568,7 +2581,8 @@ app.put('/api/profile', requireAuth, async (req, res) => {
       [F_WHATSAPP]: whatsapp   || '',
       [F_COMMISSION_SPLIT]: commissionSplit || '',
       [F_AVG_PAYAWAY]: avgPayaway || '',
-      [F_BUDDY_EMAIL]: buddyEmail || null
+      [F_BUDDY_EMAIL]: buddyEmail || null,
+      [F_BUDDY_LINK]: buddyLinkIds
     };
     if (password) {
       fields[F_PASSWORD] = bcrypt.hashSync(password, 10);
