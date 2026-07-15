@@ -121,6 +121,7 @@ const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 const F_BUDDY_EMAIL          = 'fldhw8BOP43FdBePg'; // Buddy Email — colleague chosen for lead-sharing in Engage™
 const F_BUDDY_LINK           = 'fldSWadRr1KAZTrzE'; // Buddy — linked record mirror of Buddy Email, readable in Airtable
+const F_QL_ORDER             = 'fld1QTI4dYsU463CA'; // Quick Links Order — JSON array of tile keys, stored in Airtable (not a local file — Railway's filesystem is ephemeral and wipes local JSON on every redeploy)
 
 // ── CAS Path table ────────────────────────────────────────────
 const CAS_PATH_TABLE     = 'tblY3lKPcIQCbCoFP';
@@ -201,11 +202,7 @@ function computeNavAccess(f) {
   return result;
 }
 
-// ── Quick Links order (local, per-user) ────────────────────────
-const QUICK_LINKS_ORDER_PATH = path.join(__dirname, 'quick-links-order.json');
-let _quickLinksOrder = {}; // { "email": ["menu","marketing",...] }
-try { _quickLinksOrder = JSON.parse(fs.readFileSync(QUICK_LINKS_ORDER_PATH, 'utf8')); } catch(_) {}
-function saveQuickLinksOrder() { fs.writeFileSync(QUICK_LINKS_ORDER_PATH, JSON.stringify(_quickLinksOrder, null, 2)); }
+// ── Quick Links order (per-user, stored in Airtable — see F_QL_ORDER) ──
 // Routes for /api/quick-links are registered further down, after session middleware is set up.
 
 // ── Login attempt tracking (in-memory, resets on restart) ────────
@@ -571,25 +568,31 @@ app.use('/api/', (req, res, next) => {
   next();
 });
 
-app.get('/api/quick-links', requireAuth, (req, res) => {
+app.get('/api/quick-links', requireAuth, async (req, res) => {
   try {
-    const email = (req.session.user && req.session.user.email || '').toLowerCase();
-    res.json({ order: _quickLinksOrder[email] || null });
+    const id = req.session.user.id;
+    const data = await atFetch(`/${id}?fields[]=${F_QL_ORDER}&returnFieldsByFieldId=true`);
+    const raw = data.fields && data.fields[F_QL_ORDER];
+    let order = null;
+    if (raw) { try { order = JSON.parse(raw); } catch (_) { order = null; } }
+    res.json({ order });
   } catch (err) {
     console.error('Quick links load error:', err);
     res.status(500).json({ error: 'Failed to load.' });
   }
 });
 
-app.post('/api/quick-links', requireAuth, (req, res) => {
-  const email = (req.session.user && req.session.user.email || '').toLowerCase();
+app.post('/api/quick-links', requireAuth, async (req, res) => {
   const { order } = req.body || {};
   if (!Array.isArray(order) || !order.every(v => typeof v === 'string')) {
     return res.status(400).json({ error: 'order must be an array of strings' });
   }
   try {
-    _quickLinksOrder[email] = order;
-    saveQuickLinksOrder();
+    const id = req.session.user.id;
+    await atFetch(`/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_QL_ORDER]: JSON.stringify(order) } })
+    });
     res.json({ success: true });
   } catch (err) {
     console.error('Quick links save error:', err);
