@@ -409,19 +409,34 @@ async function loadFeatureFlagsFromAirtable() {
     const data = await featureFlagsFetch('');
     const loaded = { ...FEATURES_DEFAULT };
     const ids = {};
+    const dupes = [];
+    // Keep the FIRST row seen for each key (the originally-seeded, labelled
+    // row) and flag any later duplicates for cleanup — duplicates were being
+    // created when a save landed before this load had finished populating
+    // _featureFlagRecordIds (see note on _featureFlagsReady below).
     (data.records || []).forEach(r => {
       const key = r.fields[F_FF_KEY];
       if (!key) return;
+      if (ids[key]) { dupes.push(r.id); return; }
       loaded[key] = r.fields[F_FF_ENABLED] !== false;
       ids[key] = r.id;
     });
     _features = loaded;
     _featureFlagRecordIds = ids;
+    if (dupes.length) {
+      console.warn(`Feature flags: removing ${dupes.length} duplicate Airtable row(s)`);
+      for (const id of dupes) {
+        try { await featureFlagsFetch(`/${id}`, { method: 'DELETE' }); } catch (e) { /* best effort */ }
+      }
+    }
   } catch (err) {
     console.error('Failed to load feature flags from Airtable, using defaults:', err.message);
   }
 }
-loadFeatureFlagsFromAirtable();
+// Requests must never read/write _features before the initial Airtable load
+// has completed, otherwise a save can race ahead of the load and create
+// duplicate rows (each treated as "not found yet" and POSTed as new).
+const _featureFlagsReady = loadFeatureFlagsFromAirtable();
 
 async function atFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${endpoint}`;
@@ -6031,12 +6046,14 @@ app.get('/api/dip-certificate', requireAuth, async (req, res) => {
 });
 
 // ── Feature flags API ─────────────────────────────────────────
-app.get('/api/admin/features', requireAuth, (req, res) => {
+app.get('/api/admin/features', requireAuth, async (req, res) => {
+  await _featureFlagsReady;
   res.json(_features);
 });
 
 app.post('/api/admin/features', requireAdmin, async (req, res) => {
   try {
+    await _featureFlagsReady;
     const updates = req.body;
     const allowed = Object.keys(FEATURES_DEFAULT);
     const changedKeys = allowed.filter(k => (k in updates) && !!updates[k] !== _features[k]);
