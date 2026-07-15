@@ -1389,6 +1389,21 @@ select:focus { outline:none; }
               <option value="Protection">Protection (15hr target)</option>
             </select>
           </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Specialist</label>
+            <select id="cpdf-specialist" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
+              <option value="">None</option>
+              <option value="Equity Release">Equity Release</option>
+              <option value="Later Life Lending">Later Life Lending</option>
+              <option value="Commercial Finance">Commercial Finance</option>
+              <option value="Bridging Finance">Bridging Finance</option>
+              <option value="Buy to Let / Portfolio">Buy to Let / Portfolio</option>
+              <option value="Wealth & Investments">Wealth &amp; Investments</option>
+              <option value="General Insurance">General Insurance</option>
+              <option value="Legal Services (Wills/LPA)">Legal Services (Wills/LPA)</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
         <div id="cpd-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:12px;"></div>
         <div style="display:flex;gap:10px;margin-top:16px;">
@@ -11626,6 +11641,7 @@ function openCpdForm() {
   document.getElementById('cpdf-activity').value = '';
   document.getElementById('cpdf-learned').value = '';
   document.getElementById('cpdf-category').value = 'Technical Knowledge';
+  document.getElementById('cpdf-specialist').value = '';
   document.getElementById('cpd-form-error').style.display = 'none';
   var user = _currentUser || {};
   var defaultType = (!user.sellsProtection || user.sellsMortgages || (!user.sellsMortgages && !user.sellsProtection)) ? 'Mortgage' : 'Protection';
@@ -11644,6 +11660,7 @@ function openCpdFormEdit(idx) {
   document.getElementById('cpdf-minutes').value  = e.minutes  || 60;
   document.getElementById('cpdf-category').value = e.category || 'Other';
   document.getElementById('cpdf-cpdtype').value  = e.cpdType  || 'Mortgage';
+  document.getElementById('cpdf-specialist').value = e.specialist || '';
   document.getElementById('cpdf-learned').value  = e.learned  || '';
   document.getElementById('cpd-form-error').style.display = 'none';
   document.getElementById('cpd-form').style.display = 'block';
@@ -11663,6 +11680,7 @@ function saveCpdEntry() {
   var minutes  = document.getElementById('cpdf-minutes').value;
   var category = document.getElementById('cpdf-category').value;
   var cpdType  = document.getElementById('cpdf-cpdtype').value;
+  var specialist = document.getElementById('cpdf-specialist').value;
   var learned  = document.getElementById('cpdf-learned').value.trim();
   if (!activity) { errEl.textContent = 'Please enter an activity.'; errEl.style.display = 'block'; return; }
   if (!date)     { errEl.textContent = 'Date is required.';          errEl.style.display = 'block'; return; }
@@ -11671,7 +11689,7 @@ function saveCpdEntry() {
   fetch(isEdit ? '/api/cpd/' + _cpdEditingId : '/api/cpd', {
     method: isEdit ? 'PATCH' : 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category, cpdType, learned })
+    body: JSON.stringify({ activity, date, minutes: parseInt(minutes), category, cpdType, specialist, learned })
   }).then(function(r) { return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
     .then(function(res) {
       if (!res.ok) { errEl.textContent = res.data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }

@@ -3451,6 +3451,7 @@ const CPD_SOURCE   = 'fldSjdFlkizyQVNzP';
 const CPD_VTITLE   = 'fldXmHRWv246Wb5FF';
 const CPD_TYPE     = 'fldRi9wWzALjvvzu1';
 const CPD_LEARNED  = 'flduS7f67tF3W64ZA';
+const CPD_SPECIALIST = 'fldmujpXpcGR9lq0I'; // single-select: non-mortgage/protection specialist licence area, optional
 // Per-product CPD targets in minutes: Investment 35hrs, Mortgage 15hrs, Protection 15hrs
 const CPD_TARGETS  = { Investment: 2100, Mortgage: 900, Protection: 900 };
 
@@ -3477,7 +3478,8 @@ function cpdRecordToEntry(record) {
     source:     f[CPD_SOURCE]    || '',
     videoTitle: f[CPD_VTITLE]    || '',
     cpdType:    f[CPD_TYPE]      || '',
-    learned:    f[CPD_LEARNED]   || ''
+    learned:    f[CPD_LEARNED]   || '',
+    specialist: f[CPD_SPECIALIST] || ''
   };
 }
 
@@ -3649,7 +3651,7 @@ app.get('/api/cpd', requireAuth, async (req, res) => {
 
 // POST /api/cpd — manual entry
 app.post('/api/cpd', requireAuth, async (req, res) => {
-  const { activity, date, minutes, category, cpdType, learned, source } = req.body;
+  const { activity, date, minutes, category, cpdType, learned, source, specialist } = req.body;
   if (!activity || !date || !minutes) return res.status(400).json({ error: 'Activity, date and minutes required' });
   try {
     const data = await cpdFetch('', {
@@ -3662,8 +3664,9 @@ app.post('/api/cpd', requireAuth, async (req, res) => {
         [CPD_CATEGORY]: category || 'Other',
         [CPD_SOURCE]:   source || 'Manual',
         [CPD_TYPE]:     cpdType || 'Mortgage',
-        ...(learned ? { [CPD_LEARNED]: learned } : {})
-      }}], returnFieldsByFieldId: true })
+        ...(learned ? { [CPD_LEARNED]: learned } : {}),
+        ...(specialist ? { [CPD_SPECIALIST]: specialist } : {})
+      }}], returnFieldsByFieldId: true, typecast: true })
     });
     res.json(cpdRecordToEntry(data.records[0]));
   } catch (err) {
@@ -3895,17 +3898,18 @@ app.patch('/api/cpd/:id', requireAuth, async (req, res) => {
   try {
     const record = await cpdFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     if (record.fields[CPD_EMAIL] !== email) return res.status(403).json({ error: 'Forbidden' });
-    const { activity, date, minutes, category, cpdType, learned } = req.body;
+    const { activity, date, minutes, category, cpdType, learned, specialist } = req.body;
     const fields = {};
-    if (activity  !== undefined) fields[CPD_ACTIVITY] = activity;
-    if (date      !== undefined) fields[CPD_DATE]     = date;
-    if (minutes   !== undefined) fields[CPD_MINUTES]  = parseInt(minutes, 10);
-    if (category  !== undefined) fields[CPD_CATEGORY] = category;
-    if (cpdType   !== undefined) fields[CPD_TYPE]     = cpdType;
-    if (learned   !== undefined) fields[CPD_LEARNED]  = learned;
+    if (activity   !== undefined) fields[CPD_ACTIVITY]   = activity;
+    if (date       !== undefined) fields[CPD_DATE]       = date;
+    if (minutes    !== undefined) fields[CPD_MINUTES]    = parseInt(minutes, 10);
+    if (category   !== undefined) fields[CPD_CATEGORY]   = category;
+    if (cpdType    !== undefined) fields[CPD_TYPE]       = cpdType;
+    if (learned    !== undefined) fields[CPD_LEARNED]    = learned;
+    if (specialist !== undefined) fields[CPD_SPECIALIST] = specialist;
     const updated = await cpdFetch(`/${req.params.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
     });
     res.json(cpdRecordToEntry(updated));
   } catch (err) {
