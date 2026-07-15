@@ -10005,11 +10005,11 @@ var OPP_CARDS = {
 };
 
 var OPP_PAGE_SECTIONS = {
-  purchase:   ['mortgage','protection','insurance','health','legal','move','referrals'],
-  btl:        ['mortgageBtl','protection','insurance','health','legal','moveBtl','referrals'],
-  remortgage: ['mortgage','protection','insurance','health','legal','referrals'],
-  lifetime:   ['mortgage','protection','insurance','health','legal','referrals'],
-  ftb:        ['mortgage','protection','insurance','health','legal','move','referrals'],
+  purchase:   ['mortgage','protection','insurance','health','legal','move','referrals','wealthReferral'],
+  btl:        ['mortgageBtl','protection','insurance','health','legal','moveBtl','referrals','wealthReferral'],
+  remortgage: ['mortgage','protection','insurance','health','legal','referrals','wealthReferral'],
+  lifetime:   ['mortgage','protection','insurance','health','legal','referrals','wealthReferral'],
+  ftb:        ['mortgage','protection','insurance','health','legal','move','referrals','wealthReferral'],
   commercial: ['commercialLending'],
   bridging:   ['bridgingLending']
 };
@@ -10023,7 +10023,8 @@ var OPP_SECTIONS_DEF = {
   legal:            { label: 'Legal & Estate Planning',cards: ['wills','poa','conveyancing'] },
   move:             { label: 'The Move',               cards: ['survey','removals'] },
   moveBtl:          { label: 'The Move',               cards: ['survey'] },
-  referrals:        { label: 'Referrals',              cards: ['reviews','wealth'] },
+  referrals:        { label: 'Referrals',              cards: ['reviews'] },
+  wealthReferral:   { label: 'Wealth',                  cards: ['wealth'] },
   commercialLending:{ label: 'Commercial Lending',      cards: ['commercial'] },
   bridgingLending:  { label: 'Bridging Lending',        cards: ['bridging'] }
 };
