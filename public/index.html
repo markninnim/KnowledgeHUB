@@ -10079,10 +10079,10 @@ function openBrokerProfile(email, name, keepDateRange) {
             '<div style="font-size:28px;font-weight:800;color:' + (f.nps >= 50 ? '#22c55e' : f.nps >= 0 ? '#f59e0b' : '#b91c1c') + ';">' + (f.nps >= 0 ? '+' : '') + f.nps + '</div>' +
             '<div style="font-size:11px;color:#6b7c8f;">NPS</div>' +
           '</div>' : '') +
-          (f.rank && f.totalAdvisers ? '<div style="text-align:center;align-self:center;">' +
-            '<span class="lic-icon-wrap" style="font-size:12px;font-weight:700;color:var(--brand-navy);background:#f0f4f8;padding:3px 9px;border-radius:10px;">#' + f.rank +
-              '<span class="lic-tip" style="white-space:nowrap;">Rank ' + f.rank + ' of ' + f.totalAdvisers + ' advisers by review count</span>' +
-            '</span>' +
+          (f.rank && f.totalAdvisers ? '<div class="lic-icon-wrap" style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">#' + f.rank + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">Rank</div>' +
+            '<span class="lic-tip" style="white-space:nowrap;">Rank ' + f.rank + ' of ' + f.totalAdvisers + ' advisers by review count</span>' +
           '</div>' : '') +
         '</div>';
 
