@@ -3996,7 +3996,7 @@ select:focus { outline:none; }
               <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
               <span style="font-size:12px;color:#6b7c8f;">to</span>
               <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-              <button onclick="document.getElementById('bp-rev-from').value='';document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
+              <button onclick="document.getElementById('bp-rev-from').value=bpFirstOfPreviousMonth();document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
             </div>
           </div>
           <div id="bp-reviews" style="display:flex;flex-direction:column;gap:0;max-height:400px;overflow-y:auto;"></div>
@@ -10056,10 +10056,12 @@ function openBrokerProfile(email, name, keepDateRange) {
           '</div>' : '') +
         '</div>';
 
-      // All Feefo reviews with date filter
+      // All Feefo reviews with date filter — defaults to 1st of last month
       window._bpReviews = f.reviews || [];
       if (window._bpReviews.length) {
         document.getElementById('bp-reviews-wrap').style.display = 'block';
+        var bpRevFromEl = document.getElementById('bp-rev-from');
+        if (bpRevFromEl && !bpRevFromEl.value) bpRevFromEl.value = bpFirstOfPreviousMonth();
         filterBpReviews();
       }
 
