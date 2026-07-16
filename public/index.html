@@ -16246,6 +16246,17 @@ function lgStatusPillStyle(status) {
 }
 function loadLeadGen() {
   if (_lgLoaded) return;
+  // Re-sync the remembered Table/Cards view choice now that _currentUser is
+  // known (the initial _lgView read at script-load time only had an 'anon'
+  // key to go on) and reflect it in the toggle button styling.
+  try {
+    var savedView = localStorage.getItem(lgViewPrefKey());
+    if (savedView) _lgView = savedView;
+  } catch (_) {}
+  var tableBtn0 = document.getElementById('lg-view-table');
+  var cardBtn0  = document.getElementById('lg-view-card');
+  if (tableBtn0) { tableBtn0.style.background = (_lgView === 'table') ? 'var(--brand-navy)' : '#f5f7fa'; tableBtn0.style.color = (_lgView === 'table') ? '#fff' : 'var(--brand-navy)'; }
+  if (cardBtn0)  { cardBtn0.style.background  = (_lgView === 'card')  ? 'var(--brand-navy)' : '#f5f7fa'; cardBtn0.style.color  = (_lgView === 'card')  ? '#fff' : 'var(--brand-navy)'; }
   var loadingEl = document.getElementById('lg-loading');
   var contentEl = document.getElementById('lg-content');
   loadingEl.style.display = 'block';
@@ -16328,9 +16339,15 @@ function lgMarkLeadsSeen() {
     if (dot) dot.style.display = 'none';
   }).catch(function() {});
 }
-var _lgView = 'table';
+function lgViewPrefKey() {
+  return 'kh_lg_view_' + ((_currentUser && _currentUser.email) || 'anon').toLowerCase();
+}
+var _lgView = (function() {
+  try { return localStorage.getItem(lgViewPrefKey()) || 'table'; } catch (_) { return 'table'; }
+})();
 function lgSetView(view) {
   _lgView = view;
+  try { localStorage.setItem(lgViewPrefKey(), view); } catch (_) {}
   var tableBtn = document.getElementById('lg-view-table');
   var cardBtn  = document.getElementById('lg-view-card');
   if (tableBtn) { tableBtn.style.background = (view === 'table') ? 'var(--brand-navy)' : '#f5f7fa'; tableBtn.style.color = (view === 'table') ? '#fff' : 'var(--brand-navy)'; }
