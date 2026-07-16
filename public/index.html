@@ -3988,30 +3988,18 @@ select:focus { outline:none; }
           <div id="bp-cd-recent" style="display:none;flex-direction:column;gap:0;margin-top:10px;"></div>
         </div>
 
-        <!-- Feefo Reviews (all, with date filter) -->
+        <!-- Feefo Reviews (all — follows the page-level date filter at the top) -->
         <div id="bp-reviews-wrap" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div style="margin-bottom:14px;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Feefo Reviews <span id="bp-reviews-count" style="font-weight:400;color:#6b7c8f;"></span></div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <input type="date" id="bp-rev-from" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-              <span style="font-size:12px;color:#6b7c8f;">to</span>
-              <input type="date" id="bp-rev-to" oninput="filterBpReviews()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-              <button onclick="document.getElementById('bp-rev-from').value=bpFirstOfPreviousMonth();document.getElementById('bp-rev-to').value='';filterBpReviews();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
-            </div>
           </div>
           <div id="bp-reviews" style="display:flex;flex-direction:column;gap:0;max-height:400px;overflow-y:auto;"></div>
         </div>
 
-        <!-- All Website Activity (CPD log) -->
+        <!-- All Website Activity (CPD log) — follows the page-level date filter at the top -->
         <div id="bp-activity-wrap" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div style="margin-bottom:14px;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Activity <span id="bp-activity-count" style="font-weight:400;color:#6b7c8f;"></span></div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <input type="date" id="bp-act-from" oninput="filterBpActivity()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-              <span style="font-size:12px;color:#6b7c8f;">to</span>
-              <input type="date" id="bp-act-to" oninput="filterBpActivity()" style="border:1px solid #d1d5db;border-radius:7px;padding:4px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-              <button onclick="document.getElementById('bp-act-from').value=bpFirstOfPreviousMonth();document.getElementById('bp-act-to').value='';filterBpActivity();" style="border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
-            </div>
           </div>
           <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -10056,12 +10044,10 @@ function openBrokerProfile(email, name, keepDateRange) {
           '</div>' : '') +
         '</div>';
 
-      // All Feefo reviews with date filter — defaults to 1st of last month
+      // All Feefo reviews — already filtered server-side by the page-level date range
       window._bpReviews = f.reviews || [];
       if (window._bpReviews.length) {
         document.getElementById('bp-reviews-wrap').style.display = 'block';
-        var bpRevFromEl = document.getElementById('bp-rev-from');
-        if (bpRevFromEl && !bpRevFromEl.value) bpRevFromEl.value = bpFirstOfPreviousMonth();
         filterBpReviews();
       }
 
@@ -10382,12 +10368,10 @@ function openBrokerProfile(email, name, keepDateRange) {
         }
       }
 
-      // ── All Activity (full CPD log) — defaults to 1st of last month ──
+      // ── All Activity (full CPD log) — already filtered server-side by the page-level date range ──
       window._bpActivity = allLog;
       if (allLog.length) {
         document.getElementById('bp-activity-wrap').style.display = 'block';
-        var bpActFromEl = document.getElementById('bp-act-from');
-        if (bpActFromEl && !bpActFromEl.value) bpActFromEl.value = bpFirstOfPreviousMonth();
         filterBpActivity();
       }
 
@@ -10515,17 +10499,12 @@ function openBrokerProfile(email, name, keepDateRange) {
 }
 
 function filterBpReviews() {
-  var from = document.getElementById('bp-rev-from').value;
-  var to   = document.getElementById('bp-rev-to').value;
-  var all  = window._bpReviews || [];
-  var filtered = all.filter(function(r) {
-    if (from && r.date && r.date < from) return false;
-    if (to   && r.date && r.date > to)   return false;
-    return true;
-  });
-  document.getElementById('bp-reviews-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
-  document.getElementById('bp-reviews').innerHTML = filtered.length
-    ? filtered.map(function(r) {
+  // Reviews are already filtered server-side by the page-level date range
+  // (the From/To pill at the top of the broker profile).
+  var all = window._bpReviews || [];
+  document.getElementById('bp-reviews-count').textContent = '(' + all.length + ')';
+  document.getElementById('bp-reviews').innerHTML = all.length
+    ? all.map(function(r) {
         var starStr = '';
         if (r.rating) for (var i=1;i<=5;i++) starStr += '<span style="color:' + (i<=r.rating?'var(--brand-orange)':'#ddd') + ';font-size:12px;">★</span>';
         return '<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">' +
@@ -10541,18 +10520,13 @@ function filterBpReviews() {
 }
 
 function filterBpActivity() {
-  var from = document.getElementById('bp-act-from').value;
-  var to   = document.getElementById('bp-act-to').value;
-  var all  = window._bpActivity || [];
-  var filtered = all.filter(function(e) {
-    if (from && e.date && e.date < from) return false;
-    if (to   && e.date && e.date > to)   return false;
-    return true;
-  });
-  document.getElementById('bp-activity-count').textContent = '(' + filtered.length + ' of ' + all.length + ')';
+  // Activity is already filtered server-side by the page-level date range
+  // (the From/To pill at the top of the broker profile).
+  var all = window._bpActivity || [];
+  document.getElementById('bp-activity-count').textContent = '(' + all.length + ')';
   var typeColor = { Mortgage: 'var(--brand-navy)', Protection: 'var(--brand-orange)', Investment: '#2e99d5' };
-  document.getElementById('bp-activity-body').innerHTML = filtered.length
-    ? filtered.map(function(e) {
+  document.getElementById('bp-activity-body').innerHTML = all.length
+    ? all.map(function(e) {
         var label = e.video || e.activity || '—';
         var tc = typeColor[e.type] || '#6b7c8f';
         return '<tr style="border-bottom:1px solid #f0f4f8;">' +
