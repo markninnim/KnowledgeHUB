@@ -5502,6 +5502,22 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
   const brokerEmail = (req.query.email || '').trim().toLowerCase();
   if (!brokerEmail) return res.status(400).json({ error: 'email required' });
 
+  // Optional date range filter (yyyy-mm-dd) — applied to CPD, Feefo,
+  // Consumer Duty and Reporting (Compliance Reports), each against their
+  // own date field.
+  const rangeFrom = (req.query.from || '').trim();
+  const rangeTo   = (req.query.to   || '').trim();
+  function dateRangeClause(fieldRef) {
+    const parts = [];
+    if (rangeFrom) parts.push(`IS_AFTER({${fieldRef}}, "${rangeFrom}")`);
+    if (rangeTo)   parts.push(`IS_BEFORE({${fieldRef}}, DATEADD("${rangeTo}", 1, 'days'))`);
+    return parts;
+  }
+  function withDateRange(baseFormula, fieldRef) {
+    const extra = dateRangeClause(fieldRef);
+    return extra.length ? `AND(${baseFormula},${extra.join(',')})` : baseFormula;
+  }
+
   try {
     // 1. Lookup user record for full name + profile
     const uf = encodeURIComponent(`LOWER({Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
@@ -5518,7 +5534,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
 
       // CPD Log — all entries for this email
       (async () => {
-        const formula = encodeURIComponent(`LOWER({User Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        const formula = encodeURIComponent(withDateRange(`LOWER({User Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`, CPD_DATE));
         let records = [], offset = '';
         do {
           const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&pageSize=100${offset ? '&offset=' + offset : ''}`;
@@ -5532,7 +5548,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       // Feefo — by adviser full name
       (async () => {
         if (!safeName) return [];
-        const formula = encodeURIComponent(`LOWER(TRIM({Adviser})) = "${safeName}"`);
+        const formula = encodeURIComponent(withDateRange(`LOWER(TRIM({Adviser})) = "${safeName}"`, 'Date'));
         const qs = `?filterByFormula=${formula}&fields[]=Adviser&fields[]=Review&fields[]=Service Rating&fields[]=NPS&fields[]=Customer Name&fields[]=Date&sort[0][field]=Date&sort[0][direction]=desc&pageSize=100`;
         const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tblU58wJ0rNFPMiKp${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
         const b  = await r.json();
@@ -5542,7 +5558,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       // Consumer Duty — by broker full name
       (async () => {
         if (!safeName) return [];
-        const formula = encodeURIComponent(`LOWER(TRIM({${CD_BROKER}})) = "${safeName}"`);
+        const formula = encodeURIComponent(withDateRange(`LOWER(TRIM({${CD_BROKER}})) = "${safeName}"`, CD_DATE));
         let records = [], offset = '';
         do {
           const qs  = `?filterByFormula=${formula}&sort[0][field]=${CD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
@@ -5598,7 +5614,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
 
       // Compliance Reports — Complaint / Breach / Conflict / Gifts / Self Sale / Whistleblowing, by email
       (async () => {
-        const formula = encodeURIComponent(`LOWER({${CR_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        const formula = encodeURIComponent(withDateRange(`LOWER({${CR_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`, CR_SUBMITTED));
         let records = [], offset = '';
         do {
           const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;

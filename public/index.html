@@ -3825,14 +3825,20 @@ select:focus { outline:none; }
     <!-- Broker Profile Panel (shown when a broker is selected) -->
     <div id="sv-broker-profile" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
       <!-- Back + header -->
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
-        <button onclick="closeBrokerProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;font-family:inherit;">← Back</button>
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;">
+        <button onclick="closeBrokerProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;font-family:inherit;flex-shrink:0;">← Back</button>
         <div style="flex:1;min-width:0;">
-          <div id="bp-name" style="font-size:20px;font-weight:800;color:var(--brand-navy);"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px;">
-            <div id="bp-meta" style="font-size:13px;color:#6b7c8f;"></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div id="bp-name" style="font-size:20px;font-weight:800;color:var(--brand-navy);"></div>
             <div id="bp-tenure" style="font-size:12px;color:#6b7c8f;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px;"></div>
           </div>
+          <div id="bp-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <input type="date" id="bp-date-from" onchange="bpReloadWithDateRange()" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
+          <span style="font-size:12px;color:#6b7c8f;">to</span>
+          <input type="date" id="bp-date-to" onchange="bpReloadWithDateRange()" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
+          <button onclick="bpResetDateRange()" style="border:1px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
         </div>
       </div>
 
@@ -9904,7 +9910,23 @@ function savePredictedCasDate() {
 
 // ── Broker Profile ────────────────────────────────────────────
 var _bpCurrentBrokerName = '';
-function openBrokerProfile(email, name) {
+var _bpCurrentEmail = '';
+var _bpCurrentName = '';
+function bpFirstOfPreviousMonth() {
+  var d = new Date();
+  d.setMonth(d.getMonth() - 1, 1);
+  return d.toISOString().slice(0, 10);
+}
+function bpReloadWithDateRange() {
+  if (!_bpCurrentEmail) return;
+  openBrokerProfile(_bpCurrentEmail, _bpCurrentName, true);
+}
+function bpResetDateRange() {
+  document.getElementById('bp-date-from').value = bpFirstOfPreviousMonth();
+  document.getElementById('bp-date-to').value = '';
+  bpReloadWithDateRange();
+}
+function openBrokerProfile(email, name, keepDateRange) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   var panel = document.getElementById('sv-broker-profile');
   panel.style.display = 'block';
@@ -9912,8 +9934,20 @@ function openBrokerProfile(email, name) {
   document.getElementById('bp-meta').textContent = email;
   document.getElementById('bp-loading').style.display = 'block';
   document.getElementById('bp-content').style.display = 'none';
+  _bpCurrentEmail = email;
+  _bpCurrentName = name;
 
-  fetch('/api/supervisor/broker-profile?email=' + encodeURIComponent(email))
+  var fromInput = document.getElementById('bp-date-from');
+  var toInput   = document.getElementById('bp-date-to');
+  if (!keepDateRange) {
+    fromInput.value = bpFirstOfPreviousMonth();
+    toInput.value = '';
+  }
+  var rangeQs = '';
+  if (fromInput.value) rangeQs += '&from=' + encodeURIComponent(fromInput.value);
+  if (toInput.value)   rangeQs += '&to=' + encodeURIComponent(toInput.value);
+
+  fetch('/api/supervisor/broker-profile?email=' + encodeURIComponent(email) + rangeQs)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       document.getElementById('bp-loading').style.display = 'none';
