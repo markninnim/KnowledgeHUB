@@ -8135,16 +8135,18 @@ function loadHomeData() {
         // invisible without scrolling. This is a fixed, non-scrolling summary.
         var mine = me && items.find(function(e) { return e.name.toLowerCase().trim() === me.toLowerCase().trim(); });
         if (pinEl) {
+          pinEl.style.display = 'flex';
+          pinEl.style.alignItems = 'center';
+          pinEl.style.gap = '8px';
           if (mine) {
-            pinEl.style.display = 'flex';
-            pinEl.style.alignItems = 'center';
-            pinEl.style.gap = '8px';
             pinEl.innerHTML =
               '<span style="font-size:11px;font-weight:700;color:var(--brand-orange);width:20px;flex-shrink:0;">#' + mine.rank + '</span>' +
               '<span style="font-size:12px;color:var(--brand-navy);font-weight:700;flex:1;">You</span>' +
               '<span style="font-size:12px;font-weight:700;color:var(--brand-navy);">' + mine[valueKey] + (suffix || '') + '</span>';
           } else {
-            pinEl.style.display = 'none';
+            pinEl.innerHTML =
+              '<span style="font-size:12px;color:var(--brand-navy);font-weight:700;flex:1;">You</span>' +
+              '<span style="font-size:12px;color:#6b7c8f;">No data for this period yet</span>';
           }
         }
       }
