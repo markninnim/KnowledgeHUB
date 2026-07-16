@@ -3863,7 +3863,7 @@ select:focus { outline:none; }
 
           <!-- Row 1 Col 3: Consumer Duty (stretch) -->
           <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:1;grid-column:3;align-self:stretch;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Consumer Duty</div>
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Consumer Understanding</div>
             <div id="bp-cd"></div>
           </div>
 
@@ -3959,11 +3959,16 @@ select:focus { outline:none; }
               <div id="bp-cd-score" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;"></div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
             <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
               <div id="bp-cd-full-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
               <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Full Understanding</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+              <div id="bp-cd-restored-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;margin-bottom:4px;"></div>
+              <div style="font-size:12px;font-weight:600;color:#b45309;">Understanding Restored</div>
+              <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
             </div>
             <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
               <div id="bp-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
@@ -10037,21 +10042,28 @@ function openBrokerProfile(email, name, keepDateRange) {
         filterBpReviews();
       }
 
-      // ── Consumer Duty ──
+      // ── Consumer Understanding ──
       var cd = d.consumerDuty || {};
-      var cdScore = cd.total ? Math.round(cd.full / cd.total * 100) : null;
+      var cdScore = cd.total ? Math.round((cd.full + (cd.restored || 0)) / cd.total * 100) : null;
       document.getElementById('bp-cd').innerHTML =
-        '<div style="display:flex;gap:16px;margin-bottom:14px;">' +
+        '<div style="display:flex;gap:16px;">' +
           '<div style="text-align:center;">' +
             '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.total || 0) + '</div>' +
             '<div style="font-size:11px;color:#6b7c8f;">responses</div>' +
           '</div>' +
-          (cdScore != null ? '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:800;color:' + (cdScore>=90?'#22c55e':cdScore>=70?'#f59e0b':'#b91c1c') + ';">' + cdScore + '%</div>' +
-            '<div style="font-size:11px;color:#6b7c8f;">full understanding</div>' +
-          '</div>' : '') +
-        '</div>' +
-        (cd.partial ? '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 12px;font-size:12px;color:#991b1b;">' + cd.partial + ' partial understanding ' + (cd.partial===1?'case':'cases') + ' require follow-up</div>' : '<div style="font-size:12px;color:#22c55e;font-weight:600;">✓ No partial understanding cases</div>');
+          '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#22c55e;">' + (cd.full || 0) + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">full</div>' +
+          '</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#b91c1c;">' + (cd.partial || 0) + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">partial</div>' +
+          '</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:28px;font-weight:800;color:#f59e0b;">' + (cd.restored || 0) + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">restored</div>' +
+          '</div>' +
+        '</div>';
 
       // ── Consumer Duty expanded card (above Feefo reviews) ──
       var cdExpanded = document.getElementById('bp-cd-expanded');
@@ -10059,9 +10071,11 @@ function openBrokerProfile(email, name, keepDateRange) {
         cdExpanded.style.display = '';
         var cdScoreEl = document.getElementById('bp-cd-score');
         var cdFullEl  = document.getElementById('bp-cd-full-count');
+        var cdRestEl  = document.getElementById('bp-cd-restored-count');
         var cdPartEl  = document.getElementById('bp-cd-partial-count');
         if (cdScoreEl) cdScoreEl.textContent = (cdScore != null ? cdScore + '%' : '—');
         if (cdFullEl)  cdFullEl.textContent  = cd.full || 0;
+        if (cdRestEl)  cdRestEl.textContent  = cd.restored || 0;
         if (cdPartEl)  cdPartEl.textContent  = cd.partial || 0;
         // Recent responses list
         var recs = cd.records || [];
@@ -14915,14 +14929,24 @@ function updateCdSummaryTiles() {
   renderCdList();
 }
 
-function _cdStorageKey(id) { return 'cd_resolved_' + id; }
-
+// Restored ticks are persisted to Airtable (Restored Keys field on the
+// Consumer Duty record) via PATCH /api/consumer-duty/:id/restore, so the
+// status is the same for every viewer — previously this was localStorage
+// only, which meant a supervisor viewing another adviser's records (or
+// their broker profile) never saw ticks made on a different browser.
 function _cdGetTicked(id) {
-  try { return JSON.parse(localStorage.getItem(_cdStorageKey(id)) || '[]'); } catch(e) { return []; }
+  var r = (window._cdRecords || []).find(function(rec) { return rec.id === id; });
+  return (r && r.restoredKeys) ? r.restoredKeys.slice() : [];
 }
 
 function _cdSetTicked(id, arr) {
-  try { localStorage.setItem(_cdStorageKey(id), JSON.stringify(arr)); } catch(e) {}
+  var r = (window._cdRecords || []).find(function(rec) { return rec.id === id; });
+  if (r) r.restoredKeys = arr.slice();
+  fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys: arr })
+  }).catch(function() {});
 }
 
 function _cdUpdateBadge() {

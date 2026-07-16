@@ -5420,6 +5420,28 @@ const CD_Q9      = 'fldGxipBKk94ffhax';   // Q9 Literature Clarity
 const CD_Q10     = 'fldAENiQSS9W5Dt8V';   // Q10 Support Required
 const CD_NPS     = 'fldvT8olEjrbOAG52';   // NPS Rating
 const CD_COMMENT = 'fldfsuOr3P3COsXUp';   // Comment
+const CD_RESTORED_KEYS = 'fldjfQetEIQubB2u9'; // Restored Keys — comma-separated flagged question keys marked as remediated
+
+// Flagged-question detector per key (mirrors cdIsPerfect's per-question checks)
+// so we can tell whether every flagged question on a record has been ticked
+// as remediated ("restored") vs only some/none ("partial").
+const CD_FLAGGED_CHECKS = {
+  q1:  f => !(f[CD_Q1]  || '').trim().toLowerCase().startsWith('yes'),
+  q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure',
+  q5:  f => (f[CD_Q5]  || '').trim().toLowerCase() === 'no',
+  q6:  f => (f[CD_Q6]  || '').trim().toLowerCase() === 'no',
+  q7:  f => (f[CD_Q7]  || '').trim().toLowerCase() === 'no',
+  q9:  f => (f[CD_Q9]  || '').trim().toLowerCase() === 'unclear',
+  q10: f => (f[CD_Q10] || '').trim().toLowerCase().includes('did not receive adequate'),
+  q3:  f => { const v = (f[CD_Q3] || '').trim().toLowerCase(); return v.includes("i'd like") || v.includes('call me'); },
+  q8:  f => (f[CD_Q8]  || '').trim().toLowerCase().includes('would like to discuss')
+};
+function cdRecordStatus(f) {
+  const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
+  if (!flaggedKeys.length) return 'full';
+  const ticked = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
+  return flaggedKeys.every(k => ticked.includes(k)) ? 'restored' : 'partial';
+}
 
 function cdIsPerfect(f) {
   // Returns array of question labels that are unclear/need attention
@@ -5468,6 +5490,7 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
         comment:  f[CD_COMMENT] || '',
         perfect,
         issues,
+        restoredKeys: (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean),
         answers: {
           q1:  f[CD_Q1]  || '',
           q2:  f[CD_Q2]  || '',
@@ -5486,6 +5509,28 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
     res.json({ total: allRecords.length, records });
   } catch (err) {
     console.error('consumer-duty error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/consumer-duty/:id/restore — save which flagged questions have
+// had remediation completed for a record. Persisted to Airtable (Restored
+// Keys field) so the status is consistent for every viewer, not just the
+// browser that ticked it (previously stored in localStorage only).
+app.patch('/api/consumer-duty/:id/restore', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const keys = Array.isArray(req.body.keys) ? req.body.keys.filter(Boolean) : [];
+  try {
+    const url = `https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}`;
+    const r = await fetch(url, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id, fields: { [CD_RESTORED_KEYS]: keys.join(',') } }] })
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.error?.message || `Airtable ${r.status}`);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -5667,14 +5712,18 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       date:     r.fields['Date'] || null
     }));
 
-    // Process Consumer Duty
-    let cdFull = 0, cdPartial = 0;
+    // Process Consumer Duty — full / restored / partial, using the persisted
+    // Restored Keys field so this is consistent for every viewer.
+    let cdFull = 0, cdPartial = 0, cdRestored = 0;
     const cdRecords = cdRecs.map(rec => {
       const f = rec.cellValuesByFieldId || rec.fields || {};
       const issues  = cdIsPerfect(f);
       const perfect = issues.length === 0;
-      if (perfect) cdFull++; else cdPartial++;
-      return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues };
+      const status  = cdRecordStatus(f);
+      if (status === 'full') cdFull++;
+      else if (status === 'restored') cdRestored++;
+      else cdPartial++;
+      return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues, status };
     });
 
     // Process Revalidation — returnFieldsByFieldId=true → data is in rec.fields
@@ -5777,7 +5826,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
-      consumerDuty: { total: cdRecs.length, full: cdFull, partial: cdPartial, records: cdRecords.slice(0, 10) },
+      consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
       reEngage:      reEngageBuckets,
