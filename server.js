@@ -1930,10 +1930,40 @@ app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
 
 // ── AutoCRM notes / Business Won state (local, per-broker) ────
 const AUTOCRM_NOTES_PATH = path.join(__dirname, 'autocrm-notes.json');
-let _autoCrmNotes = {}; // { [brokerEmailLower]: { [rowKey]: { notes: '', won: false } } }
+let _autoCrmNotes = {}; // { [brokerEmailLower]: { [rowKey]: { notes: '', won: false, handoff: false, handoffLeadId, handoffAdviser } } }
 try { _autoCrmNotes = JSON.parse(fs.readFileSync(AUTOCRM_NOTES_PATH, 'utf8')); } catch (_) {}
 function saveAutoCrmNotes() {
   try { fs.writeFileSync(AUTOCRM_NOTES_PATH, JSON.stringify(_autoCrmNotes, null, 2)); } catch (e) { console.error('Failed to save AutoCRM notes:', e); }
+}
+
+// ── ReEngage™ → LeadGEN handoff: round-robin assignment among advisers
+// with {Is LeadGen} ticked on their profile, so opportunities a broker hands
+// off don't all pile onto one person.
+const LG_REFERRED_BY = 'fldX3Mm8s67oQnziZ'; // Referred By — the original broker, for referral-fee tracking
+const LEADGEN_ROTATION_PATH = path.join(__dirname, 'leadgen-rotation.json');
+let _leadGenRotation = { index: 0 };
+try { _leadGenRotation = JSON.parse(fs.readFileSync(LEADGEN_ROTATION_PATH, 'utf8')); } catch (_) {}
+function saveLeadGenRotation() {
+  try { fs.writeFileSync(LEADGEN_ROTATION_PATH, JSON.stringify(_leadGenRotation, null, 2)); } catch (e) { console.error('Failed to save LeadGen rotation:', e); }
+}
+async function getNextLeadGenAdviser() {
+  let records = [], offset;
+  do {
+    const qs = `?returnFieldsByFieldId=true&pageSize=100` + (offset ? `&offset=${offset}` : '');
+    const data = await atFetch(qs);
+    records = records.concat(data.records || []);
+    offset = data.offset;
+  } while (offset);
+  const eligible = [...new Set(
+    records.filter(r => r.fields[F_IS_LEADGEN] === true)
+      .map(r => [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ').trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+  if (!eligible.length) return null;
+  const idx = _leadGenRotation.index % eligible.length;
+  _leadGenRotation.index = (idx + 1) % eligible.length;
+  saveLeadGenRotation();
+  return eligible[idx];
 }
 
 app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
@@ -2005,7 +2035,8 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
         benefitEnd: g.benefitEnd,
         notes: saved.notes || '',
         won: !!saved.won,
-        handoff: !!saved.handoff
+        handoff: !!saved.handoff,
+        handoffAdviser: saved.handoffAdviser || ''
       };
     });
 
@@ -2018,21 +2049,65 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
 
 // Save notes / Business Won state for a single AutoCRM card, scoped to the
 // logged-in broker (each broker's cases have their own independent state).
-app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
+app.post('/api/mortgage-completions/note', requireAuth, async (req, res) => {
   const user = req.session.user;
   const brokerEmail = (user.email || '').toLowerCase();
-  const { key, notes, won, handoff } = req.body || {};
+  const { key, notes, won, handoff, name, email, loanAmount, lender, benefitEnd } = req.body || {};
   if (!key) return res.status(400).json({ error: 'key required' });
   try {
     if (!_autoCrmNotes[brokerEmail]) _autoCrmNotes[brokerEmail] = {};
     const existing = _autoCrmNotes[brokerEmail][key] || {};
+    const wasHandedOff = !!existing.handoff;
+    const nowHandoff = (handoff !== undefined) ? !!handoff : (existing.handoff || false);
     _autoCrmNotes[brokerEmail][key] = {
-      notes:   (notes   !== undefined) ? String(notes) : (existing.notes   || ''),
-      won:     (won     !== undefined) ? !!won          : (existing.won     || false),
-      handoff: (handoff !== undefined) ? !!handoff      : (existing.handoff || false)
+      notes:          (notes !== undefined) ? String(notes) : (existing.notes || ''),
+      won:            (won   !== undefined) ? !!won         : (existing.won   || false),
+      handoff:        nowHandoff,
+      handoffLeadId:  existing.handoffLeadId  || null,
+      handoffAdviser: existing.handoffAdviser || ''
     };
+
+    // First time this case is marked for LeadGEN — create the actual lead in
+    // Airtable, assigned round-robin to an adviser with {Is LeadGen} ticked,
+    // and tag the referring broker so a referral fee can be tracked.
+    if (nowHandoff && !wasHandedOff) {
+      try {
+        const referrerName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || brokerEmail;
+        const adviser = await getNextLeadGenAdviser();
+        const noteLines = [
+          'Re-engagement opportunity handed off from ' + referrerName + '.',
+          lender ? ('Lender: ' + lender) : '',
+          (typeof loanAmount === 'number') ? ('Loan Amount: £' + loanAmount.toLocaleString('en-GB')) : '',
+          benefitEnd ? ('Original completion/benefit end: ' + benefitEnd) : ''
+        ].filter(Boolean).join('\n');
+        const leadFields = {
+          [LG_NAME]:        name || 'Unnamed',
+          [LG_NOTES]:       noteLines,
+          [LG_SOURCE]:      'ReEngage',
+          [LG_QUALITY]:     'Warm',
+          [LG_REFERRED_BY]: referrerName
+        };
+        if (email)   leadFields[LG_EMAIL]   = email;
+        if (adviser) leadFields[LG_ADVISER] = adviser;
+        const createRes = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: [{ fields: leadFields }], typecast: true })
+        });
+        const createBody = await createRes.json();
+        if (createRes.ok && createBody.records && createBody.records[0]) {
+          _autoCrmNotes[brokerEmail][key].handoffLeadId  = createBody.records[0].id;
+          _autoCrmNotes[brokerEmail][key].handoffAdviser = adviser || '';
+        } else {
+          console.error('LeadGEN handoff lead creation failed:', createBody);
+        }
+      } catch (e) {
+        console.error('LeadGEN handoff error:', e);
+      }
+    }
+
     saveAutoCrmNotes();
-    res.json({ success: true });
+    res.json({ success: true, handoffAdviser: _autoCrmNotes[brokerEmail][key].handoffAdviser || null });
   } catch (err) {
     console.error('AutoCRM note save error:', err);
     res.status(500).json({ error: 'Failed to save.' });
@@ -2117,7 +2192,8 @@ app.get('/api/reengage-completions', requireAuth, async (req, res) => {
         benefitEnd: g.benefitEnd,
         notes: saved.notes || '',
         won: !!saved.won,
-        handoff: !!saved.handoff
+        handoff: !!saved.handoff,
+        handoffAdviser: saved.handoffAdviser || ''
       };
     });
 

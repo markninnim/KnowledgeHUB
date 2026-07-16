@@ -15293,6 +15293,7 @@ function reRenderRows() {
           '<label title="Hand this client off to LeadGEN — they will be worked as a lead by the team, and you will earn a referral fee if it converts." style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #d1d5db;font-size:11.5px;font-weight:700;color:#6b7c8f;cursor:pointer;" onclick="event.stopPropagation();">' +
             '<input type="checkbox" ' + (row.handoff ? 'checked' : '') + ' onchange="reToggleHandoff(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\', this.checked)"> Mark for LeadGEN&#8482; (referral fee)' +
           '</label>' +
+          (row.handoff && row.handoffAdviser ? '<div style="font-size:11px;color:#6b7c8f;margin-top:6px;">Assigned to <strong style="color:var(--brand-navy);">' + escHtml(row.handoffAdviser) + '</strong></div>' : '') +
         '</div>';
     }).join('');
     return '<div style="margin-bottom:28px;">' +
@@ -15309,7 +15310,14 @@ function reToggleHandoff(key, handoff) {
   fetch('/api/mortgage-completions/note', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: key, handoff: handoff })
+    body: JSON.stringify({
+      key: key, handoff: handoff,
+      name: row ? row.name : '', email: row ? row.email : '',
+      loanAmount: row ? row.loanAmount : null, lender: row ? row.lender : '',
+      benefitEnd: row ? row.benefitEnd : ''
+    })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (row && handoff && d && d.handoffAdviser) { row.handoffAdviser = d.handoffAdviser; reRenderRows(); }
   }).catch(function() {});
 }
 
