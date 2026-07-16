@@ -5938,25 +5938,53 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
 
     y = H - headerH - 26;
 
+    let firstSection = true;
     const sectionTitle = (title) => {
-      ensureSpace(30);
+      if (!firstSection) y -= 16; // breathing room before each new section
+      firstSection = false;
+      ensureSpace(34);
       page.drawText(title, { x: 36, y, size: 12, font: fontBold, color: darkBlue });
-      y -= 6;
+      y -= 8;
       page.drawLine({ start: { x: 36, y }, end: { x: W - 36, y }, thickness: 1, color: lightGrey });
-      y -= 18;
+      y -= 22;
+    };
+
+    // Wrap a label into lines that fit within maxWidth at the given font/size
+    const wrapLabel = (text, maxWidth, font, size) => {
+      const words = String(text).split(' ');
+      const lines = [];
+      let cur = '';
+      words.forEach(w => {
+        const test = cur ? cur + ' ' + w : w;
+        if (font.widthOfTextAtSize(test, size) > maxWidth && cur) {
+          lines.push(cur);
+          cur = w;
+        } else {
+          cur = test;
+        }
+      });
+      if (cur) lines.push(cur);
+      return lines;
     };
 
     // Reusable "N stat tiles in a row" renderer
     const drawStatRow = (stats) => {
-      ensureSpace(46);
       const colW = (W - 72) / stats.length;
+      const labelSize = stats.length > 4 ? 7 : 8;
+      const labelPad = 10; // horizontal breathing room inside each column
+      const wrapped = stats.map(s => wrapLabel(s.label, colW - labelPad, fontMed, labelSize));
+      const maxLines = Math.max.apply(null, wrapped.map(l => l.length));
+      const rowH = 26 + maxLines * 10 + 14;
+      ensureSpace(rowH);
       stats.forEach((s, i) => {
         const x = 36 + i * colW;
         const numText = String(s.value);
         page.drawText(numText, { x: x + (colW - fontBold.widthOfTextAtSize(numText, 18)) / 2, y, size: 18, font: fontBold, color: s.color || darkBlue });
-        page.drawText(s.label, { x: x + (colW - fontMed.widthOfTextAtSize(s.label, 8)) / 2, y: y - 14, size: 8, font: fontMed, color: grey });
+        wrapped[i].forEach((line, li) => {
+          page.drawText(line, { x: x + (colW - fontMed.widthOfTextAtSize(line, labelSize)) / 2, y: y - 15 - li * 10, size: labelSize, font: fontMed, color: grey });
+        });
       });
-      y -= 40;
+      y -= rowH;
     };
 
     const fmtMin = m => { const h = Math.floor(m/60), mn = Math.round(m%60); return h > 0 ? (h + 'h' + (mn > 0 ? ' ' + mn + 'm' : '')) : (mn + 'm'); };
