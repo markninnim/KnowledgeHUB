@@ -721,10 +721,12 @@ select:focus { outline:none; }
             <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:14px;">
               <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Top Reviews</div>
               <div id="home-feefo-leaders" style="font-size:13px;color:#6b7c8f;height:220px;overflow:hidden;">Loading…</div>
+              <div id="home-feefo-leaders-pin" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #d1d5db;"></div>
             </div>
             <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:14px;">
               <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Top NPS</div>
               <div id="home-feefo-leaders-avg" style="font-size:13px;color:#6b7c8f;height:220px;overflow:hidden;">Loading…</div>
+              <div id="home-feefo-leaders-avg-pin" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #d1d5db;"></div>
             </div>
           </div>
         </div>
@@ -8117,9 +8119,9 @@ function loadHomeData() {
 
       // Leaderboard helpers
       var me = (_currentUser && [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ')) || '';
-      function renderLeaderboard(el, items, valueKey, suffix) {
+      function renderLeaderboard(el, pinEl, items, valueKey, suffix) {
         if (!el) return;
-        if (!items || !items.length) { el.textContent = 'No data yet.'; return; }
+        if (!items || !items.length) { el.textContent = 'No data yet.'; if (pinEl) pinEl.style.display = 'none'; return; }
         el.innerHTML = items.map(function(e) {
           var isMe = me && e.name.toLowerCase().trim() === me.toLowerCase().trim();
           return '<div' + (isMe ? ' data-isme="true"' : '') + ' style="display:flex;align-items:center;gap:8px;padding:5px 0;' + (isMe ? 'background:#fffbf0;margin:0 -14px;padding:5px 14px;border-radius:6px;' : '') + '">'
@@ -8128,10 +8130,27 @@ function loadHomeData() {
             + '<span style="font-size:12px;font-weight:700;color:#6b7c8f;">' + e[valueKey] + (suffix || '') + '</span>'
             + '</div>';
         }).join('');
+        // Always show a pinned "your position" row — the scrolling list above
+        // may cap at the top 30, so the adviser's own rank can otherwise be
+        // invisible without scrolling. This is a fixed, non-scrolling summary.
+        var mine = me && items.find(function(e) { return e.name.toLowerCase().trim() === me.toLowerCase().trim(); });
+        if (pinEl) {
+          if (mine) {
+            pinEl.style.display = 'flex';
+            pinEl.style.alignItems = 'center';
+            pinEl.style.gap = '8px';
+            pinEl.innerHTML =
+              '<span style="font-size:11px;font-weight:700;color:var(--brand-orange);width:20px;flex-shrink:0;">#' + mine.rank + '</span>' +
+              '<span style="font-size:12px;color:var(--brand-navy);font-weight:700;flex:1;">You</span>' +
+              '<span style="font-size:12px;font-weight:700;color:var(--brand-navy);">' + mine[valueKey] + (suffix || '') + '</span>';
+          } else {
+            pinEl.style.display = 'none';
+          }
+        }
       }
-      renderLeaderboard(leadersEl,    d.leaderboard    || [], 'count', '');
-      renderLeaderboard(leadersAvgEl, d.leaderboardNps || [], 'nps',   '');
-      // Animate scroll to centre current user's row in both leaderboards
+      renderLeaderboard(leadersEl,    document.getElementById('home-feefo-leaders-pin'),     d.leaderboard    || [], 'count', '');
+      renderLeaderboard(leadersAvgEl, document.getElementById('home-feefo-leaders-avg-pin'),  d.leaderboardNps || [], 'nps',   '');
+      // Gently scroll each leaderboard so the current user's row drifts into view
       function scrollToMe(el) {
         if (!el) return;
         var myRow = el.querySelector('[data-isme]');

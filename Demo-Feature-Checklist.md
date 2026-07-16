@@ -3,10 +3,19 @@
 ## PART 1 — Broker view
 
 ### Home
-- Quick Links tile grid — drag-and-drop reordering, click the edit icon to change a tile's destination
-- News Bulletins scroller (supervisors/admins can click "Add Story" to post one)
-- CPD summary snapshot
-- Birthday card — shows automatically on the broker's birthday
+- Personalised greeting — "Good morning/afternoon/evening, [First Name]!" based on time of day; automatically swaps to "🎂 Happy Birthday, [First Name]!" on the broker's own birthday
+- Customer Birthdays widget — pulls today's client birthdays automatically, auto-rotates through name + email if there's more than one
+- Quick Links tile grid — drag-and-drop reordering, click the edit icon on any tile to change its destination
+- AutoCRM™ mini-widget — renewals-by-month strip + running total, right on Home
+- News Bulletins scroller (supervisors/admins can click "Add Story" to post one); Latest Learning Video card and Latest Newsletter card sit alongside it
+- FP Surveying / Acre Surveying partner card
+- CPD Progress snapshot (bars by Mortgage/Protection/Investment) and ReEngage™ snapshot, side by side
+- Consumer Duty card — Consumer Duty Score %, three clickable stat tiles (Full Understanding / Understanding Restored / Partial Understanding) that filter a "Recent Responses" list below
+- Feefo card (full width):
+  - Star rating summary + paginated list of the broker's own reviews
+  - Company-wide rank badge (e.g. "#1 of 42") next to the "Your Feefo Reviews" heading
+  - Date-range filter on reviews (From/To + Clear)
+  - "Top Reviews" and "Top NPS" mini-leaderboards alongside the review list
 
 ### Compliance — AutoCPD™
 - Log CPD entries (activity, date, minutes, category, Mortgage/Protection/Investment type, what you learned)
