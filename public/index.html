@@ -7692,17 +7692,14 @@ function loadHomeReengage() {
 
     // Coarse 1-5(+) year buckets, same logic as the ReEngage sidebar
     var yearCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    var retargetCount = 0; // exact 4 years 6 months — the "ready to retarget" window
     rows.forEach(function(row) {
       var yb = reYearsAgo(row.benefitEnd);
       if (yb) yearCounts[yb] = (yearCounts[yb] || 0) + 1;
-      var p = reElapsedParts(row.benefitEnd);
-      if (p && p.years === 4 && p.months === 6) retargetCount++;
     });
 
     box.innerHTML = '';
     var rowWrap = document.createElement('div');
-    rowWrap.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;';
+    rowWrap.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:8px;';
     [1,2,3,4,5].forEach(function(bucket) {
       var tile = document.createElement('div');
       tile.style.cssText = 'background:#f5f7fa;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;transition:background .15s;';
@@ -7714,13 +7711,6 @@ function loadHomeReengage() {
       rowWrap.appendChild(tile);
     });
     box.appendChild(rowWrap);
-
-    var retargetTile = document.createElement('div');
-    retargetTile.style.cssText = 'background:rgba(184,89,9,.08);border:1px solid var(--brand-orange);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
-    retargetTile.innerHTML = '<div><div style="font-size:11px;font-weight:700;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.4px;">Ready to retarget</div><div style="font-size:12px;color:#6b7c8f;">4 years 6 months since renewal</div></div>' +
-      '<div style="font-size:22px;font-weight:800;color:var(--brand-orange);">' + retargetCount + '</div>';
-    retargetTile.onclick = function(){ homeGoToReengage(function(){ reFilterByExact(4, 6, document.getElementById('re-nav-y4-6m')); }); };
-    box.appendChild(retargetTile);
   }).catch(function() {
     box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load ReEngage&#8482; data.</div>';
   });
