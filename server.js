@@ -5514,7 +5514,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     const safeName   = fullName.toLowerCase().trim().replace(/"/g, '\\"');
 
     // 2. Parallel data fetches
-    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs, mcRecs] = await Promise.all([
+    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs, mcRecs, crRecs] = await Promise.all([
 
       // CPD Log — all entries for this email
       (async () => {
@@ -5592,6 +5592,19 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
           if (!r.ok) break;
           records = records.concat(b.records || []);
           offset  = b.offset || '';
+        } while (offset);
+        return records;
+      })(),
+
+      // Compliance Reports — Complaint / Breach / Conflict / Gifts / Self Sale / Whistleblowing, by email
+      (async () => {
+        const formula = encodeURIComponent(`LOWER({${CR_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        let records = [], offset = '';
+        do {
+          const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+          const d  = await crFetch(qs);
+          records  = records.concat(d.records || []);
+          offset   = d.offset || '';
         } while (offset);
         return records;
       })()
@@ -5724,6 +5737,26 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     Object.keys(autoCrmRows).forEach(k => autoCrmRows[k].sort((a, b) => (a.benefitEnd || '').localeCompare(b.benefitEnd || '')));
     const autoCrmTotal = Object.values(autoCrmMonths).reduce((s, v) => s + v, 0);
 
+    // Compliance Reports — count + row detail per type, for the Reporting tiles
+    const crByType = {};
+    CR_TYPES.forEach(t => { crByType[t] = []; });
+    crRecs.forEach(r => {
+      const f = r.fields || {};
+      const type = f[CR_TYPE] || '';
+      if (!crByType[type]) crByType[type] = [];
+      crByType[type].push({
+        id: r.id,
+        summary: f[CR_SUMMARY] || '',
+        dateSubmitted: f[CR_SUBMITTED] || '',
+        incidentDate: f[CR_INCIDENT] || '',
+        clientName: f[CR_CLIENT] || '',
+        details: f[CR_DETAILS] || '',
+        status: f[CR_STATUS] || 'New'
+      });
+    });
+    const crCounts = {};
+    Object.keys(crByType).forEach(t => { crCounts[t] = crByType[t].length; });
+
     res.json({
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
@@ -5734,7 +5767,8 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       reEngage:      reEngageBuckets,
       reEngageRows:  reEngageRows,
       autoCrm:       { months: autoCrmMonths, total: autoCrmTotal },
-      autoCrmRows:   autoCrmRows
+      autoCrmRows:   autoCrmRows,
+      reporting:     { counts: crCounts, rows: crByType }
     });
   } catch (err) {
     console.error('broker-profile error:', err);
