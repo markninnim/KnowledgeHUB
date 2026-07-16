@@ -10312,6 +10312,19 @@ function openBrokerProfile(email, name, keepDateRange) {
         if (modal) modal.style.display = 'flex';
       };
 
+      // Replacement Ratio — lost business (Benefit End >1 month overdue) as a %
+      // of new business (completions) within the selected date range. Shown at
+      // the end of AutoCRM™ Renewals.
+      function bpReplacementRatioHtml(ac) {
+        var newCount  = ac.newCount || 0;
+        var lostCount = ac.lostCount || 0;
+        var ratio     = ac.replacementRatio;
+        return '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;display:flex;align-items:center;justify-content:space-between;">' +
+          '<span style="font-size:11px;color:#6b7c8f;">' + newCount + ' new · ' + lostCount + ' lost (this period)</span>' +
+          '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">Replacement Ratio: ' + (ratio != null ? ratio + '%' : '—') + '</span>' +
+        '</div>';
+      }
+
       window._bpAcRows = (d.autoCrmRows || {});
       var acEl = document.getElementById('bp-autocrm');
       if (acEl) {
@@ -10328,9 +10341,10 @@ function openBrokerProfile(email, name, keepDateRange) {
               '</div>';
             }).join('') +
           '</div>' +
-          '<div id="bp-ac-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>';
+          '<div id="bp-ac-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>' +
+          bpReplacementRatioHtml(ac);
         } else {
-          acEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No renewals due in the next 6 months for this adviser</div>';
+          acEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No renewals due in the next 6 months for this adviser</div>' + bpReplacementRatioHtml(ac);
         }
       }
 

@@ -1878,6 +1878,7 @@ const MC_DESC        = 'fldnl007W7yv92Uv2'; // Description
 const MC_LENDER      = 'flda3Kbg6U5VlY437'; // Lender
 const MC_BENEFIT_END = 'fldQxzVK10rodVVgH'; // Benefit End (Date) — formula, ISO date
 const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the broker who owns this case
+const MC_DATE           = 'flde2uvM4ZMlRqijT'; // Date — mortgage completion date, text "M/D/YY"
 const MC_DOB            = 'fldJvFYek6dPQqtF2'; // DOB — text, format M/D/YY
 
 // ── Customer birthdays (today), scoped to the logged-in broker's own clients ──
@@ -5646,7 +5647,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       (async () => {
         const formula = encodeURIComponent(`LOWER({${MC_CUST_REF_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
         let records = [], offset = '';
-        const mcFieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_LENDER, MC_BENEFIT_END].map(f => `&fields[]=${f}`).join('');
+        const mcFieldQs = [MC_NAME, MC_EMAIL, MC_LOAN, MC_LENDER, MC_BENEFIT_END, MC_DATE].map(f => `&fields[]=${f}`).join('');
         do {
           const qs = `?filterByFormula=${formula}${mcFieldQs}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
           const r  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
@@ -5833,6 +5834,40 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     Object.keys(autoCrmRows).forEach(k => autoCrmRows[k].sort((a, b) => (a.benefitEnd || '').localeCompare(b.benefitEnd || '')));
     const autoCrmTotal = Object.values(autoCrmMonths).reduce((s, v) => s + v, 0);
 
+    // Replacement Ratio — lost business (Benefit End >1 month overdue) as a %
+    // of new business (completions) within the selected date range. Not a true
+    // per-client retention rate (we can't match a lost case to its replacement
+    // case), just a book-health ratio: are we writing enough new business to
+    // cover what's falling off.
+    function parseMDY(str) {
+      if (!str) return null;
+      const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      if (!m) return null;
+      let yr = m[3];
+      yr = yr.length === 2 ? '20' + yr : yr;
+      const dt = new Date(Number(yr), Number(m[1]) - 1, Number(m[2]));
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+    const rrFromDt = rangeFrom ? new Date(rangeFrom) : null;
+    const rrToDt   = rangeTo   ? new Date(rangeTo)   : null;
+    function rrInRange(dt) {
+      if (!dt) return false;
+      if (rrFromDt && dt < rrFromDt) return false;
+      if (rrToDt && dt > rrToDt) return false;
+      return true;
+    }
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    let newBusinessCount = 0, lostBusinessCount = 0;
+    mcRecs.forEach(r => {
+      const f = r.fields || {};
+      const compDt = parseMDY(f[MC_DATE]);
+      if (compDt && rrInRange(compDt)) newBusinessCount++;
+      const benefitEndDt = f[MC_BENEFIT_END] ? new Date(f[MC_BENEFIT_END]) : null;
+      if (benefitEndDt && !isNaN(benefitEndDt.getTime()) && benefitEndDt < oneMonthAgo && rrInRange(benefitEndDt)) lostBusinessCount++;
+    });
+    const replacementRatio = newBusinessCount > 0 ? Math.round((lostBusinessCount / newBusinessCount) * 100) : null;
+
     // Compliance Reports — count + row detail per type, for the Reporting tiles
     const crByType = {};
     CR_TYPES.forEach(t => { crByType[t] = []; });
@@ -5863,7 +5898,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
       reEngage:      reEngageBuckets,
       reEngageRows:  reEngageRows,
-      autoCrm:       { months: autoCrmMonths, total: autoCrmTotal },
+      autoCrm:       { months: autoCrmMonths, total: autoCrmTotal, newCount: newBusinessCount, lostCount: lostBusinessCount, replacementRatio },
       autoCrmRows:   autoCrmRows,
       reporting:     { counts: crCounts, rows: crByType }
     };
