@@ -10297,8 +10297,8 @@ function openBrokerProfile(email, name, keepDateRange) {
             [1,2,3,4,5,6].map(function(n) {
               var count = ac.months[n] || 0;
               var clickable = count > 0;
-              return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'ac\',' + n + ')" style="cursor:pointer;"' : '') +
-                ' data-bp-bucket="ac' + n + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;">' +
+              return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'ac\',' + n + ')"' : '') +
+                ' data-bp-bucket="ac' + n + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;' + (clickable ? 'cursor:pointer;' : '') + '">' +
                 '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);line-height:1;">' + count + '</div>' +
                 '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + n + ' Month</div>' +
               '</div>';
@@ -10356,8 +10356,8 @@ function openBrokerProfile(email, name, keepDateRange) {
           function bpReCard(label, key) {
             var count = re[key] || 0;
             var clickable = count > 0;
-            return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'re\',\'' + key + '\')" style="cursor:pointer;"' : '') +
-              ' data-bp-bucket="re' + key + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;">' +
+            return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'re\',\'' + key + '\')"' : '') +
+              ' data-bp-bucket="re' + key + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;' + (clickable ? 'cursor:pointer;' : '') + '">' +
               '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);line-height:1;">' + count + '</div>' +
               '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + label + '</div>' +
               '</div>';
