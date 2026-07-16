@@ -10136,7 +10136,10 @@ function openBrokerProfile(email, name, keepDateRange) {
         var cdFullEl  = document.getElementById('bp-cd-full-count');
         var cdRestEl  = document.getElementById('bp-cd-restored-count');
         var cdPartEl  = document.getElementById('bp-cd-partial-count');
-        if (cdScoreEl) cdScoreEl.textContent = (cdScore != null ? cdScore + '%' : '—');
+        if (cdScoreEl) {
+          cdScoreEl.textContent = (cdScore != null ? cdScore + '%' : '—');
+          cdScoreEl.style.color = (cdScore === 100) ? '#22c55e' : 'var(--brand-navy)';
+        }
         if (cdFullEl)  cdFullEl.textContent  = cd.full || 0;
         if (cdRestEl)  cdRestEl.textContent  = cd.restored || 0;
         if (cdPartEl)  cdPartEl.textContent  = cd.partial || 0;
