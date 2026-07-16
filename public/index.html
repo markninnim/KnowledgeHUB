@@ -71,6 +71,7 @@ html { height: 100%; }
 .lic-icon-wrap:first-child .lic-tip::after { left:10px; transform:none; }
 .lic-icon-wrap:last-child .lic-tip { left:auto; right:0; transform:none; }
 .lic-icon-wrap:last-child .lic-tip::after { left:auto; right:10px; transform:none; }
+.bp-rr-info-wrap:hover .bp-rr-info-tip { visibility:visible; opacity:1; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid var(--brand-orange); }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
@@ -10319,9 +10320,18 @@ function openBrokerProfile(email, name, keepDateRange) {
         var newCount  = ac.newCount || 0;
         var lostCount = ac.lostCount || 0;
         var ratio     = ac.replacementRatio;
+        var tipText = 'Lost business (' + lostCount + ') as a % of new business (' + newCount + ') written in the selected date range. ' +
+          'Lost = completions whose Benefit End date is more than 1 month overdue. New = completions with a completion date in range. ' +
+          'Lower is better — it is a book-health check, not a per-client retention rate.';
         return '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;display:flex;align-items:center;justify-content:space-between;">' +
           '<span style="font-size:11px;color:#6b7c8f;">' + newCount + ' new · ' + lostCount + ' lost (this period)</span>' +
-          '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">Replacement Ratio: ' + (ratio != null ? ratio + '%' : '—') + '</span>' +
+          '<span style="display:inline-flex;align-items:center;gap:5px;">' +
+            '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">Replacement Ratio: ' + (ratio != null ? ratio + '%' : '—') + '</span>' +
+            '<span style="position:relative;display:inline-flex;" class="bp-rr-info-wrap">' +
+              '<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#d7dee5;color:#5b6b7a;font-size:9.5px;font-weight:700;cursor:default;">i</span>' +
+              '<span class="bp-rr-info-tip" style="visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 6px);right:0;width:230px;white-space:normal;background:var(--brand-navy);color:#fff;font-size:10.5px;font-weight:500;line-height:1.5;padding:8px 10px;border-radius:6px;transition:opacity .12s;pointer-events:none;z-index:30;">' + escHtml(tipText) + '</span>' +
+            '</span>' +
+          '</span>' +
         '</div>';
       }
 
