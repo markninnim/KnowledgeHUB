@@ -10583,7 +10583,7 @@ function openBrokerProfile(email, name, keepDateRange) {
                     '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">YTD Comparison</span>' +
                     (pctChange != null ? '<span style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:8px;background:' + (pctUp ? '#dcfce7' : '#fef2f2') + ';color:' + (pctUp ? '#166534' : '#991b1b') + ';">' + (pctUp ? '+' : '') + pctChange + '%</span>' : '') +
                   '</div>' +
-                  bpYtdBar((curYear - 1) + ' YTD', prevYtd, '#94a3b8') +
+                  bpYtdBar((curYear - 1) + ' YTD', prevYtd, 'var(--brand-orange)') +
                   bpYtdBar(curYear + ' YTD', curYtd, 'var(--brand-navy)') +
                 '</div>';
                 html = ytdHtml + html;
