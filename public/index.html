@@ -5818,7 +5818,7 @@ function loadSocialContent() {
       h3.textContent = title;
       var pillarBadge = document.createElement('span');
       pillarBadge.textContent = pillar;
-      pillarBadge.style.cssText = 'display:inline-block;margin-left:10px;font-size:10px;font-weight:700;line-height:1;color:#fff;background:' + (PILLAR_COLORS[pillar] || '#6b7c8f') + ';padding:5px 10px 4px;border-radius:20px;text-transform:none;letter-spacing:.2px;vertical-align:middle;';
+      pillarBadge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin-left:10px;font-size:10px;font-weight:700;line-height:1.4;color:#fff;background:' + (PILLAR_COLORS[pillar] || '#6b7c8f') + ';padding:6px 12px;border-radius:20px;text-transform:none;letter-spacing:.2px;vertical-align:middle;';
       h3.appendChild(pillarBadge);
       var newestFile = post.files.reduce(function(latest, f) { return new Date(f.created) > new Date(latest.created) ? f : latest; }, post.files[0]);
       if (newestFile && new Date(newestFile.created) < sixMonthsAgo) {
