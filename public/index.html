@@ -142,6 +142,7 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
 .sc-filter { background:#f5f7fa; border:1px solid #d1d5db; color:#6b7c8f; padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer; }
 .sc-filter.active { background:var(--brand-navy); border-color:var(--brand-navy); color:#fff; }
 .sc-filter:hover:not(.active) { border-color:var(--brand-navy); color:var(--brand-navy); }
+.sc-pillar.active { background:var(--brand-orange); border-color:var(--brand-orange); color:var(--brand-navy); }
 .thumb { background:#f5f7fa; border:1px solid #d1d5db; border-radius:7px; padding:8px; margin-bottom:4px; text-align:center; height:120px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
 .thumb img { max-height:104px; max-width:100%; object-fit:contain; position:relative; z-index:1; }
 .thumb canvas { max-height:104px; max-width:100%; }
@@ -840,6 +841,20 @@ select:focus { outline:none; }
         </button>
       </div>
       <div id="featured-social-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
+    </div>
+    <div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">What are content pillars?</div>
+      <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 8px;">Every post below is tagged with a <strong>pillar</strong> — the theme it serves. Use the pillar filter to plan a balanced week rather than posting whatever's newest: aim for a mix rather than several posts from the same pillar in a row, so your feed doesn't read as one-note.</p>
+      <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0;">A simple rhythm that works well for 3 posts a week: one <strong>Property Journey</strong> post (practical, how-to content that brings in first-time buyers and movers), one <strong>Protection &amp; Wellbeing</strong> or <strong>Renewals &amp; Rates</strong> post (keeps you visible to your existing client base), and one <strong>Trust &amp; Results</strong> post (reviews, awards, credibility). Layer in <strong>Market &amp; Money News</strong> when something topical happens (a Budget, a base rate move) and <strong>Community &amp; Culture</strong> around holidays and seasonal moments — those are for warmth and engagement, not lead generation, so don't let them crowd out the rest.</p>
+    </div>
+    <div id="sc-pillar-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="sc-filter sc-pillar active" onclick="filterPillar('all',this)">All Pillars</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Property Journey',this)">Property Journey</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Renewals &amp; Rates',this)">Renewals &amp; Rates</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Protection &amp; Wellbeing',this)">Protection &amp; Wellbeing</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Trust &amp; Results',this)">Trust &amp; Results</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Market &amp; Money News',this)">Market &amp; Money News</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Community &amp; Culture',this)">Community &amp; Culture</button>
     </div>
     <div id="sc-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
       <button class="sc-filter active" onclick="filterSocial('all',this)">All</button>
@@ -5621,6 +5636,146 @@ function buildDefaultCopy(postName, approvedCopy) {
 
 var _socialCopyDb = {};
 
+// ── Content pillars — one theme per post, used to plan a balanced posting
+// schedule rather than posting whatever's newest. See the context box above
+// the pillar filter row in the Bespoke Social Content section for how to use
+// these day to day.
+var PILLAR_MAP = {
+  "23 or 5": "Renewals & Rates",
+  "5 stars 5000": "Trust & Results",
+  "5 stars 5000 times": "Trust & Results",
+  "April fool": "Community & Culture",
+  "Spring goals": "Market & Money News",
+  "a renters path": "Property Journey",
+  "a third done": "Property Journey",
+  "and chill": "Community & Culture",
+  "april fool 2026": "Community & Culture",
+  "autumn renewal": "Renewals & Rates",
+  "avoid alert achieve": "Property Journey",
+  "base rate": "Market & Money News",
+  "beyond basic salary": "Protection & Wellbeing",
+  "borrow bark buy": "Property Journey",
+  "broker benefits": "Trust & Results",
+  "celebrating women": "Community & Culture",
+  "christmas renewal": "Renewals & Rates",
+  "clarity over confidence": "Property Journey",
+  "clarity over uncertainty": "Trust & Results",
+  "clear signals": "Renewals & Rates",
+  "clocks forward": "Renewals & Rates",
+  "confused": "Property Journey",
+  "cosy corner": "Property Journey",
+  "cosy corners": "Property Journey",
+  "coz": "Renewals & Rates",
+  "done right done fast": "Trust & Results",
+  "dont leave it to chance": "Protection & Wellbeing",
+  "eid": "Community & Culture",
+  "equity empowered": "Property Journey",
+  "feeling lucky": "Community & Culture",
+  "finance with purpose": "Trust & Results",
+  "fixed or flexible": "Renewals & Rates",
+  "from approval to offer": "Property Journey",
+  "from student to settled": "Property Journey",
+  "future freedom": "Property Journey",
+  "gental guidance": "Trust & Results",
+  "good fortune": "Community & Culture",
+  "growing family": "Protection & Wellbeing",
+  "happy easter": "Community & Culture",
+  "help from home": "Property Journey",
+  "helping you prepare": "Property Journey",
+  "hindsight handled": "Renewals & Rates",
+  "home ownership made simple": "Property Journey",
+  "how much can i borrow": "Property Journey",
+  "income secured": "Protection & Wellbeing",
+  "invest with confidence": "Property Journey",
+  "is it all a blur": "Trust & Results",
+  "job security isnt guaranteed": "Protection & Wellbeing",
+  "know before you borrow": "Property Journey",
+  "know your numbers clearly": "Market & Money News",
+  "lending prepared": "Property Journey",
+  "lets review together": "Renewals & Rates",
+  "life happens unexpectedly": "Protection & Wellbeing",
+  "location location location": "Property Journey",
+  "market pulse": "Renewals & Rates",
+  "market signals": "Renewals & Rates",
+  "mental health 3": "Protection & Wellbeing",
+  "mental health 4": "Protection & Wellbeing",
+  "mental health 5": "Protection & Wellbeing",
+  "mental health1": "Protection & Wellbeing",
+  "mental health2": "Protection & Wellbeing",
+  "minimum to mortgage": "Property Journey",
+  "mortgage match": "Property Journey",
+  "mortgage renewals": "Renewals & Rates",
+  "move in sooner": "Property Journey",
+  "move with confidence": "Renewals & Rates",
+  "myths cost money": "Trust & Results",
+  "new year new guidance": "Market & Money News",
+  "no can still be a yes": "Property Journey",
+  "no deposit no problem": "Property Journey",
+  "no scary surprises": "Property Journey",
+  "opportunity knocks": "Property Journey",
+  "own it": "Property Journey",
+  "past present perspective": "Renewals & Rates",
+  "plan approve move": "Property Journey",
+  "plan prepare prosper": "Property Journey",
+  "planning beyond policital change": "Market & Money News",
+  "pre approved confidence": "Property Journey",
+  "preparation before suprises": "Property Journey",
+  "progress is power": "Property Journey",
+  "proven expertise": "Trust & Results",
+  "quarter done vision board": "Property Journey",
+  "relax recharge reset": "Property Journey",
+  "renewal due": "Renewals & Rates",
+  "renovation ready": "Property Journey",
+  "reset rebukd reapply": "Property Journey",
+  "review Bryce": "Trust & Results",
+  "review claire": "Trust & Results",
+  "review peter": "Trust & Results",
+  "safety net": "Protection & Wellbeing",
+  "scotland sunshine success": "Property Journey",
+  "self employed success": "Property Journey",
+  "show your affordability": "Property Journey",
+  "smarter mortgage decisions": "Property Journey",
+  "smarter summer": "Property Journey",
+  "spring refresh": "Renewals & Rates",
+  "stamp duty made simple": "Property Journey",
+  "start your journey": "Property Journey",
+  "stop renting start owning": "Property Journey",
+  "strong defence beyond the pitch": "Trust & Results",
+  "surveying beyond": "Property Journey",
+  "the clocks ticking": "Renewals & Rates",
+  "the futures bright": "Market & Money News",
+  "the road to glory": "Trust & Results",
+  "trust, integrity foundations": "Trust & Results",
+  "trusted since 1999": "Trust & Results",
+  "underwritten with care": "Protection & Wellbeing",
+  "unlock your potential": "Property Journey",
+  "what if i cannot work": "Protection & Wellbeing",
+  "when it matters": "Protection & Wellbeing",
+  "where pieces fit": "Property Journey",
+  "working together": "Trust & Results",
+  "your next move matters": "Renewals & Rates",
+  "your path forward": "Property Journey",
+  "your plan their security": "Protection & Wellbeing"
+};
+var PILLAR_COLORS = {
+  "Property Journey":         "#2e99d5",
+  "Renewals & Rates":         "var(--brand-navy)",
+  "Protection & Wellbeing":   "#166534",
+  "Trust & Results":          "var(--brand-orange)",
+  "Market & Money News":      "#7c3aed",
+  "Community & Culture":      "#b45309"
+};
+function pillarFor(postName) { return PILLAR_MAP[postName] || 'Uncategorised'; }
+var _scPillarFilter = 'all';
+function filterPillar(pillar, btn) {
+  _scPillarFilter = pillar;
+  document.querySelectorAll('.sc-pillar').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.sc-post').forEach(function(post) {
+    post.style.display = (pillar === 'all' || post.dataset.pillar === pillar) ? '' : 'none';
+  });
+}
+
 function loadSocialContent() {
   loadFeaturedSocial();
   Promise.all([
@@ -5653,9 +5808,19 @@ function loadSocialContent() {
     var sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
     posts.forEach(function(post) {
+      var pillar = pillarFor(post.name);
+      var postWrap = document.createElement('div');
+      postWrap.className = 'sc-post';
+      postWrap.dataset.pillar = pillar;
+      if (_scPillarFilter !== 'all' && pillar !== _scPillarFilter) postWrap.style.display = 'none';
+
       var title = post.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
       var h3 = document.createElement('h3');
       h3.textContent = title;
+      var pillarBadge = document.createElement('span');
+      pillarBadge.textContent = pillar;
+      pillarBadge.style.cssText = 'margin-left:10px;font-size:10px;font-weight:700;color:#fff;background:' + (PILLAR_COLORS[pillar] || '#6b7c8f') + ';padding:2px 8px;border-radius:4px;text-transform:none;letter-spacing:.2px;vertical-align:middle;';
+      h3.appendChild(pillarBadge);
       var newestFile = post.files.reduce(function(latest, f) { return new Date(f.created) > new Date(latest.created) ? f : latest; }, post.files[0]);
       if (newestFile && new Date(newestFile.created) < sixMonthsAgo) {
         var expiredBadge = document.createElement('span');
@@ -5664,10 +5829,10 @@ function loadSocialContent() {
         h3.appendChild(expiredBadge);
       }
       h3.style.cssText = 'color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);';
-      container.appendChild(h3);
+      postWrap.appendChild(h3);
       var grid = document.createElement('div'); grid.className = 'grid';
       post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file)); });
-      container.appendChild(grid);
+      postWrap.appendChild(grid);
 
       // Approved Post Wording section
       var storageKey = 'post-wording-' + post.name;
@@ -5724,7 +5889,8 @@ function loadSocialContent() {
 
       wrapDiv.appendChild(ta);
       wrapDiv.appendChild(btnRow);
-      container.appendChild(wrapDiv);
+      postWrap.appendChild(wrapDiv);
+      container.appendChild(postWrap);
     });
   }).catch(function(err) {
     document.getElementById('social-content-body').innerHTML = '<p style="color:#cc0000;">Could not load social content: ' + (err && err.message ? err.message : String(err)) + '</p>';
