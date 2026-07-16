@@ -16412,7 +16412,6 @@ function lgRenderLeads() {
             + '<input type="checkbox" ' + (_lgSelectedIds[lead.id] ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="lgToggleSelected(\'' + lead.id + '\', this.checked)" style="flex-shrink:0;cursor:pointer;">'
             + '<span style="font-size:14px;font-weight:700;color:var(--brand-navy);cursor:pointer;" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</span>'
           + '</div>'
-          + '<div style="display:flex;gap:6px;flex-shrink:0;">' + lgQualitySelectHtml(lead) + lgStatusSelectHtml(lead) + '</div>'
         + '</div>'
         + '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.8;">'
           + (lead.createdTime ? '<div>Created: ' + lgFmtDateTime(lead.createdTime) + '</div>' : '')
