@@ -5944,9 +5944,7 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
       firstSection = false;
       ensureSpace(34);
       page.drawText(title, { x: 36, y, size: 12, font: fontBold, color: darkBlue });
-      y -= 8;
-      page.drawLine({ start: { x: 36, y }, end: { x: W - 36, y }, thickness: 1, color: lightGrey });
-      y -= 22;
+      y -= 26;
     };
 
     // Wrap a label into lines that fit within maxWidth at the given font/size
