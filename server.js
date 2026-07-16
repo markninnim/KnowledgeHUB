@@ -2004,7 +2004,8 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
         lender: g.lender,
         benefitEnd: g.benefitEnd,
         notes: saved.notes || '',
-        won: !!saved.won
+        won: !!saved.won,
+        handoff: !!saved.handoff
       };
     });
 
@@ -2020,14 +2021,15 @@ app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
 app.post('/api/mortgage-completions/note', requireAuth, (req, res) => {
   const user = req.session.user;
   const brokerEmail = (user.email || '').toLowerCase();
-  const { key, notes, won } = req.body || {};
+  const { key, notes, won, handoff } = req.body || {};
   if (!key) return res.status(400).json({ error: 'key required' });
   try {
     if (!_autoCrmNotes[brokerEmail]) _autoCrmNotes[brokerEmail] = {};
     const existing = _autoCrmNotes[brokerEmail][key] || {};
     _autoCrmNotes[brokerEmail][key] = {
-      notes: (notes !== undefined) ? String(notes) : (existing.notes || ''),
-      won:   (won   !== undefined) ? !!won            : (existing.won   || false)
+      notes:   (notes   !== undefined) ? String(notes) : (existing.notes   || ''),
+      won:     (won     !== undefined) ? !!won          : (existing.won     || false),
+      handoff: (handoff !== undefined) ? !!handoff      : (existing.handoff || false)
     };
     saveAutoCrmNotes();
     res.json({ success: true });
@@ -2114,7 +2116,8 @@ app.get('/api/reengage-completions', requireAuth, async (req, res) => {
         lender: g.lender,
         benefitEnd: g.benefitEnd,
         notes: saved.notes || '',
-        won: !!saved.won
+        won: !!saved.won,
+        handoff: !!saved.handoff
       };
     });
 

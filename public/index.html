@@ -4079,7 +4079,7 @@ select:focus { outline:none; }
   <div id="tab-reengage" class="tab-pane">
     <div style="padding:32px 32px 0;">
       <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">ReEngage&#8482;</h2>
-      <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases whose benefit end date has already passed &#8212; your own past clients, grouped by how many years ago the case completed, so you can proactively reach out about a new deal.</p>
+      <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases whose benefit end date has already passed &#8212; your own past clients, grouped by how many years ago the case completed, so you can proactively reach out about a new deal. Some of these will be recent completions but older ones are a re-engagement opportunity. If you wish to re-engage please get in touch, or mark to hand off and earn a referral fee.</p>
       <div id="re-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading&hellip;</div>
       <div id="re-content" style="display:none;padding-bottom:32px;"></div>
     </div>
@@ -15277,7 +15277,7 @@ function reRenderRows() {
 
   contentEl.innerHTML = groups.map(function(group) {
     var cards = group.rows.map(function(row) {
-      var cardStyle = 'background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;cursor:pointer;transition:opacity .15s;';
+      var cardStyle = 'background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;cursor:pointer;transition:opacity .15s;' + (row.handoff ? 'opacity:.55;' : '');
       return '<div class="re-card" data-re-key="' + escHtml(row.key) + '" style="' + cardStyle + '" onclick="reOpenNotes(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\')">' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;">' +
             '<span style="color:var(--brand-navy);font-size:14px;font-weight:700;">' + escHtml(row.name || 'Unnamed') + '</span>' +
@@ -15290,6 +15290,9 @@ function reRenderRows() {
             (row.lender ? '<div>Lender: ' + escHtml(row.lender) + '</div>' : '') +
             '<div>' + reElapsedLabel(row.benefitEnd) + '</div>' +
           '</div>' +
+          '<label title="Hand this client off to LeadGEN — they will be worked as a lead by the team, and you will earn a referral fee if it converts." style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #d1d5db;font-size:11.5px;font-weight:700;color:#6b7c8f;cursor:pointer;" onclick="event.stopPropagation();">' +
+            '<input type="checkbox" ' + (row.handoff ? 'checked' : '') + ' onchange="reToggleHandoff(\'' + escHtml(row.key).replace(/'/g,"\\'") + '\', this.checked)"> Mark for LeadGEN&#8482; (referral fee)' +
+          '</label>' +
         '</div>';
     }).join('');
     return '<div style="margin-bottom:28px;">' +
@@ -15297,6 +15300,17 @@ function reRenderRows() {
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">' + cards + '</div>' +
     '</div>';
   }).join('');
+}
+
+function reToggleHandoff(key, handoff) {
+  var row = _reAllRows.find(function(r) { return r.key === key; });
+  if (row) row.handoff = handoff;
+  reRenderRows();
+  fetch('/api/mortgage-completions/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: key, handoff: handoff })
+  }).catch(function() {});
 }
 
 var _reNotesKey = null;
