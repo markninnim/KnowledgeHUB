@@ -16420,7 +16420,7 @@ function lgRenderLeads() {
           + (lead.email ? '<div>' + escHtml(lead.email) + '</div>' : '')
           + '<div>Property: ' + (escHtml(lead.propertyValue) || '—') + ' &middot; Deposit: ' + (escHtml(lead.deposit) || '—') + '</div>'
           + '<div>Salary: ' + (lead.salary ? acFmtCurrency(lead.salary) : '—') + '</div>'
-          + (lead.source ? '<div>Source: ' + escHtml(lead.source) + '</div>' : '')
+          + (lead.source ? '<div>Source: ' + escHtml(lgSourceLabel(lead.source)) + '</div>' : '')
           + (showAdviserFilter && lead.adviser ? '<div>Adviser: ' + escHtml(lead.adviser) + '</div>' : '')
           + (lead.followUp ? '<div>Follow up: ' + acFmtDate(lead.followUp) + '</div>' : '')
           + (lead.mortgageSaleValue || lead.insuranceSaleValue || lead.brokerFeeValue ? '<div>' +
@@ -16448,7 +16448,7 @@ function lgRenderLeads() {
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.source) + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lgSourceLabel(lead.source)) + '</td>'
       + (showAdviserFilter ? '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>' : '')
       + '<td style="padding:10px 12px;">' + lgQualitySelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
@@ -16526,11 +16526,14 @@ function lgDataUserSelectHtml() {
   );
   return '<select id="lg-data-user" onchange="_lgDataUser=this.value;lgRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
+function lgSourceLabel(source) {
+  return source === 'ReEngage' ? 'ReEngage™' : (source || '');
+}
 var _lgDataSource = ''; // '' = all sources
 function lgDataSourceSelectHtml() {
   var sources = Array.from(new Set(_lgLeads.map(function(l) { return l.source; }).filter(Boolean))).sort(function(a, b) { return a.localeCompare(b); });
   var options = ['<option value="">All Sources</option>'].concat(
-    sources.map(function(name) { return '<option' + (name === _lgDataSource ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
+    sources.map(function(name) { return '<option value="' + escHtml(name) + '"' + (name === _lgDataSource ? ' selected' : '') + '>' + escHtml(lgSourceLabel(name)) + '</option>'; })
   );
   return '<select id="lg-data-source" onchange="_lgDataSource=this.value;lgRenderData();" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
 }
