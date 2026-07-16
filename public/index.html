@@ -10159,40 +10159,46 @@ function openBrokerProfile(email, name, keepDateRange) {
           : '<div style="font-size:12px;color:#6b7c8f;">No test results found</div>';
       }
 
+      // ── Generic "N videos logged" list renderer with a click-to-expand
+      // "+N more" toggle, shared by Videos Watched and Revalidation ──
+      function bpVideoRow(v) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
+          '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
+          '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
+        '</div>';
+      }
+      function bpRenderVideoList(elId, all, cap, emptyMsg, countSuffix, expanded) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        if (!all.length) { el.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">' + emptyMsg + '</div>'; return; }
+        var shown = expanded ? all : all.slice(0, cap);
+        var remaining = all.length - shown.length;
+        el.innerHTML = '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + all.length + ' ' + countSuffix + '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:4px;">' + shown.map(bpVideoRow).join('') + '</div>' +
+          (remaining > 0
+            ? '<button onclick="bpToggleVideoList(\'' + elId + '\',true)" style="background:none;border:none;padding:0;margin-top:6px;font-size:11px;color:var(--brand-navy);font-weight:600;cursor:pointer;text-decoration:underline;">+' + remaining + ' more</button>'
+            : (expanded && all.length > cap
+              ? '<button onclick="bpToggleVideoList(\'' + elId + '\',false)" style="background:none;border:none;padding:0;margin-top:6px;font-size:11px;color:var(--brand-navy);font-weight:600;cursor:pointer;text-decoration:underline;">Show less</button>'
+              : ''));
+      }
+      window._bpVideoLists = window._bpVideoLists || {};
+      window.bpToggleVideoList = function(elId, expand) {
+        var cfg = window._bpVideoLists[elId];
+        if (!cfg) return;
+        bpRenderVideoList(elId, cfg.all, cfg.cap, cfg.emptyMsg, cfg.countSuffix, expand);
+      };
+
       // ── Videos Watched (from CPD log) — capped to 5 most recent ──
       var allLog = (d.cpd && d.cpd.log) || [];
       var videos = allLog.filter(function(e) { return e.videoTitle; });
-      var videosShown = videos.slice(0, 5);
-      document.getElementById('bp-videos').innerHTML = videos.length
-        ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + videos.length + ' video' + (videos.length!==1?'s':'') + ' logged</div>' +
-          '<div style="display:flex;flex-direction:column;gap:6px;">' +
-          videosShown.map(function(v) {
-            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
-              '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
-            '</div>';
-          }).join('') + '</div>' +
-          (videos.length > 5 ? '<div style="font-size:11px;color:#6b7c8f;margin-top:6px;">+' + (videos.length - 5) + ' more</div>' : '')
-        : '<div style="font-size:12px;color:#6b7c8f;">No videos logged yet</div>';
+      window._bpVideoLists['bp-videos'] = { all: videos, cap: 5, emptyMsg: 'No videos logged yet', countSuffix: 'video' + (videos.length!==1?'s':'') + ' logged' };
+      bpRenderVideoList('bp-videos', videos, 5, 'No videos logged yet', 'video' + (videos.length!==1?'s':'') + ' logged', false);
 
       // ── Revalidation Videos (CPD log entries matching known revalidation video titles) ──
       var rvTitles = _rvVideos.map(function(v) { return v.title.toLowerCase(); });
       var rvVideos = allLog.filter(function(e) { return e.videoTitle && rvTitles.indexOf(e.videoTitle.toLowerCase()) !== -1; });
-      var rvVideosEl = document.getElementById('bp-rv-videos');
-      if (rvVideosEl) {
-        var rvVideosShown = rvVideos.slice(0, 4);
-        rvVideosEl.innerHTML = rvVideos.length
-          ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + rvVideos.length + ' video' + (rvVideos.length!==1?'s':'') + ' watched</div>' +
-            '<div style="display:flex;flex-direction:column;gap:4px;">' +
-            rvVideosShown.map(function(v) {
-              return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
-                '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
-                '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
-              '</div>';
-            }).join('') + '</div>' +
-            (rvVideos.length > 4 ? '<div style="font-size:11px;color:#6b7c8f;margin-top:6px;">+' + (rvVideos.length - 4) + ' more</div>' : '')
-          : '<div style="font-size:12px;color:#6b7c8f;">No revalidation videos watched yet</div>';
-      }
+      window._bpVideoLists['bp-rv-videos'] = { all: rvVideos, cap: 4, emptyMsg: 'No revalidation videos watched yet', countSuffix: 'video' + (rvVideos.length!==1?'s':'') + ' watched' };
+      bpRenderVideoList('bp-rv-videos', rvVideos, 4, 'No revalidation videos watched yet', 'video' + (rvVideos.length!==1?'s':'') + ' watched', false);
 
       // ── Newsletter Access (CPD log entries for FPG CPD Round-up newsletters) ──
       var nlEl = document.getElementById('bp-newsletter');
