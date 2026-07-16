@@ -4773,6 +4773,11 @@ app.get('/view-asset/*', requireAuth, (req, res) => {
   const parts = req.params[0].split('/').map(p => decodeURIComponent(p).replace(/\.\./g, ''));
   const filePath = path.join(__dirname, 'public/assets', ...parts);
   if (!fs.existsSync(filePath)) return res.status(404).send('Asset not found.');
+  // Allow <img crossorigin="anonymous"> to load this (e.g. the broker-logo
+  // canvas personaliser) without the browser treating it as CORS-tainted —
+  // per spec, setting the crossorigin attribute forces CORS mode even for
+  // same-origin requests, so this header is required or onerror fires.
+  res.header('Access-Control-Allow-Origin', '*');
   res.sendFile(filePath);
 });
 
