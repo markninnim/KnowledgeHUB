@@ -487,18 +487,36 @@ select:focus { outline:none; }
         <!-- Cols 1-2: News Bulletins + Video/Newsletter stacked -->
         <div style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;">
 
-          <!-- News Bulletins -->
-          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-              <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+          <!-- News Bulletins (2/3) + Today's Recommended Post (1/3) -->
+          <div style="display:flex;gap:20px;">
+
+            <!-- News Bulletins -->
+            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:2;min-width:0;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+                </div>
+                <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">News Bulletins</div>
+                <button id="news-add-btn" onclick="openNewsModal()" style="display:none;margin-left:auto;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Story</button>
               </div>
-              <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">News Bulletins</div>
-              <button id="news-add-btn" onclick="openNewsModal()" style="display:none;margin-left:auto;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Story</button>
+              <div style="height:320px;overflow:hidden;position:relative;" id="home-bulletins-wrap"><div style="display:flex;flex-direction:column;gap:12px;padding-right:6px;" id="home-bulletins-grid">
+                <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">No bulletins yet.</div>
+              </div></div>
             </div>
-            <div style="height:320px;overflow:hidden;position:relative;" id="home-bulletins-wrap"><div style="display:flex;flex-direction:column;gap:12px;padding-right:6px;" id="home-bulletins-grid">
-              <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">No bulletins yet.</div>
-            </div></div>
+
+            <!-- Today's Recommended Post -->
+            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:1;min-width:0;display:flex;flex-direction:column;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <div style="width:36px;height:36px;background:var(--brand-orange);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                </div>
+                <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">Today's Recommended Post</div>
+              </div>
+              <div id="home-today-post" style="flex:1;display:flex;flex-direction:column;">
+                <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Loading...</div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Video + Newsletter side by side -->
@@ -5797,6 +5815,92 @@ function filterPillar(pillar, btn) {
   });
 }
 
+// Deterministic day-of-year seed so every user sees the same pick, and the
+// pillar rotates day to day rather than always showing the same theme.
+function _dayOfYearSeed() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  var diff = now - start;
+  return Math.floor(diff / 86400000);
+}
+function loadTodayPost() {
+  var box = document.getElementById('home-today-post');
+  if (!box) return;
+  Promise.all([
+    fetch('/api/social-content').then(function(r){ return r.json(); }),
+    fetch('/social-copy.json').then(function(r){ return r.json(); }).catch(function(){ return {}; })
+  ]).then(function(results) {
+    var posts  = results[0] || [];
+    var copyDb = results[1] || {};
+    if (!posts.length) { box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">No posts available.</div>'; return; }
+
+    // Group posts by pillar
+    var byPillar = {};
+    posts.forEach(function(post) {
+      var pillar = pillarFor(post.name);
+      if (!byPillar[pillar]) byPillar[pillar] = [];
+      byPillar[pillar].push(post);
+    });
+    var pillars = Object.keys(byPillar).filter(function(p){ return p !== 'Uncategorised'; }).sort();
+    if (!pillars.length) pillars = Object.keys(byPillar);
+    var seed = _dayOfYearSeed();
+    var pillar = pillars[seed % pillars.length];
+    var candidates = byPillar[pillar];
+
+    // Most recent post within that pillar
+    var newestPostDate = function(post) {
+      return post.files.reduce(function(latest, f) { return new Date(f.created) > latest ? new Date(f.created) : latest; }, new Date(0));
+    };
+    var chosen = candidates.reduce(function(best, p) { return newestPostDate(p) > newestPostDate(best) ? p : best; }, candidates[0]);
+
+    var squareFile = chosen.files.find(function(f) {
+      var info = resolveSizeLabel(f.name || f);
+      return info.label === 'Square';
+    }) || chosen.files[0];
+    var fileName = squareFile.name || squareFile;
+    var imgUrl = '/download-post/' + encodeURIComponent(chosen.name) + '/' + encodeURIComponent(fileName);
+
+    var title = chosen.name.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+    var approvedCopy = copyDb[chosen.name] || '';
+    var copyText = buildDefaultCopy(chosen.name, approvedCopy);
+    var pillarColor = PILLAR_COLORS[pillar] || '#6b7c8f';
+
+    box.innerHTML = '';
+    var badge = document.createElement('div');
+    badge.textContent = pillar;
+    badge.style.cssText = 'display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1.4;color:#fff;background:' + pillarColor + ';padding:6px 12px;border-radius:20px;margin-bottom:10px;';
+    box.appendChild(badge);
+
+    var imgWrap = document.createElement('div');
+    imgWrap.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#f5f7fa;display:flex;align-items:center;justify-content:center;margin-bottom:10px;';
+    var img = document.createElement('img');
+    img.src = imgUrl;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+    img.onerror = function(){ imgWrap.innerHTML = '<div style="color:#6b7c8f;font-size:12px;">Image unavailable</div>'; };
+    imgWrap.appendChild(img);
+    box.appendChild(imgWrap);
+
+    var titleEl = document.createElement('div');
+    titleEl.textContent = title;
+    titleEl.style.cssText = 'font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:8px;';
+    box.appendChild(titleEl);
+
+    var copyEl = document.createElement('div');
+    copyEl.textContent = copyText;
+    copyEl.style.cssText = 'font-size:12px;color:#6b7c8f;white-space:pre-wrap;flex:1;overflow-y:auto;max-height:120px;margin-bottom:10px;';
+    box.appendChild(copyEl);
+
+    var goBtn = document.createElement('a');
+    goBtn.href = '#';
+    goBtn.textContent = 'View in Social Content →';
+    goBtn.style.cssText = 'font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;';
+    goBtn.onclick = function(e){ e.preventDefault(); show('social-content', document.querySelector('a[onclick*="social-content"]')); loadSocialContent(); };
+    box.appendChild(goBtn);
+  }).catch(function() {
+    box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load today\'s post.</div>';
+  });
+}
+
 function loadSocialContent() {
   loadFeaturedSocial();
   Promise.all([
@@ -7560,6 +7664,7 @@ function loadHomeData() {
     }
     greetEl.textContent = tod + (name ? ', ' + name : '') + '!';
   }
+  loadTodayPost();
   if (_homeLoaded) return;
   _homeLoaded = true;
 
