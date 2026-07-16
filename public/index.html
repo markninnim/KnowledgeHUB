@@ -488,23 +488,21 @@ select:focus { outline:none; }
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:stretch;">
 
         <!-- Cols 1-2: News Bulletins + Video/Newsletter stacked -->
-        <div style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;height:100%;">
+        <div style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;">
 
-          <!-- News Bulletins (2/3 height) + Today's Recommended Post (1/3 height), stacked —
-               flex:1 so this block absorbs any extra height column 3 gains (e.g. a third
-               CPD bar or extra ReEngage buckets), keeping both columns the same height. -->
-          <div style="display:flex;flex-direction:column;gap:20px;flex:1;">
+          <!-- News Bulletins (2/3 height) + Today's Recommended Post (1/3 height), stacked -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
 
             <!-- News Bulletins -->
-            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:2;min-width:0;display:flex;flex-direction:column;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-shrink:0;">
+            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:2;min-width:0;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
                 <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
                 </div>
                 <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">News Bulletins</div>
                 <button id="news-add-btn" onclick="openNewsModal()" style="display:none;margin-left:auto;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Add Story</button>
               </div>
-              <div style="flex:1;min-height:224px;overflow:hidden;position:relative;" id="home-bulletins-wrap"><div style="display:flex;flex-direction:column;gap:12px;padding-right:6px;" id="home-bulletins-grid">
+              <div style="height:320px;overflow:hidden;position:relative;" id="home-bulletins-wrap"><div style="display:flex;flex-direction:column;gap:12px;padding-right:6px;" id="home-bulletins-grid">
                 <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">No bulletins yet.</div>
               </div></div>
             </div>
