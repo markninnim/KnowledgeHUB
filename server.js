@@ -1928,12 +1928,81 @@ app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
   }
 });
 
-// ── AutoCRM notes / Business Won state (local, per-broker) ────
-const AUTOCRM_NOTES_PATH = path.join(__dirname, 'autocrm-notes.json');
-let _autoCrmNotes = {}; // { [brokerEmailLower]: { [rowKey]: { notes: '', won: false, handoff: false, handoffLeadId, handoffAdviser } } }
-try { _autoCrmNotes = JSON.parse(fs.readFileSync(AUTOCRM_NOTES_PATH, 'utf8')); } catch (_) {}
-function saveAutoCrmNotes() {
-  try { fs.writeFileSync(AUTOCRM_NOTES_PATH, JSON.stringify(_autoCrmNotes, null, 2)); } catch (e) { console.error('Failed to save AutoCRM notes:', e); }
+// ── AutoCRM notes / Business Won / LeadGEN handoff state (per-broker) ──
+// Stored in Airtable (not a local JSON file) so it survives Railway's
+// rolling/ephemeral redeploys — a local file gets wiped on every deploy,
+// which is exactly why a broker's "Mark for LeadGEN" tick was resetting.
+const ACN_BASE            = 'appqQv0Xog8yZMwI9';
+const ACN_TABLE           = 'tblwaTA95rtSd5ogj';
+const ACN_KEY             = 'fldT4fVByQIDjjjNz'; // Composite Key = brokerEmail + '|' + rowKey
+const ACN_BROKER          = 'fldBFYyIMrtHF16dp';
+const ACN_ROWKEY          = 'flduqnMna5haDzv1K';
+const ACN_NOTES           = 'fldLNHrKLWL2LHrWk';
+const ACN_WON             = 'fldtgohVqNE0BvCHg';
+const ACN_HANDOFF         = 'fldKdlevcQdWmHNjQ';
+const ACN_HANDOFF_ADVISER = 'fldEyZIHv658mWMPM';
+const ACN_HANDOFF_LEADID  = 'fldAzrFWopqByE4mH';
+
+let _autoCrmNotes = {}; // { [brokerEmailLower]: { [rowKey]: { notes, won, handoff, handoffLeadId, handoffAdviser } } }
+async function loadAutoCrmNotesFromAirtable() {
+  try {
+    let records = [], offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100` + (offset ? `&offset=${offset}` : '');
+      const r = await fetch(`https://api.airtable.com/v0/${ACN_BASE}/${ACN_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      records = records.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset);
+    const notes = {};
+    records.forEach(rec => {
+      const f = rec.fields || {};
+      const brokerEmail = (f[ACN_BROKER] || '').toLowerCase();
+      const rowKey = f[ACN_ROWKEY] || '';
+      if (!brokerEmail || !rowKey) return;
+      if (!notes[brokerEmail]) notes[brokerEmail] = {};
+      notes[brokerEmail][rowKey] = {
+        notes: f[ACN_NOTES] || '',
+        won: !!f[ACN_WON],
+        handoff: !!f[ACN_HANDOFF],
+        handoffAdviser: f[ACN_HANDOFF_ADVISER] || '',
+        handoffLeadId: f[ACN_HANDOFF_LEADID] || null
+      };
+    });
+    _autoCrmNotes = notes;
+  } catch (err) {
+    console.error('Failed to load AutoCRM notes from Airtable:', err);
+  }
+}
+const _autoCrmNotesReady = loadAutoCrmNotesFromAirtable();
+
+// Upserts a single broker/row's note state to Airtable — a targeted single-
+// record upsert (not a full rewrite), matching the robust pattern used for
+// Feature Flags, so concurrent app instances can never create duplicate rows.
+async function upsertAutoCrmNote(brokerEmail, rowKey, data) {
+  try {
+    const compositeKey = brokerEmail + '|' + rowKey;
+    await fetch(`https://api.airtable.com/v0/${ACN_BASE}/${ACN_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        performUpsert: { fieldsToMergeOn: [ACN_KEY] },
+        records: [{ fields: {
+          [ACN_KEY]:             compositeKey,
+          [ACN_BROKER]:          brokerEmail,
+          [ACN_ROWKEY]:          rowKey,
+          [ACN_NOTES]:           data.notes || '',
+          [ACN_WON]:             !!data.won,
+          [ACN_HANDOFF]:         !!data.handoff,
+          [ACN_HANDOFF_ADVISER]: data.handoffAdviser || '',
+          [ACN_HANDOFF_LEADID]:  data.handoffLeadId || ''
+        } }]
+      })
+    });
+  } catch (e) {
+    console.error('Failed to save AutoCRM note to Airtable:', e);
+  }
 }
 
 // ── ReEngage™ → LeadGEN handoff: round-robin assignment among advisers
@@ -1969,6 +2038,7 @@ async function getNextLeadGenAdviser() {
 app.get('/api/mortgage-completions', requireAuth, async (req, res) => {
   const user = req.session.user;
   try {
+    await _autoCrmNotesReady;
     const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
     const formula = encodeURIComponent(
       `AND(IS_AFTER({Benefit End (Date)}, DATEADD(TODAY(), -1, 'days')), IS_BEFORE({Benefit End (Date)}, DATEADD(TODAY(), 6, 'months')), LOWER({Customer Ref Email})="${brokerEmail}")`
@@ -2055,6 +2125,7 @@ app.post('/api/mortgage-completions/note', requireAuth, async (req, res) => {
   const { key, notes, won, handoff, name, email, loanAmount, lender, benefitEnd } = req.body || {};
   if (!key) return res.status(400).json({ error: 'key required' });
   try {
+    await _autoCrmNotesReady;
     if (!_autoCrmNotes[brokerEmail]) _autoCrmNotes[brokerEmail] = {};
     const existing = _autoCrmNotes[brokerEmail][key] || {};
     const wasHandedOff = !!existing.handoff;
@@ -2106,7 +2177,7 @@ app.post('/api/mortgage-completions/note', requireAuth, async (req, res) => {
       }
     }
 
-    saveAutoCrmNotes();
+    await upsertAutoCrmNote(brokerEmail, key, _autoCrmNotes[brokerEmail][key]);
     res.json({ success: true, handoffAdviser: _autoCrmNotes[brokerEmail][key].handoffAdviser || null });
   } catch (err) {
     console.error('AutoCRM note save error:', err);
@@ -2122,6 +2193,7 @@ app.post('/api/mortgage-completions/note', requireAuth, async (req, res) => {
 app.get('/api/reengage-completions', requireAuth, async (req, res) => {
   const user = req.session.user;
   try {
+    await _autoCrmNotesReady;
     const brokerEmail = (user.email || '').toLowerCase().replace(/"/g, '\\"');
     const formula = encodeURIComponent(
       `AND(IS_BEFORE({Benefit End (Date)}, TODAY()), LOWER({Customer Ref Email})="${brokerEmail}")`
