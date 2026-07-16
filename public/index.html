@@ -10089,7 +10089,7 @@ function openBrokerProfile(email, name, keepDateRange) {
             '</div>' +
           '</div>' +
           '<div style="text-align:center;margin-left:36px;">' +
-            '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cdFullPct != null ? cdFullPct + '%' : '—') + '</div>' +
+            '<div style="font-size:28px;font-weight:800;color:' + (cdFullPct === 100 ? '#22c55e' : 'var(--brand-navy)') + ';">' + (cdFullPct != null ? cdFullPct + '%' : '—') + '</div>' +
             '<div style="font-size:11px;color:#6b7c8f;">% full</div>' +
           '</div>' +
         '</div>';
