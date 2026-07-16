@@ -830,7 +830,6 @@ select:focus { outline:none; }
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">This library contains pre-approved social content ready to post across your channels. Before creating anything yourself, <strong>browse here first</strong> -if what you need already exists, it has been signed off and is good to go.</p>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">If you do choose to create your own content, <strong>it must be submitted for approval before being posted</strong>. This protects the brand and ensures everything going out under the FPG name is consistent and compliant. Please also be mindful of image rights, only use images you have permission to use. If a licenced image is detected online, you will be liable for a fine for unauthorised use. When in doubt, stick to approved assets in this library, your own photography, or images from a platform you hold an active licence for. Any questions, speak to <strong>Mark Ninnim</strong> -<a href="mailto:mark.ninnim@financeplanning.co.uk" style="color:#6b7c8f;text-decoration:none;">mark.ninnim@financeplanning.co.uk</a> or <a href="tel:07525932299" style="color:#6b7c8f;text-decoration:none;">07525 932 299</a></p>
     <p id="social-coverage-msg" style="display:none;font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;"></p>
-    <div style="border-bottom:1px solid #d1d5db;margin-bottom:24px;"></div>
 
     <!-- Featured Posts (admin/marketing only) -->
     <div id="featured-social-wrap" style="display:none;margin-bottom:32px;">
@@ -842,11 +841,9 @@ select:focus { outline:none; }
       </div>
       <div id="featured-social-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"></div>
     </div>
-    <div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:700;color:var(--brand-navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">What are content pillars?</div>
-      <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 8px;">Every post below is tagged with a <strong>pillar</strong> — the theme it serves. Use the pillar filter to plan a balanced week rather than posting whatever's newest: aim for a mix rather than several posts from the same pillar in a row, so your feed doesn't read as one-note.</p>
-      <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0;">A simple rhythm that works well for 3 posts a week: one <strong>Property Journey</strong> post (practical, how-to content that brings in first-time buyers and movers), one <strong>Protection &amp; Wellbeing</strong> or <strong>Renewals &amp; Rates</strong> post (keeps you visible to your existing client base), and one <strong>Trust &amp; Results</strong> post (reviews, awards, credibility). Layer in <strong>Market &amp; Money News</strong> when something topical happens (a Budget, a base rate move) and <strong>Community &amp; Culture</strong> around holidays and seasonal moments — those are for warmth and engagement, not lead generation, so don't let them crowd out the rest.</p>
-    </div>
+    <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">What are content pillars?</h2>
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 8px;">Every post below is tagged with a <strong>pillar</strong> — the theme it serves. Use the pillar filter to plan a balanced week rather than posting whatever's newest: aim for a mix rather than several posts from the same pillar in a row, so your feed doesn't read as one-note.</p>
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 20px;">A simple rhythm that works well for 3 posts a week: one <strong>Property Journey</strong> post (practical, how-to content that brings in first-time buyers and movers), one <strong>Protection &amp; Wellbeing</strong> or <strong>Renewals &amp; Rates</strong> post (keeps you visible to your existing client base), and one <strong>Trust &amp; Results</strong> post (reviews, awards, credibility). Layer in <strong>Market &amp; Money News</strong> when something topical happens (a Budget, a base rate move) and <strong>Community &amp; Culture</strong> around holidays and seasonal moments — those are for warmth and engagement, not lead generation, so don't let them crowd out the rest. Use <strong>Call to Action</strong> posts sparingly and deliberately — these are your direct invitations to book an appointment, check affordability, or get an Agreed in Principle, so save them for when you actually want the conversation, rather than every day.</p>
     <div id="sc-pillar-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
       <button class="sc-filter sc-pillar active" onclick="filterPillar('all',this)">All Pillars</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Property Journey',this)">Property Journey</button>
@@ -855,6 +852,7 @@ select:focus { outline:none; }
       <button class="sc-filter sc-pillar" onclick="filterPillar('Trust &amp; Results',this)">Trust &amp; Results</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Market &amp; Money News',this)">Market &amp; Money News</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Community &amp; Culture',this)">Community &amp; Culture</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Call to Action',this)">Call to Action</button>
     </div>
     <div id="sc-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
       <button class="sc-filter active" onclick="filterSocial('all',this)">All</button>
@@ -5641,7 +5639,7 @@ var _socialCopyDb = {};
 // the pillar filter row in the Bespoke Social Content section for how to use
 // these day to day.
 var PILLAR_MAP = {
-  "23 or 5": "Renewals & Rates",
+  "2,3 or 5": "Renewals & Rates",
   "5 stars 5000": "Trust & Results",
   "5 stars 5000 times": "Trust & Results",
   "April fool": "Community & Culture",
@@ -5673,7 +5671,7 @@ var PILLAR_MAP = {
   "feeling lucky": "Community & Culture",
   "finance with purpose": "Trust & Results",
   "fixed or flexible": "Renewals & Rates",
-  "from approval to offer": "Property Journey",
+  "from approval to offer": "Call to Action",
   "from student to settled": "Property Journey",
   "future freedom": "Property Journey",
   "gental guidance": "Trust & Results",
@@ -5684,7 +5682,7 @@ var PILLAR_MAP = {
   "helping you prepare": "Property Journey",
   "hindsight handled": "Renewals & Rates",
   "home ownership made simple": "Property Journey",
-  "how much can i borrow": "Property Journey",
+  "how much can i borrow": "Call to Action",
   "income secured": "Protection & Wellbeing",
   "invest with confidence": "Property Journey",
   "is it all a blur": "Trust & Results",
@@ -5692,9 +5690,9 @@ var PILLAR_MAP = {
   "know before you borrow": "Property Journey",
   "know your numbers clearly": "Market & Money News",
   "lending prepared": "Property Journey",
-  "lets review together": "Renewals & Rates",
+  "lets review together": "Call to Action",
   "life happens unexpectedly": "Protection & Wellbeing",
-  "location location location": "Property Journey",
+  "location location location": "Call to Action",
   "market pulse": "Renewals & Rates",
   "market signals": "Renewals & Rates",
   "mental health 3": "Protection & Wellbeing",
@@ -5712,13 +5710,13 @@ var PILLAR_MAP = {
   "no can still be a yes": "Property Journey",
   "no deposit no problem": "Property Journey",
   "no scary surprises": "Property Journey",
-  "opportunity knocks": "Property Journey",
+  "opportunity knocks": "Call to Action",
   "own it": "Property Journey",
   "past present perspective": "Renewals & Rates",
-  "plan approve move": "Property Journey",
+  "plan approve move": "Call to Action",
   "plan prepare prosper": "Property Journey",
   "planning beyond policital change": "Market & Money News",
-  "pre approved confidence": "Property Journey",
+  "pre approved confidence": "Call to Action",
   "preparation before suprises": "Property Journey",
   "progress is power": "Property Journey",
   "proven expertise": "Trust & Results",
@@ -5763,7 +5761,8 @@ var PILLAR_COLORS = {
   "Protection & Wellbeing":   "#166534",
   "Trust & Results":          "var(--brand-orange)",
   "Market & Money News":      "#7c3aed",
-  "Community & Culture":      "#b45309"
+  "Community & Culture":      "#b45309",
+  "Call to Action":           "#dc2626"
 };
 function pillarFor(postName) { return PILLAR_MAP[postName] || 'Uncategorised'; }
 var _scPillarFilter = 'all';
