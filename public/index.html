@@ -16444,17 +16444,14 @@ function lgRenderLeads() {
       + '<td style="' + td + 'font-size:13px;font-weight:600;color:var(--brand-navy);" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.name) + lgAutoCrmIconHtml(lead) + (lgIsNewLead(lead, openedLeadIds) ? lgNewLeadDotHtml() : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.createdTime ? lgFmtDateTime(lead.createdTime) : '') + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.phone) + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.email) + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.propertyValue) + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lead.deposit) + '</td>'
-      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + (lead.salary ? acFmtCurrency(lead.salary) : '') + '</td>'
+      + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lgFirstEmail(lead.email)) + '</td>'
       + '<td style="' + td + '" onclick="lgOpenModal(\'' + lead.id + '\')">' + escHtml(lgSourceLabel(lead.source)) + '</td>'
       + (showAdviserFilter ? '<td style="padding:10px 12px;">' + lgAdviserSelectHtml(lead) + '</td>' : '')
       + '<td style="padding:10px 12px;">' + lgQualitySelectHtml(lead) + '</td>'
       + '<td style="padding:10px 12px;">' + lgStatusSelectHtml(lead) + '</td>'
       + '</tr>';
   }).join('');
-  var headers = ['','Name','Created','Phone','Email','Property Value','Deposit','Salary','Source'].concat(showAdviserFilter ? ['Adviser'] : []).concat(['Quality','Status']);
+  var headers = ['','Name','Created','Phone','Email','Source'].concat(showAdviserFilter ? ['Adviser'] : []).concat(['Quality','Status']);
   contentEl.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">'
     + '<thead><tr style="background:#f5f7fa;">'
       + headers.map(function(h) {
@@ -16528,6 +16525,11 @@ function lgDataUserSelectHtml() {
 }
 function lgSourceLabel(source) {
   return source === 'ReEngage' ? 'ReEngage™' : (source || '');
+}
+// Some ReEngage handoffs carry multiple joint-applicant emails, comma-separated —
+// the table view should only ever show the first one to keep the row compact.
+function lgFirstEmail(email) {
+  return (email || '').split(',')[0].trim();
 }
 var _lgDataSource = ''; // '' = all sources
 function lgDataSourceSelectHtml() {
