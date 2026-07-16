@@ -5736,6 +5736,21 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       const d = npsRated.filter(r => r.fields['NPS'] <= 6).length;
       feefoNps = Math.round((p - d) / npsRated.length * 100);
     }
+    // Company-wide Feefo rank — where this broker sits vs every other
+    // adviser by review count (all-time, not scoped to the page's date
+    // range, since rank is a standing/reputation measure not a period one).
+    let feefoRank = null, feefoTotalAdvisers = null;
+    try {
+      const feefoStatsByAdviser = await fetchFeefoStatsByAdviser();
+      const nameKey = fullName.toLowerCase().trim();
+      const counts = Object.values(feefoStatsByAdviser).map(s => s.count).sort((a, b) => b - a);
+      const myCount = feefoStatsByAdviser[nameKey] ? feefoStatsByAdviser[nameKey].count : 0;
+      feefoTotalAdvisers = counts.length;
+      feefoRank = myCount > 0 ? counts.findIndex(v => v <= myCount) + 1 : null;
+    } catch (feefoRankErr) {
+      console.error('broker-profile feefo rank error:', feefoRankErr);
+    }
+
     const feefoReviews = feefoRecs.map(r => ({
       customer: r.fields['Customer Name'] || 'Customer',
       review:   r.fields['Review'] || '',
@@ -5891,7 +5906,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     return {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
-      feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
+      feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews, rank: feefoRank, totalAdvisers: feefoTotalAdvisers },
       consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults,
       knowledgeTests: knowledgeTests,
