@@ -3854,7 +3854,10 @@ select:focus { outline:none; }
 
           <!-- Row 1 Col 1: CPD (stretch to match tallest in row) -->
           <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:1;grid-column:1;align-self:stretch;">
-            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">CPD Progress</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">CPD Progress</div>
+              <div id="bp-cpd-licences" style="font-size:11px;font-weight:600;color:#6b7c8f;text-align:right;"></div>
+            </div>
             <div id="bp-cpd" style="display:flex;flex-direction:column;gap:12px;"></div>
           </div>
 
@@ -9999,19 +10002,32 @@ function openBrokerProfile(email, name, keepDateRange) {
       var cpdEl = document.getElementById('bp-cpd');
       var byType = d.cpd ? d.cpd.byType : {};
       var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
+      var QUALIFY_MINS = 120; // 2 hours — icon turns green once reached in that subject
       var types = [];
       if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
       if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
       if (u.sellsInvestments) types.push({ key: 'Wealth', color: '#2e99d5' });
       if (!types.length) types = [{ key: 'Mortgage', color: 'var(--brand-navy)' }, { key: 'Protection', color: 'var(--brand-orange)' }];
+
+      var licencesEl = document.getElementById('bp-cpd-licences');
+      if (licencesEl) {
+        var licences = [];
+        if (u.sellsMortgages)   licences.push('Mortgage');
+        if (u.sellsProtection)  licences.push('Protection');
+        if (u.sellsInvestments) licences.push('Wealth');
+        licencesEl.textContent = licences.length ? licences.join(' · ') : '';
+      }
+
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
         var target  = targets[t.key] || 900;
         var pct     = Math.min(100, Math.round(done / target * 100));
         var complete = done >= target;
+        var qualified = done >= QUALIFY_MINS;
+        var dotColor = qualified ? '#22c55e' : '#d1d5db';
         return '<div>' +
-          '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
-            '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.key + '</span>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
+            '<span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#6b7c8f;"><span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></span>' + t.key + '</span>' +
             '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
           '</div>' +
           '<div style="height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden;">' +
