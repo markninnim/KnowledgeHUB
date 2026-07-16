@@ -10142,7 +10142,7 @@ function openBrokerProfile(email, name, keepDateRange) {
           return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;gap:10px;">' +
             '<div style="font-size:12px;color:#6b7c8f;min-width:0;">' + escHtml(t.label || ('Test ' + n)) + '</div>' +
             '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
-              '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + (t.score != null ? t.score + '%' : '—') + '</span>' +
+              '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + (t.score != null ? t.score + '/' + t.max : '—') + '</span>' +
               '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (pass?'PASS':'FAIL') + '</span>' +
             '</div>' +
           '</div>';

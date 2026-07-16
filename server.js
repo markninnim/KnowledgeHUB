@@ -5540,6 +5540,17 @@ app.patch('/api/consumer-duty/:id/restore', requireAuth, async (req, res) => {
 const RV_BASE  = 'applcWZPy40cayRzd';
 const RV_TABLE = 'tblI70qGiOJqICPfC'; // 2026 Revalidation Results
 
+// Revalidation "Broker List" table — per-topic knowledge test scores
+const BL_BASE       = 'applcWZPy40cayRzd';
+const BL_TABLE      = 'tbljGWcm32Y4fQAmS'; // Broker List
+const BL_EMAIL      = 'fldUEJ65iCoFCDyOd';
+const BL_TEST_FIELDS = [
+  { field: 'fld4nRZdwzUCKBwIY', max: 12, label: 'Complaints, Conduct Rules & Breaches' },
+  { field: 'fldGQ76iaTKSQax8p', max: 12, label: 'Consumer Duty & Financial Crime' },
+  { field: 'fldRSL1PSjoaVadvd', max: 12, label: 'Vulnerable Clients & Information Security' },
+  { field: 'fldL8YGlYtT7QXjSu', max: 11, label: 'Record Keeping & Sales Process' }
+];
+
 // Core data fetch shared by the JSON endpoint and the PDF export below —
 // takes the raw params instead of req/res so both routes can call it.
 async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
@@ -5565,7 +5576,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     const safeName   = fullName.toLowerCase().trim().replace(/"/g, '\\"');
 
     // 2. Parallel data fetches
-    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs, mcRecs, crRecs] = await Promise.all([
+    const [cpdRecs, feefoRecs, cdRecs, rvRecs, leadRecs, mcRecs, crRecs, blRec] = await Promise.all([
 
       // CPD Log — all entries for this email
       (async () => {
@@ -5658,6 +5669,17 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
           offset   = d.offset || '';
         } while (offset);
         return records;
+      })(),
+
+      // Revalidation Broker List — per-topic knowledge test scores, by email.
+      // NOT date-range filtered (one-off tests, often predate the report range).
+      (async () => {
+        const formula = encodeURIComponent(`LOWER(TRIM({${BL_EMAIL}})) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+        const fieldQs = [BL_EMAIL, ...BL_TEST_FIELDS.map(t => t.field)].map(f => `&fields[]=${f}`).join('');
+        const qs = `?filterByFormula=${formula}${fieldQs}&returnFieldsByFieldId=true&pageSize=10`;
+        const r  = await fetch(`https://api.airtable.com/v0/${BL_BASE}/${BL_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const b  = await r.json();
+        return (b.records || [])[0] || null;
       })()
     ]);
 
@@ -5684,36 +5706,24 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       });
     });
 
-    // Induction knowledge test results — 4 named topic tests, logged in the CPD
-    // Log itself (Source = "Knowledge Test"), same lookup used by the CAS Path
-    // induction tracker. Keeps the most recent pass, or most recent attempt if
-    // never passed.
-    const KT_NAME_TO_NUM = {
-      '1. Complaints, Conduct Rules & Breaches': 1,
-      '2. Consumer Duty & Financial Crime': 2,
-      '3. Vulnerable Clients & Information Security': 3,
-      '4. Record Keeping & Sales Process': 4
-    };
-    const KT_LABELS = {
-      1: 'Complaints, Conduct Rules & Breaches',
-      2: 'Consumer Duty & Financial Crime',
-      3: 'Vulnerable Clients & Information Security',
-      4: 'Record Keeping & Sales Process'
-    };
+    // Revalidation knowledge test results — 4 named topic tests, sourced from
+    // the Revalidation "Broker List" table (Test 1–4 score fields), matched by
+    // email. Not date-range filtered — these are one-off tests.
     const knowledgeTests = {};
-    cpdLog.forEach(e => {
-      if (e.source !== 'Knowledge Test') return;
-      const activity = (e.activity || '').replace(/ – Knowledge Test$/, '');
-      const num = KT_NAME_TO_NUM[activity];
-      if (!num) return;
-      const pctMatch = (e.learned || '').match(/\((\d+)%\)/);
-      const pct    = pctMatch ? parseInt(pctMatch[1]) : null;
-      const passed = (e.learned || '').toUpperCase().includes('PASSED');
-      const existing = knowledgeTests[num];
-      if (!existing || (!existing.passed && passed) || (existing.passed === passed && e.date > existing.date)) {
-        knowledgeTests[num] = { label: KT_LABELS[num], date: e.date, score: pct, passed };
-      }
-    });
+    if (blRec) {
+      const blf = blRec.fields || {};
+      BL_TEST_FIELDS.forEach((t, i) => {
+        const raw = blf[t.field];
+        if (raw === undefined || raw === null || raw === '') return;
+        const score = Number(raw);
+        knowledgeTests[i + 1] = {
+          label: t.label,
+          score,
+          max: t.max,
+          passed: !isNaN(score) ? (score / t.max) >= 0.7 : null
+        };
+      });
+    }
 
     // Process Feefo
     const rated   = feefoRecs.filter(r => r.fields['Service Rating']);
