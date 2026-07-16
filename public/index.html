@@ -843,13 +843,13 @@ select:focus { outline:none; }
     </div>
     <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">What are content pillars?</h2>
     <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 8px;">Every post below is tagged with a <strong>pillar</strong> — the theme it serves. Use the pillar filter to plan a balanced week rather than posting whatever's newest: aim for a mix rather than several posts from the same pillar in a row, so your feed doesn't read as one-note.</p>
-    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 20px;">A simple rhythm that works well for 3 posts a week: one <strong>Property Journey</strong> post (practical, how-to content that brings in first-time buyers and movers), one <strong>Protection &amp; Wellbeing</strong> or <strong>Renewals &amp; Rates</strong> post (keeps you visible to your existing client base), and one <strong>Trust &amp; Results</strong> post (reviews, awards, credibility). Layer in <strong>Market &amp; Money News</strong> when something topical happens (a Budget, a base rate move) and <strong>Community &amp; Culture</strong> around holidays and seasonal moments — those are for warmth and engagement, not lead generation, so don't let them crowd out the rest. Use <strong>Call to Action</strong> posts sparingly and deliberately — these are your direct invitations to book an appointment, check affordability, or get an Agreed in Principle, so save them for when you actually want the conversation, rather than every day.</p>
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 20px;">A simple rhythm that works well for 3 posts a week: one <strong>Property Journey</strong> post (practical, how-to content that brings in first-time buyers and movers), one <strong>Protection &amp; Wellbeing</strong> or <strong>Renewals &amp; Rates</strong> post (keeps you visible to your existing client base), and one <strong>Trust Building</strong> post (reviews, awards, credibility). Layer in <strong>Market &amp; Money News</strong> when something topical happens (a Budget, a base rate move) and <strong>Community &amp; Culture</strong> around holidays and seasonal moments — those are for warmth and engagement, not lead generation, so don't let them crowd out the rest. Use <strong>Call to Action</strong> posts sparingly and deliberately — these are your direct invitations to book an appointment, check affordability, or get an Agreed in Principle, so save them for when you actually want the conversation, rather than every day.</p>
     <div id="sc-pillar-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
       <button class="sc-filter sc-pillar active" onclick="filterPillar('all',this)">All Pillars</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Property Journey',this)">Property Journey</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Renewals &amp; Rates',this)">Renewals &amp; Rates</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Protection &amp; Wellbeing',this)">Protection &amp; Wellbeing</button>
-      <button class="sc-filter sc-pillar" onclick="filterPillar('Trust &amp; Results',this)">Trust &amp; Results</button>
+      <button class="sc-filter sc-pillar" onclick="filterPillar('Trust Building',this)">Trust Building</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Market &amp; Money News',this)">Market &amp; Money News</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Community &amp; Culture',this)">Community &amp; Culture</button>
       <button class="sc-filter sc-pillar" onclick="filterPillar('Call to Action',this)">Call to Action</button>
@@ -5640,8 +5640,8 @@ var _socialCopyDb = {};
 // these day to day.
 var PILLAR_MAP = {
   "2,3 or 5": "Renewals & Rates",
-  "5 stars 5000": "Trust & Results",
-  "5 stars 5000 times": "Trust & Results",
+  "5 stars 5000": "Trust Building",
+  "5 stars 5000 times": "Trust Building",
   "April fool": "Community & Culture",
   "Spring goals": "Market & Money News",
   "a renters path": "Property Journey",
@@ -5653,28 +5653,28 @@ var PILLAR_MAP = {
   "base rate": "Market & Money News",
   "beyond basic salary": "Protection & Wellbeing",
   "borrow bark buy": "Property Journey",
-  "broker benefits": "Trust & Results",
+  "broker benefits": "Trust Building",
   "celebrating women": "Community & Culture",
   "christmas renewal": "Renewals & Rates",
   "clarity over confidence": "Property Journey",
-  "clarity over uncertainty": "Trust & Results",
+  "clarity over uncertainty": "Trust Building",
   "clear signals": "Renewals & Rates",
   "clocks forward": "Renewals & Rates",
   "confused": "Property Journey",
   "cosy corner": "Property Journey",
   "cosy corners": "Property Journey",
   "coz": "Renewals & Rates",
-  "done right done fast": "Trust & Results",
+  "done right done fast": "Trust Building",
   "dont leave it to chance": "Protection & Wellbeing",
   "eid": "Community & Culture",
   "equity empowered": "Property Journey",
   "feeling lucky": "Community & Culture",
-  "finance with purpose": "Trust & Results",
+  "finance with purpose": "Trust Building",
   "fixed or flexible": "Renewals & Rates",
   "from approval to offer": "Call to Action",
   "from student to settled": "Property Journey",
   "future freedom": "Property Journey",
-  "gental guidance": "Trust & Results",
+  "gental guidance": "Trust Building",
   "good fortune": "Community & Culture",
   "growing family": "Protection & Wellbeing",
   "happy easter": "Community & Culture",
@@ -5685,7 +5685,7 @@ var PILLAR_MAP = {
   "how much can i borrow": "Call to Action",
   "income secured": "Protection & Wellbeing",
   "invest with confidence": "Property Journey",
-  "is it all a blur": "Trust & Results",
+  "is it all a blur": "Trust Building",
   "job security isnt guaranteed": "Protection & Wellbeing",
   "know before you borrow": "Property Journey",
   "know your numbers clearly": "Market & Money News",
@@ -5705,7 +5705,7 @@ var PILLAR_MAP = {
   "mortgage renewals": "Renewals & Rates",
   "move in sooner": "Property Journey",
   "move with confidence": "Renewals & Rates",
-  "myths cost money": "Trust & Results",
+  "myths cost money": "Trust Building",
   "new year new guidance": "Market & Money News",
   "no can still be a yes": "Property Journey",
   "no deposit no problem": "Property Journey",
@@ -5719,15 +5719,15 @@ var PILLAR_MAP = {
   "pre approved confidence": "Call to Action",
   "preparation before suprises": "Property Journey",
   "progress is power": "Property Journey",
-  "proven expertise": "Trust & Results",
+  "proven expertise": "Trust Building",
   "quarter done vision board": "Property Journey",
   "relax recharge reset": "Property Journey",
   "renewal due": "Renewals & Rates",
   "renovation ready": "Property Journey",
   "reset rebukd reapply": "Property Journey",
-  "review Bryce": "Trust & Results",
-  "review claire": "Trust & Results",
-  "review peter": "Trust & Results",
+  "review Bryce": "Trust Building",
+  "review claire": "Trust Building",
+  "review peter": "Trust Building",
   "safety net": "Protection & Wellbeing",
   "scotland sunshine success": "Property Journey",
   "self employed success": "Property Journey",
@@ -5738,19 +5738,19 @@ var PILLAR_MAP = {
   "stamp duty made simple": "Property Journey",
   "start your journey": "Property Journey",
   "stop renting start owning": "Property Journey",
-  "strong defence beyond the pitch": "Trust & Results",
+  "strong defence beyond the pitch": "Trust Building",
   "surveying beyond": "Property Journey",
   "the clocks ticking": "Renewals & Rates",
   "the futures bright": "Market & Money News",
-  "the road to glory": "Trust & Results",
-  "trust, integrity foundations": "Trust & Results",
-  "trusted since 1999": "Trust & Results",
+  "the road to glory": "Trust Building",
+  "trust, integrity foundations": "Trust Building",
+  "trusted since 1999": "Trust Building",
   "underwritten with care": "Protection & Wellbeing",
   "unlock your potential": "Property Journey",
   "what if i cannot work": "Protection & Wellbeing",
   "when it matters": "Protection & Wellbeing",
   "where pieces fit": "Property Journey",
-  "working together": "Trust & Results",
+  "working together": "Trust Building",
   "your next move matters": "Renewals & Rates",
   "your path forward": "Property Journey",
   "your plan their security": "Protection & Wellbeing"
@@ -5759,7 +5759,7 @@ var PILLAR_COLORS = {
   "Property Journey":         "#2e99d5",
   "Renewals & Rates":         "var(--brand-navy)",
   "Protection & Wellbeing":   "#166534",
-  "Trust & Results":          "var(--brand-orange)",
+  "Trust Building":          "var(--brand-orange)",
   "Market & Money News":      "#7c3aed",
   "Community & Culture":      "#b45309",
   "Call to Action":           "#dc2626"
@@ -5818,7 +5818,7 @@ function loadSocialContent() {
       h3.textContent = title;
       var pillarBadge = document.createElement('span');
       pillarBadge.textContent = pillar;
-      pillarBadge.style.cssText = 'margin-left:10px;font-size:10px;font-weight:700;color:#fff;background:' + (PILLAR_COLORS[pillar] || '#6b7c8f') + ';padding:2px 8px;border-radius:4px;text-transform:none;letter-spacing:.2px;vertical-align:middle;';
+      pillarBadge.style.cssText = 'display:inline-block;margin-left:10px;font-size:10px;font-weight:700;line-height:1;color:#fff;background:' + (PILLAR_COLORS[pillar] || '#6b7c8f') + ';padding:5px 10px 4px;border-radius:20px;text-transform:none;letter-spacing:.2px;vertical-align:middle;';
       h3.appendChild(pillarBadge);
       var newestFile = post.files.reduce(function(latest, f) { return new Date(f.created) > new Date(latest.created) ? f : latest; }, post.files[0]);
       if (newestFile && new Date(newestFile.created) < sixMonthsAgo) {
