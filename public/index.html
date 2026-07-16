@@ -5926,7 +5926,33 @@ function loadTodayPost() {
     goBtn.href = '#';
     goBtn.textContent = 'View in Social Content →';
     goBtn.style.cssText = 'font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;';
-    goBtn.onclick = function(e){ e.preventDefault(); switchTab('marketing'); show('social-content', document.getElementById('nav-social-content')); loadSocialContent(); };
+    var targetPostId = 'sc-post-' + chosen.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+    goBtn.onclick = function(e){
+      e.preventDefault();
+      switchTab('marketing');
+      show('social-content', document.getElementById('nav-social-content'));
+      loadSocialContent();
+      // Reset any pillar filter that might be hiding this post, then scroll to
+      // and briefly highlight it once the section has rendered.
+      _scPillarFilter = 'all';
+      document.querySelectorAll('.sc-pillar').forEach(function(b){ b.classList.remove('active'); });
+      var tries = 0;
+      var wait = setInterval(function() {
+        tries++;
+        var el = document.getElementById(targetPostId);
+        if (el || tries > 40) {
+          clearInterval(wait);
+          if (el) {
+            el.style.display = '';
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var origBg = el.style.background;
+            el.style.transition = 'background .4s';
+            el.style.background = 'rgba(184,89,9,.08)';
+            setTimeout(function(){ el.style.background = origBg; }, 2000);
+          }
+        }
+      }, 100);
+    };
     textCol.appendChild(goBtn);
   }).catch(function() {
     box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load today\'s post.</div>';
@@ -5968,6 +5994,7 @@ function loadSocialContent() {
       var pillar = pillarFor(post.name);
       var postWrap = document.createElement('div');
       postWrap.className = 'sc-post';
+      postWrap.id = 'sc-post-' + post.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
       postWrap.dataset.pillar = pillar;
       if (_scPillarFilter !== 'all' && pillar !== _scPillarFilter) postWrap.style.display = 'none';
 
