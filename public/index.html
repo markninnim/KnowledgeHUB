@@ -4138,7 +4138,7 @@ select:focus { outline:none; }
           <p id="lg-leads-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Add, track, and update leads through cold, warm to hot before converting to business and putting on Acre. Alternatively, share with a colleague.</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;height:38px;">
-          <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;"></div>
+          <div id="lg-adviser-filter-wrap" style="display:flex;align-items:center;height:100%;position:relative;"></div>
           <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;height:100%;box-sizing:border-box;">
             <button id="lg-view-table" onclick="lgSetView('table')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ Table</button>
             <button id="lg-view-card" onclick="lgSetView('card')" style="height:100%;box-sizing:border-box;padding:0 14px;border:none;outline:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
@@ -16153,13 +16153,41 @@ function lgFilteredLeads() {
 function lgSetAdviserFilter(name) {
   _lgAdviserFilter = name;
   lgUpdateLeadsTitle();
+  lgCloseAdviserFilterList();
   lgRenderLeads();
 }
+// Custom dropdown (not a native <select>) so the adviser list — which can run
+// to 100+ names — is reliably scrollable via a plain overflow-y:auto div,
+// rather than relying on the OS's native select popup.
+function lgToggleAdviserFilterList() {
+  var list = document.getElementById('lg-adviser-filter-list');
+  if (!list) return;
+  var opening = list.style.display === 'none';
+  list.style.display = opening ? 'block' : 'none';
+  if (opening) {
+    setTimeout(function() {
+      document.addEventListener('click', lgAdviserFilterOutsideClick, { capture: true, once: true });
+    }, 0);
+  }
+}
+function lgAdviserFilterOutsideClick(e) {
+  var wrap = document.getElementById('lg-adviser-filter-wrap');
+  if (wrap && !wrap.contains(e.target)) lgCloseAdviserFilterList();
+}
+function lgCloseAdviserFilterList() {
+  var list = document.getElementById('lg-adviser-filter-list');
+  if (list) list.style.display = 'none';
+}
 function lgAdviserFilterHtml() {
-  var options = ['<option value="">All Advisers</option>'].concat(
-    _lgAdvisers.map(function(name) { return '<option' + (name === _lgAdviserFilter ? ' selected' : '') + '>' + escHtml(name) + '</option>'; })
-  );
-  return '<select onchange="lgSetAdviserFilter(this.value)" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;">' + options.join('') + '</select>';
+  var rows = [''].concat(_lgAdvisers).map(function(name) {
+    var isActive = name === _lgAdviserFilter;
+    return '<div onclick="lgSetAdviserFilter(\'' + escHtml(name).replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;background:' + (isActive ? '#eef1fb' : '#fff') + ';" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'' + (isActive ? '#eef1fb' : '#fff') + '\'">' + (name ? escHtml(name) : 'All Advisers') + '</div>';
+  }).join('');
+  return '<button type="button" onclick="lgToggleAdviserFilterList()" style="height:100%;box-sizing:border-box;padding:0 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);font-weight:600;background:#fff;cursor:pointer;outline:none;display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+      + (_lgAdviserFilter ? escHtml(_lgAdviserFilter) : 'All Advisers')
+      + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>'
+    + '</button>'
+    + '<div id="lg-adviser-filter-list" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;min-width:220px;max-height:320px;overflow-y:auto;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;">' + rows + '</div>';
 }
 function lgFirstName() {
   var u = _currentUser || {};
