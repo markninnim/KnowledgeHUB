@@ -72,6 +72,8 @@ html { height: 100%; }
 .lic-icon-wrap:last-child .lic-tip { left:auto; right:0; transform:none; }
 .lic-icon-wrap:last-child .lic-tip::after { left:auto; right:10px; transform:none; }
 .bp-rr-info-wrap:hover .bp-rr-info-tip { visibility:visible; opacity:1; }
+@keyframes kh-spin { to { transform: rotate(360deg); } }
+.kh-spinner { display:inline-block; width:18px; height:18px; border:2.5px solid #e2e8f0; border-top-color:var(--brand-navy); border-radius:50%; animation:kh-spin .7s linear infinite; vertical-align:middle; }
 .sidebar a { display: block; color: rgba(255,255,255,.7); text-decoration: none; padding: 9px 20px; font-size: 13px; border-left: 3px solid transparent; }
 .sidebar a:hover, .sidebar a.active { color: #fff; background: rgba(255,255,255,.1); border-left: 3px solid var(--brand-orange); }
 #pz-broker-panel a { display:block; padding:9px 18px; font-size:13px; color:#3a4a5a; text-decoration:none; border-left:3px solid transparent; transition:background .15s,color .15s; line-height:1.4; }
@@ -3851,7 +3853,10 @@ select:focus { outline:none; }
       </div>
 
       <!-- Loading / error state -->
-      <div id="bp-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading profile…</div>
+      <div id="bp-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">
+        <div class="kh-spinner" style="margin-bottom:10px;"></div>
+        <div>Loading profile…</div>
+      </div>
       <div id="bp-content" style="display:none;">
 
         <!-- 3-column grid: explicit grid positions prevent auto-placement gaps -->
@@ -10482,7 +10487,7 @@ function openBrokerProfile(email, name, keepDateRange) {
       // ── Pay / Commission ──
       var bpPayEl = document.getElementById('bp-pay');
       if (bpPayEl) {
-        bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Loading…</div>';
+        bpPayEl.innerHTML = '<div style="text-align:center;padding:16px 0;color:#6b7c8f;font-size:12px;"><div class="kh-spinner" style="margin-bottom:8px;"></div><div>Loading commission data…</div></div>';
         var bpLastName = (u.lastName || '').toUpperCase().trim() || (name || '').split(' ').pop().toUpperCase().trim();
         if (bpLastName) {
           fetch('/api/pay/broker/list?lastName=' + encodeURIComponent(bpLastName))
