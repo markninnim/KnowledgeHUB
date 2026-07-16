@@ -9788,7 +9788,6 @@ function openBrokerProfile(email, name) {
               '</div>';
             }).join('') +
           '</div>' +
-          '<div style="margin-top:10px;font-size:12px;color:#6b7c8f;">Total: <strong style="color:var(--brand-navy);">' + ac.total + '</strong></div>' +
           '<div id="bp-ac-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>';
         } else {
           acEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No renewals due in the next 6 months for this adviser</div>';
@@ -9827,14 +9826,14 @@ function openBrokerProfile(email, name) {
             var count = re[key] || 0;
             var clickable = count > 0;
             return '<div ' + (clickable ? 'onclick="bpToggleBucket(\'re\',\'' + key + '\')" style="cursor:pointer;"' : '') +
-              ' data-bp-bucket="re' + key + '" style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:12px 14px;transition:background .12s;">' +
-              '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>' +
-              '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);">' + count + '</div>' +
+              ' data-bp-bucket="re' + key + '" style="text-align:center;padding:8px 4px;border-radius:8px;transition:background .12s;">' +
+              '<div style="font-size:20px;font-weight:800;color:var(--brand-navy);line-height:1;">' + count + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + label + '</div>' +
               '</div>';
           }
           reEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
-            bpReCard('4y 6m', '4y6m') +
-            bpReCard('4y 3m', '4y3m') +
+            bpReCard('4 years 6 months', '4y6m') +
+            bpReCard('4 years 3 months', '4y3m') +
             bpReCard('5 years', '5y') +
             '</div>' +
             '<div id="bp-re-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;"></div>';
