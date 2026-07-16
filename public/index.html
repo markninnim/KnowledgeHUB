@@ -10578,15 +10578,15 @@ function openBrokerProfile(email, name, keepDateRange) {
                     '<div style="background:#eef1f4;border-radius:5px;height:8px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:5px;"></div></div>' +
                   '</div>';
                 }
-                var ytdHtml = '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #eef1f4;">' +
+                var ytdHtml = '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;">' +
                   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
                     '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">YTD Comparison</span>' +
                     (pctChange != null ? '<span style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:8px;background:' + (pctUp ? '#dcfce7' : '#fef2f2') + ';color:' + (pctUp ? '#166534' : '#991b1b') + ';">' + (pctUp ? '+' : '') + pctChange + '%</span>' : '') +
                   '</div>' +
-                  bpYtdBar((curYear - 1) + ' YTD', prevYtd, 'var(--brand-orange)') +
-                  bpYtdBar(curYear + ' YTD', curYtd, 'var(--brand-navy)') +
+                  bpYtdBar(curYear + ' YTD', curYtd, 'var(--brand-orange)') +
+                  bpYtdBar((curYear - 1) + ' YTD', prevYtd, 'var(--brand-navy)') +
                 '</div>';
-                html = ytdHtml + html;
+                html = html + ytdHtml;
               }
 
               bpPayEl.innerHTML = html;
