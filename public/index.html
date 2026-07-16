@@ -3834,11 +3834,14 @@ select:focus { outline:none; }
           </div>
           <div id="bp-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <input type="date" id="bp-date-from" onchange="bpReloadWithDateRange()" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-          <span style="font-size:12px;color:#6b7c8f;">to</span>
-          <input type="date" id="bp-date-to" onchange="bpReloadWithDateRange()" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;">
-          <button onclick="bpResetDateRange()" style="border:1px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
+        <div style="display:flex;align-items:center;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:8px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:9px 14px;">
+            <span style="font-size:13px;font-weight:700;color:#6b7c8f;">From</span>
+            <input type="date" id="bp-date-from" onchange="bpReloadWithDateRange()" style="border:none;background:transparent;padding:0;font-size:13px;color:var(--brand-navy);font-family:inherit;">
+            <span style="font-size:13px;font-weight:700;color:#6b7c8f;margin-left:10px;">To</span>
+            <input type="date" id="bp-date-to" onchange="bpReloadWithDateRange()" style="border:none;background:transparent;padding:0;font-size:13px;color:var(--brand-navy);font-family:inherit;">
+          </div>
+          <button onclick="bpResetDateRange()" style="margin-left:8px;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
         </div>
       </div>
 
