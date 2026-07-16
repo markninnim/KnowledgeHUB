@@ -12531,17 +12531,18 @@ function renderSpecialistCpd() {
       '</div>';
     }
 
-    var parentTotal = parentMins[c.parentType] || 0;
-    var pct = parentTotal > 0 ? Math.min(100, Math.round((specMins / parentTotal) * 100)) : 0;
+    var target = SPECIALIST_CPD_TARGET_MINS; // 3 hours
+    var pct    = Math.min(100, Math.round((specMins / target) * 100));
+    var done   = specMins >= target;
     return '<div style="margin-bottom:14px;">' +
       '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
         '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + c.key + '</div>' +
-        '<div style="font-size:13px;color:#6b7c8f;font-weight:600;">' + fmtMins(specMins) + ' of ' + fmtMins(parentTotal) + ' ' + c.parentType + '</div>' +
+        '<div style="font-size:13px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';font-weight:600;">' + fmtMins(specMins) + ' of ' + fmtMins(target) + (done ? ' ✓' : '') + '</div>' +
       '</div>' +
       '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
-        '<div style="background:var(--brand-orange);height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
+        '<div style="background:' + (done ? '#22c55e' : 'var(--brand-orange)') + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
       '</div>' +
-      '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + pct + '% of ' + c.parentType + ' CPD</div>' +
+      '<div style="font-size:11px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' + (done ? '✓ Target met' : pct + '% of ' + fmtMins(target) + ' target') + '</div>' +
     '</div>';
   }).join('');
 }
@@ -12568,7 +12569,11 @@ function renderCpdPie() {
   var cx = 50, cy = 50, r = 38, sw = 15;
   function arcPath(pct, offset, color) {
     if (pct <= 0) return '';
-    if (pct >= 1) pct = 0.9999;
+    if (pct >= 1) {
+      // Full circle — draw as a <circle> so it renders as a complete ring
+      // rather than an near-invisible near-0-degree arc.
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + sw + '"/>';
+    }
     var start = offset * 2 * Math.PI - Math.PI / 2;
     var end   = (offset + pct) * 2 * Math.PI - Math.PI / 2;
     var x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
@@ -12617,6 +12622,7 @@ function renderCpdEntries(entries) {
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + d + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;font-weight:600;">' + escHtml(e.activity) + '</td>' +
       '<td style="padding:11px 16px;">' + typeTag + '</td>' +
+      '<td style="padding:11px 16px;">' + (e.specialist ? '<span style="background:#fdf2e3;color:var(--brand-orange);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.specialist) + '</span>' : '<span style="color:#d1d5db;">—</span>') + '</td>' +
       '<td style="padding:11px 16px;"><span style="background:' + CAT_BG + ';color:' + CAT_TC + ';font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + escHtml(e.category) + '</span></td>' +
       '<td style="padding:11px 16px;font-size:13px;color:#6b7c8f;white-space:nowrap;">' + srcIcon + escHtml(e.source) + '</td>' +
       '<td style="padding:11px 16px;font-size:13px;font-weight:700;color:var(--brand-navy);text-align:right;white-space:nowrap;">' + fmtMins(e.minutes) + '</td>' +
@@ -12631,6 +12637,7 @@ function renderCpdEntries(entries) {
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Date</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Activity</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Type</th>' +
+    '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Specialist</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Category</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Source</th>' +
     '<th style="padding:10px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Time</th>' +
