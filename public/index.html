@@ -10008,8 +10008,7 @@ function openBrokerProfile(email, name, keepDateRange) {
             '<div style="width:' + pct + '%;height:100%;background:' + (complete ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
           '</div>' +
         '</div>';
-      }).join('') +
-      '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f4f8;font-size:12px;color:#6b7c8f;">' + (d.cpd ? d.cpd.entryCount : 0) + ' log entries · ' + fmtCpdTime(d.cpd ? d.cpd.totalMins : 0) + ' total</div>';
+      }).join('');
 
       // ── Feefo ──
       var f = d.feefo || {};
