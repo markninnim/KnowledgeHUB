@@ -10163,7 +10163,7 @@ function openBrokerProfile(email, name, keepDateRange) {
       var videos = allLog.filter(function(e) { return e.videoTitle; });
       document.getElementById('bp-videos').innerHTML = videos.length
         ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + videos.length + ' video' + (videos.length!==1?'s':'') + ' logged</div>' +
-          '<div style="display:flex;flex-direction:column;gap:6px;">' +
+          '<div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">' +
           videos.map(function(v) {
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
               '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
@@ -10208,7 +10208,7 @@ function openBrokerProfile(email, name, keepDateRange) {
         if (nlUniq.length) {
           nlEl.innerHTML =
             '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + nlUniq.length + ' newsletter' + (nlUniq.length!==1?'s':'') + ' read</div>' +
-            '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            '<div style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;">' +
             nlUniq.map(function(e) {
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f4f8;">' +
                 '<span style="font-size:12px;color:#6b7c8f;flex:1;">' + escHtml(e.activity || 'Newsletter') + '</span>' +
