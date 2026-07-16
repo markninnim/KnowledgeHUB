@@ -10132,20 +10132,37 @@ function openBrokerProfile(email, name, keepDateRange) {
         }
       }
 
-      // ── Test Results (all quiz rows with date/score/result) ──
-      var quiz = d.quiz || [];
-      document.getElementById('bp-quiz').innerHTML = quiz.length
-        ? quiz.map(function(q) {
-            var pass = (q.result || '').toLowerCase().includes('pass');
-            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<div style="font-size:12px;color:#6b7c8f;">' + (q.date || '—') + '</div>' +
-              '<div style="display:flex;align-items:center;gap:6px;">' +
-                '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + (q.score || '—') + '</span>' +
-                '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (q.result || '—') + '</span>' +
-              '</div>' +
-            '</div>';
-          }).join('')
-        : '<div style="font-size:12px;color:#6b7c8f;">No test results found</div>';
+      // ── Test Results — the 4 named induction knowledge tests, title + score ──
+      var kt = d.knowledgeTests || {};
+      var ktRows = [1,2,3,4].filter(function(n){ return kt[n]; });
+      if (ktRows.length) {
+        document.getElementById('bp-quiz').innerHTML = ktRows.map(function(n) {
+          var t = kt[n];
+          var pass = !!t.passed;
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;gap:10px;">' +
+            '<div style="font-size:12px;color:#6b7c8f;min-width:0;">' + escHtml(t.label || ('Test ' + n)) + '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">' +
+              '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + (t.score != null ? t.score + '%' : '—') + '</span>' +
+              '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (pass?'PASS':'FAIL') + '</span>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        // Fall back to Revalidation results if no induction knowledge tests logged
+        var quiz = d.quiz || [];
+        document.getElementById('bp-quiz').innerHTML = quiz.length
+          ? quiz.map(function(q) {
+              var pass = (q.result || '').toLowerCase().includes('pass');
+              return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f4f8;">' +
+                '<div style="font-size:12px;color:#6b7c8f;">' + (q.date || '—') + '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                  '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">' + (q.score || '—') + '</span>' +
+                  '<span style="background:' + (pass?'#dcfce7':'#fef2f2') + ';color:' + (pass?'#166534':'#991b1b') + ';font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;">' + (q.result || '—') + '</span>' +
+                '</div>' +
+              '</div>';
+            }).join('')
+          : '<div style="font-size:12px;color:#6b7c8f;">No test results found</div>';
+      }
 
       // ── Videos Watched (from CPD log) ──
       var allLog = (d.cpd && d.cpd.log) || [];

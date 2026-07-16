@@ -5684,6 +5684,37 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       });
     });
 
+    // Induction knowledge test results — 4 named topic tests, logged in the CPD
+    // Log itself (Source = "Knowledge Test"), same lookup used by the CAS Path
+    // induction tracker. Keeps the most recent pass, or most recent attempt if
+    // never passed.
+    const KT_NAME_TO_NUM = {
+      '1. Complaints, Conduct Rules & Breaches': 1,
+      '2. Consumer Duty & Financial Crime': 2,
+      '3. Vulnerable Clients & Information Security': 3,
+      '4. Record Keeping & Sales Process': 4
+    };
+    const KT_LABELS = {
+      1: 'Complaints, Conduct Rules & Breaches',
+      2: 'Consumer Duty & Financial Crime',
+      3: 'Vulnerable Clients & Information Security',
+      4: 'Record Keeping & Sales Process'
+    };
+    const knowledgeTests = {};
+    cpdLog.forEach(e => {
+      if (e.source !== 'Knowledge Test') return;
+      const activity = (e.activity || '').replace(/ – Knowledge Test$/, '');
+      const num = KT_NAME_TO_NUM[activity];
+      if (!num) return;
+      const pctMatch = (e.learned || '').match(/\((\d+)%\)/);
+      const pct    = pctMatch ? parseInt(pctMatch[1]) : null;
+      const passed = (e.learned || '').toUpperCase().includes('PASSED');
+      const existing = knowledgeTests[num];
+      if (!existing || (!existing.passed && passed) || (existing.passed === passed && e.date > existing.date)) {
+        knowledgeTests[num] = { label: KT_LABELS[num], date: e.date, score: pct, passed };
+      }
+    });
+
     // Process Feefo
     const rated   = feefoRecs.filter(r => r.fields['Service Rating']);
     const feefoAvg = rated.length ? (rated.reduce((s,r) => s + r.fields['Service Rating'], 0) / rated.length).toFixed(1) : null;
@@ -5818,6 +5849,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
       consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 10) },
       quiz:          quizResults,
+      knowledgeTests: knowledgeTests,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
       reEngage:      reEngageBuckets,
       reEngageRows:  reEngageRows,
