@@ -5823,7 +5823,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     Object.keys(crByType).forEach(t => { crCounts[t] = crByType[t].length; });
 
     res.json({
-      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'] },
+      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
       consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 10) },

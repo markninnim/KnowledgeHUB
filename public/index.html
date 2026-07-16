@@ -9990,28 +9990,26 @@ function openBrokerProfile(email, name, keepDateRange) {
       var cpdEl = document.getElementById('bp-cpd');
       var byType = d.cpd ? d.cpd.byType : {};
       var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
-      var QUALIFY_MINS = 120; // 2 hours — icon turns green once reached in that subject
       var types = [];
       if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
       if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
       if (u.sellsInvestments) types.push({ key: 'Wealth', color: '#2e99d5' });
       if (!types.length) types = [{ key: 'Mortgage', color: 'var(--brand-navy)' }, { key: 'Protection', color: 'var(--brand-orange)' }];
 
-      // Matches the licence icon set used on the Supervise broker cards (LICENCE_ICONS) —
-      // same viewBox/stroke-width/size, just recoloured via currentColor for the qualified state.
-      var CPD_TYPE_ICON = {
-        Mortgage:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
-        Protection: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
-        Wealth:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
-      };
-
-      // Top-right header: icons for each licence held, green once 2 hours (qualifying CPD) logged in that subject
+      // Top-right header: specialist licence icons held (same LICENCE_ICONS set used
+      // on the Supervise broker cards) — not the base Mortgage/Protection CPD types.
       var licencesEl = document.getElementById('bp-cpd-licences');
       if (licencesEl) {
-        licencesEl.innerHTML = types.map(function(t) {
-          var done = byType[t.key] || 0;
-          var color = (done >= QUALIFY_MINS) ? '#22c55e' : '#6b7c8f';
-          return '<span style="display:inline-flex;align-items:center;color:' + color + ';margin-left:8px;">' + (CPD_TYPE_ICON[t.key] || '') + '</span>';
+        var specialistIcons = [
+          { flag: u.equityRelease,       icon: LICENCE_ICONS.lifetime },
+          { flag: u.commercialMortgages, icon: LICENCE_ICONS.commercial },
+          { flag: u.bridging,            icon: LICENCE_ICONS.bridging },
+          { flag: u.pmi,                 icon: LICENCE_ICONS.pmi },
+          { flag: u.businessProtection,  icon: LICENCE_ICONS.businessProtection },
+          { flag: u.sellsInvestments,    icon: LICENCE_ICONS.wealth }
+        ].filter(function(x) { return x.flag; });
+        licencesEl.innerHTML = specialistIcons.map(function(x) {
+          return '<span class="lic-icon-wrap" style="margin-left:8px;">' + x.icon.svg + '<span class="lic-tip">' + escHtml(x.icon.label) + '</span></span>';
         }).join('');
       }
 
