@@ -10507,7 +10507,10 @@ function openBrokerProfile(email, name, keepDateRange) {
                 }
                 return -1;
               }
-              var months = {};
+              // Build totals across ALL years (not just current year) so we can
+              // compute a YTD vs same-period-last-year comparison, in addition
+              // to the current-year monthly breakdown shown in the list.
+              var allMonths = {};
               valid.forEach(function(s) {
                 if (s.type !== 'rtf') return;
                 var mi = bpGetMonthIndex(s);
@@ -10516,14 +10519,20 @@ function openBrokerProfile(email, name, keepDateRange) {
                 var sdYr = s.statementDate ? parseInt(s.statementDate.trim().split(/\s+/).pop(), 10) : parseInt(s.year, 10);
                 var labelYr = (!isNaN(sdYr) && mi === 11) ? sdYr - 1 : sdYr;
                 if (isNaN(labelYr)) labelYr = parseInt(s.year, 10);
-                if (isNaN(labelYr) || labelYr < 2026) return;
+                if (isNaN(labelYr)) return;
                 var key = labelYr + '-' + mi;
-                months[key] = { label: mName + ' ' + labelYr, total: s.totalPay || 0, sortKey: labelYr * 100 + mi };
+                allMonths[key] = { label: mName + ' ' + labelYr, year: labelYr, monthIdx: mi, total: s.totalPay || 0, sortKey: labelYr * 100 + mi };
               });
-              var monthArr = Object.keys(months).map(function(k){ return months[k]; })
+              var now = new Date();
+              var curYear = now.getFullYear();
+              var curMonthIdx = now.getMonth(); // 0-11 — YTD cutoff (this month inclusive)
+
+              // Current-year monthly list (unchanged behaviour, just year-agnostic now)
+              var monthArr = Object.keys(allMonths).map(function(k){ return allMonths[k]; })
+                               .filter(function(m){ return m.year === curYear; })
                                .sort(function(a, b){ return b.sortKey - a.sortKey; });
               if (!monthArr.length) {
-                bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No commission data from January 2026</div>';
+                bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No commission data from ' + curYear + '</div>';
                 return;
               }
               var html = '';
@@ -10542,6 +10551,38 @@ function openBrokerProfile(email, name, keepDateRange) {
               html += '<span style="font-size:11px;color:#6b7c8f;font-weight:600;">TOTAL COMMISSION</span>';
               html += '<span style="font-size:14px;font-weight:800;color:'+(grandNeg?'#c0392b':'var(--brand-navy)')+';">'+grandStr+'</span>';
               html += '</div>';
+
+              // ── YTD vs same-period-last-year comparison chart ──
+              var curYtd = 0, prevYtd = 0;
+              Object.keys(allMonths).forEach(function(k) {
+                var m = allMonths[k];
+                if (m.monthIdx > curMonthIdx) return; // only months up to "now" count for a fair YTD comparison
+                if (m.year === curYear) curYtd += m.total;
+                else if (m.year === curYear - 1) prevYtd += m.total;
+              });
+              if (prevYtd || curYtd) {
+                var pctChange = prevYtd !== 0 ? Math.round(((curYtd - prevYtd) / Math.abs(prevYtd)) * 100) : null;
+                var pctUp = pctChange != null && pctChange >= 0;
+                var maxVal = Math.max(Math.abs(curYtd), Math.abs(prevYtd), 1);
+                function bpYtdBar(label, val, color) {
+                  var pct = Math.max(2, Math.round((Math.abs(val) / maxVal) * 100));
+                  var amtStr = (val < 0 ? '−' : '') + '£' + Math.abs(val).toFixed(2);
+                  return '<div style="margin-bottom:8px;">' +
+                    '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7c8f;margin-bottom:3px;"><span>' + label + '</span><span style="font-weight:700;color:var(--brand-navy);">' + amtStr + '</span></div>' +
+                    '<div style="background:#eef1f4;border-radius:5px;height:8px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:5px;"></div></div>' +
+                  '</div>';
+                }
+                var ytdHtml = '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #eef1f4;">' +
+                  '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+                    '<span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">YTD Comparison</span>' +
+                    (pctChange != null ? '<span style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:8px;background:' + (pctUp ? '#dcfce7' : '#fef2f2') + ';color:' + (pctUp ? '#166534' : '#991b1b') + ';">' + (pctUp ? '+' : '') + pctChange + '%</span>' : '') +
+                  '</div>' +
+                  bpYtdBar((curYear - 1) + ' YTD', prevYtd, '#94a3b8') +
+                  bpYtdBar(curYear + ' YTD', curYtd, 'var(--brand-navy)') +
+                '</div>';
+                html = ytdHtml + html;
+              }
+
               bpPayEl.innerHTML = html;
             })
             .catch(function(){ bpPayEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Commission data unavailable</div>'; });
