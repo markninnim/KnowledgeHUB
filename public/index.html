@@ -3923,18 +3923,18 @@ select:focus { outline:none; }
             <div id="bp-reengage"></div>
           </div>
 
-          <!-- Row 5 Col 1-3: Engage™ (Hot/Warm/Cold lead counts) -->
-          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;grid-row:5;grid-column:1 / span 3;">
+        </div>
+
+        <!-- Engage™ (30%) + Reporting (70%) on one row -->
+        <div style="display:flex;gap:16px;margin-bottom:16px;">
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:0 0 30%;min-width:0;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Engage&#8482;</div>
             <div id="bp-engage"></div>
           </div>
-
-        </div>
-
-        <!-- Reporting (Compliance report counts, click to view detail) -->
-        <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
-          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Reporting</div>
-          <div id="bp-reporting" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;"></div>
+          <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:0 0 70%;min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Reporting</div>
+            <div id="bp-reporting" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;"></div>
+          </div>
         </div>
 
         <!-- Reporting detail modal -->
@@ -10310,18 +10310,19 @@ function openBrokerProfile(email, name, keepDateRange) {
         }
       }
 
-      // ── Engage™ (Hot / Warm / Cold lead counts) ──
+      // ── Engage™ (Hot / Warm / Cold lead counts) — number centered on top, label
+      // underneath, matching the AutoCRM/ReEngage/Reporting tile style ──
       function bpStatCard(label, count, color) {
-        return '<div style="background:#f8fafc;border:1px solid #e9f0f6;border-radius:10px;padding:14px 16px;">' +
-          '<div style="font-size:10.5px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">' + label + '</div>' +
-          '<div style="font-size:20px;font-weight:800;color:' + color + ';">' + count + '</div>' +
+        return '<div style="text-align:center;padding:8px 4px;border-radius:8px;">' +
+          '<div style="font-size:20px;font-weight:800;color:' + color + ';line-height:1;">' + count + '</div>' +
+          '<div style="font-size:11px;color:#6b7c8f;margin-top:4px;">' + label + '</div>' +
           '</div>';
       }
       var engEl = document.getElementById('bp-engage');
       if (engEl) {
         var eng = d.engage || { total: 0, hot: 0, warm: 0, cold: 0 };
         if (eng.total) {
-          engEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">' +
+          engEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
             bpStatCard('Hot', eng.hot, '#b91c1c') +
             bpStatCard('Warm', eng.warm, '#b45309') +
             bpStatCard('Cold', eng.cold, '#2e99d5') +
