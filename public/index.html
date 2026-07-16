@@ -4254,7 +4254,7 @@ select:focus { outline:none; }
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Follow Up</label><input id="lg-followup" type="date" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;"></div>
       </div>
       <div style="display:flex;gap:12px;">
-        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Source</label><select id="lg-source" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Website</option><option>FP Surveying</option><option>Facebook</option></select></div>
+        <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Source</label><select id="lg-source" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Website</option><option>FP Surveying</option><option>Facebook</option><option value="ReEngage">ReEngage&#8482;</option></select></div>
         <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Lead Quality</label><select id="lg-quality" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff;"><option value=""></option><option>Hot</option><option>Warm</option><option>Cold</option></select></div>
       </div>
       <div style="display:flex;gap:12px;">
@@ -16800,7 +16800,21 @@ function lgOpenModal(id) {
     adviserSel.innerHTML = '<option selected>' + escHtml(selfName) + '</option>';
   }
   document.getElementById('lg-followup').value = lead ? (lead.followUp || '') : '';
-  document.getElementById('lg-source').value  = lead ? (lead.source || '') : '';
+  // If the record's Source value isn't one of this dropdown's hard-coded
+  // options (e.g. it was set elsewhere, like the ReEngage handoff, or added
+  // directly in Airtable), inject it as a temporary selected option instead
+  // of silently falling back to blank — otherwise saving the modal for an
+  // unrelated field (e.g. phone number) would overwrite/clear the real value.
+  var lgSourceSel = document.getElementById('lg-source');
+  Array.from(lgSourceSel.querySelectorAll('option[data-lg-dynamic]')).forEach(function(o) { o.remove(); });
+  if (lead && lead.source && !Array.from(lgSourceSel.options).some(function(o) { return o.value === lead.source; })) {
+    var dynOpt = document.createElement('option');
+    dynOpt.value = lead.source;
+    dynOpt.textContent = lgSourceLabel(lead.source);
+    dynOpt.setAttribute('data-lg-dynamic', '1');
+    lgSourceSel.appendChild(dynOpt);
+  }
+  lgSourceSel.value = lead ? (lead.source || '') : '';
   document.getElementById('lg-quality').value = lead ? (lead.quality || '') : '';
   document.getElementById('lg-mortval').value = lead ? (lead.mortgageSaleValue  || '') : '';
   document.getElementById('lg-insval').value  = lead ? (lead.insuranceSaleValue || '') : '';
