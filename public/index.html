@@ -10571,10 +10571,20 @@ function openBrokerProfile(email, name, keepDateRange) {
               html += '</div>';
 
               // ── YTD vs same-period-last-year comparison chart ──
+              // Cap the comparison at the latest month we actually have a
+              // current-year statement for (not just today's calendar month) —
+              // otherwise if last year already has a statement for the current
+              // month but this year's hasn't been filed/parsed yet, last year
+              // unfairly gets an extra month's income counted.
+              var curYearMonthIdxs = Object.keys(allMonths)
+                .map(function(k){ return allMonths[k]; })
+                .filter(function(m){ return m.year === curYear; })
+                .map(function(m){ return m.monthIdx; });
+              var ytdCutoffIdx = curYearMonthIdxs.length ? Math.min(curMonthIdx, Math.max.apply(null, curYearMonthIdxs)) : curMonthIdx;
               var curYtd = 0, prevYtd = 0;
               Object.keys(allMonths).forEach(function(k) {
                 var m = allMonths[k];
-                if (m.monthIdx > curMonthIdx) return; // only months up to "now" count for a fair YTD comparison
+                if (m.monthIdx > ytdCutoffIdx) return; // only months up to the latest available current-year statement count
                 if (m.year === curYear) curYtd += m.total;
                 else if (m.year === curYear - 1) prevYtd += m.total;
               });
