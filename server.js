@@ -3604,12 +3604,15 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
 
     // 3. Aggregate per member per CPD type
     const cpdByMember = {};
-    members.forEach(m => { cpdByMember[m.email] = { Investment: 0, Mortgage: 0, Protection: 0, total: 0 }; });
+    members.forEach(m => { cpdByMember[m.email] = { Investment: 0, Mortgage: 0, Protection: 0, total: 0, specialist: {} }; });
     allEntries.forEach(e => {
       if (!cpdByMember[e.email]) return;
       cpdByMember[e.email].total += e.minutes || 0;
       if (e.cpdType && cpdByMember[e.email][e.cpdType] !== undefined) {
         cpdByMember[e.email][e.cpdType] += e.minutes || 0;
+      }
+      if (e.specialist) {
+        cpdByMember[e.email].specialist[e.specialist] = (cpdByMember[e.email].specialist[e.specialist] || 0) + (e.minutes || 0);
       }
     });
 
