@@ -5926,7 +5926,7 @@ function loadTodayPost() {
     goBtn.href = '#';
     goBtn.textContent = 'View in Social Content →';
     goBtn.style.cssText = 'font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;';
-    goBtn.onclick = function(e){ e.preventDefault(); show('social-content', document.getElementById('nav-social-content')); loadSocialContent(); };
+    goBtn.onclick = function(e){ e.preventDefault(); switchTab('marketing'); show('social-content', document.getElementById('nav-social-content')); loadSocialContent(); };
     textCol.appendChild(goBtn);
   }).catch(function() {
     box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load today\'s post.</div>';
