@@ -83,6 +83,7 @@ const LG_FEEVAL    = 'fldOFq58PkIumTXcy';
 const LG_SOURCE    = 'fldO8GJlvlCL7GtI8'; // Source (Website / FP Surveying / Facebook)
 const LG_QUALITY   = 'fldHcCc3tAt8U7dVT'; // Lead Quality (Hot / Warm / Cold)
 const LG_AUTOCRM   = 'fldTTNjbgLCVVuI1B'; // Enroll into AutoCRM — creates a linked Mortgage Completions row
+const LG_REENGAGE_KEY = 'fldVh6JBP5ozDFOhA'; // ReEngage Key — brokerEmail|caseKey, guarantees one lead per handed-off case
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
@@ -2141,36 +2142,58 @@ app.post('/api/mortgage-completions/note', requireAuth, async (req, res) => {
     // First time this case is marked for LeadGEN — create the actual lead in
     // Airtable, assigned round-robin to an adviser with {Is LeadGen} ticked,
     // and tag the referring broker so a referral fee can be tracked.
-    if (nowHandoff && !wasHandedOff) {
+    //
+    // The "already handed off?" check is done against Airtable itself (via
+    // the ReEngage Key field), not just the local _autoCrmNotes cache —
+    // two Railway app instances could otherwise both believe a case hasn't
+    // been handed off yet and each create their own duplicate lead. Once a
+    // lead exists for a case, this code path never writes to it again, so a
+    // later modal edit (phone number, status, adviser reassignment, etc.)
+    // can never be silently overwritten by a repeat handoff toggle.
+    if (nowHandoff) {
       try {
-        const referrerName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || brokerEmail;
-        const adviser = await getNextLeadGenAdviser();
-        const noteLines = [
-          'Re-engagement opportunity handed off from ' + referrerName + '.',
-          lender ? ('Lender: ' + lender) : '',
-          (typeof loanAmount === 'number') ? ('Loan Amount: £' + loanAmount.toLocaleString('en-GB')) : '',
-          benefitEnd ? ('Original completion/benefit end: ' + benefitEnd) : ''
-        ].filter(Boolean).join('\n');
-        const leadFields = {
-          [LG_NAME]:        name || 'Unnamed',
-          [LG_NOTES]:       noteLines,
-          [LG_SOURCE]:      'ReEngage',
-          [LG_QUALITY]:     'Warm',
-          [LG_REFERRED_BY]: referrerName
-        };
-        if (email)   leadFields[LG_EMAIL]   = email;
-        if (adviser) leadFields[LG_ADVISER] = adviser;
-        const createRes = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ records: [{ fields: leadFields }], typecast: true })
+        const compositeKey = brokerEmail + '|' + key;
+        const checkFormula = encodeURIComponent(`{${LG_REENGAGE_KEY}} = "${compositeKey.replace(/"/g, '\\"')}"`);
+        const checkRes = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}?filterByFormula=${checkFormula}&maxRecords=1&fields[]=${LG_ADVISER}`, {
+          headers: { Authorization: `Bearer ${AT_KEY}` }
         });
-        const createBody = await createRes.json();
-        if (createRes.ok && createBody.records && createBody.records[0]) {
-          _autoCrmNotes[brokerEmail][key].handoffLeadId  = createBody.records[0].id;
-          _autoCrmNotes[brokerEmail][key].handoffAdviser = adviser || '';
+        const checkBody = await checkRes.json();
+        const existingLead = (checkRes.ok && checkBody.records && checkBody.records[0]) || null;
+
+        if (existingLead) {
+          _autoCrmNotes[brokerEmail][key].handoffLeadId  = existingLead.id;
+          _autoCrmNotes[brokerEmail][key].handoffAdviser = existingLead.fields[LG_ADVISER] || _autoCrmNotes[brokerEmail][key].handoffAdviser || '';
         } else {
-          console.error('LeadGEN handoff lead creation failed:', createBody);
+          const referrerName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || brokerEmail;
+          const adviser = await getNextLeadGenAdviser();
+          const noteLines = [
+            'Re-engagement opportunity handed off from ' + referrerName + '.',
+            lender ? ('Lender: ' + lender) : '',
+            (typeof loanAmount === 'number') ? ('Loan Amount: £' + loanAmount.toLocaleString('en-GB')) : '',
+            benefitEnd ? ('Original completion/benefit end: ' + benefitEnd) : ''
+          ].filter(Boolean).join('\n');
+          const leadFields = {
+            [LG_REENGAGE_KEY]: compositeKey,
+            [LG_NAME]:         name || 'Unnamed',
+            [LG_NOTES]:        noteLines,
+            [LG_SOURCE]:       'ReEngage',
+            [LG_QUALITY]:      'Warm',
+            [LG_REFERRED_BY]:  referrerName
+          };
+          if (email)   leadFields[LG_EMAIL]   = email;
+          if (adviser) leadFields[LG_ADVISER] = adviser;
+          const createRes = await fetch(`https://api.airtable.com/v0/${LG_BASE}/${LG_TABLE}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ records: [{ fields: leadFields }], typecast: true })
+          });
+          const createBody = await createRes.json();
+          if (createRes.ok && createBody.records && createBody.records[0]) {
+            _autoCrmNotes[brokerEmail][key].handoffLeadId  = createBody.records[0].id;
+            _autoCrmNotes[brokerEmail][key].handoffAdviser = adviser || '';
+          } else {
+            console.error('LeadGEN handoff lead creation failed:', createBody);
+          }
         }
       } catch (e) {
         console.error('LeadGEN handoff error:', e);
