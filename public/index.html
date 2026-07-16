@@ -10021,18 +10021,42 @@ function openBrokerProfile(email, name, keepDateRange) {
         }).join('');
       }
 
+      // YTD pace — what fraction of the year has elapsed, so a supervisor can
+      // see whether logged CPD is ahead of or behind a straight-line pace
+      // toward the annual target (not just total progress toward the target).
+      var _cpdNow = new Date();
+      var _cpdYearStart = new Date(_cpdNow.getFullYear(), 0, 1);
+      var _cpdYearEnd   = new Date(_cpdNow.getFullYear() + 1, 0, 1);
+      var yearFraction = (_cpdNow - _cpdYearStart) / (_cpdYearEnd - _cpdYearStart);
+
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
         var target  = targets[t.key] || 900;
         var pct     = Math.min(100, Math.round(done / target * 100));
         var complete = done >= target;
+        var expectedByNow = target * yearFraction;
+        var paceDiff = done - expectedByNow;
+        var paceAhead = paceDiff >= 0;
+        var paceLabel = complete ? '' :
+          '<span style="font-size:11px;font-weight:700;color:' + (paceAhead ? '#22c55e' : '#c0392b') + ';margin-left:8px;">' +
+            (paceAhead ? '▲ Ahead ' : '▼ Behind ') + fmtCpdTime(Math.abs(paceDiff)) +
+          '</span>';
+        var pacePct = Math.min(100, Math.max(0, Math.round(yearFraction * 100)));
         return '<div>' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
             '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.key + '</span>' +
-            '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
+            '<span>' +
+              '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
+              paceLabel +
+            '</span>' +
           '</div>' +
-          '<div style="height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden;">' +
-            '<div style="width:' + pct + '%;height:100%;background:' + (complete ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
+          '<div style="position:relative;height:7px;background:#f0f4f8;border-radius:4px;overflow:visible;">' +
+            '<div style="position:absolute;inset:0;border-radius:4px;overflow:hidden;">' +
+              '<div style="width:' + pct + '%;height:100%;background:' + (complete ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
+            '</div>' +
+            (!complete ? '<div class="lic-icon-wrap" style="position:absolute;top:-2px;left:' + pacePct + '%;width:2px;height:11px;background:#94a3b8;transform:translateX(-1px);">' +
+              '<span class="lic-tip" style="white-space:nowrap;">YTD pace target: ' + fmtCpdTime(Math.round(expectedByNow)) + '</span>' +
+            '</div>' : '') +
           '</div>' +
         '</div>';
       }).join('');
