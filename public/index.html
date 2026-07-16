@@ -10045,23 +10045,30 @@ function openBrokerProfile(email, name, keepDateRange) {
       // ── Consumer Understanding ──
       var cd = d.consumerDuty || {};
       var cdScore = cd.total ? Math.round((cd.full + (cd.restored || 0)) / cd.total * 100) : null;
+      var cdFullPct = cd.total ? Math.round((cd.full || 0) / cd.total * 100) : null;
       document.getElementById('bp-cd').innerHTML =
-        '<div style="display:flex;gap:16px;">' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.total || 0) + '</div>' +
-            '<div style="font-size:11px;color:#6b7c8f;">responses</div>' +
+        '<div style="display:flex;align-items:flex-start;">' +
+          '<div style="display:flex;gap:22px;">' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.total || 0) + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;">responses</div>' +
+            '</div>' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.full || 0) + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;">full</div>' +
+            '</div>' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.partial || 0) + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;">partial</div>' +
+            '</div>' +
+            '<div style="text-align:center;">' +
+              '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cd.restored || 0) + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;">restored</div>' +
+            '</div>' +
           '</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:800;color:#22c55e;">' + (cd.full || 0) + '</div>' +
-            '<div style="font-size:11px;color:#6b7c8f;">full</div>' +
-          '</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:800;color:#b91c1c;">' + (cd.partial || 0) + '</div>' +
-            '<div style="font-size:11px;color:#6b7c8f;">partial</div>' +
-          '</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:28px;font-weight:800;color:#f59e0b;">' + (cd.restored || 0) + '</div>' +
-            '<div style="font-size:11px;color:#6b7c8f;">restored</div>' +
+          '<div style="text-align:center;margin-left:36px;">' +
+            '<div style="font-size:28px;font-weight:800;color:var(--brand-navy);">' + (cdFullPct != null ? cdFullPct + '%' : '—') + '</div>' +
+            '<div style="font-size:11px;color:#6b7c8f;">% full</div>' +
           '</div>' +
         '</div>';
 
