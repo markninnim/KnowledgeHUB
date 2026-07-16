@@ -10159,18 +10159,20 @@ function openBrokerProfile(email, name, keepDateRange) {
           : '<div style="font-size:12px;color:#6b7c8f;">No test results found</div>';
       }
 
-      // ── Videos Watched (from CPD log) ──
+      // ── Videos Watched (from CPD log) — capped to 5 most recent ──
       var allLog = (d.cpd && d.cpd.log) || [];
       var videos = allLog.filter(function(e) { return e.videoTitle; });
+      var videosShown = videos.slice(0, 5);
       document.getElementById('bp-videos').innerHTML = videos.length
         ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + videos.length + ' video' + (videos.length!==1?'s':'') + ' logged</div>' +
-          '<div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">' +
-          videos.map(function(v) {
+          '<div style="display:flex;flex-direction:column;gap:6px;">' +
+          videosShown.map(function(v) {
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
               '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
               '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
             '</div>';
-          }).join('') + '</div>'
+          }).join('') + '</div>' +
+          (videos.length > 5 ? '<div style="font-size:11px;color:#6b7c8f;margin-top:6px;">+' + (videos.length - 5) + ' more</div>' : '')
         : '<div style="font-size:12px;color:#6b7c8f;">No videos logged yet</div>';
 
       // ── Revalidation Videos (CPD log entries matching known revalidation video titles) ──
