@@ -10006,16 +10006,21 @@ function openBrokerProfile(email, name, keepDateRange) {
         licencesEl.textContent = licences.length ? licences.join(' · ') : '';
       }
 
+      var CPD_TYPE_ICON = {
+        Mortgage:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+        Protection: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+        Wealth:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
+      };
       cpdEl.innerHTML = types.map(function(t) {
         var done    = byType[t.key] || 0;
         var target  = targets[t.key] || 900;
         var pct     = Math.min(100, Math.round(done / target * 100));
         var complete = done >= target;
         var qualified = done >= QUALIFY_MINS;
-        var dotColor = qualified ? '#22c55e' : '#d1d5db';
+        var iconColor = qualified ? '#22c55e' : '#6b7c8f';
         return '<div>' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
-            '<span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#6b7c8f;"><span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></span>' + t.key + '</span>' +
+            '<span style="display:flex;align-items:center;color:' + iconColor + ';">' + (CPD_TYPE_ICON[t.key] || '') + '</span>' +
             '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
           '</div>' +
           '<div style="height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden;">' +
