@@ -5540,18 +5540,9 @@ app.patch('/api/consumer-duty/:id/restore', requireAuth, async (req, res) => {
 const RV_BASE  = 'applcWZPy40cayRzd';
 const RV_TABLE = 'tblI70qGiOJqICPfC'; // 2026 Revalidation Results
 
-app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
-  const caller = req.session.user;
-  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
-
-  const brokerEmail = (req.query.email || '').trim().toLowerCase();
-  if (!brokerEmail) return res.status(400).json({ error: 'email required' });
-
-  // Optional date range filter (yyyy-mm-dd) — applied to CPD, Feefo,
-  // Consumer Duty and Reporting (Compliance Reports), each against their
-  // own date field.
-  const rangeFrom = (req.query.from || '').trim();
-  const rangeTo   = (req.query.to   || '').trim();
+// Core data fetch shared by the JSON endpoint and the PDF export below —
+// takes the raw params instead of req/res so both routes can call it.
+async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
   function dateRangeClause(fieldRef) {
     const parts = [];
     if (rangeFrom) parts.push(`IS_AFTER({${fieldRef}}, "${rangeFrom}")`);
@@ -5563,8 +5554,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     return extra.length ? `AND(${baseFormula},${extra.join(',')})` : baseFormula;
   }
 
-  try {
-    // 1. Lookup user record for full name + profile
+  // 1. Lookup user record for full name + profile
     const uf = encodeURIComponent(`LOWER({Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
     const ur  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${uf}&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
     const ud  = await ur.json();
@@ -5822,7 +5812,7 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     const crCounts = {};
     Object.keys(crByType).forEach(t => { crCounts[t] = crByType[t].length; });
 
-    res.json({
+    return {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews },
@@ -5834,9 +5824,186 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
       autoCrm:       { months: autoCrmMonths, total: autoCrmTotal },
       autoCrmRows:   autoCrmRows,
       reporting:     { counts: crCounts, rows: crByType }
-    });
+    };
+}
+
+app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const brokerEmail = (req.query.email || '').trim().toLowerCase();
+  if (!brokerEmail) return res.status(400).json({ error: 'email required' });
+
+  const rangeFrom = (req.query.from || '').trim();
+  const rangeTo   = (req.query.to   || '').trim();
+
+  try {
+    const data = await getBrokerProfileData(brokerEmail, rangeFrom, rangeTo);
+    res.json(data);
   } catch (err) {
     console.error('broker-profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/supervisor/broker-profile/pdf — export the broker profile as a
+// nicely formatted A4 PDF report (same data as the JSON endpoint above).
+app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const brokerEmail = (req.query.email || '').trim().toLowerCase();
+  if (!brokerEmail) return res.status(400).json({ error: 'email required' });
+  const rangeFrom = (req.query.from || '').trim();
+  const rangeTo   = (req.query.to   || '').trim();
+
+  try {
+    const data = await getBrokerProfileData(brokerEmail, rangeFrom, rangeTo);
+    const u = data.user;
+    const userName = u.fullName || brokerEmail;
+
+    const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
+    const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
+    const logoBytes     = fs.readFileSync(path.join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png'));
+
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    const fontBold = await pdfDoc.embedFont(fontBoldBytes);
+    const fontSemi = fontBold;
+    const fontMed  = await pdfDoc.embedFont(fontMedBytes);
+    const logoImg  = await pdfDoc.embedPng(logoBytes);
+    const logoDims = logoImg.scale(0.104);
+
+    const W = 595.28, H = 841.89; // A4
+    const darkBlue   = rgb(0/255,   55/255,  104/255);
+    const orange     = rgb(184/255, 89/255,  9/255);
+    const green      = rgb(34/255,  197/255, 94/255);
+    const red        = rgb(185/255, 28/255,  28/255);
+    const amber      = rgb(180/255, 83/255,  9/255);
+    const blueAccent = rgb(46/255,  153/255, 213/255);
+    const grey       = rgb(107/255, 124/255, 143/255);
+    const lightGrey  = rgb(232/255, 236/255, 240/255);
+    const pageBg     = rgb(245/255, 247/255, 250/255);
+    const white      = rgb(1, 1, 1);
+
+    let page = pdfDoc.addPage([W, H]);
+    let y = H;
+
+    const newPage = () => { page = pdfDoc.addPage([W, H]); page.drawRectangle({ x:0, y:0, width:W, height:H, color: pageBg }); y = H - 40; };
+    const ensureSpace = (needed) => { if (y - needed < 40) newPage(); };
+
+    page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: pageBg });
+
+    // ── Header ──
+    const headerH = 70;
+    page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: white });
+    page.drawImage(logoImg, { x: 28, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
+    page.drawText(userName, { x: W - 28 - fontBold.widthOfTextAtSize(userName, 14), y: H - 32, size: 14, font: fontBold, color: darkBlue });
+    const metaStr = [u.jobTitle, brokerEmail].filter(Boolean).join('  ·  ');
+    page.drawText(metaStr, { x: W - 28 - fontMed.widthOfTextAtSize(metaStr, 9), y: H - 48, size: 9, font: fontMed, color: grey });
+    const rangeStr = 'Broker Profile Report' + (rangeFrom || rangeTo ? '  ·  ' + (rangeFrom || 'start') + ' to ' + (rangeTo || 'now') : '') + '  ·  ' + new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    page.drawText(rangeStr, { x: W - 28 - fontMed.widthOfTextAtSize(rangeStr, 8), y: H - 60, size: 8, font: fontMed, color: grey });
+
+    y = H - headerH - 26;
+
+    const sectionTitle = (title) => {
+      ensureSpace(30);
+      page.drawText(title, { x: 36, y, size: 12, font: fontBold, color: darkBlue });
+      y -= 6;
+      page.drawLine({ start: { x: 36, y }, end: { x: W - 36, y }, thickness: 1, color: lightGrey });
+      y -= 18;
+    };
+
+    // Reusable "N stat tiles in a row" renderer
+    const drawStatRow = (stats) => {
+      ensureSpace(46);
+      const colW = (W - 72) / stats.length;
+      stats.forEach((s, i) => {
+        const x = 36 + i * colW;
+        const numText = String(s.value);
+        page.drawText(numText, { x: x + (colW - fontBold.widthOfTextAtSize(numText, 18)) / 2, y, size: 18, font: fontBold, color: s.color || darkBlue });
+        page.drawText(s.label, { x: x + (colW - fontMed.widthOfTextAtSize(s.label, 8)) / 2, y: y - 14, size: 8, font: fontMed, color: grey });
+      });
+      y -= 40;
+    };
+
+    const fmtMin = m => { const h = Math.floor(m/60), mn = Math.round(m%60); return h > 0 ? (h + 'h' + (mn > 0 ? ' ' + mn + 'm' : '')) : (mn + 'm'); };
+
+    // ── CPD Progress ──
+    sectionTitle('CPD Progress');
+    const cpdTargets = { Mortgage: 900, Protection: 900, Wealth: 2100 };
+    const cpdTypes = [];
+    if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) cpdTypes.push({ key:'Mortgage',   color: darkBlue });
+    if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) cpdTypes.push({ key:'Protection', color: orange });
+    if (u.sellsInvestments) cpdTypes.push({ key:'Wealth', color: blueAccent });
+    if (!cpdTypes.length) cpdTypes.push({ key:'Mortgage', color: darkBlue }, { key:'Protection', color: orange });
+    const barX = 36, barW = W - 190, barH = 8;
+    cpdTypes.forEach(t => {
+      ensureSpace(36);
+      const done = data.cpd.byType[t.key] || 0;
+      const target = cpdTargets[t.key] || 900;
+      const pct = Math.min(1, target > 0 ? done / target : 0);
+      const complete = done >= target;
+      page.drawText(t.key, { x: barX, y: y + 2, size: 10, font: fontSemi, color: darkBlue });
+      const statTxt = fmtMin(done) + ' / ' + fmtMin(target) + (complete ? ' ✓' : '');
+      page.drawText(statTxt, { x: barX + barW + 14, y: y + 2, size: 9, font: fontMed, color: complete ? green : grey });
+      y -= 14;
+      page.drawRectangle({ x: barX, y, width: barW, height: barH, color: lightGrey });
+      if (pct > 0) page.drawRectangle({ x: barX, y, width: barW * pct, height: barH, color: complete ? green : t.color });
+      y -= 20;
+    });
+    y -= 6;
+
+    // ── Feefo ──
+    sectionTitle('Feefo');
+    drawStatRow([
+      { label: 'REVIEWS', value: data.feefo.count || 0 },
+      { label: 'AVG RATING', value: data.feefo.avg ? data.feefo.avg + ' / 5' : '—' },
+      { label: 'NPS', value: data.feefo.nps != null ? data.feefo.nps : '—' }
+    ]);
+
+    // ── Consumer Understanding ──
+    sectionTitle('Consumer Understanding');
+    const cdPct = data.consumerDuty.total ? Math.round(((data.consumerDuty.full||0) / data.consumerDuty.total) * 100) : null;
+    drawStatRow([
+      { label: 'RESPONSES', value: data.consumerDuty.total || 0 },
+      { label: 'FULL', value: data.consumerDuty.full || 0, color: darkBlue },
+      { label: 'PARTIAL', value: data.consumerDuty.partial || 0, color: red },
+      { label: 'RESTORED', value: data.consumerDuty.restored || 0, color: amber },
+      { label: '% FULL', value: cdPct != null ? cdPct + '%' : '—' }
+    ]);
+
+    // ── AutoCRM Renewals ──
+    sectionTitle('AutoCRM™ Renewals (next 6 months)');
+    drawStatRow([1,2,3,4,5,6].map(n => ({ label: n + ' MONTH', value: data.autoCrm.months[n] || 0 })));
+
+    // ── ReEngage ──
+    sectionTitle('ReEngage™ (past completions)');
+    drawStatRow([
+      { label: '4 YEARS 6 MONTHS', value: data.reEngage['4y6m'] || 0 },
+      { label: '4 YEARS 3 MONTHS', value: data.reEngage['4y3m'] || 0 },
+      { label: '5 YEARS', value: data.reEngage['5y'] || 0 }
+    ]);
+
+    // ── Engage ──
+    sectionTitle('Engage™');
+    drawStatRow([
+      { label: 'HOT', value: data.engage.hot || 0, color: red },
+      { label: 'WARM', value: data.engage.warm || 0, color: amber },
+      { label: 'COLD', value: data.engage.cold || 0, color: blueAccent }
+    ]);
+
+    // ── Reporting ──
+    sectionTitle('Reporting');
+    var crCounts = data.reporting.counts || {};
+    drawStatRow(['Complaint','Breach','Conflict of Interest','Gifts & Hospitality','Self Sale','Whistleblowing'].map(t => ({ label: t.toUpperCase(), value: crCounts[t] || 0 })));
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + userName.replace(/[^a-z0-9]+/gi,'-') + '-broker-profile.pdf"');
+    res.send(Buffer.from(pdfBytes));
+  } catch (err) {
+    console.error('broker-profile pdf error:', err);
     res.status(500).json({ error: err.message });
   }
 });
