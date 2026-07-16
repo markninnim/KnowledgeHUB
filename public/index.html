@@ -3979,8 +3979,10 @@ select:focus { outline:none; }
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
             </div>
           </div>
-          <div id="bp-cd-recent-label" style="display:none;font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Recent Responses</div>
-          <div id="bp-cd-recent" style="display:flex;flex-direction:column;gap:0;"></div>
+          <button id="bp-cd-recent-label" onclick="var l=document.getElementById('bp-cd-recent');var open=l.style.display!=='none';l.style.display=open?'none':'flex';this.querySelector('.arr').textContent=open?'▸':'▾';" style="display:none;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;padding:0;width:100%;text-align:left;">
+            <span class="arr">▸</span> Recent Responses
+          </button>
+          <div id="bp-cd-recent" style="display:none;flex-direction:column;gap:0;margin-top:10px;"></div>
         </div>
 
         <!-- Feefo Reviews (all, with date filter) -->
@@ -10092,8 +10094,7 @@ function openBrokerProfile(email, name, keepDateRange) {
         var recentEl = document.getElementById('bp-cd-recent');
         var recentLabel = document.getElementById('bp-cd-recent-label');
         if (recs.length && recentEl) {
-          if (recentLabel) recentLabel.style.display = '';
-          recentEl.style.display = 'flex';
+          if (recentLabel) recentLabel.style.display = 'flex';
           recentEl.innerHTML = recs.map(function(r) {
             var dateStr = r.date ? new Date(r.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '';
             var statusColor = r.perfect ? '#22c55e' : '#b91c1c';
