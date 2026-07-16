@@ -10359,11 +10359,11 @@ function openBrokerProfile(email, name, keepDateRange) {
         var newCount  = ac.newCount || 0;
         var lostCount = ac.lostCount || 0;
         var ratio     = ac.replacementRatio;
-        var tipText = 'Lost business (' + lostCount + ') as a % of new business (' + newCount + ') written in the selected date range. ' +
-          'Lost = completions whose Benefit End date is more than 1 month overdue. New = completions with a completion date in range. ' +
+        var tipText = 'Lost business (' + lostCount + ') as a % of new business (' + newCount + ') written year-to-date (calendar year, not affected by the date filter above). ' +
+          'Lost = completions whose Benefit End date is more than 1 month overdue. New = completions with a completion date this year. ' +
           'Lower is better — it is a book-health check, not a per-client retention rate.';
         return '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef1f4;display:flex;align-items:center;justify-content:space-between;">' +
-          '<span style="font-size:11px;color:#6b7c8f;">' + newCount + ' new · ' + lostCount + ' lost (this period)</span>' +
+          '<span style="font-size:11px;color:#6b7c8f;">' + newCount + ' new · ' + lostCount + ' lost (YTD)</span>' +
           '<span style="display:inline-flex;align-items:center;gap:5px;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">Replacement Ratio: ' + (ratio != null ? ratio + '%' : '—') + '</span>' +
             '<span class="lic-icon-wrap">' +

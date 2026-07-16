@@ -5863,12 +5863,16 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       const dt = new Date(Number(yr), Number(m[1]) - 1, Number(m[2]));
       return isNaN(dt.getTime()) ? null : dt;
     }
-    const rrFromDt = rangeFrom ? new Date(rangeFrom) : null;
-    const rrToDt   = rangeTo   ? new Date(rangeTo)   : null;
+    // Always calendar-YTD (Jan 1 of this year through today) — deliberately
+    // NOT tied to the page's From/To date filter, so this stays a stable
+    // year-to-date measure regardless of what range a supervisor has selected.
+    const rrNow     = new Date();
+    const rrFromDt  = new Date(rrNow.getFullYear(), 0, 1);
+    const rrToDt    = rrNow;
     function rrInRange(dt) {
       if (!dt) return false;
-      if (rrFromDt && dt < rrFromDt) return false;
-      if (rrToDt && dt > rrToDt) return false;
+      if (dt < rrFromDt) return false;
+      if (dt > rrToDt) return false;
       return true;
     }
     const oneMonthAgo = new Date();
