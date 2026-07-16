@@ -5285,9 +5285,31 @@ var SIZE_LABELS = {
   'fpg-tiktok-1080x1920.jpg':    { label: 'TikTok / Story', size: '1080 × 1920' },
   'fpg-square-1200x1200.jpg':    { label: 'Square',         size: '1200 × 1200' }
 };
+// Newer uploads use free-form names like "1080 x 1350 - ig.jpg" instead of the
+// fixed fpg-*.jpg names above — parse the dimensions and platform tag out of
+// those instead of falling back to the raw filename as the display label.
+function resolveSizeLabel(file) {
+  if (SIZE_LABELS[file]) return SIZE_LABELS[file];
+  var lower = file.toLowerCase();
+  var dimMatch = lower.match(/(\d+)\s*x\s*(\d+)/);
+  var size = dimMatch ? (dimMatch[1] + ' × ' + dimMatch[2]) : '';
+  var tagMatch = lower.match(/-\s*([a-z ]+?)\s*\.[a-z0-9]+$/);
+  var tags = tagMatch ? tagMatch[1].trim().split(/\s+/).filter(Boolean) : [];
+  var label = file.replace(/\.[^.]+$/, '');
+  if (tags.length > 1) {
+    label = 'Square';
+  } else if (tags.length === 1) {
+    var tag = tags[0];
+    if (/^tik/.test(tag))      label = 'TikTok / Story';
+    else if (/^ig/.test(tag))  label = 'Instagram';
+    else if (/^fb/.test(tag))  label = 'Facebook';
+    else if (/^li/.test(tag))  label = 'LinkedIn';
+  }
+  return { label: label, size: size };
+}
 function makeSocialCard(postName, fileObj) {
   var file = fileObj.name || fileObj;
-  var info = SIZE_LABELS[file] || { label: file, size: '' };
+  var info = resolveSizeLabel(file);
   var url  = '/download-post/' + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
   var addedDate = fileObj.created ? new Date(fileObj.created) : null;
   var fmt = function(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
