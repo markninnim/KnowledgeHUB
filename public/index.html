@@ -10180,15 +10180,17 @@ function openBrokerProfile(email, name, keepDateRange) {
       var rvVideos = allLog.filter(function(e) { return e.videoTitle && rvTitles.indexOf(e.videoTitle.toLowerCase()) !== -1; });
       var rvVideosEl = document.getElementById('bp-rv-videos');
       if (rvVideosEl) {
+        var rvVideosShown = rvVideos.slice(0, 4);
         rvVideosEl.innerHTML = rvVideos.length
           ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + rvVideos.length + ' video' + (rvVideos.length!==1?'s':'') + ' watched</div>' +
             '<div style="display:flex;flex-direction:column;gap:4px;">' +
-            rvVideos.map(function(v) {
+            rvVideosShown.map(function(v) {
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f8;">' +
                 '<span style="font-size:12px;color:#6b7c8f;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(v.videoTitle) + '</span>' +
                 '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
               '</div>';
-            }).join('') + '</div>'
+            }).join('') + '</div>' +
+            (rvVideos.length > 4 ? '<div style="font-size:11px;color:#6b7c8f;margin-top:6px;">+' + (rvVideos.length - 4) + ' more</div>' : '')
           : '<div style="font-size:12px;color:#6b7c8f;">No revalidation videos watched yet</div>';
       }
 
