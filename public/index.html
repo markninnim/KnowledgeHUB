@@ -10327,9 +10327,9 @@ function openBrokerProfile(email, name, keepDateRange) {
           '<span style="font-size:11px;color:#6b7c8f;">' + newCount + ' new · ' + lostCount + ' lost (this period)</span>' +
           '<span style="display:inline-flex;align-items:center;gap:5px;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--brand-navy);">Replacement Ratio: ' + (ratio != null ? ratio + '%' : '—') + '</span>' +
-            '<span style="position:relative;display:inline-flex;" class="bp-rr-info-wrap">' +
-              '<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#d7dee5;color:#5b6b7a;font-size:9.5px;font-weight:700;cursor:default;">i</span>' +
-              '<span class="bp-rr-info-tip" style="visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 6px);right:0;width:230px;white-space:normal;background:var(--brand-navy);color:#fff;font-size:10.5px;font-weight:500;line-height:1.5;padding:8px 10px;border-radius:6px;transition:opacity .12s;pointer-events:none;z-index:30;">' + escHtml(tipText) + '</span>' +
+            '<span class="lic-icon-wrap">' +
+              '<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#d7dee5;color:#5b6b7a;font-size:9.5px;font-weight:700;">i</span>' +
+              '<span class="lic-tip" style="white-space:normal;width:220px;text-align:left;line-height:1.5;">' + escHtml(tipText) + '</span>' +
             '</span>' +
           '</span>' +
         '</div>';
