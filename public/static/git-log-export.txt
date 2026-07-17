@@ -1,0 +1,127 @@
+KnowledgeHUB — Git Commit Log Export
+Generated: 2026-07-17
+Total commits: 122
+============================================================
+
+2026-07-17 | fe673ec | Add SimFlex logo asset
+2026-07-17 | 9c62354 | Swap version history corner logo to SimFlex
+2026-07-17 | e8609e7 | Add v0.1 Early Development entry to version history
+2026-07-17 | bc25c87 | Remove contact email from Home footer (kept on version history page)
+2026-07-17 | a5448e9 | Add route for version-history.html
+2026-07-17 | 2aed304 | Add version history page, link it from footer, add contact email
+2026-07-17 | b216400 | Add footer credit line to Home page
+2026-07-17 | 5ab42ef | Add optional payslip cross-check to Bank Statement Check
+2026-07-17 | eae45ed | Add full Checks Performed breakdown + Save PDF button to Lab reports
+2026-07-17 | 0ad0538 | Elaborate Lab subtitle: MVP/dev status by Simflex.AI
+2026-07-17 | 66d54bf | Lab sidebar links toggle between Payslip Check and Bank Statement Check
+2026-07-17 | 5e7538d | Move Bank Statement Check back under Lab, below Payslip Check
+2026-07-17 | a532799 | Rename Bank Check to Bank Statement Check
+2026-07-17 | a5b8dd0 | Give Bank Statement Check its own top-nav tab and page
+2026-07-17 | 5d0850f | Add Bank Statement Check tool to Lab
+2026-07-17 | 1b8fbfb | Add Lab to Feature Rollout Controls
+2026-07-17 | 29d04b9 | Payslip Check: forensic-detective framing + PII redaction in reports
+2026-07-16 | 483ceef | Revert column stretch; increase News Bulletins scroll area to 320px
+2026-07-16 | 1a72828 | News Bulletins scroll area fills available card height
+2026-07-16 | 01aaf6f | Stretch Home left columns to match right column height
+2026-07-16 | e2d0373 | Always show a You row on NPS leaderboard, even with no data
+2026-07-16 | b32f517 | Always show adviser's own rank via pinned row on Feefo leaderboards
+2026-07-16 | bf708f8 | Specialist CPD: 3h target + green state; add Specialist column to CPD entries; fix 100% donut ring
+2026-07-16 | ce5e861 | Specialist licence icons on My Team go green at 3 hours YTD CPD
+2026-07-16 | 70a55ab | Specialist licence icons on My Team go green at 3 hours YTD CPD
+2026-07-16 | 08716b2 | Fix Broker Branded Logo download: add CORS header to /view-asset so crossOrigin img loads succeed
+2026-07-16 | 1ae09a6 | Broker profile: color Consumer Duty Score green at 100%
+2026-07-16 | 6835721 | Add loading spinner graphic to broker profile and Pay commission loading states
+2026-07-16 | c01e702 | Broker profile: fix Feefo rank label to stack under number (flex-direction override)
+2026-07-16 | fbb9224 | Replacement Ratio: always calculate calendar YTD, ignore page date filter
+2026-07-16 | 776966b | Broker profile: style Feefo rank to match other stat tiles (no pill)
+2026-07-16 | 98f4ead | Broker profile: show Feefo rank as inline pill next to NPS
+2026-07-16 | c33ac93 | Update S Sutton sample pay statements: ~10k/month 2025, ~8k/month 2026
+2026-07-16 | 00cd729 | CPD Progress: add YTD pace marker and ahead/behind indicator for supervisors
+2026-07-16 | 9c205af | Fix Pay YTD comparison: cap both years at latest available current-year month, not calendar month
+2026-07-16 | b7c4e55 | Broker profile: color Consumer Understanding % full green at 100%
+2026-07-16 | dafe28b | Update R Chart sample pay statements: ~9k/month 2025, ~10k/month 2026
+2026-07-16 | 8ee658e | Broker profile: hide empty Engage/ReEngage/AutoCRM cards and expand siblings to fill the row
+2026-07-16 | 0c91b11 | Broker profile: move YTD comparison below list, swap bar colors/order (2026 top/orange)
+2026-07-16 | 0c5d24b | Broker profile: remove underline from '+N more' toggle link
+2026-07-16 | 4517a34 | Broker profile: color YTD comparison bars (last year orange, this year navy)
+2026-07-16 | 1177126 | Broker profile: make '+N more' clickable to expand full Videos/Revalidation lists
+2026-07-16 | b774f9c | Broker profile: add YTD vs prior-year Pay comparison chart
+2026-07-16 | 73025c0 | Broker profile: cap Revalidation videos list to 4 visible entries
+2026-07-16 | 12a1e94 | Broker profile: cap Videos Watched list to 5 most recent entries
+2026-07-16 | 3397387 | Add sample/test pay statement files for S Sutton and R Chart (2025-2026)
+2026-07-16 | 110382b | Broker profile: fix Replacement Ratio tooltip by reusing proven lic-icon-wrap pattern
+2026-07-16 | dff78f2 | Broker profile: add hover tooltip explaining Replacement Ratio
+2026-07-16 | fca22a5 | Broker profile: add Replacement Ratio (lost vs new business) to AutoCRM Renewals
+2026-07-16 | 353ad70 | Broker profile: Pay card spans rows 2-3 in column 3 to fill layout gap
+2026-07-16 | ec270cb | Broker profile: stretch Row 3 cards (Test Results/Revalidation) to fill row height
+2026-07-16 | e3a1e6c | Broker profile: stretch Row 2 cards (Newsletter/Videos/Pay) to fill row height
+2026-07-16 | 4c460b3 | Broker profile: cap Videos Watched/Newsletter Access list height to match Pay card
+2026-07-16 | e94a3f0 | Broker profile: remove Sales Process Access section from Pay box
+2026-07-16 | 0cada72 | Broker profile: merge Commission and Sales Process Access into one 'Pay' box
+2026-07-16 | c9968d5 | Broker profile: swap Revalidation and Newsletter Access card positions
+2026-07-16 | 7c8ef18 | Broker profile: source Test Results from Revalidation Broker List table
+2026-07-16 | 7c7136f | PDF report: remove section divider lines, adjust title spacing
+2026-07-16 | 023c31c | Broker profile: remove Cold from Engage, shrink Engage card, fit Reporting row
+2026-07-16 | b9979f8 | Fix PDF report spacing: wrap long stat labels, add consistent section gaps
+2026-07-16 | d6dd6db | Simplify Reporting tiles (no boxes, matching label font) and remove Engage tile colours
+2026-07-16 | 4f259ed | Show the 4 named knowledge tests with title+score in broker profile Test Results card
+2026-07-16 | e63a07a | Add PDF export button to broker profile, generating a branded A4 report
+2026-07-16 | a0d9df3 | Put Engage (30%) and Reporting (70%) on one row; match Engage tile style to AutoCRM
+2026-07-16 | c68af70 | Fix duplicate style attribute causing AutoCRM/ReEngage tile misalignment
+2026-07-16 | 0e1a37a | Show specialist licence icons (not Mortgage/Protection) in CPD Progress card header
+2026-07-16 | 3e7577c | Match CPD Progress header icons to the existing LICENCE_ICONS set (house/briefcase/$)
+2026-07-16 | 24c6066 | Swap CPD Progress layout: text labels on bars, icons in top-right header
+2026-07-16 | cc3b633 | Replace CPD subject dot+label with matching app icons (house/heart/$)
+2026-07-16 | a063eff | Remove per-section date filters from Feefo Reviews and All Activity; all boxes now follow the page-level date filter
+2026-07-16 | e6dbc20 | Default All Activity date filter to 1st of last month
+2026-07-16 | 04ac2d4 | Default Feefo Reviews date filter to 1st of last month
+2026-07-16 | d8b47fe | Show licences held in CPD Progress card header, green dot at 2hrs per subject
+2026-07-16 | f639137 | Match Clear button size/style to date range pill box
+2026-07-16 | 1101b6f | Collapse Consumer Duty recent responses list behind a click-to-expand toggle
+2026-07-16 | 5cb55fa | Restyle broker profile date filter as single From/To pill box
+2026-07-16 | ae8759f | Consumer Understanding card: all numbers navy, wider spacing, add % full stat with extra gap
+2026-07-16 | 815fef9 | Persist Consumer Duty remediation ticks to Airtable (Restored Keys field), show real Full/Restored/Partial counts everywhere
+2026-07-16 | 8c0be1c | Remove log entries summary line from CPD Progress card, shrinking row height
+2026-07-16 | a37c584 | Add date-range filter to broker profile (defaults to 1st of last month), move tenure inline next to name
+2026-07-16 | 4e1f599 | Add Reporting tiles (6 compliance report types) to broker profile, with click-through detail modal
+2026-07-16 | 689f970 | View in Social Content link now scrolls to and highlights the specific recommended post
+2026-07-16 | 7dcad5f | Fix View in Social Content link: switch to marketing tab before showing section
+2026-07-16 | 61e7ba3 | Remove Ready to Retarget tile from home ReEngage box so layout fits
+2026-07-16 | 33596bf | Stack CPD Summary and ReEngage boxes vertically instead of side by side
+2026-07-16 | 463001a | Split CPD Summary 50/50 with new clickable ReEngage bucket-count box on home page
+2026-07-16 | 2173485 | Reduce News Bulletins box height to 70%
+2026-07-16 | 0e6bcb3 | Stack News Bulletins above Today's Recommended Post; horizontal card layout
+2026-07-16 | 1f0561d | Add Today's Recommended Post card to home page (2/3 news, 1/3 daily pillar-rotated post)
+2026-07-16 | 0a299f1 | Rename sidebar link to 'Your Social Content', match badge style to Supervise sidebar
+2026-07-16 | 2a867ea | Rename heading to 'Content Pillars', remove em dash
+2026-07-16 | 47146f3 | Fix social content card naming/filtering for new free-form filenames
+2026-07-16 | b7991cd | Center pillar badge text with equal padding
+2026-07-16 | 3997eac | Fix pillar badge padding/shape for balanced pill look
+2026-07-16 | 099fec4 | Simplify pillar section styling, add Call to Action pillar
+2026-07-16 | 86e6932 | Add content pillar tagging + filter to Bespoke Social Content, with day-to-day usage guidance
+2026-07-16 | af8ec1b | Add approved post copy for new social content: 23 or 5, Christmas Renewal, Is It All A Blur, How Much Can I Borrow, Job Security Isn't Guaranteed, Let's Review Together, Planning Beyond Political Change, Renewal Due, Trusted Since 1999, What If I Cannot Work, 5 Stars 5000
+2026-07-16 | 0a15da7 | Replace native adviser filter select with scrollable custom dropdown (fixes cut-off list)
+2026-07-16 | 3e9294a | Remember Leads Table/Cards view choice per user
+2026-07-16 | 2cc709c | Remove Quality/Status pills from Leads card view
+2026-07-16 | 6ff8fd0 | Fix Leads modal clearing unrecognized Source values (e.g. ReEngage) when editing unrelated fields
+2026-07-16 | 453d907 | Move AutoCRM/ReEngage notes+handoff state to Airtable (was local JSON, wiped on every Railway redeploy)
+2026-07-16 | 4ba6508 | Remove Property Value/Deposit/Salary from Leads table view, show single email only
+2026-07-16 | cc89989 | Display ReEngage lead source with trademark symbol
+2026-07-16 | 1a98af7 | Remove bold from Admin/account nav pill labels
+2026-07-16 | d5f26af | Wire ReEngage LeadGEN handoff to real lead creation: round-robin assignment + Referred By tagging for referral fees
+2026-07-16 | cbf0d69 | Update ReEngage subtitle; add Mark for LeadGEN handoff toggle to ReEngage cards
+2026-07-16 | dd52b31 | Match ReEngage card styling to AutoCRM (plain cells, lowercase labels), drop Total line and boxed mini-cards
+2026-07-15 | 3e27469 | Fix broker profile Mortgage Completions fetch; redesign AutoCRM/ReEngage as 50/50 cards with clickable client-level detail
+2026-07-15 | 8a6ccf3 | Fix broker profile Mortgage Completions fetch missing returnFieldsByFieldId (broke AutoCRM Renewals + ReEngage buckets)
+2026-07-15 | 89a1988 | AutoCRM Renewals card: always show with empty-state message
+2026-07-15 | 6589183 | Add AutoCRM Renewals summary row to broker profile in Supervise
+2026-07-15 | 53fb13d | Fix licence icon tooltips getting clipped by card overflow
+2026-07-15 | 1d55192 | Add custom hover tooltips to licence icon badges
+2026-07-15 | 3444679 | Add licence icon badges to broker cards on Supervise page
+2026-07-15 | a64f9e4 | Fix feature flags not saving: use Airtable upsert instead of stale record-id cache
+2026-07-15 | 2baf63c | Move Engage before ReEngage in grouped nav
+2026-07-15 | 76cdc8d | Move Earn tab before Learn in top nav
+2026-07-15 | 7bd2db9 | Group AutoCRM/ReEngage/Engage nav tabs in a bordered container at the end
+2026-07-15 | a32da4d | Fix quick-links menu not persisting: move from local JSON file to Airtable
+2026-07-15 | 6a01427 | Rename nav labels: My Team to Supervise, Learning to Learn, Opportunities to Earn
+2026-07-15 | 7e0f3ad | Add Finance Planning Wealth logo/link to Wealth Opportunities page
