@@ -1213,6 +1213,81 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
   }
 });
 
+// ── Lab: Payslip Check — fraud/anomaly screening on customer-supplied
+// payslips (income evidence uploaded during a mortgage/protection case),
+// NOT the broker's own commission statements. Broker uploads 1-3 payslip
+// images/PDFs; Claude vision reviews them for internal math inconsistencies,
+// signs of tampering, mismatched details across slips, and large
+// unexplained variance between periods.
+app.post('/api/lab/payslip-check', requireAuth, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'This tool is not configured yet. Ask an admin to add an Anthropic API key.' });
+  }
+  const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
+  if (!files.length) return res.status(400).json({ error: 'Upload at least one payslip.' });
+  if (files.length > 6) return res.status(400).json({ error: 'Please upload 6 payslips or fewer at a time.' });
+
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+  const content = [];
+  for (const f of files) {
+    const ct = (f && f.contentType || '').toLowerCase();
+    if (!ALLOWED.includes(ct)) return res.status(400).json({ error: `Unsupported file type: ${ct || 'unknown'}. Use JPG, PNG or PDF.` });
+    if (!f.base64) return res.status(400).json({ error: 'A file failed to upload — please try again.' });
+    if (ct === 'application/pdf') {
+      content.push({ type: 'document', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    } else {
+      content.push({ type: 'image', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    }
+  }
+  content.push({
+    type: 'text',
+    text: `You are acting as a forensic fraud investigator, examining ${files.length} payslip document(s) a customer has submitted as income evidence for a mortgage/protection case. Your job is to be suspicious by default and actively hunt for anything that looks fabricated, altered, or inconsistent — the adviser is relying on your report to decide whether these documents can be trusted. Investigate:
+1. Internal maths — do gross pay, deductions (tax, NI, pension, etc.) and net pay actually add up on each slip?
+2. Year-to-date figures — if YTD totals are shown, do they increase sensibly slip-to-slip (consistent with the pay period gap between documents)?
+3. Large variance — is any slip's net/gross pay wildly different (say, more than ~25-30%) from the others with no obvious explanation (bonus, overtime, etc. stated)? Call this out explicitly as "large variance" if found.
+4. Consistency of fixed details — employer name, tax code, employee name/address should match across all slips.
+5. Formatting/visual red flags — inconsistent fonts, misaligned columns, obvious editing artefacts, pixelation/smudging around numbers suggesting edited digits, mismatched date logic (e.g. pay date before period end), or anything else that looks doctored.
+
+PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, National Insurance number, address, date of birth, bank/account details, or employer name verbatim anywhere in your response — refer to them generically instead (e.g. "the stated NI number is inconsistent between slip 1 and slip 2", not the number itself). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
+
+Respond with ONLY a JSON object, no other text, in exactly this shape:
+{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","flags":[{"type":"maths|ytd|variance|consistency|formatting|other","description":"specific, concrete description of the issue found, naming which document(s) — no personal identifiers"}]}
+If nothing is wrong, return riskLevel "low", an empty flags array, and a summary confirming the slips look internally consistent. Do not invent problems that aren't visibly supported by the documents — only report what you can actually see.`
+  });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    const raw = (data.content && data.content[0] && data.content[0].text) || '';
+    let parsed;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    } catch (e) {
+      parsed = { riskLevel: 'medium', summary: 'The AI response could not be parsed automatically — review the raw output below.', flags: [], raw };
+    }
+    parsed.riskLevel = ['low', 'medium', 'high'].includes(parsed.riskLevel) ? parsed.riskLevel : 'medium';
+    parsed.flags = Array.isArray(parsed.flags) ? parsed.flags : [];
+    res.json(parsed);
+  } catch (err) {
+    console.error('payslip-check error:', err);
+    res.status(500).json({ error: 'Something went wrong reaching the AI. Please try again.' });
+  }
+});
+
 // ── Help KB admin CRUD — admin-only, so the whitelist of content the AI can
 // draw from is editable without a code deploy, but only by admins.
 app.get('/api/admin/help-kb', requireAdmin, async (req, res) => {
