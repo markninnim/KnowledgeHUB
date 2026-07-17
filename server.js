@@ -42,6 +42,14 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const AT_KEY      = process.env.AIRTABLE_API_KEY;
 const AT_BASE     = 'appqQv0Xog8yZMwI9';
 const AT_TABLE    = 'tbltcinwWF3FXDGre';
+
+// Change Requests — submitted via the version history page, supervisor/admin only
+const CR_REQ_TABLE     = 'tbl33YSTWCQhMqbw3';
+const CR_REQ_NAME      = 'fld0xdnUhI9uHnYsj';
+const CR_REQ_TEXT      = 'fldChfOUECFcAvVF6';
+const CR_REQ_IMPORTANCE = 'flddZQriukRPnsCbR';
+const CR_REQ_COMPLETED = 'fldr4LAbBM5w4EXPR';
+const CR_REQ_DATE      = 'flddfyEUWn1xPG4vU';
 // Muttuo — Fitch and Fitch's leads base (separate Airtable base, same PAT)
 const MUTTUO_BASE  = 'appZUxEeP6nY26iQh';
 const MUTTUO_TABLE = 'tbl1N4AE687y5BI78';
@@ -2727,6 +2735,85 @@ app.get('/api/git-log', (req, res) => {
     const p = path.join(__dirname, 'public/static/git-log-export.txt');
     if (require('fs').existsSync(p)) return res.sendFile(p);
     res.status(500).send('Commit log unavailable.');
+  }
+});
+
+// ── Change Requests page (auth required; supervisor/admin can submit) ───
+app.get('/change-requests.html', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/change-requests.html'));
+});
+
+app.get('/api/change-requests', requireAuth, async (req, res) => {
+  try {
+    const fieldQs = [CR_REQ_NAME, CR_REQ_TEXT, CR_REQ_IMPORTANCE, CR_REQ_COMPLETED, CR_REQ_DATE]
+      .map(f => `fields[]=${f}`).join('&');
+    const qs = `?${fieldQs}&sort[0][field]=${CR_REQ_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100`;
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${CR_REQ_TABLE}${qs}`, {
+      headers: { Authorization: `Bearer ${AT_KEY}` }
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    const rows = (body.records || []).map(rec => {
+      const f = rec.fields || {};
+      return {
+        id: rec.id,
+        name: f[CR_REQ_NAME] || '',
+        request: f[CR_REQ_TEXT] || '',
+        importance: f[CR_REQ_IMPORTANCE] || '',
+        completed: !!f[CR_REQ_COMPLETED],
+        dateSubmitted: f[CR_REQ_DATE] || ''
+      };
+    });
+    res.json({ requests: rows, canManage: !!(req.session.user.isSupervisor || req.session.user.isAdmin) });
+  } catch (err) {
+    console.error('change-requests list error:', err.message);
+    res.status(500).json({ error: 'Could not load change requests' });
+  }
+});
+
+app.post('/api/change-requests', requireAdminOrSupervisor, async (req, res) => {
+  try {
+    const { name, request, importance } = req.body;
+    if (!name || !request) return res.status(400).json({ error: 'Name and change request text are required' });
+    const validImportance = ['Low', 'Medium', 'High', 'Critical'].includes(importance) ? importance : 'Medium';
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${CR_REQ_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        records: [{
+          fields: {
+            [CR_REQ_NAME]: name,
+            [CR_REQ_TEXT]: request,
+            [CR_REQ_IMPORTANCE]: validImportance,
+            [CR_REQ_COMPLETED]: false,
+            [CR_REQ_DATE]: new Date().toISOString().slice(0, 10)
+          }
+        }]
+      })
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    res.json({ ok: true, record: body.records[0] });
+  } catch (err) {
+    console.error('change-requests create error:', err.message);
+    res.status(500).json({ error: 'Could not save change request' });
+  }
+});
+
+app.patch('/api/change-requests/:id', requireAdminOrSupervisor, async (req, res) => {
+  try {
+    const { completed } = req.body;
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${CR_REQ_TABLE}/${req.params.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { [CR_REQ_COMPLETED]: !!completed } })
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('change-requests update error:', err.message);
+    res.status(500).json({ error: 'Could not update change request' });
   }
 });
 

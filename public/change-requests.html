@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KnowledgeHUB&#8482; — Change Requests</title>
+<link rel="icon" type="image/png" href="/static/favicon-fpg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:   #003768;
+    --orange: #fcb034;
+    --grey:   #6b7c8f;
+    --light:  #f5f7fa;
+    --border: #e8ecf0;
+    --red:    #d64545;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--light);
+    margin: 0;
+    color: #1a2a3a;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--blue);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  h1 {
+    text-align: center;
+    color: var(--blue);
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--grey);
+    font-size: 14px;
+    margin: 0 0 32px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 0 0 16px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--grey);
+    margin-bottom: 5px;
+  }
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    outline: none;
+    margin-bottom: 16px;
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  button.primary {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  #form-status { font-size: 12px; color: var(--grey); margin-top: 10px; min-height: 16px; }
+
+  .request-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .request-row:last-child { border-bottom: none; }
+  .request-row.completed { opacity: .55; }
+  .request-main { flex: 1; min-width: 0; }
+  .request-name { font-size: 13px; font-weight: 700; color: var(--blue); }
+  .request-text { font-size: 13px; color: #3a4756; margin: 4px 0; line-height: 1.5; }
+  .request-meta { font-size: 11px; color: var(--grey); }
+  .importance-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-right: 6px;
+  }
+  .importance-Low      { background: #eef1f4; color: #6b7c8f; }
+  .importance-Medium   { background: #fef3d7; color: #92650a; }
+  .importance-High     { background: #ffe3cc; color: #b1500a; }
+  .importance-Critical { background: #fbdada; color: var(--red); }
+  .complete-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--grey);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .complete-toggle input { margin: 0; width: 16px; height: 16px; cursor: pointer; }
+  .empty-state { font-size: 13px; color: var(--grey); text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="/version-history.html">&larr; Back to Version History</a>
+  <h1>Change Requests</h1>
+  <p class="subtitle">Track feature requests and improvements for KnowledgeHUB&#8482;</p>
+
+  <div class="card" id="add-card" style="display:none;">
+    <h2>Add a Change Request</h2>
+    <label for="cr-name">Name</label>
+    <input type="text" id="cr-name" placeholder="Your name">
+    <label for="cr-text">Change Request</label>
+    <textarea id="cr-text" placeholder="Describe what you'd like changed or added..."></textarea>
+    <label for="cr-importance">Importance</label>
+    <select id="cr-importance">
+      <option value="Low">Low</option>
+      <option value="Medium" selected>Medium</option>
+      <option value="High">High</option>
+      <option value="Critical">Critical</option>
+    </select>
+    <button class="primary" id="cr-submit" onclick="submitChangeRequest()">Add Request</button>
+    <div id="form-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>All Requests</h2>
+    <div id="request-list"><p class="empty-state">Loading&hellip;</p></div>
+  </div>
+</div>
+
+<script>
+var _canManage = false;
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function loadRequests() {
+  fetch('/api/change-requests')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _canManage = !!data.canManage;
+      document.getElementById('add-card').style.display = _canManage ? 'block' : 'none';
+      renderList(data.requests || []);
+    })
+    .catch(function(){
+      document.getElementById('request-list').innerHTML = '<p class="empty-state">Could not load change requests.</p>';
+    });
+}
+
+function renderList(rows) {
+  var el = document.getElementById('request-list');
+  if (!rows.length) {
+    el.innerHTML = '<p class="empty-state">No change requests yet.</p>';
+    return;
+  }
+  el.innerHTML = rows.map(function(r){
+    var pillClass = 'importance-' + (r.importance || 'Medium');
+    var toggle = _canManage
+      ? '<label class="complete-toggle"><input type="checkbox" ' + (r.completed ? 'checked' : '') +
+        ' onchange="toggleCompleted(\'' + r.id + '\', this.checked)"> Completed</label>'
+      : (r.completed ? '<span class="complete-toggle">&#10003; Completed</span>' : '');
+    return '<div class="request-row' + (r.completed ? ' completed' : '') + '">' +
+      '<div class="request-main">' +
+        '<div class="request-name">' + esc(r.name) + '</div>' +
+        '<div class="request-text">' + esc(r.request) + '</div>' +
+        '<div class="request-meta"><span class="importance-pill ' + pillClass + '">' + esc(r.importance || 'Medium') + '</span>' + esc(r.dateSubmitted) + '</div>' +
+      '</div>' +
+      toggle +
+    '</div>';
+  }).join('');
+}
+
+function toggleCompleted(id, completed) {
+  fetch('/api/change-requests/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ completed: completed })
+  }).then(loadRequests);
+}
+
+function submitChangeRequest() {
+  var name = document.getElementById('cr-name').value.trim();
+  var text = document.getElementById('cr-text').value.trim();
+  var importance = document.getElementById('cr-importance').value;
+  var status = document.getElementById('form-status');
+  if (!name || !text) {
+    status.textContent = 'Please enter your name and a change request.';
+    return;
+  }
+  var btn = document.getElementById('cr-submit');
+  btn.disabled = true;
+  status.textContent = 'Saving...';
+  fetch('/api/change-requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, request: text, importance: importance })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      btn.disabled = false;
+      if (data.ok) {
+        document.getElementById('cr-name').value = '';
+        document.getElementById('cr-text').value = '';
+        document.getElementById('cr-importance').value = 'Medium';
+        status.textContent = 'Added.';
+        loadRequests();
+      } else {
+        status.textContent = data.error || 'Could not save request.';
+      }
+    })
+    .catch(function(){
+      btn.disabled = false;
+      status.textContent = 'Could not save request.';
+    });
+}
+
+loadRequests();
+</script>
+</body>
+</html>
