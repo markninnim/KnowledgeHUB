@@ -1250,9 +1250,11 @@ app.post('/api/lab/payslip-check', requireAuth, async (req, res) => {
 
 PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, National Insurance number, address, date of birth, bank/account details, or employer name verbatim anywhere in your response — refer to them generically instead (e.g. "the stated NI number is inconsistent between slip 1 and slip 2", not the number itself). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
 
+TRANSPARENCY — the adviser needs to see exactly what you checked, not just problems. For EACH of the 5 checks above, report a result even when it passed cleanly, so the adviser can see the full basis for your verdict, not just the failures.
+
 Respond with ONLY a JSON object, no other text, in exactly this shape:
-{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","flags":[{"type":"maths|ytd|variance|consistency|formatting|other","description":"specific, concrete description of the issue found, naming which document(s) — no personal identifiers"}]}
-If nothing is wrong, return riskLevel "low", an empty flags array, and a summary confirming the slips look internally consistent. Do not invent problems that aren't visibly supported by the documents — only report what you can actually see.`
+{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","checks":[{"type":"maths","label":"Internal maths","status":"pass|flag","note":"what you actually checked and found — specific, e.g. figures reconciled to the penny, or describe the discrepancy"},{"type":"ytd","label":"Year-to-date progression","status":"pass|flag","note":"..."},{"type":"variance","label":"Large variance between periods","status":"pass|flag","note":"..."},{"type":"consistency","label":"Consistency of fixed details","status":"pass|flag","note":"..."},{"type":"formatting","label":"Formatting / visual red flags","status":"pass|flag","note":"..."}],"flags":[{"type":"maths|ytd|variance|consistency|formatting|other","description":"specific, concrete description of any issue found, naming which document(s) — no personal identifiers"}]}
+Every one of the 5 "checks" entries must always be present, with status "pass" if nothing wrong was found for that check and "flag" if something was. The "flags" array should list only the items that were NOT a clean pass (it can be empty if everything passed). Do not invent problems that aren't visibly supported by the documents — only report what you can actually see.`
   });
 
   try {
@@ -1281,6 +1283,7 @@ If nothing is wrong, return riskLevel "low", an empty flags array, and a summary
     }
     parsed.riskLevel = ['low', 'medium', 'high'].includes(parsed.riskLevel) ? parsed.riskLevel : 'medium';
     parsed.flags = Array.isArray(parsed.flags) ? parsed.flags : [];
+    parsed.checks = Array.isArray(parsed.checks) ? parsed.checks : [];
     res.json(parsed);
   } catch (err) {
     console.error('payslip-check error:', err);
@@ -1332,9 +1335,11 @@ app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
 
 PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, account number, sort code, address, or the name of any specific named individual/company a payment was made to or from, verbatim anywhere in your response — describe transactions generically instead (e.g. "a recurring payment to what appears to be a gambling operator" rather than naming it, "a payment to another individual" rather than naming them). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
 
+TRANSPARENCY — the adviser needs to see exactly what you checked, not just problems. Report a result for BOTH checks below even when they pass cleanly, so the adviser can see the full basis for your verdict, not just the failures.
+
 Respond with ONLY a JSON object, no other text, in exactly this shape:
-{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","flags":[{"type":"maths|gap|other","description":"specific, concrete description of the issue found — no personal identifiers"}],"expenditure":{"household":0,"recreation":0,"bills":0,"credit":0,"other":0,"totalIncome":null,"totalExpenditure":null},"badHabits":["short specific description of each habit found"],"questions":["specific follow-up question"]}
-Use null for any expenditure figure you can't reasonably estimate from what's visible. If nothing is wrong, return riskLevel "low", an empty flags array, and a summary confirming the statement looks internally consistent — but still complete the expenditure summary, bad habits and questions sections as best you can from what's visible. Do not invent problems or figures that aren't visibly supported by the documents.`
+{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","checks":[{"type":"maths","label":"Running balance maths","status":"pass|flag","note":"what you actually checked and found — specific, e.g. balance reconciled throughout, or describe the discrepancy"},{"type":"gap","label":"Gaps, duplicates or missing pages","status":"pass|flag","note":"..."}],"flags":[{"type":"maths|gap|other","description":"specific, concrete description of any issue found — no personal identifiers"}],"expenditure":{"household":0,"recreation":0,"bills":0,"credit":0,"other":0,"totalIncome":null,"totalExpenditure":null},"badHabits":["short specific description of each habit found"],"questions":["specific follow-up question"]}
+Both "checks" entries must always be present, with status "pass" if nothing wrong was found and "flag" if something was. The "flags" array should list only items that were NOT a clean pass (it can be empty). Use null for any expenditure figure you can't reasonably estimate from what's visible. If nothing is wrong, return riskLevel "low" and a summary confirming the statement looks internally consistent — but still complete the expenditure summary, bad habits and questions sections as best you can from what's visible. Do not invent problems or figures that aren't visibly supported by the documents.`
   });
 
   try {
@@ -1359,9 +1364,10 @@ Use null for any expenditure figure you can't reasonably estimate from what's vi
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
     } catch (e) {
-      parsed = { riskLevel: 'medium', summary: 'The AI response could not be parsed automatically — review the raw output below.', flags: [], expenditure: {}, badHabits: [], questions: [], raw };
+      parsed = { riskLevel: 'medium', summary: 'The AI response could not be parsed automatically — review the raw output below.', checks: [], flags: [], expenditure: {}, badHabits: [], questions: [], raw };
     }
     parsed.riskLevel = ['low', 'medium', 'high'].includes(parsed.riskLevel) ? parsed.riskLevel : 'medium';
+    parsed.checks = Array.isArray(parsed.checks) ? parsed.checks : [];
     parsed.flags = Array.isArray(parsed.flags) ? parsed.flags : [];
     parsed.expenditure = (parsed.expenditure && typeof parsed.expenditure === 'object') ? parsed.expenditure : {};
     parsed.badHabits = Array.isArray(parsed.badHabits) ? parsed.badHabits : [];

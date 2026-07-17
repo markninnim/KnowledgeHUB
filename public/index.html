@@ -229,7 +229,7 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
     <button class="tab-btn"        id="tab-btn-pay"           onclick="switchTab('pay')" style="display:none;">Pay</button>
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
-    <button class="tab-btn"        id="tab-btn-lab"           onclick="switchTab('lab')">Lab</button>
+    <button class="tab-btn"        id="tab-btn-lab"           onclick="switchTab('lab')" style="display:none;">Lab</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervise</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
@@ -8745,7 +8745,7 @@ function applyFeatureFlags() {
     var activePaneId = activePane ? activePane.id : null;
     var activeDisabled = false;
     var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
-    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true, whereabouts: true };
+    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true, whereabouts: true, lab: true };
     var userNav = (_currentUser && _currentUser.navAccess) || {};
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
@@ -9648,6 +9648,53 @@ function labRunPayslipCheck() {
     });
 }
 
+// Shared: renders the "Checks Performed" list — every check the AI ran,
+// including clean passes, so the adviser can see the full basis for the
+// verdict rather than only the problems.
+function labBuildChecksHtml(checks) {
+  if (!checks || !checks.length) return '';
+  return checks.map(function(c) {
+    var pass = c.status === 'pass';
+    var icon = pass
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f2f5;">' +
+      '<span style="flex-shrink:0;margin-top:1px;">' + icon + '</span>' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:700;color:' + (pass ? 'var(--brand-navy)' : '#991b1b') + ';">' + escHtml(c.label || c.type || 'Check') + '</div>' +
+        '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.5;margin-top:2px;">' + escHtml(c.note || '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Opens a print-friendly window containing the given report element's HTML
+// and triggers the browser's print dialog — "Save as PDF" is a standard
+// destination there, so this needs no PDF library.
+function labSavePdf(elId, title) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var w = window.open('', '_blank', 'width=850,height=1100');
+  if (!w) { alert('Please allow pop-ups to save a PDF.'); return; }
+  w.document.write(
+    '<!DOCTYPE html><html><head><title>' + escHtml(title) + '</title>' +
+    '<style>' +
+      "body{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#3d4b5c;padding:32px;max-width:760px;margin:0 auto;}" +
+      'h1{font-size:18px;color:#0a2540;margin:0 0 4px;}' +
+      '.meta{font-size:12px;color:#6b7c8f;margin-bottom:24px;}' +
+      'a{color:inherit;text-decoration:none;}' +
+      'button{display:none;}' +
+    '</style></head><body>' +
+    '<h1>' + escHtml(title) + '</h1>' +
+    '<div class="meta">Generated ' + new Date().toLocaleString('en-GB') + (_currentUser ? ' by ' + escHtml([_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ')) : '') + '</div>' +
+    el.innerHTML +
+    '</body></html>'
+  );
+  w.document.close();
+  w.focus();
+  setTimeout(function() { w.print(); }, 300);
+}
+
 function labRenderPayslipResult(d) {
   var resultEl = document.getElementById('lab-payslip-result');
   var RISK = {
@@ -9656,25 +9703,27 @@ function labRenderPayslipResult(d) {
     high:   { bg: '#fee2e2', tc: '#991b1b', label: 'High risk — suspicious' }
   };
   var r = RISK[d.riskLevel] || RISK.medium;
-  var TYPE_LABEL = { maths: 'Maths', ytd: 'YTD', variance: 'Large variance', consistency: 'Consistency', formatting: 'Formatting', other: 'Other' };
 
-  var flagsHtml = (d.flags && d.flags.length)
-    ? d.flags.map(function(f) {
-        return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f2f5;">' +
-          '<span style="background:#f0f4f8;color:var(--brand-navy);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;height:fit-content;">' + escHtml(TYPE_LABEL[f.type] || f.type || 'Flag') + '</span>' +
-          '<span style="font-size:13px;color:#3d4b5c;line-height:1.5;">' + escHtml(f.description || '') + '</span>' +
-        '</div>';
-      }).join('')
-    : '<div style="color:#6b7c8f;font-size:13px;padding:8px 0;">No specific concerns raised.</div>';
+  var checksHtml = labBuildChecksHtml(d.checks);
+  var allPassed = d.checks && d.checks.length && d.checks.every(function(c) { return c.status === 'pass'; });
 
   resultEl.innerHTML =
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Investigator&#8217;s Report</div>' +
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-      '<span style="background:' + r.bg + ';color:' + r.tc + ';font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;">' + r.label + '</span>' +
+    '<div id="lab-payslip-report">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Investigator&#8217;s Report</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+        '<span style="background:' + r.bg + ';color:' + r.tc + ';font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;">' + r.label + '</span>' +
+      '</div>' +
+      '<p style="font-size:13.5px;color:var(--brand-navy);font-weight:600;line-height:1.6;margin:0 0 18px;">' + escHtml(d.summary || '') + '</p>' +
+      (checksHtml ?
+        '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Checks Performed' + (allPassed ? ' — all passed ✓' : '') + '</div>' +
+        '<div>' + checksHtml + '</div>'
+        : '') +
+      (d.raw ? '<pre style="margin-top:14px;background:#f9fafc;border:1px solid #f0f2f5;border-radius:8px;padding:12px;font-size:11px;color:#6b7c8f;white-space:pre-wrap;">' + escHtml(d.raw) + '</pre>' : '') +
     '</div>' +
-    '<p style="font-size:13.5px;color:var(--brand-navy);font-weight:600;line-height:1.6;margin:0 0 14px;">' + escHtml(d.summary || '') + '</p>' +
-    '<div>' + flagsHtml + '</div>' +
-    (d.raw ? '<pre style="margin-top:14px;background:#f9fafc;border:1px solid #f0f2f5;border-radius:8px;padding:12px;font-size:11px;color:#6b7c8f;white-space:pre-wrap;">' + escHtml(d.raw) + '</pre>' : '');
+    '<button onclick="labSavePdf(\'lab-payslip-report\',\'Payslip Check Report\')" style="margin-top:18px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+      'Save PDF' +
+    '</button>';
 }
 
 // ── Lab: Bank Statement Check ─────────────────────────────────
@@ -9724,16 +9773,8 @@ function labRenderBankResult(d) {
     high:   { bg: '#fee2e2', tc: '#991b1b', label: 'High risk — suspicious' }
   };
   var r = RISK[d.riskLevel] || RISK.medium;
-  var TYPE_LABEL = { maths: 'Maths', gap: 'Gap', other: 'Other' };
-
-  var flagsHtml = (d.flags && d.flags.length)
-    ? d.flags.map(function(f) {
-        return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f2f5;">' +
-          '<span style="background:#f0f4f8;color:var(--brand-navy);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;height:fit-content;">' + escHtml(TYPE_LABEL[f.type] || f.type || 'Flag') + '</span>' +
-          '<span style="font-size:13px;color:#3d4b5c;line-height:1.5;">' + escHtml(f.description || '') + '</span>' +
-        '</div>';
-      }).join('')
-    : '<div style="color:#6b7c8f;font-size:13px;padding:8px 0;">No specific concerns raised.</div>';
+  var checksHtml = labBuildChecksHtml(d.checks);
+  var allPassed = d.checks && d.checks.length && d.checks.every(function(c) { return c.status === 'pass'; });
 
   var fmtGBP = function(v) { return (v == null) ? '—' : '£' + Number(v).toLocaleString('en-GB', { maximumFractionDigits: 0 }); };
   var exp = d.expenditure || {};
@@ -9767,32 +9808,40 @@ function labRenderBankResult(d) {
     : '<div style="color:#6b7c8f;font-size:13px;">No follow-up questions suggested.</div>';
 
   resultEl.innerHTML =
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Investigator&#8217;s Report</div>' +
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-      '<span style="background:' + r.bg + ';color:' + r.tc + ';font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;">' + r.label + '</span>' +
+    '<div id="lab-bank-report">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Investigator&#8217;s Report</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+        '<span style="background:' + r.bg + ';color:' + r.tc + ';font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;">' + r.label + '</span>' +
+      '</div>' +
+      '<p style="font-size:13.5px;color:var(--brand-navy);font-weight:600;line-height:1.6;margin:0 0 18px;">' + escHtml(d.summary || '') + '</p>' +
+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">Expenditure Summary</div>' +
+      (exp.totalIncome != null || exp.totalExpenditure != null
+        ? '<div style="display:flex;gap:20px;margin-bottom:16px;">' +
+            (exp.totalIncome != null ? '<div><div style="font-size:11px;color:#6b7c8f;">Total income</div><div style="font-size:16px;font-weight:800;color:var(--brand-navy);">' + fmtGBP(exp.totalIncome) + '</div></div>' : '') +
+            (exp.totalExpenditure != null ? '<div><div style="font-size:11px;color:#6b7c8f;">Total expenditure</div><div style="font-size:16px;font-weight:800;color:var(--brand-navy);">' + fmtGBP(exp.totalExpenditure) + '</div></div>' : '') +
+          '</div>'
+        : '') +
+      expHtml +
+      (exp.other ? '<div style="font-size:12px;color:#6b7c8f;margin-top:4px;">Other/uncategorised: ' + fmtGBP(exp.other) + '</div>' : '') +
+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Spending Habits</div>' +
+      badHabitsHtml +
+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Questions For The Broker</div>' +
+      questionsHtml +
+
+      (checksHtml ?
+        '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Checks Performed' + (allPassed ? ' — all passed ✓' : '') + '</div>' +
+        '<div>' + checksHtml + '</div>'
+        : '') +
+
+      (d.raw ? '<pre style="margin-top:14px;background:#f9fafc;border:1px solid #f0f2f5;border-radius:8px;padding:12px;font-size:11px;color:#6b7c8f;white-space:pre-wrap;">' + escHtml(d.raw) + '</pre>' : '') +
     '</div>' +
-    '<p style="font-size:13.5px;color:var(--brand-navy);font-weight:600;line-height:1.6;margin:0 0 18px;">' + escHtml(d.summary || '') + '</p>' +
-
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">Expenditure Summary</div>' +
-    (exp.totalIncome != null || exp.totalExpenditure != null
-      ? '<div style="display:flex;gap:20px;margin-bottom:16px;">' +
-          (exp.totalIncome != null ? '<div><div style="font-size:11px;color:#6b7c8f;">Total income</div><div style="font-size:16px;font-weight:800;color:var(--brand-navy);">' + fmtGBP(exp.totalIncome) + '</div></div>' : '') +
-          (exp.totalExpenditure != null ? '<div><div style="font-size:11px;color:#6b7c8f;">Total expenditure</div><div style="font-size:16px;font-weight:800;color:var(--brand-navy);">' + fmtGBP(exp.totalExpenditure) + '</div></div>' : '') +
-        '</div>'
-      : '') +
-    expHtml +
-    (exp.other ? '<div style="font-size:12px;color:#6b7c8f;margin-top:4px;">Other/uncategorised: ' + fmtGBP(exp.other) + '</div>' : '') +
-
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Spending Habits</div>' +
-    badHabitsHtml +
-
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Questions For The Broker</div>' +
-    questionsHtml +
-
-    '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin:20px 0 10px;">Maths &amp; Consistency Flags</div>' +
-    '<div>' + flagsHtml + '</div>' +
-
-    (d.raw ? '<pre style="margin-top:14px;background:#f9fafc;border:1px solid #f0f2f5;border-radius:8px;padding:12px;font-size:11px;color:#6b7c8f;white-space:pre-wrap;">' + escHtml(d.raw) + '</pre>' : '');
+    '<button onclick="labSavePdf(\'lab-bank-report\',\'Bank Statement Check Report\')" style="margin-top:18px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+      'Save PDF' +
+    '</button>';
 }
 
 function submitForceReset() {
