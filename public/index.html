@@ -230,7 +230,7 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-pay"           onclick="switchTab('pay')" style="display:none;">Pay</button>
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-lab"           onclick="switchTab('lab')">Lab</button>
-    <button class="tab-btn"        id="tab-btn-bank-check"    onclick="switchTab('bank-check')">Bank Check</button>
+    <button class="tab-btn"        id="tab-btn-bank-check"    onclick="switchTab('bank-check')">Bank Statement Check</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervise</button>
     <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
@@ -370,9 +370,9 @@ select:focus { outline:none; }
     <h2 style="margin-top: 8px;">Lab</h2>
     <a href="#" class="active">Payslip Check</a>
   </div>
-  <!-- Bank Check sidebar -->
+  <!-- Bank Statement Check sidebar -->
   <div id="sidebar-bank-check" style="display:none">
-    <h2 style="margin-top: 8px;">Bank Check</h2>
+    <h2 style="margin-top: 8px;">Bank Statement Check</h2>
     <a href="#" class="active">Bank Statement Check</a>
   </div>
   <!-- AutoCRM sidebar -->
@@ -8738,7 +8738,7 @@ var FEATURE_LABELS = {
   learning:        { label: 'Learn',             tab: 'tab-btn-learning',          pane: 'tab-learning' },
   surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
   lab:             { label: 'Lab',               tab: 'tab-btn-lab',               pane: 'tab-lab' },
-  bankCheck:       { label: 'Bank Check',         tab: 'tab-btn-bank-check',        pane: 'tab-bank-check' },
+  bankCheck:       { label: 'Bank Statement Check', tab: 'tab-btn-bank-check',      pane: 'tab-bank-check' },
   sellingZone:     { label: 'Earn',               tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
   performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
   supervisorZone:  { label: 'Supervise',          tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
