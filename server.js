@@ -2743,6 +2743,37 @@ app.get('/change-requests.html', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/change-requests.html'));
 });
 
+// Names of all supervisors/admins, for the Name-field autocomplete on the
+// Change Requests form (only supervisors/admins can submit a request anyway).
+app.get('/api/change-requests/managers', requireAuth, async (req, res) => {
+  try {
+    const fieldQs = [F_FIRST, F_LAST, F_ADMIN, F_IS_SUPERVISOR].map(f => `fields[]=${f}`).join('&');
+    const qs = `?${fieldQs}&returnFieldsByFieldId=true&pageSize=100`;
+    let all = [];
+    let offset = '';
+    do {
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}${qs}${offset ? `&offset=${offset}` : ''}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      all = all.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset && all.length < 2000);
+
+    const names = all
+      .filter(rec => rec.fields && (rec.fields[F_ADMIN] || rec.fields[F_IS_SUPERVISOR]))
+      .map(rec => [rec.fields[F_FIRST], rec.fields[F_LAST]].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    res.json({ names });
+  } catch (err) {
+    console.error('change-requests managers error:', err.message);
+    res.status(500).json({ names: [] });
+  }
+});
+
 app.get('/api/change-requests', requireAuth, async (req, res) => {
   try {
     const fieldQs = [CR_REQ_NAME, CR_REQ_TEXT, CR_REQ_IMPORTANCE, CR_REQ_COMPLETED, CR_REQ_DATE]

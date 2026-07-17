@@ -139,7 +139,8 @@
   <div class="card" id="add-card" style="display:none;">
     <h2>Add a Change Request</h2>
     <label for="cr-name">Name</label>
-    <input type="text" id="cr-name" placeholder="Your name">
+    <input type="text" id="cr-name" placeholder="Your name" list="cr-name-list" autocomplete="off">
+    <datalist id="cr-name-list"></datalist>
     <label for="cr-text">Change Request</label>
     <textarea id="cr-text" placeholder="Describe what you'd like changed or added..."></textarea>
     <label for="cr-importance">Importance</label>
@@ -248,7 +249,20 @@ function submitChangeRequest() {
     });
 }
 
+function loadManagerNames() {
+  fetch('/api/change-requests/managers')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var list = document.getElementById('cr-name-list');
+      list.innerHTML = (data.names || []).map(function(n){
+        return '<option value="' + esc(n) + '">';
+      }).join('');
+    })
+    .catch(function(){});
+}
+
 loadRequests();
+loadManagerNames();
 </script>
 </body>
 </html>
