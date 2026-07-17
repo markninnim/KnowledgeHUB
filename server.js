@@ -2691,6 +2691,45 @@ app.get('/api/help-test-scores', requireAuth, async (req, res) => {
   }
 });
 
+// ── Live git commit log (for version-history.html) ──────────
+// Runs `git log` in the deployed checkout so it's always current with
+// whatever's actually live, no manual re-export needed. Falls back to the
+// static export file if git isn't available in this environment (e.g. a
+// build that doesn't ship the .git folder).
+let _gitLogCache = { text: null, at: 0 };
+app.get('/api/git-log', (req, res) => {
+  const CACHE_MS = 5 * 60 * 1000; // 5 minutes
+  if (_gitLogCache.text && (Date.now() - _gitLogCache.at) < CACHE_MS) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.send(_gitLogCache.text);
+  }
+  try {
+    const { execFileSync } = require('child_process');
+    const out = execFileSync('git', ['log', '--all', '--date=short', '--pretty=format:%ad | %h | %s'], {
+      cwd: __dirname,
+      encoding: 'utf8',
+      maxBuffer: 20 * 1024 * 1024
+    });
+    const lines = out.split('\n').filter(Boolean);
+    const header = [
+      'KnowledgeHUB — Full Git Commit Log Export',
+      `Generated: ${new Date().toISOString().slice(0, 10)}`,
+      `Total commits: ${lines.length}`,
+      '='.repeat(60),
+      ''
+    ].join('\n');
+    const text = header + out;
+    _gitLogCache = { text, at: Date.now() };
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(text);
+  } catch (err) {
+    console.error('git log unavailable, falling back to static export:', err.message);
+    const p = path.join(__dirname, 'public/static/git-log-export.txt');
+    if (require('fs').existsSync(p)) return res.sendFile(p);
+    res.status(500).send('Commit log unavailable.');
+  }
+});
+
 // ── Public logo (for display only) ──────────────────────────
 app.get('/public-logo', (req, res) => {
   const p = require('path').join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png');

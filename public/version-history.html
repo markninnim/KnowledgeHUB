@@ -217,7 +217,7 @@
     <div class="version-head">
       <span class="version-title">Full Commit Log</span>
     </div>
-    <p class="version-summary">The complete, unedited git history behind every release above (1,105 commits, 19 June&ndash;17 July 2026). Also available as a <a href="/static/git-log-export.txt" target="_blank">plain text download</a>.</p>
+    <p class="version-summary">The complete, unedited git history behind every release above (1,105 commits, 19 June&ndash;17 July 2026). Also available as a <a href="/api/git-log" target="_blank">plain text download</a>.</p>
     <pre id="full-log" class="log-box">Loading commit log&hellip;</pre>
   </div>
 
@@ -227,7 +227,7 @@
   </p>
 </div>
 <script>
-fetch('/static/git-log-export.txt')
+fetch('/api/git-log')
   .then(function(r){ return r.text(); })
   .then(function(text){ document.getElementById('full-log').textContent = text; })
   .catch(function(){ document.getElementById('full-log').textContent = 'Could not load commit log.'; });
