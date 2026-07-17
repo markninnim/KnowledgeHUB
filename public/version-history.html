@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KnowledgeHUB&#8482; — Version History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:   #003768;
+    --orange: #fcb034;
+    --grey:   #6b7c8f;
+    --light:  #f5f7fa;
+    --border: #e8ecf0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--light);
+    margin: 0;
+    color: #1a2a3a;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  .logo-row { text-align: center; margin-bottom: 28px; }
+  .logo-row img { height: 52px; object-fit: contain; }
+  h1 {
+    text-align: center;
+    color: var(--blue);
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--grey);
+    font-size: 14px;
+    margin: 0 0 40px;
+  }
+  .version-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+  .version-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .version-tag {
+    background: var(--blue);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .version-title { font-size: 16px; font-weight: 700; color: var(--blue); }
+  .version-date { font-size: 12px; color: var(--grey); margin-left: auto; }
+  .version-summary { font-size: 13px; color: #3a4756; margin: 8px 0 14px; }
+  ul.changes { margin: 0; padding-left: 20px; }
+  ul.changes li { font-size: 13px; color: #3a4756; margin-bottom: 6px; line-height: 1.5; }
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--grey);
+    margin-top: 40px;
+  }
+  .footer-note a { color: var(--blue); text-decoration: none; }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--blue);
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="/">&larr; Back to KnowledgeHUB</a>
+  <div class="logo-row"><img src="/public-logo" alt="Finance Planning Group"></div>
+  <h1>KnowledgeHUB&#8482; Version History</h1>
+  <p class="subtitle">A running record of major releases and improvements</p>
+
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v1.2</span>
+      <span class="version-title">Lab &amp; AI-Assisted Document Checks</span>
+      <span class="version-date">17 July 2026</span>
+    </div>
+    <p class="version-summary">Introduced the Lab section, giving users AI-assisted first-pass checks on customer-submitted documents.</p>
+    <ul class="changes">
+      <li>Added Payslip Check — forensic-style AI review flagging inconsistencies or signs of tampering.</li>
+      <li>Added Bank Statement Check, including an optional cross-check against an uploaded payslip to confirm stated income matches deposits.</li>
+      <li>Added a full "Checks Performed" breakdown and a Save PDF button to Lab reports.</li>
+      <li>Lab added to Feature Rollout Controls so it can be enabled per business/user group.</li>
+      <li>Added a footer credit line to the Home page.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v1.1</span>
+      <span class="version-title">Broker Profile, Engagement &amp; Reporting Enhancements</span>
+      <span class="version-date">16 July 2026</span>
+    </div>
+    <p class="version-summary">A broad round of improvements to the Supervisor Zone, broker profiles, CPD tracking, and Home page.</p>
+    <ul class="changes">
+      <li>Added a PDF export for the full Broker Profile report, plus Test Results, Consumer Duty/Understanding scoring, and Replacement Ratio to AutoCRM&#8482; Renewals.</li>
+      <li>Added CPD Progress pace markers, specialist CPD targets, and licence icon indicators.</li>
+      <li>Added YTD vs prior-year Pay comparison charts and Feefo leaderboard fixes (rank pins, NPS).</li>
+      <li>Wired ReEngage&#8482; to LeadGEN with round-robin assignment and referral tagging; moved AutoCRM&#8482;/ReEngage&#8482; notes to Airtable so they persist across deploys.</li>
+      <li>Added Bespoke Social Content pillars and a Today's Recommended Post card to Home.</li>
+      <li>Numerous layout, spacing and consistency fixes across broker profile cards.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v1.0</span>
+      <span class="version-title">Foundation</span>
+      <span class="version-date">15 July 2026</span>
+    </div>
+    <p class="version-summary">Core platform structure and navigation put in place.</p>
+    <ul class="changes">
+      <li>Reorganised top navigation (Supervise, Learn, Earn) and grouped AutoCRM&#8482;/ReEngage&#8482;/Engage tabs.</li>
+      <li>Moved feature flags and quick-links persistence from local files to Airtable.</li>
+      <li>Added licence icon badges and tooltips to broker cards on Supervise.</li>
+      <li>Added an AutoCRM&#8482; Renewals summary to the broker profile view.</li>
+    </ul>
+  </div>
+
+  <p class="footer-note">
+    A Finance Planning Group solution powered by SimFlex.ai<br>
+    Questions about a release? <a href="mailto:contact@simflex.ai">contact@simflex.ai</a>
+  </p>
+</div>
+</body>
+</html>
