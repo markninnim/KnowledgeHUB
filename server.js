@@ -1303,6 +1303,8 @@ app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
   const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
   if (!files.length) return res.status(400).json({ error: 'Upload at least one bank statement.' });
   if (files.length > 6) return res.status(400).json({ error: 'Please upload 6 pages/files or fewer at a time.' });
+  const payslipFiles = Array.isArray(req.body && req.body.payslipFiles) ? req.body.payslipFiles : [];
+  if (payslipFiles.length > 6) return res.status(400).json({ error: 'Please upload 6 payslips or fewer at a time.' });
 
   const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
   const content = [];
@@ -1316,9 +1318,23 @@ app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
       content.push({ type: 'image', source: { type: 'base64', media_type: ct, data: f.base64 } });
     }
   }
+  content.push({ type: 'text', text: `The ${files.length} document(s) above are the customer's BANK STATEMENT pages.` });
+  for (const f of payslipFiles) {
+    const ct = (f && f.contentType || '').toLowerCase();
+    if (!ALLOWED.includes(ct)) return res.status(400).json({ error: `Unsupported payslip file type: ${ct || 'unknown'}. Use JPG, PNG or PDF.` });
+    if (!f.base64) return res.status(400).json({ error: 'A payslip file failed to upload — please try again.' });
+    if (ct === 'application/pdf') {
+      content.push({ type: 'document', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    } else {
+      content.push({ type: 'image', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    }
+  }
+  if (payslipFiles.length) {
+    content.push({ type: 'text', text: `The ${payslipFiles.length} document(s) above are the customer's PAYSLIPS, provided to cross-check against the bank statement.` });
+  }
   content.push({
     type: 'text',
-    text: `You are acting as a forensic financial investigator, examining ${files.length} bank statement document(s) a customer has submitted as evidence during a mortgage/protection case. Be suspicious by default and thorough — the adviser is relying on your report. Do the following:
+    text: `You are acting as a forensic financial investigator, examining a customer's bank statement document(s)${payslipFiles.length ? ' and payslip(s)' : ''} submitted as evidence during a mortgage/protection case. Be suspicious by default and thorough — the adviser is relying on your report. Do the following:
 
 1. MATHS CHECK — verify the running balance is internally consistent: does each transaction correctly move the balance from its prior value (opening balance + credits - debits = closing balance, and each line's running balance follows from the one before)? Flag any line where the balance doesn't reconcile, any duplicated/reordered transactions, or gaps/jumps in the date or balance sequence that suggest a missing or altered page.
 
@@ -1332,14 +1348,16 @@ app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
 3. BAD HABITS — call out spending patterns an adviser should be aware of when assessing affordability: frequent gambling transactions, repeated overdraft usage or unpaid item fees, high-cost short-term credit (payday loans), a pattern of spending right up to or beyond income, or any other pattern that could affect mortgage/protection affordability or suitability.
 
 4. QUESTIONS FOR THE BROKER — draft 3-6 specific, concrete follow-up questions the adviser should ask the customer based on what you found (e.g. about an unexplained large deposit, a gap in the statement, or a spending pattern).
+${payslipFiles.length ? `
+5. INCOME CROSS-CHECK — since payslip(s) were also provided, compare the net pay figure and pay date on each payslip against the actual credited income shown in the bank statement. For each payslip, look for a matching deposit around the expected date, of a matching (or explainably close, e.g. after a bank holiday) amount. Flag anything that doesn't reconcile: payslip income you can't find landing in the statement, deposits that don't match any payslip, timing that looks wrong, or amounts that differ beyond a small rounding/fee margin. If everything reconciles, say so explicitly and confidently.` : ''}
 
-PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, account number, sort code, address, or the name of any specific named individual/company a payment was made to or from, verbatim anywhere in your response — describe transactions generically instead (e.g. "a recurring payment to what appears to be a gambling operator" rather than naming it, "a payment to another individual" rather than naming them). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
+PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, account number, sort code, NI number, address, or the name of any specific named individual/company a payment was made to or from, verbatim anywhere in your response — describe transactions generically instead (e.g. "a recurring payment to what appears to be a gambling operator" rather than naming it, "a payment to another individual" rather than naming them). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
 
-TRANSPARENCY — the adviser needs to see exactly what you checked, not just problems. Report a result for BOTH checks below even when they pass cleanly, so the adviser can see the full basis for your verdict, not just the failures.
+TRANSPARENCY — the adviser needs to see exactly what you checked, not just problems. Report a result for every check below even when it passes cleanly, so the adviser can see the full basis for your verdict, not just the failures.
 
 Respond with ONLY a JSON object, no other text, in exactly this shape:
-{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","checks":[{"type":"maths","label":"Running balance maths","status":"pass|flag","note":"what you actually checked and found — specific, e.g. balance reconciled throughout, or describe the discrepancy"},{"type":"gap","label":"Gaps, duplicates or missing pages","status":"pass|flag","note":"..."}],"flags":[{"type":"maths|gap|other","description":"specific, concrete description of any issue found — no personal identifiers"}],"expenditure":{"household":0,"recreation":0,"bills":0,"credit":0,"other":0,"totalIncome":null,"totalExpenditure":null},"badHabits":["short specific description of each habit found"],"questions":["specific follow-up question"]}
-Both "checks" entries must always be present, with status "pass" if nothing wrong was found and "flag" if something was. The "flags" array should list only items that were NOT a clean pass (it can be empty). Use null for any expenditure figure you can't reasonably estimate from what's visible. If nothing is wrong, return riskLevel "low" and a summary confirming the statement looks internally consistent — but still complete the expenditure summary, bad habits and questions sections as best you can from what's visible. Do not invent problems or figures that aren't visibly supported by the documents.`
+{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","checks":[{"type":"maths","label":"Running balance maths","status":"pass|flag","note":"what you actually checked and found — specific, e.g. balance reconciled throughout, or describe the discrepancy"},{"type":"gap","label":"Gaps, duplicates or missing pages","status":"pass|flag","note":"..."}${payslipFiles.length ? ',{"type":"income","label":"Payslip income vs. bank statement","status":"pass|flag","note":"specific reconciliation result per payslip — no personal identifiers"}' : ''}],"flags":[{"type":"maths|gap|income|other","description":"specific, concrete description of any issue found — no personal identifiers"}],"expenditure":{"household":0,"recreation":0,"bills":0,"credit":0,"other":0,"totalIncome":null,"totalExpenditure":null},"badHabits":["short specific description of each habit found"],"questions":["specific follow-up question"]}
+Every "checks" entry described above must always be present (${payslipFiles.length ? 'three entries: maths, gap, income' : 'two entries: maths, gap'}), with status "pass" if nothing wrong was found and "flag" if something was. The "flags" array should list only items that were NOT a clean pass (it can be empty). Use null for any expenditure figure you can't reasonably estimate from what's visible. If nothing is wrong, return riskLevel "low" and a summary confirming everything looks internally consistent — but still complete the expenditure summary, bad habits and questions sections as best you can from what's visible. Do not invent problems or figures that aren't visibly supported by the documents.`
   });
 
   try {
@@ -1352,7 +1370,7 @@ Both "checks" entries must always be present, with status "pass" if nothing wron
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1600,
+        max_tokens: 2000,
         messages: [{ role: 'user', content }]
       })
     });
