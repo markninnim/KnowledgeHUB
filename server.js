@@ -2727,6 +2727,11 @@ app.get('/public-feefo-logo', (req, res) => {
   else res.status(404).send('Not found');
 });
 
+// ── Version history (public, no auth) ───────────────────────
+app.get('/version-history.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/version-history.html'));
+});
+
 // ── Login routes ─────────────────────────────────────────────
 app.get('/login', (req, res) => {
   if (req.session.authenticated) return res.redirect('/');
