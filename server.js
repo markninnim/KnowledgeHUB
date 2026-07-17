@@ -1288,6 +1288,91 @@ If nothing is wrong, return riskLevel "low", an empty flags array, and a summary
   }
 });
 
+// ── Lab: Bank Statement Check — forensic screening of customer-supplied
+// bank statements uploaded during a mortgage/protection case. Checks the
+// maths (running balance vs. transaction list), summarises expenditure into
+// Household/Recreation/Bills/Credit buckets, flags spending habits an
+// adviser should be aware of, and drafts follow-up questions for the case.
+app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'This tool is not configured yet. Ask an admin to add an Anthropic API key.' });
+  }
+  const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
+  if (!files.length) return res.status(400).json({ error: 'Upload at least one bank statement.' });
+  if (files.length > 6) return res.status(400).json({ error: 'Please upload 6 pages/files or fewer at a time.' });
+
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+  const content = [];
+  for (const f of files) {
+    const ct = (f && f.contentType || '').toLowerCase();
+    if (!ALLOWED.includes(ct)) return res.status(400).json({ error: `Unsupported file type: ${ct || 'unknown'}. Use JPG, PNG or PDF.` });
+    if (!f.base64) return res.status(400).json({ error: 'A file failed to upload — please try again.' });
+    if (ct === 'application/pdf') {
+      content.push({ type: 'document', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    } else {
+      content.push({ type: 'image', source: { type: 'base64', media_type: ct, data: f.base64 } });
+    }
+  }
+  content.push({
+    type: 'text',
+    text: `You are acting as a forensic financial investigator, examining ${files.length} bank statement document(s) a customer has submitted as evidence during a mortgage/protection case. Be suspicious by default and thorough — the adviser is relying on your report. Do the following:
+
+1. MATHS CHECK — verify the running balance is internally consistent: does each transaction correctly move the balance from its prior value (opening balance + credits - debits = closing balance, and each line's running balance follows from the one before)? Flag any line where the balance doesn't reconcile, any duplicated/reordered transactions, or gaps/jumps in the date or balance sequence that suggest a missing or altered page.
+
+2. EXPENDITURE SUMMARY — categorise the outgoing transactions into these four buckets and estimate a total for each over the period shown:
+   - "household" (groceries, utilities you'd class as day-to-day living, rent/mortgage payments if visible)
+   - "recreation" (eating out, entertainment, subscriptions, holidays, hobbies, gambling)
+   - "bills" (regular fixed bills — council tax, insurance, phone/broadband, utilities if not already counted in household)
+   - "credit" (credit card payments, loan repayments, buy-now-pay-later, overdraft fees/interest)
+   Also estimate total income/credits in and total expenditure/debits out for the period, if determinable.
+
+3. BAD HABITS — call out spending patterns an adviser should be aware of when assessing affordability: frequent gambling transactions, repeated overdraft usage or unpaid item fees, high-cost short-term credit (payday loans), a pattern of spending right up to or beyond income, or any other pattern that could affect mortgage/protection affordability or suitability.
+
+4. QUESTIONS FOR THE BROKER — draft 3-6 specific, concrete follow-up questions the adviser should ask the customer based on what you found (e.g. about an unexplained large deposit, a gap in the statement, or a spending pattern).
+
+PRIVACY — do not repeat identifying details in your output. Never quote the customer's name, account number, sort code, address, or the name of any specific named individual/company a payment was made to or from, verbatim anywhere in your response — describe transactions generically instead (e.g. "a recurring payment to what appears to be a gambling operator" rather than naming it, "a payment to another individual" rather than naming them). This report may be read by people other than the case adviser, so no personal identifiers should appear in it.
+
+Respond with ONLY a JSON object, no other text, in exactly this shape:
+{"riskLevel":"low|medium|high","summary":"a one or two sentence investigator's verdict the adviser can act on","flags":[{"type":"maths|gap|other","description":"specific, concrete description of the issue found — no personal identifiers"}],"expenditure":{"household":0,"recreation":0,"bills":0,"credit":0,"other":0,"totalIncome":null,"totalExpenditure":null},"badHabits":["short specific description of each habit found"],"questions":["specific follow-up question"]}
+Use null for any expenditure figure you can't reasonably estimate from what's visible. If nothing is wrong, return riskLevel "low", an empty flags array, and a summary confirming the statement looks internally consistent — but still complete the expenditure summary, bad habits and questions sections as best you can from what's visible. Do not invent problems or figures that aren't visibly supported by the documents.`
+  });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1600,
+        messages: [{ role: 'user', content }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    const raw = (data.content && data.content[0] && data.content[0].text) || '';
+    let parsed;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    } catch (e) {
+      parsed = { riskLevel: 'medium', summary: 'The AI response could not be parsed automatically — review the raw output below.', flags: [], expenditure: {}, badHabits: [], questions: [], raw };
+    }
+    parsed.riskLevel = ['low', 'medium', 'high'].includes(parsed.riskLevel) ? parsed.riskLevel : 'medium';
+    parsed.flags = Array.isArray(parsed.flags) ? parsed.flags : [];
+    parsed.expenditure = (parsed.expenditure && typeof parsed.expenditure === 'object') ? parsed.expenditure : {};
+    parsed.badHabits = Array.isArray(parsed.badHabits) ? parsed.badHabits : [];
+    parsed.questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+    res.json(parsed);
+  } catch (err) {
+    console.error('bank-statement-check error:', err);
+    res.status(500).json({ error: 'Something went wrong reaching the AI. Please try again.' });
+  }
+});
+
 // ── Help KB admin CRUD — admin-only, so the whitelist of content the AI can
 // draw from is editable without a code deploy, but only by admins.
 app.get('/api/admin/help-kb', requireAdmin, async (req, res) => {
