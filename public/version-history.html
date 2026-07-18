@@ -38,6 +38,16 @@
     font-size: 14px;
     margin: 0 0 40px;
   }
+  .intro-paragraph {
+    font-size: 14px;
+    color: #3a4756;
+    line-height: 1.7;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 0 0 24px;
+  }
   .version-card {
     background: #fff;
     border: 1px solid var(--border);
@@ -114,6 +124,8 @@
   <div class="logo-row"><a href="https://simflex.ai" target="_blank" rel="noopener"><img src="/static/download.png" alt="SimFlex.ai"></a></div>
   <h1>KnowledgeHUB&#8482; Version History</h1>
   <p class="subtitle">A running record of major releases and improvements</p>
+
+  <p id="intro-paragraph" class="intro-paragraph">Loading project summary&hellip;</p>
 
   <div class="version-card milestone">
     <div class="version-head">
@@ -256,10 +268,37 @@
   </p>
 </div>
 <script>
+function formatDateLong(iso) {
+  var parts = iso.split('-');
+  var d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return d.getUTCDate() + ' ' + months[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}
+
 fetch('/api/git-log')
   .then(function(r){ return r.text(); })
-  .then(function(text){ document.getElementById('full-log').textContent = text; })
-  .catch(function(){ document.getElementById('full-log').textContent = 'Could not load commit log.'; });
+  .then(function(text){
+    document.getElementById('full-log').textContent = text;
+
+    // Parse the log to keep the intro paragraph live — first submission date
+    // and deployment count update automatically as new commits land, no
+    // manual editing of this page required.
+    var lines = text.split('\n').filter(function(l){ return /^\d{4}-\d{2}-\d{2} \| /.test(l); });
+    var intro = document.getElementById('intro-paragraph');
+    if (lines.length) {
+      var firstDate = lines[lines.length - 1].split(' | ')[0];
+      var count = lines.length;
+      intro.textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. This rebuild began on ' +
+        formatDateLong(firstDate) + ', and has since gone through ' + count.toLocaleString() +
+        ' code deployments while building out its core functionality and refining the user experience. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
+    } else {
+      intro.textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
+    }
+  })
+  .catch(function(){
+    document.getElementById('full-log').textContent = 'Could not load commit log.';
+    document.getElementById('intro-paragraph').textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
+  });
 </script>
 </body>
 </html>
