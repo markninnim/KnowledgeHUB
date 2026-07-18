@@ -42,11 +42,7 @@
     font-size: 14px;
     color: #3a4756;
     line-height: 1.7;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin: 0 0 24px;
+    margin: 0 0 32px;
   }
   .version-card {
     background: #fff;
@@ -288,9 +284,9 @@ fetch('/api/git-log')
     if (lines.length) {
       var firstDate = lines[lines.length - 1].split(' | ')[0];
       var count = lines.length;
-      intro.textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. This rebuild began on ' +
-        formatDateLong(firstDate) + ', and has since gone through ' + count.toLocaleString() +
-        ' code deployments while building out its core functionality and refining the user experience. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
+      intro.innerHTML = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. This rebuild began on ' +
+        formatDateLong(firstDate) + ', and has since gone through <strong>' + count.toLocaleString() +
+        '</strong> code deployments while building out its core functionality and refining the user experience. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
     } else {
       intro.textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
     }
