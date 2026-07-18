@@ -5920,7 +5920,47 @@ var PILLAR_MAP = {
   "working together": "Trust Building",
   "your next move matters": "Renewals & Rates",
   "your path forward": "Property Journey",
-  "your plan their security": "Protection & Wellbeing"
+  "your plan their security": "Protection & Wellbeing",
+  "1 more sleep": "Community & Culture",
+  "2026 renewal": "Renewals & Rates",
+  "2026 vision board": "Market & Money News",
+  "6 days": "Community & Culture",
+  "8 days": "Community & Culture",
+  "FTB": "Property Journey",
+  "blue monday": "Protection & Wellbeing",
+  "clear guidance": "Property Journey",
+  "creating homes": "Property Journey",
+  "day 4000": "Trust Building",
+  "decisions": "Property Journey",
+  "favourite": "Trust Building",
+  "goals": "Market & Money News",
+  "halfway": "Market & Money News",
+  "happy new year": "Community & Culture",
+  "happy place": "Property Journey",
+  "home improvements": "Property Journey",
+  "ladder": "Property Journey",
+  "merry xmas": "Community & Culture",
+  "mortgage agreed": "Call to Action",
+  "mortgage maze": "Property Journey",
+  "move forward confidently": "Property Journey",
+  "protect whats inside": "Protection & Wellbeing",
+  "rate reduction": "Renewals & Rates",
+  "re gift": "Community & Culture",
+  "saving": "Property Journey",
+  "savings": "Property Journey",
+  "shopping": "Community & Culture",
+  "smart moves": "Property Journey",
+  "spring": "Property Journey",
+  "too soon": "Community & Culture",
+  "trad or mod": "Community & Culture",
+  "tunes": "Community & Culture",
+  "twixmas": "Community & Culture",
+  "welcome": "Trust Building",
+  "were back": "Community & Culture",
+  "what makes it home": "Property Journey",
+  "what matters most": "Protection & Wellbeing",
+  "why us": "Trust Building",
+  "your finance": "Trust Building"
 };
 var PILLAR_COLORS = {
   "Property Journey":         "#2e99d5",
@@ -7464,22 +7504,48 @@ function toggleNlArchive() {
 
 function openNewsletter(url, title, monthLabel) {
   window.open(url, '_blank');
-  var today = new Date().toISOString().split('T')[0];
   var toast = document.getElementById('toast');
-  // Log 15 min Mortgage CPD
-  fetch('/api/cpd', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Mortgage', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
-  });
-  // Log 10 min Protection CPD
-  fetch('/api/cpd', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Protection', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
-  }).then(function() {
-    if (toast) { toast.textContent = '✓ 20 min CPD logged (10 Mortgage + 10 Protection)'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 5000); }
-  }).catch(function() {
-    if (toast) { toast.textContent = 'CPD log failed – try again'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 3000); }
-  });
+
+  function alreadyCredited() {
+    return (_cpdAllEntries || []).some(function(e) {
+      return e.source === 'Learning Zone' && e.activity === title;
+    });
+  }
+
+  function doLog() {
+    // Only credit CPD the first time this newsletter is opened — re-opening
+    // it later (e.g. to re-read) shouldn't log CPD again.
+    if (alreadyCredited()) {
+      if (toast) { toast.textContent = 'CPD already logged for this newsletter'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 4000); }
+      return;
+    }
+    var today = new Date().toISOString().split('T')[0];
+    // Log 10 min Mortgage CPD
+    fetch('/api/cpd', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Mortgage', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
+    });
+    // Log 10 min Protection CPD
+    fetch('/api/cpd', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Protection', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
+    }).then(function() {
+      _cpdLoaded = false; loadCpd();
+      if (toast) { toast.textContent = '✓ 20 min CPD logged (10 Mortgage + 10 Protection)'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 5000); }
+    }).catch(function() {
+      if (toast) { toast.textContent = 'CPD log failed – try again'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 3000); }
+    });
+  }
+
+  if (_cpdLoaded) {
+    doLog();
+  } else {
+    fetch('/api/cpd').then(function(r){ return r.json(); }).then(function(data) {
+      _cpdAllEntries = data.entries || [];
+      _cpdLoaded = true;
+      doLog();
+    }).catch(doLog); // if the pre-check fails, fall back to logging as before
+  }
 }
 
 function showLvSection(id, el) {
@@ -7957,7 +8023,7 @@ function loadHomeData() {
     if (!card || !barsEl) return;
 
     var byType  = cpd.byType  || {};
-    var targets = cpd.targets || { Mortgage: 900, Protection: 900, Investment: 2100 };
+    var targets = cpd.targets || { Mortgage: 960, Protection: 960, Investment: 2100 };
     var user    = _currentUser || {};
     var noFlags = !user.sellsMortgages && !user.sellsProtection;
 
@@ -10382,7 +10448,7 @@ function openBrokerProfile(email, name, keepDateRange) {
       // ── CPD ──
       var cpdEl = document.getElementById('bp-cpd');
       var byType = d.cpd ? d.cpd.byType : {};
-      var targets = { Mortgage: 900, Protection: 900, Investment: 2100 };
+      var targets = { Mortgage: 960, Protection: 960, Investment: 2100 };
       var types = [];
       if (u.sellsMortgages  || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Mortgage',   color: 'var(--brand-navy)' });
       if (u.sellsProtection || (!u.sellsMortgages && !u.sellsProtection)) types.push({ key: 'Protection', color: 'var(--brand-orange)' });
@@ -12195,7 +12261,7 @@ function svLicenceIconsHtml(m, cpd) {
 function renderSvDashboard(data) {
   var members     = data.members     || [];
   var cpdByMember = data.cpdByMember || {};
-  var targets     = data.targets     || { Mortgage: 900, Protection: 900 };
+  var targets     = data.targets     || { Mortgage: 960, Protection: 960 };
 
   if (!members.length) {
     document.getElementById('sv-loading').style.display = 'block';
@@ -12727,7 +12793,7 @@ function submitCrForm() {
 
 var _cpdAllEntries = [];
 var _cpdPeriod = 'month';
-var _cpdTargets = { Mortgage: 900, Protection: 900 };
+var _cpdTargets = { Mortgage: 960, Protection: 960 };
 var _cpdEditingId = null;
 
 function _periodTarget(annualTarget, period) {
@@ -12742,7 +12808,7 @@ function loadCpd() {
     _cpdAllEntries = (data.entries || []).sort(function(a, b) {
       return (b.date || '').localeCompare(a.date || '');
     });
-    _cpdTargets    = data.targets || { Mortgage: 900, Protection: 900 };
+    _cpdTargets    = data.targets || { Mortgage: 960, Protection: 960 };
     renderCpdProgress();
     renderCpdPie();
     renderSpecialistCpd();
@@ -12800,7 +12866,7 @@ function fmtMins(m) {
 }
 
 function renderCpdProgress() {
-  var annualTargets = _cpdTargets || { Mortgage: 900, Protection: 900, Investment: 2100 };
+  var annualTargets = _cpdTargets || { Mortgage: 960, Protection: 960, Investment: 2100 };
   var periodEntries = _cpdEntriesForPeriod(_cpdPeriod);
   var byType = { Mortgage: 0, Protection: 0, Investment: 0 };
   periodEntries.forEach(function(e) {
