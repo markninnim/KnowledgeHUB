@@ -4048,9 +4048,8 @@ const LV_DESC     = 'fldAdn5cQl5CDKJF4';
 const LV_URL      = 'fldebTNSnIADrx4jv';
 const LV_ADDED    = 'fldBykZ17cGbybYAp';
 const LV_CPD_TYPE = 'fldQoRx2AsSvTdwY6';
-const LV_ATTACH1  = 'fldhaE5zoVgOiiZva'; // Presentation 1 — attachment
-const LV_ATTACH2  = 'fldfD0bu5TjYChyfL'; // Presentation 2 — attachment
-const LV_PRES_PDF = 'fldbgruMXs2GYjYfv'; // Presentation PDF — attachment
+const LV_ATTACH1  = 'fldhaE5zoVgOiiZva'; // Presentation 1 — attachment (pptx or pdf)
+const LV_ATTACH2  = 'fldfD0bu5TjYChyfL'; // Presentation 2 — attachment (pptx or pdf)
 const FEATURED_COUNT = 8;
 
 // Uploads a base64 file directly to an Airtable attachment field, using
@@ -4093,8 +4092,7 @@ function lvRecordToVideo(record) {
     added:       f[LV_ADDED]   || record.createdTime || '',
     cpdType:     f[LV_CPD_TYPE]|| 'Mortgage',
     presentation1: lvAttachmentSummary(f[LV_ATTACH1]),
-    presentation2: lvAttachmentSummary(f[LV_ATTACH2]),
-    presentationPdf: lvAttachmentSummary(f[LV_PRES_PDF])
+    presentation2: lvAttachmentSummary(f[LV_ATTACH2])
   };
 }
 
@@ -4126,24 +4124,22 @@ app.get('/api/learning', requireAuth, async (req, res) => {
   }
 });
 
-// Uploads whichever of presentation1/presentation2/presentationPdf were sent
-// (each an optional { filename, contentType, base64 } object) to their
-// attachment fields on an already-created/updated video record.
-async function lvUploadPresentations(recordId, presentation1, presentation2, presentationPdf) {
+// Uploads whichever of presentation1/presentation2 were sent (each an
+// optional { filename, contentType, base64 } object) to their attachment
+// fields on an already-created/updated video record. Either slot can be a
+// PowerPoint or a PDF — the field itself doesn't care about file type.
+async function lvUploadPresentations(recordId, presentation1, presentation2) {
   if (presentation1 && presentation1.base64) {
-    await lvUploadAttachment(recordId, LV_ATTACH1, presentation1.filename || 'presentation1.pptx', presentation1.contentType || 'application/octet-stream', presentation1.base64);
+    await lvUploadAttachment(recordId, LV_ATTACH1, presentation1.filename || 'presentation1', presentation1.contentType || 'application/octet-stream', presentation1.base64);
   }
   if (presentation2 && presentation2.base64) {
-    await lvUploadAttachment(recordId, LV_ATTACH2, presentation2.filename || 'presentation2.pptx', presentation2.contentType || 'application/octet-stream', presentation2.base64);
-  }
-  if (presentationPdf && presentationPdf.base64) {
-    await lvUploadAttachment(recordId, LV_PRES_PDF, presentationPdf.filename || 'presentation.pdf', presentationPdf.contentType || 'application/pdf', presentationPdf.base64);
+    await lvUploadAttachment(recordId, LV_ATTACH2, presentation2.filename || 'presentation2', presentation2.contentType || 'application/octet-stream', presentation2.base64);
   }
 }
 
 // POST /api/admin/learning — add video
 app.post('/api/admin/learning', requireAdmin, async (req, res) => {
-  const { title, description, url, cpdType, presentation1, presentation2, presentationPdf } = req.body;
+  const { title, description, url, cpdType, presentation1, presentation2 } = req.body;
   if (!title || !url) return res.status(400).json({ error: 'Title and URL required' });
   try {
     const data = await lvFetch('', {
@@ -4151,7 +4147,7 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
       body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString(), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
     });
     const recordId = data.records[0].id;
-    await lvUploadPresentations(recordId, presentation1, presentation2, presentationPdf);
+    await lvUploadPresentations(recordId, presentation1, presentation2);
     const fresh = await lvFetch(`/${recordId}?returnFieldsByFieldId=true`);
     res.json(lvRecordToVideo(fresh));
   } catch (err) {
@@ -4161,13 +4157,13 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
 
 // PUT /api/admin/learning/:id — edit video
 app.put('/api/admin/learning/:id', requireAdmin, async (req, res) => {
-  const { title, description, url, cpdType, presentation1, presentation2, presentationPdf } = req.body;
+  const { title, description, url, cpdType, presentation1, presentation2 } = req.body;
   try {
     await lvFetch(`/${req.params.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_CPD_TYPE]: cpdType || 'Mortgage' }, returnFieldsByFieldId: true })
     });
-    await lvUploadPresentations(req.params.id, presentation1, presentation2, presentationPdf);
+    await lvUploadPresentations(req.params.id, presentation1, presentation2);
     const fresh = await lvFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     res.json(lvRecordToVideo(fresh));
   } catch (err) {
