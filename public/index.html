@@ -5099,6 +5099,11 @@ select:focus { outline:none; }
               <div id="lvf-pres2-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
             </div>
           </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Presentation PDF <span style="font-weight:400;">(optional)</span></label>
+            <input id="lvf-presPdf" type="file" accept=".pdf,application/pdf" style="width:100%;font-size:12.5px;font-family:inherit;">
+            <div id="lvf-presPdf-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
+          </div>
         </div>
         <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
         <div style="display:flex;gap:8px;margin-top:14px;">
@@ -7616,8 +7621,9 @@ function renderLvGrid(containerId, videos, isFeatured) {
     var thumb = makeLvThumb(v.title);
     var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
     var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
+    var presPdfArg = (v.presentationPdf && v.presentationPdf.url) ? ("{url:'" + escAttr(v.presentationPdf.url) + "',filename:'" + escAttr(v.presentationPdf.filename || '') + "'}") : 'null';
     cards.push(
-      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ',' + presPdfArg + ')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
         '</div>' +
@@ -7737,7 +7743,7 @@ function lvPresentationBtn(pres, label) {
     '</a>';
 }
 
-function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
+function openLvPlayer(url, title, desc, cpdType, pres1, pres2, presPdf) {
   _lvCurrentTitle   = title   || 'Learning video';
   _lvCurrentCpdType = cpdType || 'Mortgage';
   var embedUrl = getEmbedUrl(url);
@@ -7747,7 +7753,7 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
   document.getElementById('lv-split-title').textContent  = title || '';
   document.getElementById('lv-split-desc').textContent   = desc  || '';
   // Presentation downloads
-  var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2');
+  var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2') + lvPresentationBtn(presPdf, 'Presentation PDF');
   [['lv-presentations', 'lv-presentations-wrap'], ['lv-presentations-s', 'lv-presentations-s-wrap']].forEach(function(pair) {
     var el = document.getElementById(pair[0]);
     var wrap = document.getElementById(pair[1]);
@@ -8114,7 +8120,8 @@ function loadHomeData() {
               var type  = escAttr(res.type.key);
               var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
               var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
-              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ')" '
+              var presPdfArg = (v.presentationPdf && v.presentationPdf.url) ? ("{url:'" + escAttr(v.presentationPdf.url) + "',filename:'" + escAttr(v.presentationPdf.filename || '') + "'}") : 'null';
+              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ',' + presPdfArg + ')" '
                 + 'style="display:flex;align-items:center;gap:10px;width:100%;background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s;" '
                 + 'onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
                 + '<div style="width:28px;height:28px;background:var(--brand-navy);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
@@ -13227,6 +13234,7 @@ function openLvForm(id) {
   errEl.style.display = 'none';
   document.getElementById('lvf-pres1').value = '';
   document.getElementById('lvf-pres2').value = '';
+  document.getElementById('lvf-presPdf').value = '';
   if (id) {
     var v = _lvAdminVideos.find(function(x){ return x.id === id; });
     document.getElementById('lv-form-title').textContent = 'Edit Video';
@@ -13236,6 +13244,7 @@ function openLvForm(id) {
     document.getElementById('lvf-cpdtype').value = v.cpdType || 'Mortgage';
     document.getElementById('lvf-pres1-current').textContent = v.presentation1 ? ('Current: ' + v.presentation1.filename + ' (uploading a new file replaces it)') : '';
     document.getElementById('lvf-pres2-current').textContent = v.presentation2 ? ('Current: ' + v.presentation2.filename + ' (uploading a new file replaces it)') : '';
+    document.getElementById('lvf-presPdf-current').textContent = v.presentationPdf ? ('Current: ' + v.presentationPdf.filename + ' (uploading a new file replaces it)') : '';
   } else {
     document.getElementById('lv-form-title').textContent = 'Add Video';
     document.getElementById('lvf-title').value   = '';
@@ -13244,6 +13253,7 @@ function openLvForm(id) {
     document.getElementById('lvf-cpdtype').value = 'Mortgage';
     document.getElementById('lvf-pres1-current').textContent = '';
     document.getElementById('lvf-pres2-current').textContent = '';
+    document.getElementById('lvf-presPdf-current').textContent = '';
   }
   document.getElementById('admin-lv-form').style.display = 'block';
   document.getElementById('lvf-title').focus();
@@ -13285,12 +13295,13 @@ function saveLvVideo() {
   var method   = _lvEditingId ? 'PUT' : 'POST';
   Promise.all([
     lvReadFileAsUpload(document.getElementById('lvf-pres1')),
-    lvReadFileAsUpload(document.getElementById('lvf-pres2'))
+    lvReadFileAsUpload(document.getElementById('lvf-pres2')),
+    lvReadFileAsUpload(document.getElementById('lvf-presPdf'))
   ]).then(function(files) {
     return fetch(endpoint, {
       method: method,
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ title, description: desc, url, cpdType, presentation1: files[0], presentation2: files[1] })
+      body: JSON.stringify({ title, description: desc, url, cpdType, presentation1: files[0], presentation2: files[1], presentationPdf: files[2] })
     });
   })
     .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
