@@ -1,7 +1,7 @@
 {
-  "li":     { "xPct": 6, "yPct": 24, "wPct": 50, "hPct": 68, "fontColor": "#111111", "align": "left" },
-  "fb":     { "xPct": 6, "yPct": 24, "wPct": 48, "hPct": 68, "fontColor": "#111111", "align": "left" },
-  "ig":     { "xPct": 6, "yPct": 19, "wPct": 80, "hPct": 23, "fontColor": "#111111", "align": "left" },
+  "li":     { "xPct": 6, "yPct": 24, "wPct": 82, "hPct": 28, "fontColor": "#111111", "align": "left" },
+  "fb":     { "xPct": 6, "yPct": 24, "wPct": 82, "hPct": 29, "fontColor": "#111111", "align": "left" },
+  "ig":     { "xPct": 6, "yPct": 18, "wPct": 84, "hPct": 24, "fontColor": "#111111", "align": "left" },
   "tik":    { "xPct": 6, "yPct": 14, "wPct": 80, "hPct": 34, "fontColor": "#111111", "align": "left" },
-  "square": { "xPct": 6, "yPct": 21, "wPct": 80, "hPct": 17, "fontColor": "#111111", "align": "left" }
+  "square": { "xPct": 6, "yPct": 20, "wPct": 80, "hPct": 19, "fontColor": "#111111", "align": "left" }
 }
