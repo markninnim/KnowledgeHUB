@@ -6313,8 +6313,10 @@ function loadSocialContent() {
 // Builds a simple default caption for a trust/review post — no separate
 // social-copy.json entry per post (reviews speak for themselves), just the
 // standard broker signature/disclaimer footer appended underneath.
+// NB: the folder name is the broker/adviser sharing the feedback, not the
+// client who wrote it — so the caption doesn't try to name anyone by it.
 function buildTrustDefaultCopy(clientName) {
-  var opener = 'Nothing means more to us than hearing this kind of feedback from ' + clientName + '. It\'s exactly why we do what we do, and it\'s the standard we hold ourselves to for every client.';
+  var opener = 'One of the best parts of the job is hearing feedback like this. It\'s exactly why we do what we do, and it\'s the standard we hold ourselves to for every client.';
   return opener + '\n\n' + buildBrokerFooter();
 }
 
