@@ -1,0 +1,7 @@
+{
+  "li":     { "xPct": 8, "yPct": 33, "wPct": 84, "hPct": 45, "fontColor": "#111111", "align": "left" },
+  "fb":     { "xPct": 8, "yPct": 33, "wPct": 84, "hPct": 45, "fontColor": "#111111", "align": "left" },
+  "ig":     { "xPct": 8, "yPct": 15, "wPct": 84, "hPct": 32, "fontColor": "#111111", "align": "left" },
+  "tik":    { "xPct": 8, "yPct": 13, "wPct": 84, "hPct": 30, "fontColor": "#111111", "align": "left" },
+  "square": { "xPct": 8, "yPct": 17, "wPct": 84, "hPct": 52, "fontColor": "#111111", "align": "left" }
+}

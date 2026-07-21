@@ -6527,7 +6527,7 @@ function tpbSaveTemplate(key, fields) {
 function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily) {
   var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
   for (var size = 64; size >= 10; size--) {
-    ctx.font = '600 ' + size + 'px ' + fontFamily;
+    ctx.font = '800 ' + size + 'px ' + fontFamily;
     var lines = [];
     var line = '';
     for (var i = 0; i < words.length; i++) {

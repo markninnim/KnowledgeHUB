@@ -4957,9 +4957,12 @@ app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
 // size, expressed as % of the canvas so it stays correct at any resolution.
 const TRUST_TEMPLATE_DIR = path.join(__dirname, 'public/assets/trust-templates');
 const TRUST_TEMPLATE_CONFIG_PATH = path.join(__dirname, 'trust-template-config.json');
+// NB: filenames are the historic (and now stale) naming convention — the
+// actual pixel dimensions on disk are landscape for li/fb, confirmed against
+// the existing files in public/assets/social-trust-content/*/.
 const TRUST_SIZES = {
-  li:     { label: 'LinkedIn',       w: 627,  h: 1200, filename: '627 x 1200 - li.jpg' },
-  fb:     { label: 'Facebook',       w: 630,  h: 1200, filename: '630 x 1200 - fb.jpg' },
+  li:     { label: 'LinkedIn',       w: 1200, h: 630,  filename: '627 x 1200 - li.jpg' },
+  fb:     { label: 'Facebook',       w: 1200, h: 630,  filename: '630 x 1200 - fb.jpg' },
   ig:     { label: 'Instagram',      w: 1080, h: 1350, filename: '1080 x 1350 - ig.jpg' },
   tik:    { label: 'TikTok / Story', w: 1080, h: 1920, filename: '1080 x 1920 - tik.jpg' },
   square: { label: 'Square',         w: 1200, h: 1200, filename: '1200 x 1200 - ig fb li.jpg' }
@@ -4970,7 +4973,7 @@ function loadTrustTemplateConfig() {
   try { saved = JSON.parse(fs.readFileSync(TRUST_TEMPLATE_CONFIG_PATH, 'utf8')); } catch (e) { saved = {}; }
   const out = {};
   Object.keys(TRUST_SIZES).forEach(k => {
-    out[k] = Object.assign({ xPct: 10, yPct: 58, wPct: 80, hPct: 32, fontColor: '#153b5b', align: 'center' }, saved[k] || {});
+    out[k] = Object.assign({ xPct: 8, yPct: 33, wPct: 84, hPct: 45, fontColor: '#111111', align: 'left' }, saved[k] || {});
   });
   return out;
 }
