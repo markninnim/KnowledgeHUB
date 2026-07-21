@@ -6582,6 +6582,20 @@ function tpbDrawCanvas(key) {
   var boxH = (cfg.hPct / 100) * canvas.height;
   var fontFamily = '"Plus Jakarta Sans", sans-serif';
 
+  // TEMP DEBUG: outline the configured text box + print its % values so we
+  // can see exactly what the browser is actually using. Safe to remove once
+  // the layout is confirmed correct.
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,0,0,0.8)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(boxX, boxY, boxW, boxH);
+  ctx.fillStyle = 'rgba(255,0,0,0.9)';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('x' + cfg.xPct + ' y' + cfg.yPct + ' w' + cfg.wPct + ' h' + cfg.hPct, boxX + 2, boxY + boxH + 4);
+  ctx.restore();
+
   // Reserve a slice at the bottom of the box for the small "— name" byline,
   // sized relative to the box so it scales sensibly across all 5 templates.
   var bylineFontSize = customerName ? Math.max(13, Math.round(boxH * 0.09)) : 0;
