@@ -278,6 +278,7 @@ select:focus { outline:none; }
     <a href="#" onclick="show('marketing',this);loadMarketingDates()">Marketing Materials</a>
     <a href="#" onclick="show('social',this);loadSocialAssetDates()">Social Assets</a>
     <a id="nav-social-content" href="#" onclick="show('social-content',this);loadSocialContent()">Your Social Content <span id="social-count-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;"></span></a>
+  <a id="nav-social-trust-content" href="#" onclick="show('social-trust-content',this);loadSocialTrustContent()">Social Trust Content <span id="social-trust-count-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;"></span></a>
     <a href="#" onclick="show('stationery',this)">Stationery</a>
     <a href="#" onclick="show('templates',this);loadTemplatesDates()">Templates</a>
     <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
@@ -917,6 +918,26 @@ select:focus { outline:none; }
       <button class="sc-filter" onclick="filterSocial('Square',this)">Square</button>
     </div>
     <div id="social-content-body"><p style="color:#6b7c8f;">Loading...</p></div>
+  </div>
+  <div id="social-trust-content" class="section">
+    <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">Social Trust</h2>
+
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">Before someone will do business with you, they need to trust you, and that trust has to be earned <strong>before</strong> you ask for the sale, not during the pitch. Research into buyer psychology consistently puts trust at the centre of the decision: it's estimated that trust in the person or brand accounts for around <strong>60% of someone's decision to buy</strong>, often outweighing price, product detail, or even convenience. If a prospective client doesn't trust you, no amount of clever messaging about rates or products will get them over the line.</p>
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 10px;">This is why content built around trust matters so much in a social media strategy, and why it shouldn't be treated as an afterthought. Trust content works by <strong>showing</strong> rather than telling: instead of saying "we're great to work with", it lets your existing clients say it for you. A genuine five-star review, a client's own words about how you helped them, or a screenshot of praise, all do more to reassure a prospective client than any amount of self-promotion, because it's independent, specific, and easy to believe.</p>
+    <p style="font-size:13px;color:#6b7c8f;line-height:1.75;margin:0 0 20px;">The library below is built entirely from real client reviews, turned into ready-to-post social content. Weave a couple of these into your posting schedule each week, ideally before any "call to action" style posts, so that by the time you do ask for the business, trust has already been established.</p>
+
+    <div style="margin-bottom:20px;">
+      <input id="stc-search" type="text" placeholder="Search by client name…" oninput="searchSocialTrustContent(this.value)" style="width:100%;max-width:360px;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#6b7c8f;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+    </div>
+    <div id="stc-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
+      <button class="sc-filter active" onclick="filterSocialTrust('all',this)">All</button>
+      <button class="sc-filter" onclick="filterSocialTrust('LinkedIn',this)">LinkedIn</button>
+      <button class="sc-filter" onclick="filterSocialTrust('Facebook',this)">Facebook</button>
+      <button class="sc-filter" onclick="filterSocialTrust('Instagram',this)">Instagram</button>
+      <button class="sc-filter" onclick="filterSocialTrust('TikTok / Story',this)">TikTok / Story</button>
+      <button class="sc-filter" onclick="filterSocialTrust('Square',this)">Square</button>
+    </div>
+    <div id="social-trust-content-body"><p style="color:#6b7c8f;">Loading...</p></div>
   </div>
   <div id="brochures" class="section">
     <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">Brochures</h2>
@@ -5261,6 +5282,7 @@ var sectionCallbacks = {
   'marketing':      function(){ loadMarketingDates(); },
   'social':         function(){ loadSocialAssetDates(); },
   'social-content': function(){ loadSocialContent(); },
+  'social-trust-content': function(){ loadSocialTrustContent(); },
   'templates':      function(){ loadTemplatesDates(); },
   'video-content':  function(){ loadVideoContent(); }
 };
@@ -5452,10 +5474,10 @@ function resolveSizeLabel(file) {
   }
   return { label: label, size: size };
 }
-function makeSocialCard(postName, fileObj) {
+function makeSocialCard(postName, fileObj, downloadPrefix) {
   var file = fileObj.name || fileObj;
   var info = resolveSizeLabel(file);
-  var url  = '/download-post/' + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
+  var url  = (downloadPrefix || '/download-post/') + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
   var addedDate = fileObj.created ? new Date(fileObj.created) : null;
   var fmt = function(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
 
@@ -5774,6 +5796,31 @@ function filterSocial(type, btn) {
     grid.style.display = anyVisible ? '' : 'none';
   });
 }
+function filterSocialTrust(type, btn) {
+  document.querySelectorAll('#stc-filters .sc-filter').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  var body = document.getElementById('social-trust-content-body');
+  body.querySelectorAll('.card').forEach(function(card) {
+    card.style.display = (type === 'all' || card.dataset.label === type) ? '' : 'none';
+  });
+  body.querySelectorAll('.grid').forEach(function(grid) {
+    var anyVisible = Array.from(grid.querySelectorAll('.card')).some(function(c){ return c.style.display !== 'none'; });
+    var h3 = grid.previousElementSibling;
+    if (h3 && h3.tagName === 'H3') h3.style.display = anyVisible ? '' : 'none';
+    grid.style.display = anyVisible ? '' : 'none';
+  });
+}
+
+function searchSocialTrustContent(term) {
+  term = (term || '').toLowerCase().trim();
+  var body = document.getElementById('social-trust-content-body');
+  if (!body) return;
+  body.querySelectorAll('.sc-post').forEach(function(post) {
+    var name = (post.dataset.name || '').toLowerCase();
+    post.style.display = (!term || name.indexOf(term) !== -1) ? '' : 'none';
+  });
+}
+
 function buildBrokerFooter() {
   var u = _currentUser || {};
   var name  = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
@@ -6227,6 +6274,98 @@ function loadSocialContent() {
     document.getElementById('social-content-body').innerHTML = '<p style="color:#cc0000;">Could not load social content: ' + (err && err.message ? err.message : String(err)) + '</p>';
   });
 }
+
+// Builds a simple default caption for a trust/review post — no separate
+// social-copy.json entry per post (reviews speak for themselves), just the
+// standard broker signature/disclaimer footer appended underneath.
+function buildTrustDefaultCopy(clientName) {
+  var opener = 'Nothing means more to us than hearing this kind of feedback from ' + clientName + '. It\'s exactly why we do what we do, and it\'s the standard we hold ourselves to for every client.';
+  return opener + '\n\n' + buildBrokerFooter();
+}
+
+function loadSocialTrustContent() {
+  fetch('/api/social-trust-content').then(function(r){
+    if (!r.ok) return r.text().then(function(t){ throw new Error('HTTP ' + r.status + ': ' + t.slice(0,120)); });
+    return r.json();
+  }).then(function(posts) {
+    var container = document.getElementById('social-trust-content-body');
+    container.innerHTML = '';
+    if (!posts.length) {
+      container.innerHTML = '<p style="color:#6b7c8f;">No trust content yet — drop folders into public/assets/social-trust-content/</p>';
+      return;
+    }
+    var badge = document.getElementById('social-trust-count-badge');
+    if (badge) { badge.textContent = posts.length; badge.style.display = 'inline'; }
+
+    posts.forEach(function(post) {
+      var clientName = post.name.replace(/-\d+$/, '').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      var postWrap = document.createElement('div');
+      postWrap.className = 'sc-post';
+      postWrap.id = 'stc-post-' + post.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      postWrap.dataset.name = post.name;
+
+      var h3 = document.createElement('h3');
+      h3.textContent = clientName;
+      h3.style.cssText = 'color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);';
+      postWrap.appendChild(h3);
+
+      var grid = document.createElement('div'); grid.className = 'grid';
+      post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file, '/download-trust-post/')); });
+      postWrap.appendChild(grid);
+
+      // Suggested caption
+      var storageKey = 'trust-wording-' + post.name;
+      var baseKey    = 'trust-wording-base-' + post.name;
+      var defaultVal = buildTrustDefaultCopy(clientName);
+      var savedVal   = localStorage.getItem(storageKey);
+      var savedBase  = localStorage.getItem(baseKey);
+      var taValue    = (savedVal !== null && savedBase === defaultVal) ? savedVal : defaultVal;
+
+      var wrapDiv = document.createElement('div');
+      wrapDiv.style.cssText = 'margin:12px 0 32px;width:100%;box-sizing:border-box;';
+
+      var ta = document.createElement('textarea');
+      ta.value = taValue;
+      ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;min-height:120px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;resize:vertical;outline:none;';
+      ta.addEventListener('input', function(){ localStorage.setItem(storageKey, ta.value); localStorage.setItem(baseKey, defaultVal); });
+      ta.addEventListener('focus', function(){ ta.style.borderColor = 'var(--brand-navy)'; });
+      ta.addEventListener('blur',  function(){ ta.style.borderColor = '#d1d5db'; });
+      var _btnStyle = 'margin-right:8px;background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-width:90px;';
+
+      var copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy';
+      copyBtn.style.cssText = _btnStyle;
+      (function(t, btn){ copyBtn.onclick = function(){
+        navigator.clipboard.writeText(t.value).then(function(){
+          btn.textContent = '✓ Copied!'; btn.style.color = '#2e7d32';
+          setTimeout(function(){ btn.textContent = 'Copy'; btn.style.color = 'var(--brand-navy)'; }, 2000);
+        });
+      }; })(ta, copyBtn);
+
+      var shareBtn = document.createElement('button');
+      shareBtn.textContent = 'Share';
+      shareBtn.style.cssText = _btnStyle;
+      (function(pn, t, g){ shareBtn.onclick = function(){ openShareModal(pn, t.value, g); }; })(post.name, ta, grid);
+
+      var btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;align-items:center;gap:0;margin-top:10px;flex-wrap:wrap;';
+      var label = document.createElement('div');
+      label.textContent = 'Suggested Caption';
+      label.style.cssText = 'font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:1px;margin-right:auto;';
+      btnRow.appendChild(label);
+      btnRow.appendChild(copyBtn);
+      btnRow.appendChild(shareBtn);
+
+      wrapDiv.appendChild(ta);
+      wrapDiv.appendChild(btnRow);
+      postWrap.appendChild(wrapDiv);
+      container.appendChild(postWrap);
+    });
+  }).catch(function(err) {
+    document.getElementById('social-trust-content-body').innerHTML = '<p style="color:#cc0000;">Could not load trust content: ' + (err && err.message ? err.message : String(err)) + '</p>';
+  });
+}
+
 // ── Featured Social Posts (admin/marketing) ───────────────────
 function canManageFeatured() {
   return _currentUser && (_currentUser.isAdmin || _currentUser.isMarketing);

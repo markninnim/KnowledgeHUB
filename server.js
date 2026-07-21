@@ -4943,6 +4943,15 @@ app.get('/download-post/:post/:filename', requireAuth, (req, res) => {
   res.download(filePath, safeFile);
 });
 
+// ── Social Trust Content download (nested: /download-trust-post/:post/:filename) ──
+app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
+  const safePost = req.params.post.replace(/\.\./g, '');
+  const safeFile = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, 'public/assets/social-trust-content', safePost, safeFile);
+  if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+  res.download(filePath, safeFile);
+});
+
 // ── Marketing users management (admin only) — reads/writes Airtable directly ──
 app.get('/api/marketing-users', requireAdmin, async (req, res) => {
   try {
@@ -5098,6 +5107,26 @@ app.get('/api/social-content', requireAuth, (req, res) => {
         files: fs.readdirSync(path.join(baseDir, name))
           .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
           .map(f => ({ name: f, created: getAssetDate('social/' + name + '/' + f) }))
+      }));
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Social Trust Content manifest ──────────────────────────────
+app.get('/api/social-trust-content', requireAuth, (req, res) => {
+  try {
+    const baseDir = path.join(__dirname, 'public/assets/social-trust-content');
+    if (!fs.existsSync(baseDir)) return res.json([]);
+    const posts = fs.readdirSync(baseDir)
+      .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
+      .sort()
+      .map(name => ({
+        name,
+        files: fs.readdirSync(path.join(baseDir, name))
+          .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
+          .map(f => ({ name: f, created: getAssetDate('social-trust/' + name + '/' + f) }))
       }));
     res.json(posts);
   } catch (err) {
