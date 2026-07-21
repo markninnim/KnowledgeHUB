@@ -962,6 +962,10 @@ select:focus { outline:none; }
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Adviser Name</label>
           <input id="tpb-client-name" type="text" placeholder="e.g. Alex" oninput="tpbRenderAll()" style="width:100%;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
         </div>
+        <div style="flex:1;min-width:220px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Customer Name <span style="text-transform:none;font-weight:500;">(optional)</span></label>
+          <input id="tpb-customer-name" type="text" placeholder="e.g. Sarah" oninput="tpbRenderAll()" style="width:100%;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+        </div>
       </div>
       <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Review Text</label>
       <textarea id="tpb-review-text" oninput="tpbRenderAll()" rows="4" placeholder="Paste the client's review here…" style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'"></textarea>
@@ -6574,25 +6578,40 @@ function tpbDrawCanvas(key) {
 
   var text = document.getElementById('tpb-review-text') ? document.getElementById('tpb-review-text').value.trim() : '';
   if (!text) return;
+  var customerName = document.getElementById('tpb-customer-name') ? document.getElementById('tpb-customer-name').value.trim() : '';
 
   var boxX = (cfg.xPct / 100) * canvas.width;
   var boxY = (cfg.yPct / 100) * canvas.height;
   var boxW = (cfg.wPct / 100) * canvas.width;
   var boxH = (cfg.hPct / 100) * canvas.height;
+  var fontFamily = '"Plus Jakarta Sans", sans-serif';
 
-  var fit = tpbFitText(ctx, text, boxW, boxH, '"Plus Jakarta Sans", sans-serif');
-  ctx.font = '600 ' + fit.fontSize + 'px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = cfg.fontColor || '#153b5b';
-  ctx.textAlign = cfg.align || 'center';
+  // Reserve a slice at the bottom of the box for the small "— name" byline,
+  // sized relative to the box so it scales sensibly across all 5 templates.
+  var bylineFontSize = customerName ? Math.max(13, Math.round(boxH * 0.09)) : 0;
+  var bylineGap = customerName ? Math.round(bylineFontSize * 0.7) : 0;
+  var quoteMaxHeight = boxH - bylineFontSize - bylineGap;
+
+  var fit = tpbFitText(ctx, text, boxW, quoteMaxHeight, fontFamily);
+  ctx.font = '800 ' + fit.fontSize + 'px ' + fontFamily;
+  ctx.fillStyle = cfg.fontColor || '#111111';
+  ctx.textAlign = cfg.align || 'left';
   ctx.textBaseline = 'middle';
 
   var totalHeight = fit.lines.length * fit.lineHeight;
-  var startY = boxY + (boxH - totalHeight) / 2 + fit.lineHeight / 2;
+  var startY = boxY + fit.lineHeight / 2;
   var textX = (cfg.align === 'left') ? boxX : (cfg.align === 'right' ? boxX + boxW : boxX + boxW / 2);
 
   fit.lines.forEach(function(line, i) {
     ctx.fillText(line, textX, startY + i * fit.lineHeight, boxW);
   });
+
+  if (customerName) {
+    ctx.font = '600 ' + bylineFontSize + 'px ' + fontFamily;
+    ctx.fillStyle = '#6b7c8f';
+    var bylineY = boxY + totalHeight + bylineGap + bylineFontSize / 2;
+    ctx.fillText('— ' + customerName, textX, bylineY, boxW);
+  }
 }
 
 function tpbRenderAll() {
@@ -6658,6 +6677,7 @@ function tpbGenerateAndSave() {
     setTimeout(function() { btn.disabled = false; btn.textContent = 'Generate & Save to Social Trust Content'; }, 2500);
     document.getElementById('tpb-client-name').value = '';
     document.getElementById('tpb-review-text').value = '';
+    document.getElementById('tpb-customer-name').value = '';
     tpbRenderAll();
   }).catch(function(err) {
     alert('Could not save: ' + (err && err.message ? err.message : String(err)));
