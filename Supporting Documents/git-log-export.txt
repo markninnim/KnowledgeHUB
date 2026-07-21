@@ -1,0 +1,1111 @@
+KnowledgeHUB — Full Git Commit Log Export
+Generated: 2026-07-17
+Total commits: 1105
+Range: 2026-06-19 to 2026-07-17
+============================================================
+
+2026-07-17 | 8d3947c | Extend version history back to 7 July with full commit log
+2026-07-17 | 4bd50dc | Add full commit log download to version history page
+2026-07-17 | fe673ec | Add SimFlex logo asset
+2026-07-17 | 9c62354 | Swap version history corner logo to SimFlex
+2026-07-17 | e8609e7 | Add v0.1 Early Development entry to version history
+2026-07-17 | bc25c87 | Remove contact email from Home footer (kept on version history page)
+2026-07-17 | a5448e9 | Add route for version-history.html
+2026-07-17 | 2aed304 | Add version history page, link it from footer, add contact email
+2026-07-17 | b216400 | Add footer credit line to Home page
+2026-07-17 | 5ab42ef | Add optional payslip cross-check to Bank Statement Check
+2026-07-17 | eae45ed | Add full Checks Performed breakdown + Save PDF button to Lab reports
+2026-07-17 | 0ad0538 | Elaborate Lab subtitle: MVP/dev status by Simflex.AI
+2026-07-17 | 66d54bf | Lab sidebar links toggle between Payslip Check and Bank Statement Check
+2026-07-17 | 5e7538d | Move Bank Statement Check back under Lab, below Payslip Check
+2026-07-17 | a532799 | Rename Bank Check to Bank Statement Check
+2026-07-17 | a5b8dd0 | Give Bank Statement Check its own top-nav tab and page
+2026-07-17 | 5d0850f | Add Bank Statement Check tool to Lab
+2026-07-17 | 1b8fbfb | Add Lab to Feature Rollout Controls
+2026-07-17 | 29d04b9 | Payslip Check: forensic-detective framing + PII redaction in reports
+2026-07-16 | 483ceef | Revert column stretch; increase News Bulletins scroll area to 320px
+2026-07-16 | 1a72828 | News Bulletins scroll area fills available card height
+2026-07-16 | 01aaf6f | Stretch Home left columns to match right column height
+2026-07-16 | e2d0373 | Always show a You row on NPS leaderboard, even with no data
+2026-07-16 | b32f517 | Always show adviser's own rank via pinned row on Feefo leaderboards
+2026-07-16 | bf708f8 | Specialist CPD: 3h target + green state; add Specialist column to CPD entries; fix 100% donut ring
+2026-07-16 | ce5e861 | Specialist licence icons on My Team go green at 3 hours YTD CPD
+2026-07-16 | 70a55ab | Specialist licence icons on My Team go green at 3 hours YTD CPD
+2026-07-16 | 08716b2 | Fix Broker Branded Logo download: add CORS header to /view-asset so crossOrigin img loads succeed
+2026-07-16 | 1ae09a6 | Broker profile: color Consumer Duty Score green at 100%
+2026-07-16 | 6835721 | Add loading spinner graphic to broker profile and Pay commission loading states
+2026-07-16 | c01e702 | Broker profile: fix Feefo rank label to stack under number (flex-direction override)
+2026-07-16 | fbb9224 | Replacement Ratio: always calculate calendar YTD, ignore page date filter
+2026-07-16 | 776966b | Broker profile: style Feefo rank to match other stat tiles (no pill)
+2026-07-16 | 98f4ead | Broker profile: show Feefo rank as inline pill next to NPS
+2026-07-16 | c33ac93 | Update S Sutton sample pay statements: ~10k/month 2025, ~8k/month 2026
+2026-07-16 | 00cd729 | CPD Progress: add YTD pace marker and ahead/behind indicator for supervisors
+2026-07-16 | 9c205af | Fix Pay YTD comparison: cap both years at latest available current-year month, not calendar month
+2026-07-16 | b7c4e55 | Broker profile: color Consumer Understanding % full green at 100%
+2026-07-16 | dafe28b | Update R Chart sample pay statements: ~9k/month 2025, ~10k/month 2026
+2026-07-16 | 8ee658e | Broker profile: hide empty Engage/ReEngage/AutoCRM cards and expand siblings to fill the row
+2026-07-16 | 0c91b11 | Broker profile: move YTD comparison below list, swap bar colors/order (2026 top/orange)
+2026-07-16 | 0c5d24b | Broker profile: remove underline from '+N more' toggle link
+2026-07-16 | 4517a34 | Broker profile: color YTD comparison bars (last year orange, this year navy)
+2026-07-16 | 1177126 | Broker profile: make '+N more' clickable to expand full Videos/Revalidation lists
+2026-07-16 | b774f9c | Broker profile: add YTD vs prior-year Pay comparison chart
+2026-07-16 | 73025c0 | Broker profile: cap Revalidation videos list to 4 visible entries
+2026-07-16 | 12a1e94 | Broker profile: cap Videos Watched list to 5 most recent entries
+2026-07-16 | 3397387 | Add sample/test pay statement files for S Sutton and R Chart (2025-2026)
+2026-07-16 | 110382b | Broker profile: fix Replacement Ratio tooltip by reusing proven lic-icon-wrap pattern
+2026-07-16 | dff78f2 | Broker profile: add hover tooltip explaining Replacement Ratio
+2026-07-16 | fca22a5 | Broker profile: add Replacement Ratio (lost vs new business) to AutoCRM Renewals
+2026-07-16 | 353ad70 | Broker profile: Pay card spans rows 2-3 in column 3 to fill layout gap
+2026-07-16 | ec270cb | Broker profile: stretch Row 3 cards (Test Results/Revalidation) to fill row height
+2026-07-16 | e3a1e6c | Broker profile: stretch Row 2 cards (Newsletter/Videos/Pay) to fill row height
+2026-07-16 | 4c460b3 | Broker profile: cap Videos Watched/Newsletter Access list height to match Pay card
+2026-07-16 | e94a3f0 | Broker profile: remove Sales Process Access section from Pay box
+2026-07-16 | 0cada72 | Broker profile: merge Commission and Sales Process Access into one 'Pay' box
+2026-07-16 | c9968d5 | Broker profile: swap Revalidation and Newsletter Access card positions
+2026-07-16 | 7c8ef18 | Broker profile: source Test Results from Revalidation Broker List table
+2026-07-16 | 7c7136f | PDF report: remove section divider lines, adjust title spacing
+2026-07-16 | 023c31c | Broker profile: remove Cold from Engage, shrink Engage card, fit Reporting row
+2026-07-16 | b9979f8 | Fix PDF report spacing: wrap long stat labels, add consistent section gaps
+2026-07-16 | d6dd6db | Simplify Reporting tiles (no boxes, matching label font) and remove Engage tile colours
+2026-07-16 | 4f259ed | Show the 4 named knowledge tests with title+score in broker profile Test Results card
+2026-07-16 | e63a07a | Add PDF export button to broker profile, generating a branded A4 report
+2026-07-16 | a0d9df3 | Put Engage (30%) and Reporting (70%) on one row; match Engage tile style to AutoCRM
+2026-07-16 | c68af70 | Fix duplicate style attribute causing AutoCRM/ReEngage tile misalignment
+2026-07-16 | 0e1a37a | Show specialist licence icons (not Mortgage/Protection) in CPD Progress card header
+2026-07-16 | 3e7577c | Match CPD Progress header icons to the existing LICENCE_ICONS set (house/briefcase/$)
+2026-07-16 | 24c6066 | Swap CPD Progress layout: text labels on bars, icons in top-right header
+2026-07-16 | cc3b633 | Replace CPD subject dot+label with matching app icons (house/heart/$)
+2026-07-16 | a063eff | Remove per-section date filters from Feefo Reviews and All Activity; all boxes now follow the page-level date filter
+2026-07-16 | e6dbc20 | Default All Activity date filter to 1st of last month
+2026-07-16 | 04ac2d4 | Default Feefo Reviews date filter to 1st of last month
+2026-07-16 | d8b47fe | Show licences held in CPD Progress card header, green dot at 2hrs per subject
+2026-07-16 | f639137 | Match Clear button size/style to date range pill box
+2026-07-16 | 1101b6f | Collapse Consumer Duty recent responses list behind a click-to-expand toggle
+2026-07-16 | 5cb55fa | Restyle broker profile date filter as single From/To pill box
+2026-07-16 | ae8759f | Consumer Understanding card: all numbers navy, wider spacing, add % full stat with extra gap
+2026-07-16 | 815fef9 | Persist Consumer Duty remediation ticks to Airtable (Restored Keys field), show real Full/Restored/Partial counts everywhere
+2026-07-16 | 8c0be1c | Remove log entries summary line from CPD Progress card, shrinking row height
+2026-07-16 | a37c584 | Add date-range filter to broker profile (defaults to 1st of last month), move tenure inline next to name
+2026-07-16 | 4e1f599 | Add Reporting tiles (6 compliance report types) to broker profile, with click-through detail modal
+2026-07-16 | 689f970 | View in Social Content link now scrolls to and highlights the specific recommended post
+2026-07-16 | 7dcad5f | Fix View in Social Content link: switch to marketing tab before showing section
+2026-07-16 | 61e7ba3 | Remove Ready to Retarget tile from home ReEngage box so layout fits
+2026-07-16 | 33596bf | Stack CPD Summary and ReEngage boxes vertically instead of side by side
+2026-07-16 | 463001a | Split CPD Summary 50/50 with new clickable ReEngage bucket-count box on home page
+2026-07-16 | 2173485 | Reduce News Bulletins box height to 70%
+2026-07-16 | 0e6bcb3 | Stack News Bulletins above Today's Recommended Post; horizontal card layout
+2026-07-16 | 1f0561d | Add Today's Recommended Post card to home page (2/3 news, 1/3 daily pillar-rotated post)
+2026-07-16 | 0a299f1 | Rename sidebar link to 'Your Social Content', match badge style to Supervise sidebar
+2026-07-16 | 2a867ea | Rename heading to 'Content Pillars', remove em dash
+2026-07-16 | 47146f3 | Fix social content card naming/filtering for new free-form filenames
+2026-07-16 | b7991cd | Center pillar badge text with equal padding
+2026-07-16 | 3997eac | Fix pillar badge padding/shape for balanced pill look
+2026-07-16 | 099fec4 | Simplify pillar section styling, add Call to Action pillar
+2026-07-16 | 86e6932 | Add content pillar tagging + filter to Bespoke Social Content, with day-to-day usage guidance
+2026-07-16 | af8ec1b | Add approved post copy for new social content: 23 or 5, Christmas Renewal, Is It All A Blur, How Much Can I Borrow, Job Security Isn't Guaranteed, Let's Review Together, Planning Beyond Political Change, Renewal Due, Trusted Since 1999, What If I Cannot Work, 5 Stars 5000
+2026-07-16 | 0a15da7 | Replace native adviser filter select with scrollable custom dropdown (fixes cut-off list)
+2026-07-16 | 3e9294a | Remember Leads Table/Cards view choice per user
+2026-07-16 | 2cc709c | Remove Quality/Status pills from Leads card view
+2026-07-16 | 6ff8fd0 | Fix Leads modal clearing unrecognized Source values (e.g. ReEngage) when editing unrelated fields
+2026-07-16 | 453d907 | Move AutoCRM/ReEngage notes+handoff state to Airtable (was local JSON, wiped on every Railway redeploy)
+2026-07-16 | 4ba6508 | Remove Property Value/Deposit/Salary from Leads table view, show single email only
+2026-07-16 | cc89989 | Display ReEngage lead source with trademark symbol
+2026-07-16 | 1a98af7 | Remove bold from Admin/account nav pill labels
+2026-07-16 | d5f26af | Wire ReEngage LeadGEN handoff to real lead creation: round-robin assignment + Referred By tagging for referral fees
+2026-07-16 | cbf0d69 | Update ReEngage subtitle; add Mark for LeadGEN handoff toggle to ReEngage cards
+2026-07-16 | dd52b31 | Match ReEngage card styling to AutoCRM (plain cells, lowercase labels), drop Total line and boxed mini-cards
+2026-07-15 | 3e27469 | Fix broker profile Mortgage Completions fetch; redesign AutoCRM/ReEngage as 50/50 cards with clickable client-level detail
+2026-07-15 | 8a6ccf3 | Fix broker profile Mortgage Completions fetch missing returnFieldsByFieldId (broke AutoCRM Renewals + ReEngage buckets)
+2026-07-15 | 89a1988 | AutoCRM Renewals card: always show with empty-state message
+2026-07-15 | 6589183 | Add AutoCRM Renewals summary row to broker profile in Supervise
+2026-07-15 | 53fb13d | Fix licence icon tooltips getting clipped by card overflow
+2026-07-15 | 1d55192 | Add custom hover tooltips to licence icon badges
+2026-07-15 | 3444679 | Add licence icon badges to broker cards on Supervise page
+2026-07-15 | a64f9e4 | Fix feature flags not saving: use Airtable upsert instead of stale record-id cache
+2026-07-15 | 2baf63c | Move Engage before ReEngage in grouped nav
+2026-07-15 | 76cdc8d | Move Earn tab before Learn in top nav
+2026-07-15 | 7bd2db9 | Group AutoCRM/ReEngage/Engage nav tabs in a bordered container at the end
+2026-07-15 | a32da4d | Fix quick-links menu not persisting: move from local JSON file to Airtable
+2026-07-15 | 6a01427 | Rename nav labels: My Team to Supervise, Learning to Learn, Opportunities to Earn
+2026-07-15 | 7e0f3ad | Add Finance Planning Wealth logo/link to Wealth Opportunities page
+2026-07-15 | 0a60953 | Opportunities: split Wealth Referral into its own section at the bottom
+2026-07-15 | 16ba582 | Knowledge Tests: plain sidebar links + open tests as tiles instead of accordion
+2026-07-15 | 37d097c | Advice Standards: keep Compliance nav in place when switching content
+2026-07-15 | 1fee1ca | Move Advice Standards above Reporting in Compliance sidebar
+2026-07-15 | f393838 | Fix feature flag race causing duplicate Airtable rows / lost toggles on redeploy
+2026-07-15 | d1554ab | Move Advice Standards into Compliance sidebar (orange title under Reporting)
+2026-07-15 | abddb21 | Learning Videos: add title/subtitle to presentation download section
+2026-07-15 | c372f6b | Learning Videos: add downloadable PowerPoint presentations alongside video player
+2026-07-15 | e4984c7 | Fix Adviser dropdown missing non-LeadGen-member advisers; Save button highlights on unsaved changes
+2026-07-15 | b0ef21d | Engage™: show buddy's name on Swap button; add linked Buddy column in Airtable
+2026-07-15 | 63f024e | Engage™: update subtitle copy to describe cold→warm→hot→Acre pipeline + buddy sharing
+2026-07-15 | c3847dd | Fix /api/users/names returning blank names (missing returnFieldsByFieldId)
+2026-07-15 | 0cc5958 | Add Buddy picker to My Account; Swap to Buddy in Engage™
+2026-07-15 | 4ae5e65 | Engage™: fix Delete button text alignment
+2026-07-15 | ec0b8e8 | Engage™: add checkbox multi-select + bulk delete for leads
+2026-07-15 | 2bd01cf | Engage™: show nav tab for all advisers; scope lead data server-side, not just client UI
+2026-07-15 | 105e1d8 | Engage™: hide Adviser dropdown for non-managers, auto-assign to self
+2026-07-15 | d131bf9 | Broker profile: replace Sales Funnel with Engage™/ReEngage™ card sections
+2026-07-15 | 88e2f60 | AutoCPD: add Wealth as a third CPD Type (35hr target)
+2026-07-15 | 45de61a | AutoCPD: add Specialist CPD breakdown card alongside CPD Progress
+2026-07-15 | 735abf7 | AutoCPD: Specialist dropdown now matches Users table licence names
+2026-07-15 | 719eba9 | AutoCPD: add Specialist dropdown for non-mortgage/protection licences
+2026-07-15 | 3c1e326 | Rename Leads page to Engage™ throughout visible UI
+2026-07-15 | 0dccf9d | Feature flags: persist to Airtable instead of local features.json
+2026-07-15 | 40f358b | ReEngage: fix group header label when exact 4yr6mo filter is active
+2026-07-15 | 6bdf77d | ReEngage sidebar: REENGAGE OPPORTUNITIES + RETARGET small-caps sections
+2026-07-15 | 2dd9bac | ReEngage: match title size to sidebar standard, move exact filter to bottom
+2026-07-15 | 28e762b | ReEngage: move title into sidebar, 4yr6mo link underneath
+2026-07-15 | 645ddc8 | ReEngage: add orange REENGAGE PROSPECTS title, exact 4yr6mo filter
+2026-07-15 | cf70ae2 | ReEngage: remove Business Won, show elapsed years/months since renewal
+2026-07-15 | 7218882 | Add ReEngage™ tab: past mortgage completions grouped by years since expiry
+2026-07-14 | c56f284 | Fix 'my next renewal/lead' queries being misread as a garbled client/lead name
+2026-07-14 | bc9529c | Add Feefo review leaderboard lookup to Help widget
+2026-07-14 | 693e36d | Drop labels and prevent job-title line breaks in specialist adviser lookup
+2026-07-14 | fdcb3e2 | Recognise 'a broker/colleague called X' phrasing as a contact lookup
+2026-07-14 | c0fe88e | Drop field labels from Help widget contact details
+2026-07-14 | 8866a6d | Have Help assistant ask for clarification on unrecognised words instead of guessing
+2026-07-14 | 7a1cde8 | Tolerate typos of 'details' in Help widget contact lookup
+2026-07-14 | 329bdd7 | Add real broker headcount lookup to Help widget
+2026-07-14 | f98320c | Rename AI Help Content modal to KnowledgeHELPER Parameters
+2026-07-13 | eaa9bbc | Add explicit personality directive: witty/funny baseline, sarcastic when pushed
+2026-07-13 | 42c22e2 | Fix 'who is' handling: subjective/joke questions no longer trigger a failed staff-directory search, AI now plays along instead
+2026-07-13 | 6f676da | Add trademark symbol to KnowledgeHELPER branding
+2026-07-13 | 75f9dde | Add sarcastic 'API'd to Acre / recorded for compliance' tone for illegal/inappropriate request refusals
+2026-07-13 | a1f700a | Add off-topic refusal wording + dry sarcasm for out-of-scope/web-access requests
+2026-07-13 | 78f523e | Instruct Help AI to cross-reference leads/social media and be explicit about video-analytics limitations
+2026-07-13 | e0fb2af | Combine KnowledgeHELPER greeting into single message with footnote-style disclaimer
+2026-07-13 | e03c925 | Use knowledgeHELPER icon graphic for widget bubble/header, update subtitle to 'Your AI assistant'
+2026-07-13 | ecb572b | Broaden rich-answer detection to 'what should I do', 'I have had X', 'help me with' phrasing — real situations get a real answer, not a nav pointer
+2026-07-13 | d02536b | Rename Help widget to KnowledgeHELPER, update greeting text
+2026-07-13 | eb52999 | Remove suggested quick-action buttons from Help widget greeting
+2026-07-13 | 5870474 | Fix Help widget local KB matching: word-boundary match instead of raw substring (fixes 'posts' wrongly matching POS)
+2026-07-13 | 4da54b2 | Add self-scoped test-score lookup; stop AI padding answers with unnecessary nav links
+2026-07-13 | 5445668 | Add real lookup for 'who are our wealth/trusts/commercial/etc advisers' — not secret data, shouldn't get a generic nav pointer
+2026-07-13 | a83bae3 | Test and harden Help widget routing: fix whereabouts/muttuo keyword collision, contact-lookup priority over generic nav, catch named case-detail questions as client data
+2026-07-13 | 84979ee | Fix Help widget: show friendly session-timeout message instead of raw 'Unauthorized' error
+2026-07-13 | 7376e10 | Fix Help widget: factual/timescale questions bypass generic nav answers; add Suitability Report timescale to Help KB
+2026-07-13 | d76b073 | Fix Help widget: client-safety lookups now beat generic nav match, broaden renewal-question detection, fuzzy name matching, strip stray markdown
+2026-07-13 | 0b9e2ec | Have Help AI ask a clarifying question on vague queries instead of just giving up
+2026-07-13 | fdcd55d | Fix contact lookup: 'X details' / 'who is X' now triggers the real staff directory, not the AI
+2026-07-13 | 0e417dd | Let open-ended 'what/how/why/process' questions reach the AI instead of a canned nav answer
+2026-07-13 | 4943b2b | Fix Help widget follow-ups: track last clients/leads lookup so vague follow-ups stay on the safe deterministic path
+2026-07-13 | 3e02bc1 | Add strictly self-scoped 'my leads' lookup to Help widget (LeadGEN Leads)
+2026-07-13 | 0c88049 | Clarify system prompt: colleague directory lookup is a separate real feature, not AI-answered
+2026-07-13 | 6400d68 | Broaden Help AI to full site knowledge; make no-cross-adviser-data rule absolute
+2026-07-13 | bb02fdd | Answer 'how many customers do I have' with a real count from Mortgage Completions
+2026-07-13 | e820a89 | Add strictly self-scoped 'my clients' lookup to Help widget (Mortgage Completions)
+2026-07-13 | dffc75b | Help widget: real deterministic contact lookups against Airtable Users table
+2026-07-13 | 7edd45a | Tighten AI help system prompt for precision
+2026-07-13 | db823a2 | Help widget: prevent AI/local matcher from fabricating colleague contact details
+2026-07-13 | 6771599 | Help widget: Airtable-backed admin-editable whitelist, personalised conversational tone, softer UI copy
+2026-07-13 | 72cc279 | Fix Help widget: tighten local keyword matching to avoid false positives stealing queries from AI
+2026-07-13 | 622f55e | Add ring-fenced AI to KnowledgeHUB Help widget (falls back gracefully until ANTHROPIC_API_KEY is set)
+2026-07-13 | 3e1b5f1 | Add rule-based KnowledgeHUB Help chat widget (site nav + FAQ, no AI)
+2026-07-13 | 38dc84d | Survey card: equal-height product tiles with richer content
+2026-07-13 | c0209a3 | Survey card: show products as cards (Level 2 + valuations), link surveying partner logos
+2026-07-13 | 2e485a7 | Add FP Surveying and Acre Surveying partner cards to Survey opportunity
+2026-07-13 | bf905d1 | Wealth nav opens detail page directly; show wealth opportunities as cards
+2026-07-13 | 6e06dd7 | Add standalone Wealth opportunities page under Specialist nav
+2026-07-13 | 33c15d6 | Add PPL and Alecto Legal referral partner logos to Conveyancing card
+2026-07-13 | 40da15e | Show Trusts-licenced advisers on the Power of Attorney opportunity card
+2026-07-13 | 1785dcf | BTL page: swap Residential Mortgage for Residential Remortgage (AutoCRM tie-in), remove Removals card
+2026-07-13 | 265cee2 | Use static male/female PNG images for fallback adviser avatars
+2026-07-13 | c927de7 | Add Buy to Let Mortgage opportunity page (same sections as Purchase)
+2026-07-13 | ed3120d | Wealth Referral section: only show Wealth-licenced advisers, not all specialists
+2026-07-13 | 65594ac | Refine fallback avatar SVG artwork for closer match to reference
+2026-07-13 | 09b9aaf | Rename Investments licence to Wealth; Wealth Referral section shows all licenced advisers
+2026-07-13 | 57ead59 | Redesign fallback avatar artwork to match reference headshot style
+2026-07-13 | 80d2841 | Add Wealth Referral opportunity card with investment adviser referrals
+2026-07-13 | fd3f303 | Add gender-based flat-icon avatar fallback (coloured background) for adviser photos
+2026-07-13 | 7636e52 | Access card: 2-col layout, LeadGEN member checkbox; fix adviser dropdown to show all eligible advisers
+2026-07-13 | b685ff2 | Move Leads access toggle into Top Nav Tabs grid
+2026-07-13 | b98bf9f | Move broker Marketing/LeadGen flags and per-tab Access toggles from local JSON to Airtable
+2026-07-13 | cf40474 | Add per-lead 'new' dot for newly allocated leads
+2026-07-13 | d0c5d65 | Fix new-lead dot being cleared before it can appear on page-load/reload
+2026-07-13 | 3c65bd0 | Notify on lead allocation (not just creation); add Leads button on broker profile
+2026-07-13 | b70e55e | Role-based Leads visibility: admins/supervisors see whole company, others see own leads only
+2026-07-12 | b3ec859 | Scope Lead Manager to logged-in user's own leads, remove Adviser column/filter
+2026-07-12 | f9902d1 | Add Sales Funnel (Hot/Warm/Cold/Total) to My Team broker profile
+2026-07-12 | 4d51522 | Add Sales Funnel section (Hot/Warm/Cold/Total) to Leads Data page
+2026-07-12 | 6ede82b | Show dynamic Hot lead count in title/subtitle
+2026-07-12 | e15f61e | Add tooltip to Enroll into AutoCRM tickbox
+2026-07-12 | a0528be | Update Golden Hour Leads subtitle
+2026-07-12 | a33437b | Update Warm Leads subtitle
+2026-07-12 | a7e9f0b | Update Warm Leads subtitle
+2026-07-12 | 8459a4d | Update Hot Leads subtitle with target guidance
+2026-07-12 | 6c1e981 | Move Enroll into AutoCRM tickbox inline with Name field
+2026-07-12 | 909a12a | Show AutoCRM icon after lead name once enrolled
+2026-07-12 | 1da3b37 | Shrink Name field, add Enroll into AutoCRM tickbox on leads, link into Mortgage Completions
+2026-07-12 | 5956c89 | Left-align adviser modal header, move reviews to their own section under About
+2026-07-12 | 9b633dd | Order licenced advisers by review count
+2026-07-12 | b580445 | Show Feefo star rating, review count and NPS per adviser on cards and modal
+2026-07-12 | 549efd2 | Add specialism line to adviser modal header, centre header content
+2026-07-12 | ea700f9 | Show Average Payaway on adviser modal as Typical Split, WhatsApp logo green with blue text/links
+2026-07-12 | 04719ef | Add Average Payaway field to My Account, save to Airtable
+2026-07-12 | e3623dd | Show protection advisers on Buildings & Contents; add Surveying/Trusts licence fields
+2026-07-12 | 2a180e9 | Add Commission Split field to My Account and Licenced Adviser modal
+2026-07-12 | d087e12 | Add adviser profile photo/about/WhatsApp to Licenced Adviser cards + My Account
+2026-07-12 | 936745d | Fix Opportunities crash on direct refresh (data-readiness guard)
+2026-07-12 | 2773714 | Move product licences (PMI, Lifetime, Commercial, Bridging) to Airtable; add Business Protection licence
+2026-07-12 | 52a3215 | Fix ReferenceError-class bugs on direct refresh for #selling-zone, #autocrm, #muttuo, #leadgen
+2026-07-12 | ad333ad | Add protection-only Licenced Advisers section to all life assurance product cards
+2026-07-12 | 20666e6 | Add Commercial Mortgages and Bridging Finance to Opportunities nav
+2026-07-12 | f5feaa8 | Add Licenced Advisers section to Lifetime Mortgage opportunities page
+2026-07-12 | ba76caf | Fix stale supervisor dropdown label in custom dropdown component
+2026-07-12 | 51aad55 | Add Licenced Advisers section to PMI opportunity page
+2026-07-12 | 43cc876 | Make Whereabouts card values editable, in sync with Table view
+2026-07-12 | f5913aa | Fix ReferenceError on direct refresh to #whereabouts breaking page init
+2026-07-12 | 3e21e27 | Stack AM/PM as two lines in Whereabouts cards, explain in subtitle
+2026-07-12 | 22b3f69 | Default Whereabouts to Cards view; merge AM/PM per person, hide TASS tag, title Support table
+2026-07-12 | cf1b34b | Add Table/Cards view toggle to Whereabouts
+2026-07-12 | 4494119 | Add Pay, AutoCRM, Muttuo, Whereabouts, Leads to Feature Rollout Controls
+2026-07-12 | c96a715 | Add per-user toggles for every top-nav tab in user management
+2026-07-11 | 4581780 | Add Leads to quick-link destination picker
+2026-07-11 | 6916845 | Widen custom dropdown pills so labels like Warm aren't truncated
+2026-07-11 | ff912c7 | Use correct Muttuo purple (#7c3aed) for Appointment-to-Sale bar
+2026-07-11 | 47ffc62 | Use Fitch purple for Appointment-to-Sale bar on Muttuo dashboard
+2026-07-10 | d955a70 | Personalize Muttuo My Leads titles with adviser first name
+2026-07-10 | 82297f2 | Add custom-styled dropdown component app-wide
+2026-07-10 | 9259055 | Custom dropdown arrow styling app-wide
+2026-07-10 | 1af72b5 | Update Leads status labels: Appointment Booked -> Appointment, add Signed Up
+2026-07-10 | de118f5 | Add Lead Quality (Hot/Warm/Cold) field, modal control, and My Leads sidebar filters
+2026-07-10 | b922e75 | Add red notification dot on Leads nav tab for new leads assigned to the current broker
+2026-07-10 | c8eafdb | Make Leads to Sale pie chart orange
+2026-07-10 | 6921fd0 | Drop Scheme/Payday Loans/Preferred Term from Leads (removed in Airtable); match tab-nav pill height to Admin button
+2026-07-10 | b302cd7 | Appointment to Sale: dark blue stat number, accent blue funnel bar
+2026-07-10 | 5006513 | Turn Data dashboard Source button into a filter on the Leads table's Source column
+2026-07-10 | 1a011d2 | Source Adviser filter options from the Leads table's Adviser field instead of the Users table
+2026-07-10 | ddef4d2 | Point Leads tab at the actual Leads base and wire up the Source field
+2026-07-10 | 51596ed | Rename user-facing 'LeadGen Leads' text to 'Leads'
+2026-07-10 | 6bf37ec | Widen pipeline stat cards on Muttuo and LeadGen Data dashboards
+2026-07-10 | 27dbcee | Style Source link to match user filter dropdown, link directly to grid view
+2026-07-10 | ad9f143 | Rename top nav LeadGen Leads button to Leads
+2026-07-10 | 140b031 | Set Appointment to Sale stat card accent to blue
+2026-07-10 | 98a4357 | Add Source link to LeadGen Data dashboard, opening the LeadGEN Leads Airtable base
+2026-07-10 | 7cca004 | Enable LeadGen for Fitch and Fitch advisers and seed LeadGEN Leads with Muttuo's data
+2026-07-10 | 9b908d2 | Add LeadGen Leads: clone of Muttuo gated by a per-user toggle instead of business, linked to a new LeadGEN Leads Airtable base
+2026-07-10 | 16488bc | Change impersonation banner to light grey
+2026-07-10 | 2eb890e | Sort Muttuo leads newest first
+2026-07-10 | a682dbe | Add Leads-to-Appointment and Leads-to-Sale pie charts alongside conversion funnel
+2026-07-10 | cbd8c8c | Add Leads-to-Sale ratio card to pipeline; purple Appointment-to-Sale bar
+2026-07-10 | a7252c3 | Show adviser name in Muttuo Leads page title when a broker is selected
+2026-07-10 | 90c4ff2 | Show adviser name in Muttuo Data page title when a user is selected
+2026-07-10 | 06d42e6 | Overhaul Muttuo Data dashboard: sale conversion stats, revenue, top performers, funnel chart, PDF export
+2026-07-10 | b1a3937 | Add Mortgage/Insurance Sale Value and Broker Fee Value fields to Muttuo leads
+2026-07-10 | 58cbc9a | Add user selector to Muttuo Data page, align control heights
+2026-07-10 | 72ef989 | Add My Leads section header above its All Leads link in Muttuo sidebar
+2026-07-10 | 8b9c681 | Restore Follow Up sidebar link, drop Follow Up column from table view
+2026-07-10 | 7e308a6 | Temporarily remove Follow Up from Muttuo sidebar
+2026-07-10 | d877976 | Rename Muttuo sidebar section to Lead Manager, restore My Leads as a normal link
+2026-07-10 | 0daf622 | Style My Leads as sidebar title, fix header control heights in Muttuo
+2026-07-10 | 9a36dd1 | Add My Leads filter, adviser filter dropdown, and Created date/time column to Muttuo
+2026-07-10 | 1d31b99 | Make Adviser a dropdown of Fitch and Fitch users in Muttuo table and modal
+2026-07-10 | 718e515 | Fix stuck Loading state on Muttuo refresh: guard loadMuttuo call in early hash-routing
+2026-07-10 | b032d2a | Fix ReferenceError on page load: guard mzStopPolling call in switchTab
+2026-07-10 | ae4d983 | Add Golden Hour/Today/Follow Up filters and Data MI page to Muttuo
+2026-07-10 | 928bb3a | Auto-poll Muttuo leads every 30s while the tab is open
+2026-07-10 | 670a733 | Add Adviser and Follow Up fields to Muttuo leads
+2026-07-10 | b6ee32b | Show all lead fields in Muttuo table view, click any cell to open full detail modal
+2026-07-10 | 0552e6c | Wire up Home Guru and Think Plutus brand colours
+2026-07-10 | c1095e3 | Fix Muttuo leads data mapping, add Table/Cards view toggle
+2026-07-10 | 9f7cd3d | Add Muttuo tab: Fitch and Fitch leads CRM
+2026-07-10 | f908a69 | Use Mortgage Master secondary colour for brand orange
+2026-07-10 | aa17bd8 | Theme brand orange per-user (all 75 uses), Fitch & Fitch gets #61bdb0
+2026-07-10 | 89ab967 | Use Fitch & Fitch secondary colour for sidebar labels
+2026-07-10 | 0330efc | Override sidebar section-header colour for Mortgage Heroes (orange clashed)
+2026-07-10 | 60b9a43 | Theme brand navy per-user based on business
+2026-07-10 | dff41d5 | Add Mortgage Master nav logo
+2026-07-10 | 8d0aba9 | Add per-business nav logo (matched from Airtable Business field)
+2026-07-10 | 6c86ee9 | Fix /api/quick-links being registered before session middleware, causing every request to 500
+2026-07-10 | a093b55 | Fix missing 'learning' destination causing pencil picker to crash on open
+2026-07-10 | 3bdd6ad | Fix pencil edit icon never appearing on Quick Link tiles (inline opacity was beating the hover CSS rule)
+2026-07-10 | 0636366 | wip
+2026-07-10 | bd79be2 | wip
+2026-07-10 | 3fb6fd3 | Fix Main Menu quick-link dropdown positioning when tile has been dragged elsewhere
+2026-07-10 | 3afc57d | Let users reassign what each Quick Link tile does, not just reorder them
+2026-07-10 | d5e7f64 | Make Home page Quick Links drag-to-reorder, remembered per user
+2026-07-10 | 7ea7dfc | Give brokers with tied Feefo leaderboard scores the same rank
+2026-07-09 | c46330c | Show email under name in Customer Birthdays widget, rotating one person at a time instead of scrolling
+2026-07-09 | b5ebef7 | Add discreet Customer Birthdays widget, top-right of Home greeting
+2026-07-09 | 41b14b1 | Change AutoCRM widget link text to AutoCRM™
+2026-07-09 | d311e7c | Match AutoCRM widget View all link styling to AutoCPD link
+2026-07-09 | 9784dab | Make Home AutoCRM widget numbers clickable, jumping straight into the matching month filter on the AutoCRM page
+2026-07-09 | 544d13c | Add AutoCRM Renewals widget to Home page under Quick Links
+2026-07-09 | 3c49efd | Drop year from Renewal date on AutoCRM cards
+2026-07-09 | 0b08013 | Add AutoCRM month filters, Renewal label, Business Won toggle, and notes modal
+2026-07-09 | 1ee7e2c | Update AutoCRM subtitle to reflect automatic client emails
+2026-07-09 | 26605ab | Remove description from AutoCRM cards
+2026-07-09 | e59e4b5 | Show AutoCRM renewals as cards grouped by month instead of a flat table
+2026-07-09 | 749db9a | Merge AutoCRM rows that share the same Benefit End date, Loan Amount, and Valuation, since these represent joint applicants on the same transaction
+2026-07-09 | 724c5b2 | Exit View As now lands on Home with Admin panel open automatically, instead of reloading the previous tab
+2026-07-09 | 38e96ef | Open AutoCRM to all advisers, not just supervisors/admins, since it's scoped to each broker's own cases
+2026-07-09 | 89dc3f9 | Filter AutoCRM renewals to the logged-in broker's own cases
+2026-07-09 | 81a2aa5 | Add AutoCRM tab showing mortgage renewals due in the next 6 months
+2026-07-09 | 1c310ec | Allow supervisors/admins to edit Whereabouts cells in place
+2026-07-09 | 80bfffa | Fix cell vertical centering, add week-history sidebar links on Whereabouts page
+2026-07-09 | c40cbf8 | Improve Whereabouts table layout, pick latest file by filename date, add blue nav link
+2026-07-09 | d07c604 | Center-align Whereabouts table cells and equalize column widths
+2026-07-09 | 739374b | Update package-lock.json for mammoth dependency
+2026-07-09 | c74d5ca | Add Whereabouts tab for supervisors/admins, sourced from weekly docx
+2026-07-09 | 30975d0 | Shorten My Team card tenure label to 'Xm Non CAS'
+2026-07-09 | 1686abc | Update Investment/border/error colors, apply subtle rollover to all card overlays, update style guide
+2026-07-09 | 28c1a48 | Make My Team card hover overlay more subtle
+2026-07-09 | 44bb096 | Match Admin button height to profile button
+2026-07-09 | b2107e4 | Match top nav tab weight to sidebar nav weight
+2026-07-09 | 5bce99d | Make User Management names navy, document as style guide exception
+2026-07-08 | 2657ee0 | Update Surveying ticket copy
+2026-07-08 | bc81938 | Remove grey divider line above Print section on Logo Files page
+2026-07-08 | 76ded8f | Change Mortgage brand color from accent blue to navy across all CPD displays
+2026-07-08 | a3e9f30 | Fix leaderboard text color from navy to standard grey body text
+2026-07-08 | f9c0296 | Fix off-brand #aaa grey to standard #6b7c8f throughout
+2026-07-08 | 827ddaa | Make Weekly Recordings subtitle full width
+2026-07-08 | 9384eb2 | Make page subtitles full width
+2026-07-08 | 686d870 | Fix My Team page content top spacing to match other pages
+2026-07-08 | eca09f0 | Remove slide-in animation from all pages
+2026-07-08 | 88a89a0 | Remove leftover slide-in animation from Brand Assets content switching
+2026-07-08 | 0c9dc03 | Fix Opportunities page title position and size to match standard
+2026-07-08 | fa682bb | Fix Marketing/Brand Assets page title position to match standard inset
+2026-07-08 | 7799e39 | Fix Advice Standards title position to match standard page padding
+2026-07-08 | 94b5bf2 | Consolidate into one master STYLE-GUIDE.md
+2026-07-08 | 6e928e9 | Stop mixing navy into grey body text - single color for paragraph copy and inline links
+2026-07-08 | 9d6aad6 | Audit and fix all page titles/subtitles and stray off-brand greys for consistency
+2026-07-08 | 1e51ac8 | Fix Surveying page title/subtitle to match standard style
+2026-07-08 | 1ee1726 | Fix stray off-brand grey (#374151) to standard body text color
+2026-07-08 | dc12eca | Standardize all headings to navy and all body text to grey sitewide
+2026-07-08 | 90df90f | Fix CPD PDF row background anchoring so multi-line rows no longer overlap the row above
+2026-07-08 | b3efc47 | Fix CPD PDF row height mismatch causing overlapping stripes
+2026-07-08 | ac97242 | Standardize page title/subtitle styling for consistency
+2026-07-08 | 3a59487 | Make non-CAS service tenure text red
+2026-07-08 | b68825f | Refine service tenure display: grey text, months/years format, show on My Team cards
+2026-07-08 | 6619db8 | Show start date and years/months of service on adviser profile
+2026-07-08 | a5b24ba | Standardize all hairline borders to 1px
+2026-07-08 | 1615f62 | Match date picker borders to button style
+2026-07-08 | 526c5fd | Reduce button border to 1px
+2026-07-08 | cf1ff25 | Add CLAUDE.md project guide
+2026-07-08 | dc29706 | Copy font: apply Plus Jakarta Sans to body text (match SurveyingHUB)
+2026-07-07 | c26f670 | My Team: birthday cake icon next to name on their birthday
+2026-07-07 | f309890 | Home: View log link renamed to AutoCPD™
+2026-07-07 | 75c0693 | News: Add Story button + modal for supervisors/admins; home quick link Brochures → AutoCPD™
+2026-07-07 | 7e33256 | Brand: remaining buttons to grey outline; DIP preview matches card thumb size
+2026-07-07 | c50d002 | Fix: F&P form nav also hides Industry Reading / CAS Path
+2026-07-07 | a072dbc | KnowledgeHUB™ in all user-facing text; tidy auth page titles
+2026-07-07 | d4f53eb | Button references in body text: bold, brand style
+2026-07-07 | 55bfff3 | Fix: knowledge test nav now hides Industry Reading / CAS Path sections
+2026-07-07 | c7366a6 | Learning nav: View Live Zoom link, logs 50/50 CPD on click
+2026-07-07 | a4e8627 | Buttons: grey transparent style throughout (brand)
+2026-07-07 | 0550c34 | Brand buttons: transparent navy outline across all forms and asset cards; subtitle width; add CLAUDE.md conventions
+2026-07-07 | d1f3e09 | Reporting: add Self Sale + Whistleblowing forms, expand subtitles, transparent buttons; AutoCPD above REPORTING
+2026-07-07 | 237b917 | Add compliance reporting forms: complaint, breach, conflict, gifts (Airtable-backed)
+2026-07-07 | f02badc | Compliance nav: add REPORTING section header
+2026-07-07 | ef015aa | AutoCPD intro copy; standardise labels to light blue pill (CPD + user management); Learning Zone → Learning in UI
+2026-07-07 | c370aa9 | AutoCPD: new intro copy; rename Learning Zone to Learning in UI
+2026-07-07 | b155a16 | CPD: category labels — light blue bg, dark navy text (standard label)
+2026-07-07 | 9629a60 | Rename website to KnowledgeHUB throughout
+2026-07-07 | bdcb8ab | Rename CPD Log to AutoCPD™; standardise label styles to navy pill
+2026-07-07 | 60b3d9e | CPD rows: whole row opens edit, uniform blue category labels, blue-family type labels
+2026-07-07 | edcf389 | Rename to Bespoke Social Content; label on same line as post buttons
+2026-07-07 | 380b2be | Style consistency: remove arrows, fix input border, persist asset dates
+2026-07-07 | 63f5d97 | Birthday bar: repeat in scroll loop and reduce scroll speed
+2026-07-07 | d0f72f9 | Fix Feefo logo src path
+2026-07-06 | da8b886 | Match accordion button colour to sidebar link colour
+2026-07-06 | e0bd56a | Fix View All badge alignment — consistent float:right across Numbers and My Team sidebars
+2026-07-06 | 3397279 | Styling consistency pass: standardise Cancel buttons, form label colours, font-family
+2026-07-06 | e29b7b2 | Add SimFlex.ai authorship, copyright comments, and proprietary licence
+2026-07-06 | d1bc504 | Add SimFlex.ai authorship, copyright comments, and proprietary licence
+2026-07-06 | 457f71f | Add SimFlex.ai authorship comments to server.js and index.html
+2026-07-06 | c4b22e2 | Website: auto-generate financeplanning.co.uk/firstname-lastname; show in broker profile; generate button in admin form
+2026-07-06 | fafc8a7 | CPD: edit entries, what I learned field, blue labels, datalist activity input
+2026-07-06 | 0c304cb | Fix SVG preview modal; remove MI dashboard panel
+2026-07-06 | f040207 | Add SVG and Whiteout variant cards for feefo badges (2022–2026)
+2026-07-06 | 18d1665 | Add Excep 2023 feefo badge cards; tidy heading
+2026-07-06 | 7079cce | Remove stale MI file from root
+2026-07-06 | 5b37132 | Birthday greeting + bulletin card
+2026-07-06 | bd59a10 | Birthday greeting on home page
+2026-07-06 | 1509274 | Remove MI Dashboard title from Numbers tab
+2026-07-06 | aa4998f | Add pay folder structure with .gitkeep files
+2026-07-06 | 133035b | Fix feefo image paths after folder rename to year format
+2026-07-06 | cd6bf37 | Add MI dashboard to Numbers tab; add /api/mi endpoints; rename feefo folders to year format
+2026-07-06 | 190c7cf | Non-CAS badge red, uniform badge font weight
+2026-07-06 | ceabf3b | Fix Force Reset button colour
+2026-07-06 | 0cfa5f0 | Add TOTP 2FA + wider admin panel
+2026-07-06 | ab6bb60 | Add mandatory TOTP 2FA with device trust
+2026-07-06 | 401aba2 | feat: password security — 12-char min, session invalidation, change-password, audit log, force-reset
+2026-07-06 | 16eb299 | Update lockfile with helmet; fix npm audit vulnerability
+2026-07-06 | c040273 | Security hardening: helmet, secure+sameSite cookies, API rate limiter, origin check, auth-gate features GET
+2026-07-06 | a17bdfb | Feature flags: auto-save on toggle; commit baseline features.json
+2026-07-06 | edf8d5d | Pay: tax year grouping in sidebar + Statement of Earnings view
+2026-07-06 | 799e246 | Add 2025 commission statements
+2026-07-06 | d83e4e7 | Pay: remove back button, update page subtitle
+2026-07-06 | c7797f0 | Pay detail: separate Total Pay box, broker/downloads beneath, remove duplicate summary bar
+2026-07-06 | 7957f39 | Pay summary bar: reorder fields + uniform number style
+2026-07-06 | e8fec00 | Pay: year-grouped nav links in blue sidebar
+2026-07-06 | 829f434 | Fix pay: null ref on pay-content (renamed to pay-list)
+2026-07-06 | 9034adc | Fix months reference in payRenderMonthBody
+2026-07-06 | fae71dc | Pay: year-grouped list + single-page detail + summary
+2026-07-06 | 835bd95 | Fix broker logo white fill overlap
+2026-07-06 | 5ee77a1 | Fix broker logo size; rename to Personalised Social Content
+2026-07-06 | 14c481a | Fix broker logo fill and text positioning
+2026-07-06 | 0c303d8 | Fix broker logo download: switch from server Python/Pillow to client-side Canvas
+2026-07-06 | 481a319 | Opportunities: page-specific sections, ASU, Children's Cover, Referrals, card details
+2026-07-06 | fa29d36 | Add Opportunities pages with sectioned cards
+2026-07-06 | a044106 | Opportunities: 4 sub-pages with sidebar nav (Purchase, Remortgage, Lifetime, FTB)
+2026-07-06 | 0348a07 | Numbers: rank only active advisers, max rank = adviser count
+2026-07-06 | 5b38a29 | Numbers: red dot on non-CAS adviser cards, counts match My Team
+2026-07-06 | cf69b85 | Numbers sidebar: count all advisers from Airtable, not just those with pay data
+2026-07-06 | 695294c | Sidebar badge: show total adviser count, remove debug log
+2026-07-05 | 090dad8 | Add SV debug logging to diagnose View All count
+2026-07-05 | 92d5d22 | Fix CAS panel overlap on sidebar nav, fix SPOC formula
+2026-07-05 | 41494f1 | Fix CAS+team overlap, SPOC formula, View All count
+2026-07-05 | e948703 | CAS path: test boxes full height, test name, score/date, supervisor feedback
+2026-07-05 | a93e95e | Accordion buttons: match kd-test-num grey rgba(255,255,255,.35)
+2026-07-05 | 64944b1 | CAS path: auto-populate induction test results alongside video groups
+2026-07-05 | cfec625 | Accordion subsections: light blue (#2e99d5), keep caps
+2026-07-05 | f542e1d | Rename General accordion to Quizzes
+2026-07-05 | 0ec0c0b | Fitness & Properness accordion: before General, Test 1 label, 3-line format
+2026-07-05 | 524d5ef | Revalidation accordion: 3-line format, remove F&P; F&P moved to General accordion
+2026-07-05 | 7e0ca6e | Rename KNOWLEDGE DEMONSTRATION to KNOWLEDGE TESTS
+2026-07-05 | 79534f3 | Sidebar: KNOWLEDGE DEMONSTRATION with Induction/Revalidation/General accordions
+2026-07-05 | e1fe72a | Add Fitness & Properness built-in declaration form
+2026-07-05 | 47a2faf | Add 4 induction tests to KT_TESTS; remove SurveyMonkey; fix video card play button rollover
+2026-07-05 | f3b24f0 | Rename sidebar label: KNOWLEDGE QUIZ → KNOWLEDGE TESTS
+2026-07-05 | 7072b89 | Add 5 induction tests (SurveyMonkey links) to Knowledge Quiz
+2026-07-05 | 41a4390 | Add Induction Tests section to Knowledge Quiz landing + sidebar
+2026-07-05 | c8389e4 | Induction/revalidation cards: play overlay on hover, remove static play button
+2026-07-05 | 2e7b3eb | Fix: hide My Team and Numbers tabs from broker-role users
+2026-07-05 | b0377b3 | Video cards: play icon overlay on hover, remove static play button
+2026-07-05 | 98593e3 | Make logo clickable to home
+2026-07-05 | edbf5a5 | Rollover overlay + remove buttons: news cards, knowledge test cards, newsletter cards
+2026-07-05 | 67209c9 | Fix social content: add try-catch to server route, better client error reporting
+2026-07-05 | 8caa0f0 | Fix My Team load failure: batch CPD query for large teams to avoid URL length limit
+2026-07-05 | 27322bd | Numbers: fall back to all brokers if supervisor-map API fails or returns empty
+2026-07-05 | 179bae8 | Full-card magnifying glass overlay on all asset cards
+2026-07-05 | fc7d9a8 | Fix sidebar alignment: match My Team label/link padding to Numbers
+2026-07-05 | d97d17b | Remove Open button from ov-cards
+2026-07-05 | ec261d8 | Fix sidebar alignment: label padding matches link indent; View All in Numbers sidebar
+2026-07-05 | 94f5a81 | My Team cards: magnifying glass hover overlay
+2026-07-05 | ffa832d | Remove blue border on ov-card hover
+2026-07-05 | 105b9fd | Reorder nav + burger menu: Advice Standards first, divider before My Team/Numbers
+2026-07-05 | e4b693e | Numbers/UX: fix hover corners, no-shift sidebar, Opportunities rename, My Team quick-link for supervisors, burger menu update
+2026-07-05 | 0015dfb | Fix: curly quotes JS syntax error in Numbers section
+2026-07-05 | 70bfb7e | Numbers: rename PZ, My Team nav style, hover magnifying glass, team headings
+2026-07-05 | 79a8098 | PZ: close overlay when switching supervisor in sidebar
+2026-07-05 | c171458 | PZ cards: Read more, LP% calc (prot/mtg*100), GI on line 2, company rank #N
+2026-07-05 | 0f40178 | PZ nav: Whole Team entry, filter by supervisor, LP% on cards, sort by mortgages
+2026-07-05 | 456c1cc | Fix PZ back button - hide broker panel when returning to directory
+2026-07-05 | 82eec6c | Fix PZ broker card onclick - escape JSON.stringify quotes in HTML attribute
+2026-07-05 | 27273cd | Apply approved button style to Open → cards
+2026-07-05 | 36b3ca5 | Standardise all transparent buttons to approved grey outline style
+2026-07-05 | 7e3981c | CAS Path: induction videos and tests side by side, CPD watch dates auto-filled
+2026-07-05 | ed5da2a | CAS Path: induction video dates from CPD log (read-only, auto from watch history)
+2026-07-05 | b2b14be | CAS Path: induction videos fixed table with date watched column
+2026-07-05 | 0a382ca | CAS Path: remove blue box, full-width text, hub access note, predicted date countdown
+2026-07-05 | 5dd03be | CAS Path: intro copy, Tasks section, broker My CAS Path in Learning, task completion
+2026-07-05 | 91c9125 | Fix openCasPath: sv-dashboard → sv-cpd-register (element didn't exist, crash before fetch)
+2026-07-05 | 22309c2 | Fix CAS Path onclick — escape single quotes in email/name
+2026-07-05 | 1b74ad9 | Add CAS Path feature: panel, API routes, JS functions; NON CAS sidebar links open CAS Path; SPOC stat; pure admin filter; adviser count fix
+2026-07-05 | 50522a8 | Simplify stats bar: advisers — non-cas inline
+2026-07-05 | 9ccebf7 | Add Non-CAS adviser list to My Team sidebar nav
+2026-07-05 | 5419987 | Fix adviser count to exclude pure admins and supervisors
+2026-07-05 | 052f719 | Add Non-CAS tooltip with adviser names
+2026-07-05 | bfdabe2 | Exclude pure admins from My Team adviser view
+2026-07-05 | ef1976c | Add Non-CAS count to My Team stats bar
+2026-07-05 | 0c47502 | Move CAS to Airtable field for persistent storage; fix missing red dots
+2026-07-05 | 8d7c0f3 | Remove Behind/On Track grouping, add Non-CAS key, adviser counts in sidebar
+2026-07-05 | 63d83b6 | Add Competency Status section header above CAS checkbox
+2026-07-05 | a90041d | Default CAS to true for all advisers; explicit false overrides
+2026-07-05 | 32e404a | My Team: subtle red dot on non-CAS advisers (card + list view)
+2026-07-05 | e886318 | Add CAS/Non-CAS status: form field, user list badge, server storage
+2026-07-05 | 72c1b53 | Rename Impersonate to View As; banner shows 'Viewing as [name]'
+2026-07-05 | b710b63 | Edit form: Licences section, Lifetime Mortgages, PMI, supervisor dropdown, Access section
+2026-07-05 | d17da54 | Search: fix clear button, compact inline layout, remove result count
+2026-07-05 | 1aee82d | Search bar: remove role filters, move below Feature Rollout Controls
+2026-07-05 | a37d29c | User management: live search with role filters (Supervisors / Admins)
+2026-07-05 | 5dff758 | User management: alpha sort, dark labels, fix Edit (hide list, scroll to form)
+2026-07-05 | e4071a3 | User management: smart job title, uniform button/label colours
+2026-07-05 | 349fffe | Update User Management subtitle to Knowledge Hub
+2026-07-05 | 6559516 | Card: remove status badge, larger combined total figure
+2026-07-05 | 5dea610 | Card UI: combined total in top-right, remove bottom bar
+2026-07-05 | a99e4b0 | Fix remaining curly quote JS syntax errors in heading block
+2026-07-05 | 7efcdd5 | Fix JS syntax error: curly quotes used as string delimiters broke all JS
+2026-07-05 | 3cfbb6c | Heading becomes team name (Dave's Team / Whole Team), subtitle removed
+2026-07-05 | 343154b | Subtitle: show 'Dave's Team' using supervisor first name, not email
+2026-07-05 | 182d28a | Adviser Groups: stats inline with heading, blue not green, no titles, alpha by first name
+2026-07-05 | 763e263 | Remove big stats box; show Advisers + On Track inline with header
+2026-07-05 | 8fb1ec3 | URL hash: supervisor-zone → #my-team (alias maps back for bookmarks/links)
+2026-07-05 | ffda64f | Sidebar: Supervisor Zone heading → My Team, Whole company → View All
+2026-07-05 | 37cee74 | Show My Team tab for admins too
+2026-07-05 | 9a49c3a | Rename Supervisor Zone tab to 'My Team' for supervisor users
+2026-07-05 | 1ece0d0 | UI: rename CPD Register→Adviser Groups, Group CPD→Whole company, remove All Company, Team Members→Advisers, update subtitles
+2026-07-05 | 8139585 | Fix nav links: close broker profile when switching supervisor zone view or sidebar link
+2026-07-04 | a17bbab | Fix Test Results scores/dates (rec.fields not cellValuesByFieldId) + equal-height grid boxes
+2026-07-04 | 5e8a21d | Broker profile: Test Results box (col1 row3), Newsletter to col2, Revalidation videos only
+2026-07-04 | 803acf9 | Broker profile: fix grid gaps, equal row-1 heights, compact revalidation summary
+2026-07-04 | acfedb4 | Broker profile: Revalidation videos + Newsletter Access card
+2026-07-04 | 87e54a0 | Broker profile: Consumer Duty expanded card above Feefo reviews
+2026-07-04 | 8042fde | Broker profile: unified 3-col grid, equal widths, videos no scroll
+2026-07-04 | 06a5df1 | Sales Process Access card: CPD log sessions; fix CPD byType rec.fields; videoTitle field
+2026-07-04 | ac3bed6 | Broker profile commission: robust month detection fallback (statementDate, path)
+2026-07-04 | ba36325 | Add Statements to main menu popover
+2026-07-04 | 582411d | Fix broker profile commission, Statements quick link on home page
+2026-07-04 | 63ba988 | Broker profile: monthly commission totals (Jan 2026+), fix Invalid Date, negative formatting
+2026-07-04 | a799822 | Fix LG xlsx row offset for JAN/FEB/MAY, negative payment lines
+2026-07-04 | 27bb8c8 | Fix: March negative totals parsed, L&G amounts always numeric, negative month total display
+2026-07-04 | 9a63c7b | Pay: fix L&G date-format amount parsing, cross-month carryover link, all rows accordion
+2026-07-04 | b274d17 | Pay page: all rows accordion, renewal net=gross, adjustments drill-down
+2026-07-04 | 181d6c3 | Fix Vitality xlsx: cellDates:false prevents date-format from converting amounts to Date objects
+2026-07-04 | bd5a031 | Fix Vitality parser: always positional, start row 0 (some months have no blank header row)
+2026-07-04 | 20beb16 | Pay: renewal net from entries sum, initial entries match renewal format, amounts in Net col
+2026-07-04 | af4b084 | Pay: remove 2025 data, add 2026 files with new naming convention
+2026-07-04 | f6f3869 | Pay page: filename-based xlsx classification for new naming convention
+2026-07-04 | d86eb00 | Fix Vitality XLSX parsing for headerless format (initial.xlsx)
+2026-07-04 | aec0883 | Pay composite: per-category accordion, L&G Mortgage Fees first + open by default
+2026-07-04 | af58936 | Pay: composite statement view — RTF frame with xlsx entries inline
+2026-07-04 | 2bda994 | Fix pay file discovery: broker-first folder structure, 4-part path, folder-based month key
+2026-07-04 | 0dd1219 | Pay: RTF footer detail + no duplicate source header for single-file months
+2026-07-04 | cff4094 | Pay: month-accordion UI, dual-format xlsx parser, statement composition view
+2026-07-04 | e56921a | Fix: move 2026 xlsx files into broker subfolder so /api/pay/list finds them
+2026-07-04 | 1b9aec8 | Add 2026 commission Excel files
+2026-07-04 | 796e855 | Fix: move tab-pay and tab-performance-zone inside .main (were rendering below fold)
+2026-07-04 | cd5eea1 | Fix: initUser respects URL hash instead of always going home
+2026-07-04 | 028922b | Fix: call loadPayData on initial #pay navigation
+2026-07-04 | f322ba6 | Fix: add pay to TAB_IDS so tab renders
+2026-07-04 | 5ffd714 | Debug: surface pay render error
+2026-07-04 | 92adb95 | Rebuild pay page: stats banner, year tabs with totals, month badge cards, cycle-year sort
+2026-07-04 | 6817e21 | Fix commission sort: use statementDate cycle year, correct Dec label
+2026-07-04 | c3bb7bf | Sort commission statements by month date, newest first
+2026-07-04 | 7cca037 | Fix broker profile: RTF totalPay, sort months newest first
+2026-07-04 | c586e1d | Fix broker profile: RTF totalPay, sort months newest first
+2026-07-04 | 1109eaa | New pay structure: RTF + XLSX in YEAR/BROKER folder, year tabs + detail expand
+2026-07-03 | 2cb180a | Fix CPD type, revalidation fields, add commission xlsx
+2026-07-03 | 1e7faed | Show Pay tab in nav for all logged-in users
+2026-07-03 | 4faae74 | Fix Railway build: remove xlsx server dep, switch to client-side parsing
+2026-07-03 | ff865db | Add Pay section: commission statements tab + broker profile pay card
+2026-07-03 | 4314d6f | broker profile: all feefo reviews + date filter; full activity log with date filter
+2026-07-03 | b036714 | broker profile: clickable names in SV zone, profile panel with CPD/Feefo/CD/Quiz/Videos
+2026-07-03 | 514e25d | feefo NPS leaderboard: use actual NPS field (0-10) instead of star rating
+2026-07-03 | 2a114d5 | CPD card: stretch to match col height; pace text moved below bars
+2026-07-03 | 7257199 | home grid: video+newsletter stacked under news bulletins in span-2 column
+2026-07-03 | b723871 | remove duplicate CPD card; CPD now stacked under Surveying in flex wrapper
+2026-07-03 | 5b84a44 | home-grid-news-top-cpd-bottom
+2026-07-03 | 779b082 | cpd-mini-card-in-grid
+2026-07-03 | 6bb69a5 | nps-scrollable
+2026-07-03 | 46f86ad | feefo-nps-leaderboard
+2026-07-03 | d30f459 | rename-leaderboard-label
+2026-07-03 | 23c568a | feefo-scroll-6s
+2026-07-03 | 7182111 | feefo-scroll-slow-center
+2026-07-03 | d5a8a3a | feefo-leaderboard-autoscroll
+2026-07-03 | cb97b63 | feefo-leaderboard-scroll-to-me
+2026-07-03 | bfdd09f | feefo-avg-1dp
+2026-07-03 | 4f586b0 | fix-feefo-date-scope
+2026-07-03 | f67f7a7 | feefo-2026-leaderboard-avg
+2026-07-03 | 32d8409 | feefo-date-filter-rank
+2026-07-01 | cf279aa | News Bulletins: smooth auto-scroll loop with hover pause
+2026-07-01 | 39dd901 | bulletins-single-col
+2026-07-01 | 01a9592 | News Bulletins: scrollable grid max-height 460px
+2026-07-01 | f6e34b3 | fix-bulletins-drop-attachments
+2026-07-01 | a5e7dc1 | test-no-filter
+2026-07-01 | 20b5c71 | fix-news-bulletins
+2026-07-01 | df3b470 | Fix news-bulletins: use URLSearchParams to correctly encode query
+2026-07-01 | 977c96e | News Bulletins: /api/news-bulletins endpoint + home page grid render
+2026-07-01 | 2652a4b | Home: News Bulletins inside 3-col grid, spans left 2 cols; Surveying spans 2 rows
+2026-07-01 | 0deea2a | Home: add News Bulletins 2-column card below video/newsletter row
+2026-07-01 | 191071e | Main menu popover: dynamic build with supervisor/admin items
+2026-07-01 | c33a0a5 | Quick links: hamburger Main Menu with popover, Marketing to position 2
+2026-07-01 | 7cc6a47 | Re-enable auth gateway
+2026-07-01 | a03f6c5 | TESTING: disable auth gateway
+2026-07-01 | 3da9c1a | ACRE: leads month/year rank badges
+2026-07-01 | 2295a1a | Move Sign out to bottom of account slide-out panel
+2026-07-01 | 8931327 | ACRE: inline rank badges on Sales and Commission rows
+2026-07-01 | 56c0a09 | ACRE: all-time sales count and commission, label updated to Sales
+2026-07-01 | 43cdd10 | ACRE rank: use DAM Users table as adviser pool, seed all with 0
+2026-07-01 | 53d3540 | ACRE rank: limit to FPG brokers only via email domain
+2026-07-01 | 1a00adc | ACRE: commission paid label, company rank by broker fee YTD
+2026-07-01 | deb242d | ACRE: fix returnFieldsByFieldId=true so broker fee value reads correctly
+2026-07-01 | c26f918 | ACRE: sales value shows broker fee only
+2026-07-01 | 01a7551 | ACRE: filter leads/sales by logged-in broker name/email
+2026-07-01 | b381200 | Home: 3-col top row, ACRE Surveying stats card
+2026-07-01 | 2f25ad3 | Consumer Duty: reword subtitle, two lines
+2026-07-01 | 315146c | Consumer Duty: widen subtitle to two lines
+2026-07-01 | 61f6a5f | Consumer Duty: replace response count with explanatory subtitle
+2026-06-30 | 3f651a3 | Home: videos 2-col at top, feefo full width at bottom
+2026-06-30 | db634c2 | Move CD score to header, remove understanding rate bar
+2026-06-30 | 5bb38b7 | Consumer Duty: return all records, client-side counts, green restored badge
+2026-06-30 | 19d24c5 | Consumer Duty: tile filtering, renderCdList(), fix Understanding Restored badge
+2026-06-30 | 8f4ee90 | Consumer Duty: fix restored counter (records set before tiles update), light tile style
+2026-06-30 | 8ec1246 | Consumer Duty: 3-tile blue theme, % bar, red badges, restored row updates live
+2026-06-30 | a41d3a8 | Consumer Duty: 3-tile summary with Understanding Restored counter
+2026-06-30 | e079d53 | Fix: sticky modal header z-index so content scrolls beneath it
+2026-06-30 | cb5cd70 | Consumer Duty modal: full question text + resolve checkboxes
+2026-06-30 | 2aba366 | Consumer Duty: clickable rows open full Q&A detail modal
+2026-06-30 | abe5baa | Fix duplicate CPD recs section; fix Consumer Duty returnFieldsByFieldId
+2026-06-30 | 66da504 | Consumer Duty: add returnFieldsByFieldId=true to API query
+2026-06-30 | d1e0b62 | Consumer Duty: summary card with full/partial understanding breakdown
+2026-06-30 | c518301 | CPD recs: filter already-logged, 3-col grid, buttons open video modal directly
+2026-06-30 | 437c188 | CPD: fix time format, fix Mortgage video filter for blank types
+2026-06-30 | 57f8c50 | CPD: recommend catch-up videos per behind type (Mortgage/Protection)
+2026-06-30 | e24046e | CPD summary: display time as Xh Ym instead of decimal hours
+2026-06-30 | 3e156b2 | Home quick links: rename Learning to Hangouts, Newsletters to Social Media
+2026-06-30 | b3de231 | CPD summary: show ahead/behind target pace in subtitle
+2026-06-30 | a2a6796 | Remove Compliance quick link from home page
+2026-06-30 | 64cb17a | Home page: add CPD summary card with per-type progress bars
+2026-06-30 | 578bc3c | Home: remove emoji, hide tab nav + sidebar, constrain content width
+2026-06-30 | fd9e604 | Add feefo.png to git and increase logo height to 52px
+2026-06-30 | e4d3b47 | Feefo logo: use feefo.png wide logo at 36px height
+2026-06-30 | e0bed3a | Feefo logo: serve dark platinum badge via /public-feefo-logo route
+2026-06-30 | 26d0a86 | Feefo: paginated reviews + platinum logo
+2026-06-30 | 0a12bd2 | Feefo: show all own reviews paginated 5 per page with full text
+2026-06-30 | c40f4a8 | Fix Feefo adviser match: case-insensitive LOWER(TRIM()) + error fallback
+2026-06-30 | cd3e730 | Add home page: greeting, quick links, Feefo stats, latest video/newsletter
+2026-06-30 | 121136c | Broker logo: match original font size and vertical position precisely
+2026-06-30 | fc7288b | Broker logo: left-align name to match template position
+2026-06-30 | fc3933d | Broker logo: direct download from user session, remove modal
+2026-06-30 | ae91559 | Fix thumb hover overlay z-index
+2026-06-30 | baedb63 | Magnifying glass hover on thumbs, transparent download btn, hide View btn
+2026-06-30 | 5ca193e | Add password reset via email + 3-attempt lockout (15 min)
+2026-06-30 | c643c3b | Make Advice Standards Open buttons transparent with border
+2026-06-30 | a1d8012 | Fix Airtable select error: send null not empty string for salutation
+2026-06-30 | 960e3d0 | Consistent button style on social posts: Copy, Create Post, Share all same
+2026-06-30 | 2389a1d | Send all 5 platform images as email attachments
+2026-06-30 | 7dce24a | Fix duplicate nodemailer declaration causing crash
+2026-06-30 | 91cb32e | Share social post via email (Campaign Monitor SMTP)
+2026-06-30 | 4b187d0 | Fix impersonation banner spacing - wrap text in span so gap only appears before button
+2026-06-30 | 1b9a356 | Auto-generate business card on new user + Equity Release/Commercial Mortgages products
+2026-06-30 | 212438c | Add Equity Release and Commercial Mortgages to Products Sold
+2026-06-30 | 901627b | Fix impersonation banner wording
+2026-06-30 | e869378 | Rename Guardian Mode to Impersonate
+2026-06-30 | 47a6106 | Allow supervisors to add/edit/delete/Guardian-Mode users; block editing admins
+2026-06-30 | 3532e89 | Fix admin endpoints blocked in Guardian Mode (check originalUser for admin)
+2026-06-30 | e5d28cc | Add Marketing access checkbox to Add/Edit User form
+2026-06-30 | 928b3eb | Per-platform image uploads for featured posts (Facebook, Instagram, LinkedIn, Square, TikTok)
+2026-06-30 | c2c27ec | Featured posts: blue buttons, remove Mkt toggle from user rows, fix modal grey screen
+2026-06-30 | b44db5e | Add marketing role + featured social posts (admin/marketing only, max 4)
+2026-06-30 | 0f68cf2 | Replace 'independent' with 'whole of market' in social copy
+2026-06-30 | 4f47891 | Fix: remove dangling resetBtn reference after button removal
+2026-06-30 | 7d28c8d | Debug: show error detail in social content failure
+2026-06-30 | a50a243 | Social: remove Reset button, remove clipboard icon from Copy
+2026-06-30 | 53b9149 | Broker footer: remove salutation, add 'Contact me for a friendly discussion'
+2026-06-30 | 8d2573f | Remove +2/+4 PDF artifacts from social copy
+2026-06-30 | 5adb19e | Social copy: fix 77 truncated endings + add generic copy for all 24 missing posts (103 total)
+2026-06-30 | c7bf8c0 | Fix: serve social-copy.json via authenticated route
+2026-06-30 | 3251a45 | Smart localStorage: auto-refresh copy when approved text changes
+2026-06-30 | f613d5c | Improve Loomly copy extraction: clean artifacts, 79 matched posts
+2026-06-30 | 407bc4a | Static social: auto-populate approved copy + broker footer + disclaimers
+2026-06-28 | c25507e | Match Admin/Supervisor button height to account button (1.5px border + 5px padding)
+2026-06-28 | d84b0ab | Feature flags hide content + redirect; fix button alignment
+2026-06-28 | e45cc19 | Fix Import CSV/Excel label height alignment with Add User button
+2026-06-28 | 5f955c8 | User list: supervisor on own line; fixed-width action buttons
+2026-06-28 | c87ee54 | Add Advice Standards + Supervisor Zone toggles; fix Import button alignment
+2026-06-28 | b8d7a97 | Trim feature flags to top nav tabs only; fix button alignment
+2026-06-28 | eb443df | Add admin feature flag toggles + supervisor read-only mode
+2026-06-27 | e47c110 | DIP cert: match template exactly
+2026-06-27 | 2ce5dfd | Add DIP certificate generator to Templates section
+2026-06-27 | 5bc83b4 | CPD log: sort newest-first client-side, add Financial News badge colour
+2026-06-27 | 3b735e7 | Industry Reading: coloured monogram badges instead of broken logo images
+2026-06-27 | dfe7188 | Revert to express-session: fix login loop
+2026-06-27 | 4818667 | Rename login page: Digital Asset Management → Knowledge Hub
+2026-06-27 | 8691499 | Fix cookie-session: remove secure flag blocking login on Railway
+2026-06-27 | 5d97552 | Add publication logos to Industry Reading cards
+2026-06-27 | 227f9ed | Switch to cookie-session: sessions survive server restarts
+2026-06-27 | c3f83bf | Refresh CPD log after Industry Reading entry is logged
+2026-06-27 | 579d1d8 | Show real error messages for CPD log and newsletter load failures
+2026-06-27 | 7eb9552 | CPD category: Financial News
+2026-06-27 | 28c6eb3 | Industry Reading: 6 sources with per-source timer and CPD logging
+2026-06-27 | 1d8b6eb | Fix CPD category to 'Other' (Financial News not in Airtable yet)
+2026-06-27 | fc59481 | Fix Mortgage Strategy CPD: source=Learning Zone, category=Financial news
+2026-06-27 | d802d5c | Fix: add date to Mortgage Strategy CPD log request
+2026-06-27 | a087d83 | Learning: READING section, Mortgage Strategy timed CPD reader
+2026-06-27 | 2b349a9 | Fix: null-safe competition element updates (sv-comp-tickets removed from DOM)
+2026-06-27 | b34113e | Fix surveying: variable conflict, API error guard, Guardian Mode reset
+2026-06-27 | 3eef6ca | Social card: remove ticket labels from buttons, match 191px height
+2026-06-27 | 67bbf13 | Competition: match headline sizes, expand win copy, remove social paragraph
+2026-06-27 | 0169a30 | Competition card: fixed 191px height matches image, no blue gap
+2026-06-27 | 2e69812 | Competition card: natural image height, no red background
+2026-06-27 | 0929857 | Competition card: fixed 280px height to match image
+2026-06-27 | 7105bb8 | Virgin image: fixed 260px panel, full contain
+2026-06-27 | 2329e52 | Competition: full Virgin image, 3-col social buttons
+2026-06-27 | 95d0c88 | Competition card: full-height Virgin image, redesigned left panel
+2026-06-27 | 5199dd6 | Virgin image: increase to 110px height
+2026-06-27 | e59d6db | Competition cards: full height, prize copy, navy social card
+2026-06-27 | 0aeca7a | Fix virgin.png path: move to public/static
+2026-06-27 | 2a05eef | Competition grid: 3fr 2fr split
+2026-06-27 | fed642c | Add Virgin Experience Days logo to competition card
+2026-06-27 | 13b3f5f | Referrals table: Acre Ref, Valuation, Quotation
+2026-06-27 | 4cad41f | Surveying: split competition cards, social media draw, Instagram/LinkedIn links
+2026-06-27 | 9670177 | Surveying: sidebar with LINKS section
+2026-06-27 | 1db4bdb | Rename Value per Referral to Value per Click
+2026-06-27 | 041e5c7 | Surveying: blue quick-links bar
+2026-06-27 | 8038c28 | Surveying: two stat rows MTD and YTD
+2026-06-27 | 41a26bb | Rename to Referral to Sale Ratio
+2026-06-27 | 4381826 | Pre-load surveying on init so tab button shows fees immediately
+2026-06-27 | 18c8b4e | Surveying: intro, monthly competition, layout
+2026-06-27 | 8187595 | Guardian Mode: rename, lighter blue banner, updated button labels
+2026-06-27 | 1096beb | Surveying stats + rename referrals
+2026-06-27 | 374d189 | Fix leads: filter by Introducer field (full name) not Seller
+2026-06-27 | 79678b7 | Fix surveying leads + earnings in nav button
+2026-06-27 | 7d4e5a4 | Add impersonate user feature for admins
+2026-06-27 | 9422fd4 | Surveying updates
+2026-06-27 | 28d418b | Surveying updates
+2026-06-27 | ebcfdc0 | Add Surveying tab with leads and sales from Airtable
+2026-06-26 | 2712212 | Rename App 7 to PMI in knowledge quiz
+2026-06-26 | 1d2638e | Move Learning tab to right of Advice Standards
+2026-06-26 | cf8c414 | Supervisor newsletter upload — month/year picker, PDF upload, auto-refresh grid
+2026-06-26 | 12b2080 | Fix newsletter subtitle to 20 minutes CPD
+2026-06-26 | b915af3 | Newsletter CPD source set to Learning Zone
+2026-06-26 | 53150bf | Add email share button to newsletter cards
+2026-06-26 | 4118bc2 | Update newsletter cover image
+2026-06-26 | 64aab11 | Add 2025 newsletter archive; CPD 20 min (10 mortgage + 10 protection)
+2026-06-26 | 304b9e0 | Dynamic newsletter loading — auto-render from folder, archive after 12
+2026-06-26 | 54d1e3c | Add Monthly Newsletters section: 6 newsletters, Bank of England cover, grey labels, CPD logging
+2026-06-26 | 377fc94 | Add Monthly Newsletters section under Learning
+2026-06-26 | 6b39314 | Add month range date filter to Performance Zone broker view
+2026-06-26 | e405afb | Hide Performance Zone tab from non-supervisor/admin users
+2026-06-26 | 43da2cb | Filter PZ to Airtable users only; rename A B to Andrew Bramley; add new broker stats
+2026-06-26 | 3a375d3 | Add mortgage completions, linked protection, NIC, product transfers and flags per broker
+2026-06-26 | e6bb03e | PZ: broker panel styled to match advice standards nav (white bg, navy text, blue active border)
+2026-06-26 | eaf1d6c | PZ: white topbar, supervisor sidebar, broker column, fixed chart width
+2026-06-26 | 77e3993 | PZ: blue topbar, supervisor-grouped broker directory, uniform colors, full-width bar chart
+2026-06-26 | 10e38f1 | PZ: render broker stats in fixed overlay (bypasses tab/opacity chain)
+2026-06-26 | c6b5a35 | PZ debug: add alert to confirm pzShowBroker fires on click
+2026-06-26 | 12da03e | PZ v9: simplify pzShowBroker, add version marker, force opacity:1 on main
+2026-06-26 | e2be5fe | PZ: remove slideIn animation from broker render (was causing opacity:0)
+2026-06-26 | 8729c84 | PZ: use void(0) href to prevent hash changes on broker click
+2026-06-26 | ec2402e | Clean up PZ diagnostic logs; keep pzClick+wrapper approach
+2026-06-26 | 111c74a | Fix PZ: use inline onclick+pzClick helper instead of addEventListener (more reliable)
+2026-06-26 | 4596c5d | Fix PZ: animate wrapper not container (opacity bug)
+2026-06-26 | e18628e | Add console diagnostics to pzShowBroker for debugging
+2026-06-26 | de924a3 | Fix PZ: addEventListener + void(0) links + HTML entities
+2026-06-26 | 185b8d6 | Fix PZ broker click: write to pz-main directly instead of toggling child divs
+2026-06-26 | b558e3e | Fix Performance Zone HTML structure
+2026-06-26 | e3f3c67 | Add Performance Zone: 116 brokers, 2026 YTD stats, monthly chart, searchable sidebar
+2026-06-26 | 82f2c69 | Stronger slide animation
+2026-06-26 | d2f9145 | Fix supervisor list: remove length>1 guard and dead sel reference
+2026-06-26 | 235b720 | Fix supervisor list
+2026-06-26 | edf09ff | Add subtle slide-from-left animation on sidebar navigation
+2026-06-26 | f57896b | Remove View As button
+2026-06-26 | 5d9aa9f | Fix supervisor sidebar click: fix broken onclick quote in dynamic links
+2026-06-26 | fd91690 | Supervisor Zone: supervisors in sidebar, Group CPD
+2026-06-26 | 4e55b1c | Rename Sales Process to Advice Standards in nav and overview
+2026-06-26 | 7c8ecc1 | Overview: document cards with Mortgage/Protection groups
+2026-06-26 | b399ec3 | Knowledge Quiz: rename, orange #fcb034, individual test links in sidebar (mortgage first)
+2026-06-26 | 50e0ef3 | Fix: remove stray brace that broke all JS
+2026-06-26 | d645d27 | Knowledge Tests: 11 tests (MAS + 1 app, PAS + 8 apps), dynamic grid landing, no icons
+2026-06-26 | 57ddb1f | Add Knowledge Tests to Learning — MAS and PAS, 20 MCQ, 75% passmark, CPD logging
+2026-06-26 | 90f025a | Hide Selling Zone tab
+2026-06-26 | 3f5c574 | Include admins in Supervisor Zone team view; PAS App 8 self sale
+2026-06-26 | 36781d8 | Add PAS App 8 Self Sale Policy; fix App 7 nav label; fix Protection CPD label
+2026-06-26 | 6d2b978 | Add all 7 PAS appendices; fix Protection CPD label
+2026-06-26 | 63f42de | Add Appendix 1 – Lifetime Mortgages to Mortgage Advice Standards
+2026-06-26 | c8bf54e | Fix Protection Advice Standards font to match Mortgage
+2026-06-26 | 693eba3 | Update package-lock for nodemailer
+2026-06-26 | 56869a3 | Add Share Section feature for supervisors — emails advisers with content + deep link
+2026-06-26 | 2ccec96 | Add Protection & GI Advice Standards page with nav, search and CPD timer
+2026-06-26 | ca24e5a | MAS CPD strip: add top margin for breathing room
+2026-06-26 | d05fc68 | MAS CPD: log actual reading time (per minute) on exit
+2026-06-26 | d0b35cc | MAS page: auto-log 10 min CPD after reading for 10 minutes
+2026-06-26 | 5fc59a3 | Add Mortgage Advice Standards page with in-section nav and search
+2026-06-26 | 1e37a70 | induction recordings: 10 modules matching revalidation
+2026-06-26 | 07efb7b | fix: declare _lvTimerInterval so close button works
+2026-06-26 | 284f625 | revalidation recordings: 10 modules with LV card style
+2026-06-26 | d1551d2 | learning: weekly/induction/revalidation recordings sub-nav
+2026-06-26 | 007f77c | brochure auto-personalises broker name and photo from logged-in user
+2026-06-26 | 9b60f33 | prepopulate mc and broker brand modals from user profile
+2026-06-26 | ed3d524 | feat: auto-fill business card modal from logged-in user profile
+2026-06-26 | dc9ae34 | feat: Co-supervises Email field for clean team sharing (Torie→Matt)
+2026-06-26 | 0247fde | fix: show Supervisor Zone tab for admins as well as supervisors
+2026-06-26 | cdfdad1 | fix: include supervisors in sidebar and stats counts
+2026-06-26 | ce50068 | fix: include supervisors in Behind/On Track stats counts
+2026-06-26 | 8cf1e79 | feat: Victoria Wescott as supervisor sharing Matt Stephens team
+2026-06-26 | 4ea1625 | feat: include supervisors in All Company view with grey cards, no bars unless authorised
+2026-06-25 | 3fa806f | fix: remove all curly quotes from JS
+2026-06-25 | 4b5aef3 | fix: replace curly quotes with ASCII in subtitle JS lines
+2026-06-25 | 659a255 | Admin defaults to all-company view in CPD register
+2026-06-25 | a07c0b1 | Paginate all user fetches + remove card buttons
+2026-06-25 | b0c83ee | Remove action buttons from card view
+2026-06-25 | 4544bea | Tidy admin button styles + fix bulk import select field null
+2026-06-25 | 3e60b22 | Fix bulk import: send null not empty string for select fields
+2026-06-25 | cd450b6 | Show actual error in bulk import
+2026-06-25 | 19c0f98 | Fix bulk import: async bcrypt, handle bool coercion
+2026-06-25 | 4cb33ea | Add bulk user import: Excel upload + bulk endpoint
+2026-06-25 | c2abbdd | Add bulk user import: Excel upload + /api/admin/users/bulk endpoint
+2026-06-25 | 278b774 | feat: on track/total count badge in sidebar next to Team CPD
+2026-06-25 | e620327 | style: menu=Supervisor Zone, page=CPD Register, dynamic subtitle
+2026-06-25 | e6775b8 | style: rename Supervisor Zone, dynamic CPD register subtitle
+2026-06-25 | 1cd7259 | style: all stats digits navy blue
+2026-06-25 | 6abcbea | style: redesign stats bar - single card with dividers + total CPD
+2026-06-25 | 5c783b8 | feat: top export = whole company, broker export = individual
+2026-06-25 | 0ac560b | style: date box height matches buttons
+2026-06-25 | 7e24fbe | feat: date picker in header, per-adviser CSV export
+2026-06-25 | e991b2b | feat: CSV export + date picker in supervisor zone
+2026-06-25 | c54c6b3 | style: View As panel right-aligned, custom select, no emoji
+2026-06-25 | 4bf4422 | style: list view shows total only, View/Transfer labels
+2026-06-25 | 8452e3b | feat: supervisor zone list/card view toggle
+2026-06-25 | 6ad2917 | style: remove coloured border from supervisor cards
+2026-06-25 | ffc560e | feat: supervisor zone 3-column grid
+2026-06-25 | e6fbc7d | feat: supervisor zone cards in 3-column grid
+2026-06-25 | 0aefd01 | fix: pageSize must be <100 for Airtable API
+2026-06-25 | 0e61ad4 | debug: add supervisor team debug info
+2026-06-25 | 7fb1d7a | Fix: remove duplicate requireAuth that was blocking all routes
+2026-06-25 | 2849bc5 | Fix supervisor routes: use requireAuth, filter supervisors in Node
+2026-06-25 | 29dc84f | Fix supervisor team lookup: filter in Node instead of Airtable formula
+2026-06-25 | 5db288f | PDF: remove white blocks, full word-wrapped What I Learned
+2026-06-25 | 5304a16 | Supervisor Zone: full tab, behind-target section, drill-down, transfer
+2026-06-25 | 936b4f4 | Fix PDF crash: declare user before avatar embed
+2026-06-25 | e08ce04 | PDF: remove blue line, shrink logo 20%
+2026-06-25 | 847bb3c | Profile photo upload: avatar in nav, account modal, and CPD PDF
+2026-06-25 | 633d688 | Video CPD type tag + auto-log on play, 50/50 support
+2026-06-25 | 62edfdc | CPD: pie card square alongside progress card, shorter layout
+2026-06-25 | 2be9d65 | Month default, proportional targets, pie card, PDF logo + adviser name
+2026-06-25 | 9c9dd26 | CPD Save as PDF with period filter
+2026-06-25 | f60275e | Independent Mortgage/Protection CPD buttons with 30-min countdown
+2026-06-25 | ddfd694 | Lock CPD log button for 50 minutes with live countdown
+2026-06-25 | f0ba187 | Mortgage/Protection CPD only — type toggle on video, combined total
+2026-06-25 | 5d4c615 | Fix: send null not empty string for email/url Airtable fields
+2026-06-25 | ea40a20 | Compliance: CPD Log with auto-log, manual entries, progress vs target
+2026-06-25 | 67764b1 | Learning Zone: archive closed by default
+2026-06-25 | 409e9ee | Learning Zone: search, one-line title, updated description
+2026-06-25 | 0168d3e | Learning Zone: date in card footer, clean thumbnail
+2026-06-25 | f112202 | Learning Zone: triangles top-right, date above title on thumbnails
+2026-06-25 | 89b6275 | Learning Zone: hero triangle thumbnails, no FPG label
+2026-06-25 | a3fd870 | Learning Zone: branded SVG thumbnails with FPG triangles
+2026-06-25 | efc855a | Learning Zone: video grid, archive, admin management
+2026-06-25 | 4a5d9c0 | Update lock file for bcryptjs
+2026-06-25 | 4eadee3 | User management: Airtable auth, admin UI
+2026-06-25 | 770e73f | Add 5-tab nav: Marketing, Compliance, Learning, Sales Process, Selling Zone
+2026-06-25 | 513a50d | Reduce scan text from 18pt to 13pt, cover and redraw centred
+2026-06-25 | be1e769 | Broker logo 10% smaller, equalise gaps between logo/scan/QR
+2026-06-25 | 1220d5a | Fix QR white rect clipping p descender in scan text
+2026-06-25 | 0b5d460 | Broker logo: 20% smaller (176pt)
+2026-06-25 | b769fd9 | Broker logo: smaller, centered, lower on scan page
+2026-06-25 | a438f9b | Add personalised broker logo to moving card scan page
+2026-06-25 | 78cb0e2 | Remove download button from broker branded logo card
+2026-06-25 | 3a4e31d | Add Individual Broker Branding section with canvas personaliser
+2026-06-25 | 59ca03c | Update LinkedIn header size label to published size
+2026-06-25 | f28bacd | Update social assets images
+2026-06-25 | d1691e1 | Fix LinkedIn post size label: 1200x630 not 627x1200
+2026-06-24 | 8fc6730 | Fix hash routing: call navigateToSection directly instead of load event
+2026-06-24 | c2b6419 | Increase Solopress logo size to 30px
+2026-06-24 | dd3568c | Add Solopress logo to pricing modal
+2026-06-24 | 3fb43eb | Move hash navigation to after all functions are defined
+2026-06-24 | 8fa315e | Fix hash routing — use navigateToSection instead of link.click()
+2026-06-24 | 0897dcc | Add hash routing for deep links
+2026-06-24 | 0403450 | Update marketing intro copy, remove email underline
+2026-06-24 | 7acaecb | Update moving card description
+2026-06-24 | 4981fb8 | Add ordering instructions to Marketing Materials intro
+2026-06-24 | 15acd2d | Fix thumbnail preview, button heights, approved date for moving card
+2026-06-24 | 003f042 | Clean up moving card buttons, fix magnifying glass thumbnail hover
+2026-06-24 | 27c1259 | Redesign moving card buttons: 50/50 Download+Pricing, full-width Personalise, magnifying glass on thumb
+2026-06-24 | 5c08911 | Move price calculator to reusable modal
+2026-06-24 | 5e52ad1 | Add moving card print price calculator to Marketing Materials
+2026-06-24 | 775fe9b | Add landline + website to moving card, move QR to scan page
+2026-06-24 | e944ec6 | Move QR to back of business card (page 3), cover placeholder on page 1
+2026-06-24 | cd0be37 | Fix moving card personaliser to write to correct page (page 1)
+2026-06-24 | 90c4d59 | Add Personalise My Card button, modal, and JS for moving card
+2026-06-24 | 3abcdf0 | Add /generate-moving-card route with QR code personaliser
+2026-06-24 | 8e843ed | Add Marketing Materials section with Moving Card
+2026-06-24 | a3f12c9 | Add Marketing Materials section and alphabetise menu
+2026-06-24 | 832c358 | Commit renamed review template and clean up deleted files
+2026-06-23 | 723ac5e | Rename all social content post files to FPG naming convention
+2026-06-23 | d249b27 | Add file-date spans to review platform post cards
+2026-06-23 | 3a73f61 | Add Review Platform Post section with 5 platform variants
+2026-06-23 | 678ba67 | Add review template thumbnail
+2026-06-23 | 46a936c | Add Review Template card to Social Assets layout templates
+2026-06-23 | d1d2514 | Update Confident brand voice description
+2026-06-22 | df65661 | Update Direct brand voice description
+2026-06-22 | 17e2fed | Update Human brand value description
+2026-06-22 | 39ce304 | Balance principle lengths and remove em dashes
+2026-06-22 | 6afd99b | Add Emotional Intelligence principle and expand Trusted Local Advice
+2026-06-22 | dba01b4 | Auto-flag social posts older than 6 months as Approval expired
+2026-06-22 | 1996743 | Fix punctuation in social content guidance text
+2026-06-22 | 4e13b29 | Update social coverage message with Fun fact and new copy
+2026-06-22 | ef43289 | Add platform variations count to social coverage message
+2026-06-22 | 861165f | Add 'the next' to social coverage sentence
+2026-06-22 | cf23212 | Add dynamic new content projection to social coverage message
+2026-06-22 | 969510a | Add dynamic post coverage sentence to social content section
+2026-06-22 | dcd15e6 | Add post count badge to Static Social Content nav link
+2026-06-21 | 06c238e | Rename Zoom Background files
+2026-06-21 | bf36fc1 | Swap background graphic from PNG to JPG
+2026-06-21 | 23481a4 | Update folder card description
+2026-06-21 | d4d6c1c | Update stationery card descriptions
+2026-06-21 | 428175b | Update personal web page placeholder
+2026-06-21 | b3e2a36 | Rename URL field label to Your Personal Web Page
+2026-06-21 | cb61a3a | Recalibrate business card text positions for new template
+2026-06-21 | 1d56bdd | New business card template
+2026-06-21 | 3ee9e3a | New business card thumbnail
+2026-06-21 | ecbc4da | Light blue background behind QR code on card back
+2026-06-21 | 13803b7 | Business card: blue button, remove download/view, rename to Generate My Card
+2026-06-21 | bd7b9f0 | Add optional LinkedIn/URL field to business card QR
+2026-06-21 | b85897b | White out background behind QR code on card back
+2026-06-21 | 6f87d3f | Add vCard QR code to business card back page
+2026-06-21 | 51ac2ac | Format phone number as 07525 932 299 on business card
+2026-06-21 | 5ceb998 | Fix business card font weight - use static ExtraBold and Medium TTFs
+2026-06-21 | 0ec03f3 | feat: embed Plus Jakarta Sans variable font for business card generator
+2026-06-21 | 1b44bac | fix: extend white rectangle to fully cover original card text
+2026-06-21 | 0bd7d61 | feat: business card personaliser with Make My Card modal
+2026-06-21 | a522a85 | feat: add FPG Business Card to stationery section
+2026-06-21 | f764df4 | feat: add FPG Zoom Background 2025 card
+2026-06-21 | 2945b59 | feat: add Zoom Backgrounds section to templates
+2026-06-21 | 64d7806 | fix: logo component thumbnails match hero triangle size
+2026-06-21 | 5829380 | fix: hero triangle formation card matches social assets style
+2026-06-21 | 7d4094b | update: new white logo JPG
+2026-06-21 | c13ed94 | fix: abbreviate Transparent to Trans. in logo card title
+2026-06-21 | 29294fa | fix: white logo thumbnail updated to new JPG
+2026-06-21 | b6b3169 | fix: white logo thumbnail uses transparent PNG with invert filter
+2026-06-21 | 77ba5b7 | feat: logo sections (print/web/components), rename files to FPG convention
+2026-06-21 | a211422 | fix: rename all logos to FPG-Logo-[name].[ext] and update all paths
+2026-06-21 | 1ded892 | fix: url-encode spaces in white logo filename
+2026-06-21 | d3f3fca | add: logo white PNG card in logos section
+2026-06-21 | 2cfa5f6 | fix: exact triangle coordinates from AI file
+2026-06-21 | 1d86e90 | Adjust triangle positions
+2026-06-21 | affd5fd | Fix login triangles
+2026-06-21 | 79d35ab | Login page - remove email underline, add WhatsApp number
+2026-06-21 | 9aa5e4a | Redesign login triangles
+2026-06-21 | 8152bbc | Login page - light background, hero triangles
+2026-06-21 | d96ffe8 | Fix login page centering
+2026-06-21 | c4ebdd8 | Extend session to 10 years
+2026-06-21 | a48dca2 | Update login footer with contact email
+2026-06-21 | 356a742 | Update login page - centre box, real logo, updated copy
+2026-06-21 | 134a249 | Re-enable auth gate
+2026-06-21 | 2282f0b | Add favicon
+2026-06-21 | 6356edc | Rename to FPG Digital Asset Management Tool
+2026-06-21 | 0dcf4f1 | Update folder description
+2026-06-21 | 6f7fd2b | Update folder structure - nested brochures, stationery, new asset routes
+2026-06-21 | f98b643 | Move layout templates intro to Social Assets section
+2026-06-21 | 2dd4444 | Add intro text to Templates section
+2026-06-21 | 2cca2dd | Thumbnail click opens preview sitewide
+2026-06-21 | 470b7b7 | Fix brochure buttons, add view to protection brochure
+2026-06-21 | 0c9f325 | Fix Feefo paths, remove whiteout cards, fix brochure copy
+2026-06-21 | 900724f | Fix Feefo paths, remove whiteout cards, fix brochure copy
+2026-06-21 | f96d75e | Fix Feefo paths, remove whiteout cards, fix brochure copy
+2026-06-21 | 07523db | Fix Feefo paths, remove whiteout cards, fix brochure copy
+2026-06-21 | dc20c4b | Fix Feefo paths, remove whiteout cards, fix brochure copy
+2026-06-21 | 6b8b212 | Add Feefo badges, fix email footer path
+2026-06-21 | 81babfe | Add Feefo badges, fix email footer path
+2026-06-21 | 34523d9 | Add Feefo badge cards to Graphics section
+2026-06-21 | 64da459 | Add Feefo badge cards to Graphics section
+2026-06-21 | 8069fc6 | Graphics: add Feefo subsection placeholder
+2026-06-21 | 458f178 | All intros: remove boxes, clean paragraph style, remove link underlines
+2026-06-21 | f55709d | Logo intro: remove white box, clean paragraph style
+2026-06-21 | 3555b96 | Static Social: fold licensing warning into copy, remove warning box
+2026-06-21 | b01b6cd | Logo Files: add usage guidelines intro
+2026-06-21 | fa86791 | Static Social Content: add intro with approval guidance and licensing warning
+2026-06-21 | af0d742 | Video section: add intro with stats and book-a-session callout
+2026-06-21 | 558cc85 | Social Assets: add Hero Triangle Formation card
+2026-06-21 | e4825f2 | Swap updated images
+2026-06-21 | e56e9e8 | Move email footer to Graphics, letterhead to Stationery
+2026-06-21 | 2b9ee4b | Fix broker image: curveTo → appendBezierCurve (correct pdf-lib export)
+2026-06-21 | c6df09a | Personalised brochure: circular broker photo upload and PDF embed
+2026-06-20 | 9f8c883 | Colour notice: update Mark's contact details
+2026-06-20 | ab08938 | Colour palette: add proofing advice and contact notice
+2026-06-20 | 6f88ef5 | Colour swatches: add CMYK for Hero Blue and Accent Blue
+2026-06-20 | 2caff04 | CMYK values rounded to whole numbers
+2026-06-20 | 5cd950e | Colours: separate Hero Dark Blue print (#021346) from screen blue (#003768)
+2026-06-20 | d21b110 | Colours: add CMYK values and print usage to Hero Dark Blue and Orange swatches
+2026-06-20 | 2a78cd4 | Typography: add DejaVu Serif Bold print specimen in Hero Dark Blue
+2026-06-20 | 9dcca52 | Brand Voice: expanded with core principles and additional tone examples
+2026-06-20 | 544c747 | LeadGEN brochures: Approved badge, date, active download/view buttons
+2026-06-20 | bae187a | Social/video cards: date next to Approved badge, remove Added/Expires
+2026-06-20 | 24c0235 | Logos and templates: Approved badges, dates, active download buttons
+2026-06-20 | ebbfbaa | Social assets: activate all cards, add dates, fix downloads
+2026-06-20 | 41cb273 | Remove Added prefix from brochure date
+2026-06-20 | 2263188 | Show upload date next to Approved badge on brochure cards
+2026-06-20 | 135305b | Match personalise and download button styles
+2026-06-20 | 7f8714f | Consistent font-weight 600 across all buttons
+2026-06-20 | 3ef8f0f | Swap card order, rewrite personalised brochure description
+2026-06-20 | 55bb258 | Update personalised brochure card description
+2026-06-20 | 5943ae7 | Fix brochure cards: proper spacing, updated description text
+2026-06-20 | 341bf91 | Split protection brochure into standard and personalised cards
+2026-06-20 | 43291f3 | Move It's a fact 2mm lower
+2026-06-20 | 77a5aa3 | Precise position for It's a fact: 22.5mm x, 141.737mm y
+2026-06-20 | 9ffe4ef | Reposition It's a fact to match original text location
+2026-06-20 | 57211e8 | Move It's a fact text to top of page
+2026-06-20 | 0314e18 | Fix It's a fact position and size
+2026-06-20 | de8a773 | Add first name before It's a fact on page 2
+2026-06-20 | 7755072 | Exact background colour match #f5f7fb
+2026-06-20 | 63b85c9 | Adjust background rectangle colour to better match page
+2026-06-20 | fdfa417 | Restrict What if personalisation to pages 5 7 9 11
+2026-06-20 | c366cda | Move What if text down 3mm
+2026-06-20 | b47a2f3 | Adjust What if text: move up and left align
+2026-06-20 | ae8b855 | Fix What if personalisation: correct size, background colour and position
+2026-06-20 | e253f94 | Add first name before What if... on inner brochure pages
+2026-06-20 | 5bd7822 | Adjust brochure text up 1cm
+2026-06-20 | a4c2f2c | Move brochure text down 3cm
+2026-06-20 | e1403ed | Switch brochure personalisation to DejaVu Serif Bold
+2026-06-20 | e69c4ff | Switch to static TTF for Plus Jakarta Sans to fix kerning
+2026-06-20 | 90bf961 | Match brochure font spec: 12pt Plus Jakarta Sans, 17pt leading
+2026-06-20 | 72d0bc4 | Fix font: use Plus Jakarta Sans from @fontsource package
+2026-06-20 | e997a66 | Update brochure card description
+2026-06-20 | a83b457 | Brochure card: move description under title, remove View button
+2026-06-20 | 87c4380 | Brochure card: update description, badge to Approved
+2026-06-20 | 1709c57 | Brochure personalisation: match Hero Dark Blue colour
+2026-06-20 | 3c4696c | Align brochure personalisation text with subtitle
+2026-06-20 | f0ea056 | Adjust brochure text x position
+2026-06-20 | cd93aff | Fix brochure personalisation: use built-in Helvetica font
+2026-06-20 | aabb22a | Add personalised brochure download with Plus Jakarta Sans
+2026-06-20 | a9c2d9b | Rename video files
+2026-06-20 | b8411f8 | Video cards: add Added/Expires dates and approval badge
+2026-06-20 | 4612e3a | Exclude hero movies from git (files too large for GitHub)
+2026-06-20 | a4f2911 | Video: add reels sub-categories (appointment types, generic, seasonal)
+2026-06-20 | a54f839 | Video: add First Time Buyer under Adobe Licenced Stock Footage; filter out subfolders
+2026-06-20 | 625e049 | Video content: add Adobe Licenced Stock Footage section grouping
+2026-06-20 | 6e43bb6 | add Video Social Content section and server routes
+2026-06-20 | 8eac99b | fix post wording box to full grid width
+2026-06-20 | 2b5b2db | rename Post Wording to Approved Post Wording
+2026-06-20 | 15bbcb2 | add >> arrows to create post button
+2026-06-20 | f80caa5 | create post button dark blue, remove icon
+2026-06-20 | 6985103 | add download icon to create post modal download buttons
+2026-06-20 | 69a5d5c | remove format button from create post modal
+2026-06-20 | f127ea4 | add text formatting to create post modal
+2026-06-20 | 9d5b954 | make create post modal buttons equal width
+2026-06-20 | f316732 | add Create Post modal with platform image download and links
+2026-06-20 | b60a16e | add post wording text box under each social content post
+2026-06-20 | b78005f | add Added/Expires dates and approval status to social content cards
+2026-06-20 | 92159a9 | show file creation date on social content cards
+2026-06-20 | 974c60b | fix missing scrollbar on main content
+2026-06-20 | c816a2d | add new social content posts
+2026-06-20 | 5395b36 | add size filter buttons to social content
+2026-06-20 | 695837c | exclude PSD files from social content library
+2026-06-20 | 1712c25 | fix social content rendering using DOM methods
+2026-06-20 | f8fb6e1 | build dynamic social content section — auto-renders post folders
+2026-06-20 | 024ebb3 | add Social Content section to nav and page
+2026-06-20 | c822d73 | temporarily hide guidelines from nav
+2026-06-20 | 50b2f34 | update 2026 template card description
+2026-06-20 | 34d6551 | add thumbnail image to 2026 Photoshop template card
+2026-06-20 | de4e07c | fix LinkedIn and Facebook post orientation to landscape
+2026-06-20 | 9b61f79 | add 5 social layout template size cards
+2026-06-20 | 112c880 | add 2026 PSD template to layout templates
+2026-06-20 | 1e28f42 | move layout templates section to social assets
+2026-06-20 | 2b77711 | add Layout Templates section to templates page
+2026-06-20 | 24c2ffa | rename profile image card to Facebook Profile
+2026-06-20 | cf6b43d | add instagram profile image
+2026-06-20 | 1539b68 | update linkedin cover filename reference
+2026-06-20 | a76c072 | fix thumbnail boxes to consistent height
+2026-06-20 | c63cf88 | use slide screenshot as PowerPoint template thumbnail
+2026-06-20 | 1bca58a | remove hero banner from logo files page
+2026-06-20 | 6a968cf | add PDF and image thumbnails to asset cards
+2026-06-20 | 5c84844 | redesign: white topbar with FPG logo, sidebar below
+2026-06-20 | c8e992c | add staff buy employer and employee brochures to LeadGEN
+2026-06-20 | 556dfd0 | rename Staff Buys to LeadGEN
+2026-06-20 | 7ef2205 | add 2026 protection brochure
+2026-06-20 | 5437884 | add brochures section to nav and assets
+2026-06-20 | 24da0df | fix view button opening new window
+2026-06-20 | 93e9b94 | add preview modal for view button
+2026-06-20 | cf91e55 | add view button to all asset cards
+2026-06-20 | 85c0a1e | add fpg letterhead
+2026-06-20 | 0285efd | remove email signature kit card
+2026-06-20 | 9334516 | add email footer graphic card to templates page
+2026-06-20 | 5036279 | rename network_template to fpg-presentation-template
+2026-06-19 | 827f95c | Add email footer and card
+2026-06-19 | 73a8c40 | Add PowerPoint template
+2026-06-19 | 47456cf | Temporarily disable auth
+2026-06-19 | aedaded | Show logo preview on logo cards
+2026-06-19 | bc1c7ed | Fix auto-detection for all asset cards
+2026-06-19 | 46fe9a8 | Activate profile image download button
+2026-06-19 | 06956d9 | Add profile image social asset
+2026-06-19 | 722baee | Add Facebook cover
+2026-06-19 | e64b039 | Fix logo ready detection for all formats
+2026-06-19 | eea7899 | Simple working brand hub
+2026-06-19 | 5978d0c | Fix session for Railway proxy
+2026-06-19 | d0f33cc | Fix session cookie for Railway
+2026-06-19 | a96c756 | Fix navigation — panel-based layout
+2026-06-19 | 9c82b3e | Initial commit — full brand hub

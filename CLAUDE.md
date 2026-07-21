@@ -13,7 +13,7 @@ FPG Brand Hub / **KnowledgeHUB™** — Finance Planning Group's password-gated 
 
 ## Brand rules (always apply)
 
-See **[`STYLE-GUIDE.md`](./STYLE-GUIDE.md)** — the single master reference for colours, typography (titles/subtitles/body text), buttons, borders, pills, and naming. Always check it before styling anything, and update it (not this file) if a rule changes.
+See **[`style/STYLE-GUIDE.md`](./style/STYLE-GUIDE.md)** — the single master reference for colours, typography (titles/subtitles/body text), buttons, borders, pills, and naming. Always check it before styling anything, and update it (not this file) if a rule changes.
 
 ## Naming
 
