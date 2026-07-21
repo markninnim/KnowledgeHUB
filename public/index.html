@@ -279,6 +279,7 @@ select:focus { outline:none; }
     <a href="#" onclick="show('social',this);loadSocialAssetDates()">Social Assets</a>
     <a id="nav-social-content" href="#" onclick="show('social-content',this);loadSocialContent()">Your Social Content <span id="social-count-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;"></span></a>
   <a id="nav-social-trust-content" href="#" onclick="show('social-trust-content',this);loadSocialTrustContent()">Social Trust Content <span id="social-trust-count-badge" style="display:none;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;"></span></a>
+  <a id="nav-trust-post-builder" href="#" onclick="show('trust-post-builder',this);loadTrustPostBuilder()">Social Trust Post Builder</a>
     <a href="#" onclick="show('stationery',this)">Stationery</a>
     <a href="#" onclick="show('templates',this);loadTemplatesDates()">Templates</a>
     <a href="#" onclick="show('video-content',this);loadVideoContent()">Video Social Content</a>
@@ -938,6 +939,38 @@ select:focus { outline:none; }
       <button class="sc-filter" onclick="filterSocialTrust('Square',this)">Square</button>
     </div>
     <div id="social-trust-content-body"><p style="color:#6b7c8f;">Loading...</p></div>
+  </div>
+  <div id="trust-post-builder" class="section">
+    <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Social Trust Post Builder</h2>
+    <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 20px;line-height:1.6;">Paste a client review and generate all 5 platform sizes at once, using your saved templates — the text is sized to fit automatically and saved straight into Social Trust Content.</p>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <button onclick="tpbToggleSetup()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;border-radius:8px;font-weight:700;font-size:12px;padding:8px 14px;cursor:pointer;" onmouseover="this.style.borderColor='#003768';this.style.color='#003768'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7c8f'">⚙️ Template Setup</button>
+      <span style="font-size:12px;color:#6b7c8f;">Set up your 5 templates once — every future post reuses them.</span>
+    </div>
+
+    <div id="tpb-setup" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:24px;">
+      <h3 style="color:#003768;font-size:14px;margin:0 0 4px;">Template Setup</h3>
+      <p style="color:#6b7c8f;font-size:12.5px;margin:0 0 16px;line-height:1.6;">Upload a background image for each size, then drag the blue box onto the area where the review text should sit. This only needs doing once.</p>
+      <div id="tpb-setup-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;"></div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:24px;">
+      <h3 style="color:#003768;font-size:14px;margin:0 0 14px;">New Post</h3>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="flex:1;min-width:220px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Client Name</label>
+          <input id="tpb-client-name" type="text" placeholder="e.g. Sarah" oninput="tpbRenderAll()" style="width:100%;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+        </div>
+      </div>
+      <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Review Text</label>
+      <textarea id="tpb-review-text" oninput="tpbRenderAll()" rows="4" placeholder="Paste the client's review here…" style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'"></textarea>
+      <div id="tpb-warning" style="display:none;margin-top:10px;font-size:12px;color:#854d0e;background:#fef9c3;border-radius:8px;padding:8px 12px;"></div>
+    </div>
+
+    <div id="tpb-preview-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-bottom:20px;"></div>
+
+    <button id="tpb-generate-btn" onclick="tpbGenerateAndSave()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;border-radius:8px;font-weight:700;font-size:13px;padding:10px 20px;cursor:pointer;" onmouseover="this.style.borderColor='#003768';this.style.color='#003768'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7c8f'">Generate &amp; Save to Social Trust Content</button>
   </div>
   <div id="brochures" class="section">
     <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 16px;">Brochures</h2>
@@ -5283,6 +5316,7 @@ var sectionCallbacks = {
   'social':         function(){ loadSocialAssetDates(); },
   'social-content': function(){ loadSocialContent(); },
   'social-trust-content': function(){ loadSocialTrustContent(); },
+  'trust-post-builder': function(){ loadTrustPostBuilder(); },
   'templates':      function(){ loadTemplatesDates(); },
   'video-content':  function(){ loadVideoContent(); }
 };
@@ -6364,6 +6398,269 @@ function loadSocialTrustContent() {
     });
   }).catch(function(err) {
     document.getElementById('social-trust-content-body').innerHTML = '<p style="color:#cc0000;">Could not load trust content: ' + (err && err.message ? err.message : String(err)) + '</p>';
+  });
+}
+
+// ── Social Trust Post Builder ──────────────────────────────────
+var _tpbConfig = null;      // { li:{w,h,filename,label,xPct,yPct,wPct,hPct,fontColor,align,hasImage,imageUrl}, ... }
+var _tpbImages = {};        // key -> loaded <img> element (template background)
+var _tpbSizeKeys = ['li', 'fb', 'ig', 'tik', 'square'];
+var _tpbSaveTimer = null;
+
+function tpbToggleSetup() {
+  var el = document.getElementById('tpb-setup');
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+}
+
+function loadTrustPostBuilder() {
+  fetch('/api/admin/trust-templates').then(function(r){ return r.json(); }).then(function(config) {
+    _tpbConfig = config;
+    _tpbImages = {};
+    tpbRenderSetupGrid();
+    tpbRenderAll();
+    _tpbSizeKeys.forEach(function(key) {
+      if (config[key] && config[key].hasImage) {
+        var img = new Image();
+        img.onload = function() { tpbDrawCanvas(key); };
+        img.src = config[key].imageUrl;
+        _tpbImages[key] = img;
+      }
+    });
+  }).catch(function(err) {
+    console.error('Could not load trust templates', err);
+  });
+}
+
+function tpbRenderSetupGrid() {
+  var grid = document.getElementById('tpb-setup-grid');
+  grid.innerHTML = '';
+  _tpbSizeKeys.forEach(function(key) {
+    var cfg = _tpbConfig[key];
+    var card = document.createElement('div');
+    card.style.cssText = 'border:1px solid #d1d5db;border-radius:8px;padding:12px;';
+
+    var title = document.createElement('div');
+    title.textContent = cfg.label + ' (' + cfg.w + '×' + cfg.h + ')';
+    title.style.cssText = 'font-size:12px;font-weight:700;color:#003768;margin-bottom:8px;';
+    card.appendChild(title);
+
+    var frame = document.createElement('div');
+    var ratio = cfg.h / cfg.w;
+    frame.style.cssText = 'position:relative;width:100%;padding-top:' + (ratio * 100) + '%;background:#f5f7fa;border:1px solid #d1d5db;border-radius:6px;overflow:hidden;cursor:crosshair;';
+    frame.id = 'tpb-setup-frame-' + key;
+
+    var imgEl = document.createElement('img');
+    imgEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
+    if (cfg.hasImage) imgEl.src = cfg.imageUrl;
+    frame.appendChild(imgEl);
+
+    var box = document.createElement('div');
+    box.id = 'tpb-setup-box-' + key;
+    box.style.cssText = 'position:absolute;border:2px dashed #2e99d5;background:rgba(46,153,213,0.15);cursor:move;left:' + cfg.xPct + '%;top:' + cfg.yPct + '%;width:' + cfg.wPct + '%;height:' + cfg.hPct + '%;';
+    frame.appendChild(box);
+    tpbMakeDraggable(box, frame, key);
+
+    card.appendChild(frame);
+
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.cssText = 'margin-top:10px;font-size:11px;width:100%;';
+    fileInput.onchange = function() {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function() {
+        imgEl.src = reader.result;
+        tpbSaveTemplate(key, { imageBase64: reader.result });
+        var img = new Image();
+        img.onload = function() { tpbDrawCanvas(key); };
+        img.src = reader.result;
+        _tpbImages[key] = img;
+      };
+      reader.readAsDataURL(file);
+    };
+    card.appendChild(fileInput);
+
+    grid.appendChild(card);
+  });
+}
+
+function tpbMakeDraggable(box, frame, key) {
+  var dragging = null;
+  box.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    var rect = frame.getBoundingClientRect();
+    dragging = { startX: e.clientX, startY: e.clientY, rect: rect, cfg: Object.assign({}, _tpbConfig[key]) };
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dxPct = ((e.clientX - dragging.startX) / dragging.rect.width) * 100;
+    var dyPct = ((e.clientY - dragging.startY) / dragging.rect.height) * 100;
+    var xPct = Math.max(0, Math.min(100 - dragging.cfg.wPct, dragging.cfg.xPct + dxPct));
+    var yPct = Math.max(0, Math.min(100 - dragging.cfg.hPct, dragging.cfg.yPct + dyPct));
+    _tpbConfig[key].xPct = xPct;
+    _tpbConfig[key].yPct = yPct;
+    box.style.left = xPct + '%';
+    box.style.top = yPct + '%';
+  });
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = null;
+    tpbSaveTemplate(key, { xPct: _tpbConfig[key].xPct, yPct: _tpbConfig[key].yPct });
+    tpbDrawCanvas(key);
+  });
+}
+
+function tpbSaveTemplate(key, fields) {
+  clearTimeout(_tpbSaveTimer);
+  fetch('/api/admin/trust-templates/' + key, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields)
+  }).catch(function(err) { console.error('Could not save template', err); });
+}
+
+// Word-wraps `text` to fit `maxWidth`, never splitting a word, then shrinks
+// the font size until every line fits the width and the total block fits
+// the height. Returns { fontSize, lines, lineHeight }.
+function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily) {
+  var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
+  for (var size = 64; size >= 10; size--) {
+    ctx.font = '600 ' + size + 'px ' + fontFamily;
+    var lines = [];
+    var line = '';
+    for (var i = 0; i < words.length; i++) {
+      var test = line ? (line + ' ' + words[i]) : words[i];
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = words[i];
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    var lineHeight = size * 1.35;
+    var totalHeight = lines.length * lineHeight;
+    if (totalHeight <= maxHeight) {
+      return { fontSize: size, lines: lines, lineHeight: lineHeight };
+    }
+  }
+  // Fallback at the smallest size even if it overflows slightly
+  ctx.font = '600 10px ' + fontFamily;
+  return { fontSize: 10, lines: [text || ''], lineHeight: 14 };
+}
+
+function tpbDrawCanvas(key) {
+  var canvas = document.getElementById('tpb-canvas-' + key);
+  if (!canvas || !_tpbConfig) return;
+  var cfg = _tpbConfig[key];
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  var img = _tpbImages[key];
+  if (img && img.complete) {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = '#f5f7fa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#9ca8b4';
+    ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Upload a template in Template Setup', canvas.width / 2, canvas.height / 2);
+  }
+
+  var text = document.getElementById('tpb-review-text') ? document.getElementById('tpb-review-text').value.trim() : '';
+  if (!text) return;
+
+  var boxX = (cfg.xPct / 100) * canvas.width;
+  var boxY = (cfg.yPct / 100) * canvas.height;
+  var boxW = (cfg.wPct / 100) * canvas.width;
+  var boxH = (cfg.hPct / 100) * canvas.height;
+
+  var fit = tpbFitText(ctx, text, boxW, boxH, '"Plus Jakarta Sans", sans-serif');
+  ctx.font = '600 ' + fit.fontSize + 'px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = cfg.fontColor || '#153b5b';
+  ctx.textAlign = cfg.align || 'center';
+  ctx.textBaseline = 'middle';
+
+  var totalHeight = fit.lines.length * fit.lineHeight;
+  var startY = boxY + (boxH - totalHeight) / 2 + fit.lineHeight / 2;
+  var textX = (cfg.align === 'left') ? boxX : (cfg.align === 'right' ? boxX + boxW : boxX + boxW / 2);
+
+  fit.lines.forEach(function(line, i) {
+    ctx.fillText(line, textX, startY + i * fit.lineHeight, boxW);
+  });
+}
+
+function tpbRenderAll() {
+  var grid = document.getElementById('tpb-preview-grid');
+  if (!grid) return;
+  if (!_tpbConfig) { grid.innerHTML = '<p style="color:#6b7c8f;">Loading templates…</p>'; return; }
+  if (!grid.dataset.built) {
+    grid.innerHTML = '';
+    _tpbSizeKeys.forEach(function(key) {
+      var cfg = _tpbConfig[key];
+      var card = document.createElement('div');
+      card.style.cssText = 'border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:center;';
+      var title = document.createElement('div');
+      title.textContent = cfg.label;
+      title.style.cssText = 'font-size:11px;font-weight:700;color:#003768;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;';
+      var canvas = document.createElement('canvas');
+      canvas.id = 'tpb-canvas-' + key;
+      canvas.width = cfg.w;
+      canvas.height = cfg.h;
+      canvas.style.cssText = 'width:100%;height:auto;border-radius:6px;border:1px solid #e8ecf0;';
+      card.appendChild(title);
+      card.appendChild(canvas);
+      grid.appendChild(card);
+    });
+    grid.dataset.built = '1';
+  }
+
+  var text = document.getElementById('tpb-review-text').value.trim();
+  var warning = document.getElementById('tpb-warning');
+  var tooLong = text.length > 420;
+  warning.style.display = tooLong ? 'block' : 'none';
+  if (tooLong) warning.textContent = 'That’s a long review — text has been shrunk to fit, but a shorter quote (or an extract) will read better on the smaller sizes.';
+
+  _tpbSizeKeys.forEach(function(key) { tpbDrawCanvas(key); });
+}
+
+function tpbGenerateAndSave() {
+  var clientName = document.getElementById('tpb-client-name').value.trim();
+  var reviewText = document.getElementById('tpb-review-text').value.trim();
+  var btn = document.getElementById('tpb-generate-btn');
+  if (!clientName) { alert('Enter a client name first.'); return; }
+  if (!reviewText) { alert('Paste the review text first.'); return; }
+  var missing = _tpbSizeKeys.filter(function(key) { return !_tpbImages[key]; });
+  if (missing.length) {
+    alert('Upload all 5 templates in Template Setup before generating a post.');
+    return;
+  }
+  tpbRenderAll();
+  var images = {};
+  _tpbSizeKeys.forEach(function(key) {
+    var canvas = document.getElementById('tpb-canvas-' + key);
+    images[key] = canvas.toDataURL('image/jpeg', 0.92);
+  });
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  fetch('/api/admin/trust-post-builder/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientName: clientName, images: images })
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) throw new Error(data.error);
+    btn.textContent = '✓ Saved to Social Trust Content';
+    setTimeout(function() { btn.disabled = false; btn.textContent = 'Generate & Save to Social Trust Content'; }, 2500);
+    document.getElementById('tpb-client-name').value = '';
+    document.getElementById('tpb-review-text').value = '';
+    tpbRenderAll();
+  }).catch(function(err) {
+    alert('Could not save: ' + (err && err.message ? err.message : String(err)));
+    btn.disabled = false;
+    btn.textContent = 'Generate & Save to Social Trust Content';
   });
 }
 

@@ -4952,6 +4952,111 @@ app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
   res.download(filePath, safeFile);
 });
 
+// ── Social Trust Post Builder ───────────────────────────────────
+// Reusable background templates (uploaded once) + a text-box position per
+// size, expressed as % of the canvas so it stays correct at any resolution.
+const TRUST_TEMPLATE_DIR = path.join(__dirname, 'public/assets/trust-templates');
+const TRUST_TEMPLATE_CONFIG_PATH = path.join(__dirname, 'trust-template-config.json');
+const TRUST_SIZES = {
+  li:     { label: 'LinkedIn',       w: 627,  h: 1200, filename: '627 x 1200 - li.jpg' },
+  fb:     { label: 'Facebook',       w: 630,  h: 1200, filename: '630 x 1200 - fb.jpg' },
+  ig:     { label: 'Instagram',      w: 1080, h: 1350, filename: '1080 x 1350 - ig.jpg' },
+  tik:    { label: 'TikTok / Story', w: 1080, h: 1920, filename: '1080 x 1920 - tik.jpg' },
+  square: { label: 'Square',         w: 1200, h: 1200, filename: '1200 x 1200 - ig fb li.jpg' }
+};
+
+function loadTrustTemplateConfig() {
+  let saved = {};
+  try { saved = JSON.parse(fs.readFileSync(TRUST_TEMPLATE_CONFIG_PATH, 'utf8')); } catch (e) { saved = {}; }
+  const out = {};
+  Object.keys(TRUST_SIZES).forEach(k => {
+    out[k] = Object.assign({ xPct: 10, yPct: 58, wPct: 80, hPct: 32, fontColor: '#153b5b', align: 'center' }, saved[k] || {});
+  });
+  return out;
+}
+
+// Template image + text-box config for every size (admin builder screen)
+app.get('/api/admin/trust-templates', requireMarketingOrAdmin, (req, res) => {
+  const config = loadTrustTemplateConfig();
+  const sizes = {};
+  Object.keys(TRUST_SIZES).forEach(k => {
+    const imgPath = path.join(TRUST_TEMPLATE_DIR, k + '.png');
+    const hasImage = fs.existsSync(imgPath);
+    sizes[k] = Object.assign({}, TRUST_SIZES[k], config[k], {
+      hasImage,
+      imageUrl: hasImage ? ('/trust-template-image/' + k + '?t=' + fs.statSync(imgPath).mtimeMs) : null
+    });
+  });
+  res.json(sizes);
+});
+
+// Serve a template background image (gated, like every other asset here)
+app.get('/trust-template-image/:key', requireAuth, (req, res) => {
+  const key = req.params.key;
+  if (!TRUST_SIZES[key]) return res.status(404).send('Not found');
+  const filePath = path.join(TRUST_TEMPLATE_DIR, key + '.png');
+  if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+  res.sendFile(filePath);
+});
+
+// Upload/replace one template image and/or update its text-box position
+app.post('/api/admin/trust-templates/:key', requireMarketingOrAdmin, (req, res) => {
+  const key = req.params.key;
+  if (!TRUST_SIZES[key]) return res.status(400).json({ error: 'Unknown template size.' });
+  try {
+    const { imageBase64, xPct, yPct, wPct, hPct, fontColor, align } = req.body;
+    if (imageBase64) {
+      const m = imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+      if (!m) return res.status(400).json({ error: 'Invalid image data.' });
+      if (!fs.existsSync(TRUST_TEMPLATE_DIR)) fs.mkdirSync(TRUST_TEMPLATE_DIR, { recursive: true });
+      fs.writeFileSync(path.join(TRUST_TEMPLATE_DIR, key + '.png'), Buffer.from(m[2], 'base64'));
+    }
+    const config = loadTrustTemplateConfig();
+    config[key] = {
+      xPct: xPct != null ? Number(xPct) : config[key].xPct,
+      yPct: yPct != null ? Number(yPct) : config[key].yPct,
+      wPct: wPct != null ? Number(wPct) : config[key].wPct,
+      hPct: hPct != null ? Number(hPct) : config[key].hPct,
+      fontColor: fontColor || config[key].fontColor,
+      align: align || config[key].align
+    };
+    fs.writeFileSync(TRUST_TEMPLATE_CONFIG_PATH, JSON.stringify(config, null, 2));
+    res.json({ ok: true, config: config[key] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Save the 5 finished graphics straight into Social Trust Content
+app.post('/api/admin/trust-post-builder/generate', requireMarketingOrAdmin, (req, res) => {
+  try {
+    const { clientName, images } = req.body; // images: { li, fb, ig, tik, square } — each a JPEG data URL
+    if (!clientName || !images) return res.status(400).json({ error: 'Missing client name or images.' });
+    const slug = String(clientName).trim().replace(/[^a-z0-9\- ]/gi, '').trim();
+    if (!slug) return res.status(400).json({ error: 'Invalid client name.' });
+    const outDir = path.join(__dirname, 'public/assets/social-trust-content', slug);
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    let assetDates = {};
+    try { assetDates = JSON.parse(fs.readFileSync(path.join(__dirname, 'asset-dates.json'), 'utf8')); } catch (e) { assetDates = {}; }
+    const nowIso = new Date().toISOString();
+    let saved = 0;
+    Object.keys(TRUST_SIZES).forEach(key => {
+      const dataUrl = images[key];
+      if (!dataUrl) return;
+      const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!m) return;
+      const filename = TRUST_SIZES[key].filename;
+      fs.writeFileSync(path.join(outDir, filename), Buffer.from(m[2], 'base64'));
+      assetDates['social-trust/' + slug + '/' + filename] = nowIso;
+      saved++;
+    });
+    fs.writeFileSync(path.join(__dirname, 'asset-dates.json'), JSON.stringify(assetDates, null, 2));
+    res.json({ ok: true, folder: slug, saved });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Marketing users management (admin only) — reads/writes Airtable directly ──
 app.get('/api/marketing-users', requireAdmin, async (req, res) => {
   try {
