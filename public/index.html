@@ -959,10 +959,6 @@ select:focus { outline:none; }
       <h3 style="color:#003768;font-size:14px;margin:0 0 14px;">New Post</h3>
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
         <div style="flex:1;min-width:220px;">
-          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Adviser Name</label>
-          <input id="tpb-client-name" type="text" placeholder="e.g. Alex" oninput="tpbRenderAll()" style="width:100%;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
-        </div>
-        <div style="flex:1;min-width:220px;">
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Customer Name <span style="text-transform:none;font-weight:500;">(optional)</span></label>
           <input id="tpb-customer-name" type="text" placeholder="e.g. Sarah" oninput="tpbRenderAll()" style="width:100%;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:#003768;box-sizing:border-box;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
         </div>
@@ -6649,10 +6645,10 @@ function tpbRenderAll() {
 }
 
 function tpbGenerateAndSave() {
-  var clientName = document.getElementById('tpb-client-name').value.trim();
+  var clientName = (_currentUser && _currentUser.firstName) ? _currentUser.firstName.trim() : '';
   var reviewText = document.getElementById('tpb-review-text').value.trim();
   var btn = document.getElementById('tpb-generate-btn');
-  if (!clientName) { alert('Enter an adviser name first.'); return; }
+  if (!clientName) { alert('Could not find your name on your profile — please add it under My Account first.'); return; }
   if (!reviewText) { alert('Paste the review text first.'); return; }
   var missing = _tpbSizeKeys.filter(function(key) { return !_tpbImages[key]; });
   if (missing.length) {
@@ -6675,7 +6671,6 @@ function tpbGenerateAndSave() {
     if (data.error) throw new Error(data.error);
     btn.textContent = '✓ Saved to Social Trust Content';
     setTimeout(function() { btn.disabled = false; btn.textContent = 'Generate & Save to Social Trust Content'; }, 2500);
-    document.getElementById('tpb-client-name').value = '';
     document.getElementById('tpb-review-text').value = '';
     document.getElementById('tpb-customer-name').value = '';
     tpbRenderAll();
