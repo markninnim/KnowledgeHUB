@@ -6548,7 +6548,7 @@ function tpbWrapWords(ctx, words, maxWidth) {
 // Returns { fontSize, lines, lineHeight }.
 function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily, maxSize) {
   var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
-  for (var size = (maxSize || 96); size >= 20; size--) {
+  for (var size = (maxSize || 96); size >= 40; size--) {
     ctx.font = '800 ' + size + 'px ' + fontFamily;
     var lines = tpbWrapWords(ctx, words, maxWidth);
     var lineHeight = size * 1.35;
@@ -6560,7 +6560,7 @@ function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily, maxSize) {
 
   // Doesn't fit even at the smallest size — clip to the lines that fit and
   // truncate the last one with an ellipsis instead of letting it overflow.
-  var size = 20;
+  var size = 40;
   ctx.font = '800 ' + size + 'px ' + fontFamily;
   var lines = tpbWrapWords(ctx, words, maxWidth);
   var lineHeight = size * 1.35;
