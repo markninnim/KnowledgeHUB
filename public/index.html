@@ -5515,7 +5515,10 @@ function resolveSizeLabel(file) {
 function makeSocialCard(postName, fileObj, downloadPrefix) {
   var file = fileObj.name || fileObj;
   var info = resolveSizeLabel(file);
-  var url  = (downloadPrefix || '/download-post/') + encodeURIComponent(postName) + '/' + encodeURIComponent(file);
+  // postName may contain a '/' (adviser-slug/Review N for the nested layout) —
+  // encode each path segment individually rather than the whole string.
+  var urlPath = (postName + '/' + file).split('/').map(encodeURIComponent).join('/');
+  var url  = (downloadPrefix || '/download-post/') + urlPath;
   var addedDate = fileObj.created ? new Date(fileObj.created) : null;
   var fmt = function(d){ return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}); };
 
@@ -6338,25 +6341,29 @@ function loadSocialTrustContent() {
     var badge = document.getElementById('social-trust-count-badge');
     if (badge) { badge.textContent = posts.length; badge.style.display = 'inline'; }
 
-    posts.forEach(function(post) {
-      var clientName = post.name.replace(/-\d+$/, '').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+    // Renders one review's grid + suggested-caption block. `postKey` is the
+    // unique id used for the download URL, the DOM id, and the localStorage
+    // caption key — for the newer per-review layout that's "AdviserSlug/Review N",
+    // for the legacy flat layout it's just the adviser folder name.
+    function renderTrustReview(container, postKey, displayName, files) {
       var postWrap = document.createElement('div');
       postWrap.className = 'sc-post';
-      postWrap.id = 'stc-post-' + post.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-      postWrap.dataset.name = post.name;
+      postWrap.id = 'stc-post-' + postKey.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      postWrap.dataset.name = postKey;
 
       var h3 = document.createElement('h3');
-      h3.textContent = clientName;
+      h3.textContent = displayName;
       h3.style.cssText = 'color:var(--brand-navy);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);';
       postWrap.appendChild(h3);
 
       var grid = document.createElement('div'); grid.className = 'grid';
-      post.files.forEach(function(file) { grid.appendChild(makeSocialCard(post.name, file, '/download-trust-post/')); });
+      files.forEach(function(file) { grid.appendChild(makeSocialCard(postKey, file, '/download-trust-post/')); });
       postWrap.appendChild(grid);
 
       // Suggested caption
-      var storageKey = 'trust-wording-' + post.name;
-      var baseKey    = 'trust-wording-base-' + post.name;
+      var clientName = displayName;
+      var storageKey = 'trust-wording-' + postKey;
+      var baseKey    = 'trust-wording-base-' + postKey;
       var defaultVal = buildTrustDefaultCopy(clientName);
       var savedVal   = localStorage.getItem(storageKey);
       var savedBase  = localStorage.getItem(baseKey);
@@ -6386,7 +6393,7 @@ function loadSocialTrustContent() {
       var shareBtn = document.createElement('button');
       shareBtn.textContent = 'Share';
       shareBtn.style.cssText = _btnStyle;
-      (function(pn, t, g){ shareBtn.onclick = function(){ openShareModal(pn, t.value, g); }; })(post.name, ta, grid);
+      (function(pn, t, g){ shareBtn.onclick = function(){ openShareModal(pn, t.value, g); }; })(postKey, ta, grid);
 
       var btnRow = document.createElement('div');
       btnRow.style.cssText = 'display:flex;align-items:center;gap:0;margin-top:10px;flex-wrap:wrap;';
@@ -6401,6 +6408,25 @@ function loadSocialTrustContent() {
       wrapDiv.appendChild(btnRow);
       postWrap.appendChild(wrapDiv);
       container.appendChild(postWrap);
+    }
+
+    posts.forEach(function(post) {
+      var clientName = post.name.replace(/-\d+$/, '').replace(/[^a-zA-Z]+/g, ' ').trim().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      if (post.reviews && post.reviews.length) {
+        // Newer layout: one adviser folder holding several "Review N" sub-folders.
+        if (post.reviews.length > 1) {
+          var groupHeading = document.createElement('div');
+          groupHeading.textContent = clientName;
+          groupHeading.style.cssText = 'color:var(--brand-navy);font-size:16px;font-weight:800;margin:32px 0 4px;';
+          container.appendChild(groupHeading);
+        }
+        post.reviews.forEach(function(rev) {
+          var label = post.reviews.length > 1 ? (clientName + ' — ' + rev.review) : clientName;
+          renderTrustReview(container, post.name + '/' + rev.review, label, rev.files);
+        });
+      } else {
+        renderTrustReview(container, post.name, clientName, post.files);
+      }
     });
   }).catch(function(err) {
     document.getElementById('social-trust-content-body').innerHTML = '<p style="color:#cc0000;">Could not load trust content: ' + (err && err.message ? err.message : String(err)) + '</p>';

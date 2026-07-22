@@ -1,247 +1,4 @@
 {
-  "Alex": {
-    "emails": [
-      "alex.strange@financeplanning.co.uk"
-    ],
-    "names": [
-      "Alex Strange"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Andy": {
-    "emails": [
-      "andy.poustie@financeplanning.co.uk"
-    ],
-    "names": [
-      "Andy Poustie"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Bryce": {
-    "emails": [
-      "bryce@financeplanning.co.uk"
-    ],
-    "names": [
-      "Bryce Protheroe"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Carl": {
-    "emails": [
-      "carl.thorne@financeplanning.co.uk"
-    ],
-    "names": [
-      "Carl Thorne"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Carl-1": {
-    "emails": [
-      "carl.thorne@financeplanning.co.uk"
-    ],
-    "names": [
-      "Carl Thorne"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Chobi": {
-    "emails": [
-      "binita.gurung@financeplanning.co.uk"
-    ],
-    "names": [
-      "Chobi Gurung"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Claire": {
-    "emails": [
-      "claire.lipscomb@financeplanning.co.uk"
-    ],
-    "names": [
-      "Claire Lipscomb"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Claire-1": {
-    "emails": [
-      "claire.lipscomb@financeplanning.co.uk"
-    ],
-    "names": [
-      "Claire Lipscomb"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Daniel": {
-    "emails": [
-      "daniel.walsh@financeplanning.co.uk"
-    ],
-    "names": [
-      "Daniel Walsh"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Daniel-1": {
-    "emails": [
-      "daniel.walsh@financeplanning.co.uk"
-    ],
-    "names": [
-      "Daniel Walsh"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Emily": {
-    "emails": [
-      "emily.chattaway@financeplanning.co.uk"
-    ],
-    "names": [
-      "Emily Chattaway"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Hannah": {
-    "emails": [
-      "hannah.logan-hughes@financeplanning.co.uk"
-    ],
-    "names": [
-      "Hannah Logan-Hughes"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "James": {
-    "emails": [
-      "james.hall@financeplanning.co.uk"
-    ],
-    "names": [
-      "James Hall"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Jim": {
-    "emails": [
-      "jim.maye@financeplanning.co.uk"
-    ],
-    "names": [
-      "Jim Maye"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Jim-1": {
-    "emails": [
-      "jim.maye@financeplanning.co.uk"
-    ],
-    "names": [
-      "Jim Maye"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Johnny": {
-    "emails": [
-      "johnny.lancaster@financeplanning.co.uk"
-    ],
-    "names": [
-      "Johnny Lancaster"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Lee": {
-    "emails": [
-      "lee.harper@financeplanning.co.uk"
-    ],
-    "names": [
-      "Lee Harper"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Petru": {
-    "emails": [
-      "petru.balan@financeplanning.co.uk"
-    ],
-    "names": [
-      "Petru Balan"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Petru-1": {
-    "emails": [
-      "petru.balan@financeplanning.co.uk"
-    ],
-    "names": [
-      "Petru Balan"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Petru-2": {
-    "emails": [
-      "petru.balan@financeplanning.co.uk"
-    ],
-    "names": [
-      "Petru Balan"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Petru-3": {
-    "emails": [
-      "petru.balan@financeplanning.co.uk"
-    ],
-    "names": [
-      "Petru Balan"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Rob": {
-    "emails": [
-      "rob.chart@financeplanning.co.uk"
-    ],
-    "names": [
-      "Rob Chart"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Tracey": {
-    "emails": [
-      "tracey.copeland@financeplanning.co.uk"
-    ],
-    "names": [
-      "Tracey Copeland"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Tracy": {
-    "emails": [
-      "tracey.copeland@financeplanning.co.uk"
-    ],
-    "names": [
-      "Tracey Copeland"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Peter": {
-    "emails": [
-      "peter.stickley@financeplanning.co.uk"
-    ],
-    "names": [
-      "Peter Stickley"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Peter-1": {
-    "emails": [
-      "peter.stickley@financeplanning.co.uk"
-    ],
-    "names": [
-      "Peter Stickley"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
-  "Peter-2": {
-    "emails": [
-      "peter.stickley@financeplanning.co.uk"
-    ],
-    "names": [
-      "Peter Stickley"
-    ],
-    "createdAt": "2026-07-22T14:09:25.237662Z"
-  },
   "Chris": {
     "emails": [
       "chris.williams@financeplanning.co.uk",
@@ -969,6 +726,42 @@
     ],
     "names": [
       "Martin Ecroyd"
+    ],
+    "createdAt": "2026-07-22T00:00:00.000Z"
+  },
+  "Paul-Goodey": {
+    "emails": [
+      "paul.goodey@financeplanning.co.uk"
+    ],
+    "names": [
+      "Paul Goodey"
+    ],
+    "createdAt": "2026-07-22T00:00:00.000Z"
+  },
+  "Paul-Ripley": {
+    "emails": [
+      "paul@ripleyestates.co.uk"
+    ],
+    "names": [
+      "Paul Ripley"
+    ],
+    "createdAt": "2026-07-22T00:00:00.000Z"
+  },
+  "Richard-Hamley": {
+    "emails": [
+      "richard.hamley@financeplanning.co.uk"
+    ],
+    "names": [
+      "Richard Hamley"
+    ],
+    "createdAt": "2026-07-22T00:00:00.000Z"
+  },
+  "Richard-Saunders": {
+    "emails": [
+      "richard.saunders@financeplanning.co.uk"
+    ],
+    "names": [
+      "Richard Saunders"
     ],
     "createdAt": "2026-07-22T00:00:00.000Z"
   }

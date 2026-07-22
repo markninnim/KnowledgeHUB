@@ -4943,17 +4943,21 @@ app.get('/download-post/:post/:filename', requireAuth, (req, res) => {
   res.download(filePath, safeFile);
 });
 
-// ── Social Trust Content download (nested: /download-trust-post/:post/:filename) ──
-app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
-  const safePost = req.params.post.replace(/\.\./g, '');
-  const safeFile = path.basename(req.params.filename);
+// ── Social Trust Content download ──────────────────────────────
+// Wildcard so it covers both the flat legacy layout (post/filename) and the
+// newer per-review layout (post/Review N/filename).
+app.get('/download-trust-post/*', requireAuth, (req, res) => {
+  const parts = req.params[0].split('/').map(p => decodeURIComponent(p).replace(/\.\./g, ''));
+  if (!parts.length || !parts[parts.length - 1]) return res.status(404).send('Not found');
+  const safePost = parts[0];
+  const safeFile = path.basename(parts[parts.length - 1]);
   const owner = loadTrustPostOwners()[safePost];
   if (owner) {
     const u = req.session.user || {};
     const myEmail = (u.email || '').toLowerCase();
     if (!u.isAdmin && !(owner.emails || []).includes(myEmail)) return res.status(403).send('Forbidden');
   }
-  const filePath = path.join(__dirname, 'public/assets/social-trust-content', safePost, safeFile);
+  const filePath = path.join(__dirname, 'public/assets/social-trust-content', ...parts);
   if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
   res.download(filePath, safeFile);
 });
@@ -5274,12 +5278,32 @@ app.get('/api/social-trust-content', requireAuth, (req, res) => {
         return isAdmin || (owner.emails || []).includes(myEmail);
       })
       .sort()
-      .map(name => ({
-        name,
-        files: fs.readdirSync(path.join(baseDir, name))
-          .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
-          .map(f => ({ name: f, created: getAssetDate('social-trust/' + name + '/' + f) }))
-      }));
+      .map(name => {
+        const folderPath = path.join(baseDir, name);
+        const entries = fs.readdirSync(folderPath);
+        const reviewDirs = entries
+          .filter(e => e.startsWith('Review ') && fs.statSync(path.join(folderPath, e)).isDirectory())
+          .sort((a, b) => (parseInt(a.replace('Review ', ''), 10) || 0) - (parseInt(b.replace('Review ', ''), 10) || 0));
+        if (reviewDirs.length) {
+          // Newer layout: one sub-folder per review, each holding its own 5 graphics.
+          return {
+            name,
+            reviews: reviewDirs.map(rd => ({
+              review: rd,
+              files: fs.readdirSync(path.join(folderPath, rd))
+                .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
+                .map(f => ({ name: f, created: getAssetDate('social-trust/' + name + '/' + rd + '/' + f) }))
+            }))
+          };
+        }
+        // Legacy flat layout: graphics sit directly in the adviser folder.
+        return {
+          name,
+          files: entries
+            .filter(f => !f.startsWith('.') && !f.toLowerCase().endsWith('.psd'))
+            .map(f => ({ name: f, created: getAssetDate('social-trust/' + name + '/' + f) }))
+        };
+      });
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
