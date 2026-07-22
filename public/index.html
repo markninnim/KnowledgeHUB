@@ -944,7 +944,11 @@ select:focus { outline:none; }
     <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Social Trust Post Builder</h2>
     <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 20px;line-height:1.6;">Paste a client review and generate all 5 platform sizes at once, using your saved templates — the text is sized to fit automatically and saved straight into Social Trust Content.</p>
 
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+    <!-- Template Setup: hidden from the everyday UI now that the 5 templates are
+         dialed in — kept in the code (not deleted) as an admin fallback for
+         future re-positioning or replacing artwork. Remove style="display:none"
+         on the wrapper below (and restore the toggle button) to bring it back. -->
+    <div style="display:none;align-items:center;gap:10px;margin-bottom:20px;">
       <button onclick="tpbToggleSetup()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;border-radius:8px;font-weight:700;font-size:12px;padding:8px 14px;cursor:pointer;" onmouseover="this.style.borderColor='#003768';this.style.color='#003768'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7c8f'">⚙️ Template Setup</button>
       <span style="font-size:12px;color:#6b7c8f;">Set up your 5 templates once — every future post reuses them.</span>
     </div>
