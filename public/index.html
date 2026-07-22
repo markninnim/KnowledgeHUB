@@ -5493,8 +5493,20 @@ var SIZE_LABELS = {
 // Newer uploads use free-form names like "1080 x 1350 - ig.jpg" instead of the
 // fixed fpg-*.jpg names above — parse the dimensions and platform tag out of
 // those instead of falling back to the raw filename as the display label.
+// Social Trust Content graphics are saved as plain "li.png"/"fb.png"/"ig.png"/
+// "tik.png"/"square.png" (the trust-template keys), with no size embedded in
+// the filename — map those exact basenames straight to their real pixel size.
+var TRUST_KEY_LABELS = {
+  'li':     { label: 'LinkedIn',       size: '1200 × 630' },
+  'fb':     { label: 'Facebook',       size: '1200 × 630' },
+  'ig':     { label: 'Instagram',      size: '1080 × 1350' },
+  'tik':    { label: 'TikTok / Story', size: '1080 × 1920' },
+  'square': { label: 'Square',         size: '1200 × 1200' }
+};
 function resolveSizeLabel(file) {
   if (SIZE_LABELS[file]) return SIZE_LABELS[file];
+  var bareKey = file.replace(/\.[^.]+$/, '').toLowerCase();
+  if (TRUST_KEY_LABELS[bareKey]) return TRUST_KEY_LABELS[bareKey];
   var lower = file.toLowerCase();
   var dimMatch = lower.match(/(\d+)\s*x\s*(\d+)/);
   var size = dimMatch ? (dimMatch[1] + ' × ' + dimMatch[2]) : '';
