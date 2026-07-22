@@ -4947,6 +4947,12 @@ app.get('/download-post/:post/:filename', requireAuth, (req, res) => {
 app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
   const safePost = req.params.post.replace(/\.\./g, '');
   const safeFile = path.basename(req.params.filename);
+  const owner = loadTrustPostOwners()[safePost];
+  if (owner) {
+    const u = req.session.user || {};
+    const myEmail = (u.email || '').toLowerCase();
+    if (!u.isAdmin && owner.email !== myEmail) return res.status(403).send('Forbidden');
+  }
   const filePath = path.join(__dirname, 'public/assets/social-trust-content', safePost, safeFile);
   if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
   res.download(filePath, safeFile);
@@ -5031,6 +5037,15 @@ app.post('/api/admin/trust-templates/:key', requireMarketingOrAdmin, (req, res) 
 });
 
 // Save the 5 finished graphics straight into Social Trust Content
+// ── Social Trust Post Builder: ownership (who created each post via the
+// tool). Only the creator (and admins) can see these on the Social Trust
+// Content page — separate from the pre-existing library, which stays
+// visible to everyone until it's re-generated through the tool.
+const TRUST_POST_OWNERS_PATH = path.join(__dirname, 'trust-post-owners.json');
+function loadTrustPostOwners() {
+  try { return JSON.parse(fs.readFileSync(TRUST_POST_OWNERS_PATH, 'utf8')); } catch (e) { return {}; }
+}
+
 app.post('/api/admin/trust-post-builder/generate', requireMarketingOrAdmin, (req, res) => {
   try {
     const { clientName, images } = req.body; // images: { li, fb, ig, tik, square } — each a JPEG data URL
@@ -5054,6 +5069,18 @@ app.post('/api/admin/trust-post-builder/generate', requireMarketingOrAdmin, (req
       saved++;
     });
     fs.writeFileSync(path.join(__dirname, 'asset-dates.json'), JSON.stringify(assetDates, null, 2));
+
+    // Record the actual logged-in account as the owner of this post — not
+    // just the typed name — so it only shows up for them (and admins).
+    const owners = loadTrustPostOwners();
+    const u = req.session.user || {};
+    owners[slug] = {
+      email: (u.email || '').toLowerCase(),
+      name: [u.firstName, u.lastName].filter(Boolean).join(' '),
+      createdAt: nowIso
+    };
+    fs.writeFileSync(TRUST_POST_OWNERS_PATH, JSON.stringify(owners, null, 2));
+
     res.json({ ok: true, folder: slug, saved });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -5227,8 +5254,20 @@ app.get('/api/social-trust-content', requireAuth, (req, res) => {
   try {
     const baseDir = path.join(__dirname, 'public/assets/social-trust-content');
     if (!fs.existsSync(baseDir)) return res.json([]);
+    const u = req.session.user || {};
+    const isAdmin = !!u.isAdmin;
+    const myEmail = (u.email || '').toLowerCase();
+    const owners = loadTrustPostOwners();
     const posts = fs.readdirSync(baseDir)
       .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
+      // Posts created through the Post Builder are owned — only the creator
+      // and admins see them. Pre-existing folders (no recorded owner) have
+      // no owner yet and stay visible to everyone until re-generated.
+      .filter(name => {
+        const owner = owners[name];
+        if (!owner) return true;
+        return isAdmin || owner.email === myEmail;
+      })
       .sort()
       .map(name => ({
         name,
