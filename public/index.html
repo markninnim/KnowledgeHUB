@@ -6528,7 +6528,7 @@ function tpbSaveTemplate(key, fields) {
 // the height. Returns { fontSize, lines, lineHeight }.
 function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily) {
   var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
-  for (var size = 64; size >= 10; size--) {
+  for (var size = 96; size >= 10; size--) {
     ctx.font = '800 ' + size + 'px ' + fontFamily;
     var lines = [];
     var line = '';

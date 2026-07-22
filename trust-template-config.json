@@ -1,7 +1,7 @@
 {
   "li":     { "xPct": 8, "yPct": 30, "wPct": 84, "hPct": 64, "fontColor": "#111111", "align": "left" },
   "fb":     { "xPct": 8, "yPct": 30, "wPct": 84, "hPct": 64, "fontColor": "#111111", "align": "left" },
-  "ig":     { "xPct": 6, "yPct": 18, "wPct": 84, "hPct": 24, "fontColor": "#111111", "align": "left" },
+  "ig":     { "xPct": 7, "yPct": 24, "wPct": 86, "hPct": 68, "fontColor": "#111111", "align": "left" },
   "tik":    { "xPct": 6, "yPct": 14, "wPct": 80, "hPct": 34, "fontColor": "#111111", "align": "left" },
   "square": { "xPct": 6, "yPct": 20, "wPct": 80, "hPct": 19, "fontColor": "#111111", "align": "left" }
 }
