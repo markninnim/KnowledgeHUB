@@ -4951,7 +4951,7 @@ app.get('/download-trust-post/:post/:filename', requireAuth, (req, res) => {
   if (owner) {
     const u = req.session.user || {};
     const myEmail = (u.email || '').toLowerCase();
-    if (!u.isAdmin && owner.email !== myEmail) return res.status(403).send('Forbidden');
+    if (!u.isAdmin && !(owner.emails || []).includes(myEmail)) return res.status(403).send('Forbidden');
   }
   const filePath = path.join(__dirname, 'public/assets/social-trust-content', safePost, safeFile);
   if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
@@ -5072,11 +5072,14 @@ app.post('/api/admin/trust-post-builder/generate', requireMarketingOrAdmin, (req
 
     // Record the actual logged-in account as the owner of this post — not
     // just the typed name — so it only shows up for them (and admins).
+    // `emails`/`names` are arrays so a folder can be shared by more than one
+    // adviser (e.g. legacy folders backfilled for advisers with the same
+    // first name).
     const owners = loadTrustPostOwners();
     const u = req.session.user || {};
     owners[slug] = {
-      email: (u.email || '').toLowerCase(),
-      name: [u.firstName, u.lastName].filter(Boolean).join(' '),
+      emails: [(u.email || '').toLowerCase()],
+      names: [[u.firstName, u.lastName].filter(Boolean).join(' ')],
       createdAt: nowIso
     };
     fs.writeFileSync(TRUST_POST_OWNERS_PATH, JSON.stringify(owners, null, 2));
@@ -5260,13 +5263,15 @@ app.get('/api/social-trust-content', requireAuth, (req, res) => {
     const owners = loadTrustPostOwners();
     const posts = fs.readdirSync(baseDir)
       .filter(f => !f.startsWith('.') && fs.statSync(path.join(baseDir, f)).isDirectory())
-      // Posts created through the Post Builder are owned — only the creator
-      // and admins see them. Pre-existing folders (no recorded owner) have
-      // no owner yet and stay visible to everyone until re-generated.
+      // Every folder is now owned by one or more advisers (backfilled from
+      // the Airtable Users list for pre-existing folders, recorded directly
+      // for anything made through the Post Builder). Only an owner or an
+      // admin can see it. A folder with no recorded owner at all (shouldn't
+      // normally happen) stays visible to everyone as a safe fallback.
       .filter(name => {
         const owner = owners[name];
         if (!owner) return true;
-        return isAdmin || owner.email === myEmail;
+        return isAdmin || (owner.emails || []).includes(myEmail);
       })
       .sort()
       .map(name => ({
