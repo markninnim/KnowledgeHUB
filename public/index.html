@@ -6523,34 +6523,57 @@ function tpbSaveTemplate(key, fields) {
   }).catch(function(err) { console.error('Could not save template', err); });
 }
 
+// Wraps `words` into lines that each fit `maxWidth` at the given font size,
+// never splitting a word.
+function tpbWrapWords(ctx, words, maxWidth) {
+  var lines = [];
+  var line = '';
+  for (var i = 0; i < words.length; i++) {
+    var test = line ? (line + ' ' + words[i]) : words[i];
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = words[i];
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 // Word-wraps `text` to fit `maxWidth`, never splitting a word, then shrinks
 // the font size until every line fits the width and the total block fits
-// the height. Returns { fontSize, lines, lineHeight }.
+// the height. If the copy still doesn't fit even at the smallest size, it is
+// clipped to however many lines fit and the last visible line ends in "…".
+// Returns { fontSize, lines, lineHeight }.
 function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily, maxSize) {
   var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
   for (var size = (maxSize || 96); size >= 10; size--) {
     ctx.font = '800 ' + size + 'px ' + fontFamily;
-    var lines = [];
-    var line = '';
-    for (var i = 0; i < words.length; i++) {
-      var test = line ? (line + ' ' + words[i]) : words[i];
-      if (ctx.measureText(test).width > maxWidth && line) {
-        lines.push(line);
-        line = words[i];
-      } else {
-        line = test;
-      }
-    }
-    if (line) lines.push(line);
+    var lines = tpbWrapWords(ctx, words, maxWidth);
     var lineHeight = size * 1.35;
     var totalHeight = lines.length * lineHeight;
     if (totalHeight <= maxHeight) {
       return { fontSize: size, lines: lines, lineHeight: lineHeight };
     }
   }
-  // Fallback at the smallest size even if it overflows slightly
-  ctx.font = '600 10px ' + fontFamily;
-  return { fontSize: 10, lines: [text || ''], lineHeight: 14 };
+
+  // Doesn't fit even at the smallest size — clip to the lines that fit and
+  // truncate the last one with an ellipsis instead of letting it overflow.
+  var size = 10;
+  ctx.font = '800 ' + size + 'px ' + fontFamily;
+  var lines = tpbWrapWords(ctx, words, maxWidth);
+  var lineHeight = size * 1.35;
+  var maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    var last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) {
+      last = last.slice(0, -1).trim();
+    }
+    lines[maxLines - 1] = last + '…';
+  }
+  return { fontSize: size, lines: lines, lineHeight: lineHeight };
 }
 
 function tpbDrawCanvas(key) {
