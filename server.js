@@ -5015,14 +5015,14 @@ app.post('/api/admin/trust-templates/:key', requireMarketingOrAdmin, (req, res) 
       fs.writeFileSync(path.join(TRUST_TEMPLATE_DIR, key + '.png'), Buffer.from(m[2], 'base64'));
     }
     const config = loadTrustTemplateConfig();
-    config[key] = {
+    config[key] = Object.assign({}, config[key], {
       xPct: xPct != null ? Number(xPct) : config[key].xPct,
       yPct: yPct != null ? Number(yPct) : config[key].yPct,
       wPct: wPct != null ? Number(wPct) : config[key].wPct,
       hPct: hPct != null ? Number(hPct) : config[key].hPct,
       fontColor: fontColor || config[key].fontColor,
       align: align || config[key].align
-    };
+    });
     fs.writeFileSync(TRUST_TEMPLATE_CONFIG_PATH, JSON.stringify(config, null, 2));
     res.json({ ok: true, config: config[key] });
   } catch (err) {

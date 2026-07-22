@@ -6526,9 +6526,9 @@ function tpbSaveTemplate(key, fields) {
 // Word-wraps `text` to fit `maxWidth`, never splitting a word, then shrinks
 // the font size until every line fits the width and the total block fits
 // the height. Returns { fontSize, lines, lineHeight }.
-function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily) {
+function tpbFitText(ctx, text, maxWidth, maxHeight, fontFamily, maxSize) {
   var words = (text || '').replace(/\s+/g, ' ').trim().split(' ');
-  for (var size = 96; size >= 10; size--) {
+  for (var size = (maxSize || 96); size >= 10; size--) {
     ctx.font = '800 ' + size + 'px ' + fontFamily;
     var lines = [];
     var line = '';
@@ -6584,11 +6584,12 @@ function tpbDrawCanvas(key) {
 
   // Reserve a slice at the bottom of the box for the small "— name" byline,
   // sized relative to the box so it scales sensibly across all 5 templates.
-  var bylineFontSize = customerName ? Math.max(13, Math.round(boxH * 0.09)) : 0;
+  var bylineFontSize = customerName ? Math.max(13, Math.round(boxH * 0.09 * (cfg.bylineScale != null ? cfg.bylineScale : 1))) : 0;
   var bylineGap = customerName ? Math.round(bylineFontSize * 0.7) : 0;
   var quoteMaxHeight = boxH - bylineFontSize - bylineGap;
 
-  var fit = tpbFitText(ctx, text, boxW, quoteMaxHeight, fontFamily);
+  var maxSize = Math.round(96 * (cfg.fontScale || 1));
+  var fit = tpbFitText(ctx, text, boxW, quoteMaxHeight, fontFamily, maxSize);
   ctx.font = '800 ' + fit.fontSize + 'px ' + fontFamily;
   ctx.fillStyle = cfg.fontColor || '#111111';
   ctx.textAlign = cfg.align || 'left';
