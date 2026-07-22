@@ -6582,18 +6582,20 @@ function tpbDrawCanvas(key) {
   var boxH = (cfg.hPct / 100) * canvas.height;
   var fontFamily = '"Plus Jakarta Sans", sans-serif';
 
-  // Reserve a slice at the bottom of the box for the small "— name" byline,
-  // sized relative to the box so it scales sensibly across all 5 templates.
-  var bylineFontSize = customerName ? Math.max(13, Math.round(boxH * 0.09 * (cfg.bylineScale != null ? cfg.bylineScale : 1))) : 0;
-  var bylineGap = customerName ? Math.round(bylineFontSize * 0.7) : 0;
-  var quoteMaxHeight = boxH - bylineFontSize - bylineGap;
-
+  // Fit the quote first, leaving a rough allowance for the byline below it,
+  // then size the byline as exactly 50% of whatever body font size was
+  // actually chosen (not an independent guess) so the ratio is consistent
+  // across all 5 cards regardless of review length.
   var maxSize = Math.round(96 * (cfg.fontScale || 1));
-  var fit = tpbFitText(ctx, text, boxW, quoteMaxHeight, fontFamily, maxSize);
+  var provisionalMaxHeight = customerName ? boxH * 0.85 : boxH;
+  var fit = tpbFitText(ctx, text, boxW, provisionalMaxHeight, fontFamily, maxSize);
   ctx.font = '800 ' + fit.fontSize + 'px ' + fontFamily;
   ctx.fillStyle = cfg.fontColor || '#111111';
   ctx.textAlign = cfg.align || 'left';
   ctx.textBaseline = 'middle';
+
+  var bylineFontSize = customerName ? Math.max(10, Math.round(fit.fontSize * 0.5)) : 0;
+  var bylineGap = customerName ? Math.round(bylineFontSize * 0.7) : 0;
 
   var totalHeight = fit.lines.length * fit.lineHeight;
   var startY = boxY + fit.lineHeight / 2;
@@ -6607,7 +6609,7 @@ function tpbDrawCanvas(key) {
     ctx.font = '600 ' + bylineFontSize + 'px ' + fontFamily;
     ctx.fillStyle = '#6b7c8f';
     var bylineY = boxY + totalHeight + bylineGap + bylineFontSize / 2;
-    ctx.fillText('— ' + customerName, textX, bylineY, boxW);
+    ctx.fillText(customerName, textX, bylineY, boxW);
   }
 }
 

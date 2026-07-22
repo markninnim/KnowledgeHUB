@@ -1,7 +1,7 @@
 {
-  "li":     { "xPct": 8, "yPct": 30, "wPct": 84, "hPct": 64, "fontColor": "#111111", "align": "left" },
-  "fb":     { "xPct": 8, "yPct": 30, "wPct": 84, "hPct": 64, "fontColor": "#111111", "align": "left" },
-  "ig":     { "xPct": 7, "yPct": 20, "wPct": 86, "hPct": 72, "fontColor": "#111111", "align": "left", "fontScale": 0.9, "bylineScale": 0.6 },
-  "tik":    { "xPct": 8, "yPct": 14, "wPct": 84, "hPct": 78, "fontColor": "#111111", "align": "left", "fontScale": 0.9, "bylineScale": 0.5 },
+  "li":     { "xPct": 8, "yPct": 31.3, "wPct": 84, "hPct": 62.7, "fontColor": "#111111", "align": "left" },
+  "fb":     { "xPct": 8, "yPct": 31.3, "wPct": 84, "hPct": 62.7, "fontColor": "#111111", "align": "left" },
+  "ig":     { "xPct": 7, "yPct": 20, "wPct": 86, "hPct": 72, "fontColor": "#111111", "align": "left", "fontScale": 0.9 },
+  "tik":    { "xPct": 8, "yPct": 14, "wPct": 84, "hPct": 78, "fontColor": "#111111", "align": "left", "fontScale": 0.9 },
   "square": { "xPct": 9, "yPct": 22, "wPct": 82, "hPct": 70, "fontColor": "#111111", "align": "left" }
 }
