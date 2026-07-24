@@ -6764,6 +6764,50 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
     var crCounts = data.reporting.counts || {};
     drawStatRow(['Complaint','Breach','Conflict of Interest','Gifts & Hospitality','Self Sale','Whistleblowing'].map(t => ({ label: t.toUpperCase(), value: crCounts[t] || 0 })));
 
+    // ── Meeting Notes (latest quarter) ──
+    try {
+      const formula = encodeURIComponent(`LOWER({Adviser Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+      const notesUrl = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent('Adviser Dashboard Notes')}?filterByFormula=${formula}&sort[0][field]=Created At&sort[0][direction]=desc&pageSize=1`;
+      const notesResp = await fetch(notesUrl, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      if (notesResp.ok) {
+        const notesBody = await notesResp.json();
+        const latest = (notesBody.records || [])[0];
+        if (latest) {
+          const quarter = latest.fields['Quarter'] || '';
+          const noteText = latest.fields['Notes'] || '';
+          let actionPoints = [];
+          try { actionPoints = JSON.parse(latest.fields['Action Points'] || '[]'); } catch (e) { actionPoints = []; }
+
+          sectionTitle('Meeting Notes' + (quarter ? ' — ' + quarter : ''));
+          if (noteText) {
+            const maxW = W - 72;
+            wrapLabel(noteText, maxW, fontMed, 10).forEach(line => {
+              ensureSpace(16);
+              page.drawText(line, { x: 36, y, size: 10, font: fontMed, color: darkBlue });
+              y -= 14;
+            });
+            y -= 6;
+          }
+          if (actionPoints.length) {
+            ensureSpace(16);
+            page.drawText('Action Points', { x: 36, y, size: 10, font: fontBold, color: darkBlue });
+            y -= 16;
+            actionPoints.forEach(p => {
+              const bullet = p.done ? '✓ ' : '☐ ';
+              const lines = wrapLabel(bullet + (p.text || ''), W - 90, fontMed, 10);
+              lines.forEach((line, i) => {
+                ensureSpace(15);
+                page.drawText(line, { x: 40, y, size: 10, font: fontMed, color: p.done ? grey : darkBlue });
+                y -= 14;
+              });
+            });
+          }
+        }
+      }
+    } catch (notesErr) {
+      console.error('broker-profile pdf meeting-notes error:', notesErr);
+    }
+
     const pdfBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="' + userName.replace(/[^a-z0-9]+/gi,'-') + '-broker-profile.pdf"');
@@ -6846,6 +6890,89 @@ app.get('/api/advisor-dashboard', requireAuth, async (req, res) => {
     res.json({ available: true, adviser: fullName, rows });
   } catch (err) {
     console.error('advisor-dashboard error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Adviser Dashboard Notes (quarterly meeting notes + action points) ──
+const ADN_TABLE = 'Adviser Dashboard Notes';
+
+function requireSupervisorOrAdmin(req, res) {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) {
+    res.status(403).json({ error: 'Forbidden' });
+    return false;
+  }
+  return true;
+}
+
+// GET /api/advisor-dashboard-notes?email=... — list all quarterly notes for
+// an adviser, newest first. Supervisor/admin only.
+app.get('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const formula = encodeURIComponent(`LOWER({Adviser Email}) = "${email.replace(/"/g, '\\"')}"`);
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}?filterByFormula=${formula}&sort[0][field]=Created At&sort[0][direction]=desc&pageSize=100`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    if (!r.ok) {
+      if (r.status === 404) return res.json({ notes: [] }); // table doesn't exist yet
+      const errBody = await r.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+    }
+    const body = await r.json();
+    const notes = (body.records || []).map(rec => {
+      let actionPoints = [];
+      try { actionPoints = JSON.parse(rec.fields['Action Points'] || '[]'); } catch (e) { actionPoints = []; }
+      return {
+        id: rec.id,
+        quarter: rec.fields['Quarter'] || '',
+        notes: rec.fields['Notes'] || '',
+        actionPoints,
+        createdBy: rec.fields['Created By'] || '',
+        createdAt: rec.fields['Created At'] || rec.createdTime
+      };
+    });
+    res.json({ notes });
+  } catch (err) {
+    console.error('advisor-dashboard-notes GET error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/advisor-dashboard-notes — create a new quarterly note. Supervisor/admin only.
+app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+    const quarter = (req.body.quarter || '').trim();
+    const notes = (req.body.notes || '').trim();
+    const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
+    if (!email || !quarter) return res.status(400).json({ error: 'email and quarter required' });
+
+    const fields = {
+      'Adviser Email': email,
+      'Quarter': quarter,
+      'Notes': notes,
+      'Action Points': JSON.stringify(actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text)),
+      'Created By': (req.session.user.email || '').toLowerCase(),
+      'Created At': new Date().toISOString()
+    };
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields }], typecast: true })
+    });
+    if (!r.ok) {
+      const errBody = await r.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+    }
+    const body = await r.json();
+    res.json({ success: true, id: (body.records || [])[0]?.id });
+  } catch (err) {
+    console.error('advisor-dashboard-notes POST error:', err);
     res.status(500).json({ error: err.message });
   }
 });

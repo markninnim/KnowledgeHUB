@@ -4112,6 +4112,43 @@ select:focus { outline:none; }
       </div>
       <div id="ad-empty" style="display:none;text-align:center;padding:60px 20px;color:#6b7c8f;font-size:13.5px;background:#f8fafc;border:1px solid #f0f4f8;border-radius:12px;"></div>
       <div id="ad-content" style="display:none;padding-bottom:32px;"></div>
+
+      <!-- Quarterly Meeting Notes -->
+      <div id="ad-notes-section" style="display:none;padding-bottom:40px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px;">
+          <div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">Meeting Notes</div>
+          <button onclick="adOpenNoteModal()" style="display:flex;align-items:center;gap:6px;background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">+ Add Note</button>
+        </div>
+        <div id="ad-notes-list"></div>
+      </div>
+    </div>
+
+    <!-- Add Meeting Note modal -->
+    <div id="ad-note-modal" onclick="if(event.target===this)adCloseNoteModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;margin:0 20px;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #d1d5db;">
+          <div>
+            <h2 style="color:var(--brand-navy);font-size:16px;margin:0 0 2px;">Add Meeting Note</h2>
+            <p id="ad-note-subtitle" style="color:#6b7c8f;font-size:12.5px;margin:0;"></p>
+          </div>
+          <button onclick="adCloseNoteModal()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+        </div>
+        <div style="padding:20px 24px;">
+          <label style="display:block;font-size:12px;font-weight:700;color:#6b7c8f;margin-bottom:6px;">Quarter</label>
+          <input type="text" id="ad-note-quarter" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--brand-navy);margin-bottom:16px;" placeholder="e.g. Q3 2026">
+
+          <label style="display:block;font-size:12px;font-weight:700;color:#6b7c8f;margin-bottom:6px;">Notes</label>
+          <textarea id="ad-note-textarea" rows="4" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--brand-navy);resize:vertical;margin-bottom:16px;" placeholder="Summary of what was discussed…"></textarea>
+
+          <label style="display:block;font-size:12px;font-weight:700;color:#6b7c8f;margin-bottom:6px;">Action Points</label>
+          <div id="ad-note-points"></div>
+          <button onclick="adAddActionPointRow()" style="background:transparent;border:1px dashed #d1d5db;color:var(--brand-navy);padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px;">+ Add action point</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
+          <button onclick="adCloseNoteModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button onclick="adSubmitNote()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
+        </div>
+      </div>
     </div>
 
     <!-- CPD Register (main view) -->
@@ -10929,6 +10966,7 @@ function bpOpenPowerBi() {
   document.getElementById('ad-empty').style.display = 'none';
   document.getElementById('ad-content').style.display = 'none';
   document.getElementById('ad-content').innerHTML = '';
+  document.getElementById('ad-notes-section').style.display = 'none';
   fetch('/api/advisor-dashboard?email=' + encodeURIComponent(_bpCurrentEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -10936,19 +10974,116 @@ function bpOpenPowerBi() {
       if (!data.available || !data.rows || !data.rows.length) {
         document.getElementById('ad-empty').style.display = 'block';
         document.getElementById('ad-empty').textContent = 'No Power BI dashboard data has been set up for ' + (data.adviser || _bpCurrentName) + ' yet.';
-        return;
+      } else {
+        adRenderDashboard(data);
       }
-      adRenderDashboard(data);
+      adLoadNotes(_bpCurrentEmail);
     })
     .catch(function() {
       document.getElementById('ad-loading').style.display = 'none';
       document.getElementById('ad-empty').style.display = 'block';
       document.getElementById('ad-empty').textContent = 'Could not load dashboard data. Please try again.';
+      adLoadNotes(_bpCurrentEmail);
     });
 }
 function adBackToProfile() {
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'block';
+}
+
+// ── Meeting Notes (quarterly, per adviser) ──────────────────────
+var _adNotes = [];
+function adCurrentQuarter() {
+  var d = new Date();
+  var q = Math.floor(d.getMonth() / 3) + 1;
+  return 'Q' + q + ' ' + d.getFullYear();
+}
+function adLoadNotes(email) {
+  fetch('/api/advisor-dashboard-notes?email=' + encodeURIComponent(email))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _adNotes = data.notes || [];
+      adRenderNotes();
+      document.getElementById('ad-notes-section').style.display = 'block';
+    })
+    .catch(function() {
+      _adNotes = [];
+      adRenderNotes();
+      document.getElementById('ad-notes-section').style.display = 'block';
+    });
+}
+function adRenderNotes() {
+  var list = document.getElementById('ad-notes-list');
+  if (!_adNotes.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 20px;color:#6b7c8f;font-size:13px;background:#f8fafc;border:1px solid #f0f4f8;border-radius:12px;">No meeting notes yet. Add one after your next quarterly review.</div>';
+    return;
+  }
+  list.innerHTML = _adNotes.map(function(n) {
+    var dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
+    var pointsHtml = (n.actionPoints || []).map(function(p) {
+      return '<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:13px;color:' + (p.done ? '#6b7c8f' : 'var(--brand-navy)') + ';text-decoration:' + (p.done ? 'line-through' : 'none') + ';">'
+        + '<span style="flex-shrink:0;">' + (p.done ? '✅' : '⬜') + '</span><span>' + escHtml(p.text) + '</span></div>';
+    }).join('');
+    return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      + '<div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(n.quarter) + '</div>'
+      + '<div style="font-size:11.5px;color:#6b7c8f;">' + dateStr + (n.createdBy ? ' · ' + escHtml(n.createdBy) : '') + '</div>'
+      + '</div>'
+      + (n.notes ? '<div style="font-size:13px;color:var(--brand-navy);white-space:pre-wrap;margin-bottom:' + (pointsHtml ? '10px' : '0') + ';">' + escHtml(n.notes) + '</div>' : '')
+      + (pointsHtml ? '<div style="border-top:1px solid #f0f4f8;padding-top:8px;">' + pointsHtml + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+function adOpenNoteModal() {
+  document.getElementById('ad-note-quarter').value = adCurrentQuarter();
+  document.getElementById('ad-note-textarea').value = '';
+  document.getElementById('ad-note-subtitle').textContent = (_bpCurrentName || '') + ' — quarterly review';
+  var pointsContainer = document.getElementById('ad-note-points');
+  pointsContainer.innerHTML = '';
+  // Carry forward any incomplete action points from the most recent note
+  if (_adNotes.length && _adNotes[0].actionPoints) {
+    _adNotes[0].actionPoints.filter(function(p) { return !p.done; }).forEach(function(p) {
+      adAddActionPointRow(p.text, false, true);
+    });
+  }
+  document.getElementById('ad-note-modal').style.display = 'flex';
+}
+function adCloseNoteModal() {
+  document.getElementById('ad-note-modal').style.display = 'none';
+}
+function adAddActionPointRow(text, done, carried) {
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+  row.innerHTML = '<input type="checkbox" ' + (done ? 'checked' : '') + ' style="flex-shrink:0;width:16px;height:16px;">'
+    + '<input type="text" value="' + (text ? String(text).replace(/"/g, '&quot;') : '') + '" placeholder="Action point…" style="flex:1;border:1px solid #d1d5db;border-radius:6px;padding:7px 10px;font-family:inherit;font-size:13px;color:var(--brand-navy);">'
+    + (carried ? '<span style="font-size:10.5px;color:#f59e0b;font-weight:700;flex-shrink:0;">CARRIED OVER</span>' : '')
+    + '<button type="button" onclick="this.parentNode.remove()" style="background:none;border:none;color:#6b7c8f;font-size:15px;cursor:pointer;flex-shrink:0;">&#x2715;</button>';
+  document.getElementById('ad-note-points').appendChild(row);
+}
+function adSubmitNote() {
+  var quarter = document.getElementById('ad-note-quarter').value.trim();
+  if (!quarter) { alert('Please enter a quarter, e.g. Q3 2026'); return; }
+  var notes = document.getElementById('ad-note-textarea').value.trim();
+  var actionPoints = [];
+  document.getElementById('ad-note-points').querySelectorAll('div').forEach(function(row) {
+    var checkbox = row.querySelector('input[type=checkbox]');
+    var textInput = row.querySelector('input[type=text]');
+    if (checkbox && textInput && textInput.value.trim()) {
+      actionPoints.push({ text: textInput.value.trim(), done: checkbox.checked });
+    }
+  });
+  fetch('/api/advisor-dashboard-notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: _bpCurrentEmail, quarter: quarter, notes: notes, actionPoints: actionPoints })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not save note: ' + res.error); return; }
+      adCloseNoteModal();
+      adLoadNotes(_bpCurrentEmail);
+    })
+    .catch(function() { alert('Could not save note. Please try again.'); });
 }
 var AD_MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function adFmtGbp(n) {
