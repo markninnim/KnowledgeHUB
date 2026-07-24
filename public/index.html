@@ -11115,6 +11115,53 @@ function adCard(title, value, sub) {
 function adSectionTitle(t) {
   return '<div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin:28px 0 14px;">' + escHtml(t) + '</div>';
 }
+// Builds a short, compliance-flavoured supervisor summary paragraph from the
+// adviser's own dashboard rows — no hardcoded adviser-specific figures.
+function adGenerateInsightSummary(byCat, byLabel, adviserName) {
+  var caseStatus = byCat['Case Status'] || [];
+  if (!caseStatus.length) return '';
+  var name = adviserName || 'This adviser';
+  var findCs = function(label) { var r = caseStatus.find(function(x) { return x.label === label; }); return r ? r.value : 0; };
+  var totalCases = caseStatus.reduce(function(s, r) { return s + (r.value || 0); }, 0);
+  var complete = findCs('COMPLETE');
+  var notProceeding = findCs('NOT_PROCEEDING');
+  var offerReceived = findCs('OFFER_RECEIVED');
+  var pipeline = totalCases - complete - notProceeding;
+  var notProceedingPct = totalCases ? Math.round((notProceeding / totalCases) * 100) : 0;
+  var offerReceivedPct = totalCases ? Math.round((offerReceived / totalCases) * 100) : 0;
+
+  var ltvBands = byCat['LTV Band'] || [];
+  var totalLtv = ltvBands.reduce(function(s, r) { return s + (r.value || 0); }, 0);
+  var highLtv = ltvBands.filter(function(r) { return r.label === '80-90%' || r.label === '90%+'; })
+    .reduce(function(s, r) { return s + (r.value || 0); }, 0);
+  var highLtvPct = totalLtv ? Math.round((highLtv / totalLtv) * 100) : 0;
+  var ltvAvg = byLabel['Loan To Value (Average)'] ? byLabel['Loan To Value (Average)'].value : null;
+
+  var lenderShare = (byCat['Lender Share'] || []).slice().sort(function(a, b) { return b.value - a.value; });
+  var topLender = lenderShare[0];
+
+  var parts = [];
+  parts.push(escHtml(name) + ' has ' + totalCases + ' case' + (totalCases === 1 ? '' : 's') + ' on the book this period: '
+    + complete + ' complete and ' + pipeline + ' still active in the pipeline'
+    + (notProceeding ? ', with a not-proceeding rate of ' + notProceedingPct + '%' + (notProceedingPct > 15 ? ' — above what would normally be expected and worth exploring the reasons with them' : ' — within a normal range') : '') + '.');
+
+  if (offerReceived) {
+    parts.push(offerReceived + ' case' + (offerReceived === 1 ? '' : 's') + ' (' + offerReceivedPct + '% of the book) '
+      + (offerReceived === 1 ? 'is' : 'are') + ' currently sitting in Offer Received'
+      + (offerReceivedPct >= 20 ? ', a notably large bucket compared with other stages — worth confirming these are progressing to exchange promptly rather than stalling, since extended time here can expose clients to rate or product expiry risk.' : ', which looks like a normal, healthy pipeline distribution.'));
+  }
+
+  if (totalLtv) {
+    parts.push((ltvAvg !== null ? 'Average LTV sits at ' + ltvAvg + '%, and ' : '') + highLtvPct + '% of cases are above 80% LTV'
+      + (highLtvPct >= 20 ? ' — a higher-risk skew worth keeping an eye on from an affordability and vulnerable-customer perspective.' : ', which does not suggest an elevated affordability risk pattern.'));
+  }
+
+  if (topLender) {
+    parts.push('Lender panel usage ' + (topLender.value >= 30 ? 'is concentrated, with ' + escHtml(topLender.label) + ' accounting for ' + topLender.value + '% of business — worth checking this reflects genuinely better client outcomes rather than convenience or habit.' : 'is well diversified, with no single lender above ' + topLender.value + '% share, which supports fair customer outcomes and reduces concentration risk.'));
+  }
+
+  return parts.join(' ');
+}
 function adRenderDashboard(data) {
   var rows = data.rows || [];
   var byCat = {};
@@ -11133,6 +11180,15 @@ function adRenderDashboard(data) {
   }
 
   var html = '';
+
+  // Compliance summary paragraph
+  var summaryText = adGenerateInsightSummary(byCat, byLabel, data.adviser);
+  if (summaryText) {
+    html += '<div style="background:#f5f7fa;border:1px solid #d1d5db;border-left:4px solid var(--brand-navy);border-radius:10px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Supervisor Summary — Compliance Observations</div>'
+      + '<div style="font-size:13px;line-height:1.6;color:var(--brand-navy);">' + summaryText + '</div>'
+      + '</div>';
+  }
 
   // KPI cards from Summary rows
   var kpiDefs = [
