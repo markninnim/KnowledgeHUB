@@ -4097,6 +4097,23 @@ select:focus { outline:none; }
       </div>
     </div>
 
+    <!-- Adviser Dashboard (Power BI data) -->
+    <div id="sv-adviser-dashboard" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+        <button onclick="adBackToProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;font-family:inherit;flex-shrink:0;">← Back</button>
+        <div style="flex:1;min-width:0;">
+          <div id="ad-name" style="font-size:20px;font-weight:800;color:var(--brand-navy);"></div>
+          <div id="ad-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
+        </div>
+      </div>
+      <div id="ad-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">
+        <div class="kh-spinner" style="margin-bottom:10px;"></div>
+        Loading dashboard…
+      </div>
+      <div id="ad-empty" style="display:none;text-align:center;padding:60px 20px;color:#6b7c8f;font-size:13.5px;background:#f8fafc;border:1px solid #f0f4f8;border-radius:12px;"></div>
+      <div id="ad-content" style="display:none;padding-bottom:32px;"></div>
+    </div>
+
     <!-- CPD Register (main view) -->
     <div id="sv-cpd-register" style="max-width:1200px;margin:0 auto;padding:32px 8px 0;">
       <!-- Header row -->
@@ -10565,6 +10582,7 @@ function openCasPath(email, name) {
   document.getElementById('sv-cas-path-panel').style.display = 'block';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('cas-path-name').textContent = name;
   var n2 = document.getElementById('cas-path-name2'); if (n2) n2.textContent = name;
   var n3 = document.getElementById('cas-path-name3'); if (n3) n3.textContent = name;
@@ -10902,8 +10920,169 @@ function bpResetDateRange() {
   bpReloadWithDateRange();
 }
 function bpOpenPowerBi() {
-  // Placeholder — no report URL wired up yet.
-  alert('Power BI report link coming soon.');
+  if (!_bpCurrentEmail) return;
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'block';
+  document.getElementById('ad-name').textContent = _bpCurrentName || '';
+  document.getElementById('ad-meta').textContent = '';
+  document.getElementById('ad-loading').style.display = 'block';
+  document.getElementById('ad-empty').style.display = 'none';
+  document.getElementById('ad-content').style.display = 'none';
+  document.getElementById('ad-content').innerHTML = '';
+  fetch('/api/advisor-dashboard?email=' + encodeURIComponent(_bpCurrentEmail))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('ad-loading').style.display = 'none';
+      if (!data.available || !data.rows || !data.rows.length) {
+        document.getElementById('ad-empty').style.display = 'block';
+        document.getElementById('ad-empty').textContent = 'No Power BI dashboard data has been set up for ' + (data.adviser || _bpCurrentName) + ' yet.';
+        return;
+      }
+      adRenderDashboard(data);
+    })
+    .catch(function() {
+      document.getElementById('ad-loading').style.display = 'none';
+      document.getElementById('ad-empty').style.display = 'block';
+      document.getElementById('ad-empty').textContent = 'Could not load dashboard data. Please try again.';
+    });
+}
+function adBackToProfile() {
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-broker-profile').style.display = 'block';
+}
+var AD_MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function adFmtGbp(n) {
+  if (n === null || n === undefined) return '—';
+  return '£' + Number(n).toLocaleString('en-GB', { maximumFractionDigits: 0 });
+}
+function adFmtNum(n) {
+  if (n === null || n === undefined) return '—';
+  return Number(n).toLocaleString('en-GB');
+}
+function adBarRow(label, value, maxValue, displayValue, color) {
+  var pct = maxValue > 0 ? Math.max(2, Math.round((value / maxValue) * 100)) : 0;
+  return '<div style="margin-bottom:10px;">'
+    + '<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">'
+    + '<span style="color:var(--brand-navy);font-weight:600;">' + escHtml(label) + '</span>'
+    + '<span style="color:#6b7c8f;font-weight:700;">' + escHtml(displayValue) + '</span>'
+    + '</div>'
+    + '<div style="background:#eef1f5;border-radius:6px;height:8px;overflow:hidden;">'
+    + '<div style="background:' + (color || 'var(--brand-navy)') + ';height:100%;width:' + pct + '%;border-radius:6px;"></div>'
+    + '</div></div>';
+}
+function adCard(title, value, sub) {
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;">'
+    + '<div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">' + escHtml(title) + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:var(--brand-navy);">' + escHtml(value) + '</div>'
+    + (sub ? '<div style="font-size:12px;color:#6b7c8f;margin-top:4px;">' + escHtml(sub) + '</div>' : '')
+    + '</div>';
+}
+function adSectionTitle(t) {
+  return '<div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin:28px 0 14px;">' + escHtml(t) + '</div>';
+}
+function adRenderDashboard(data) {
+  var rows = data.rows || [];
+  var byCat = {};
+  rows.forEach(function(r) {
+    (byCat[r.category] = byCat[r.category] || []).push(r);
+  });
+  var byLabel = {};
+  (byCat['Summary'] || []).forEach(function(r) { byLabel[r.label] = r; });
+
+  // Period meta
+  var withPeriod = rows.find(function(r) { return r.periodStart && r.periodEnd; });
+  if (withPeriod) {
+    var ps = new Date(withPeriod.periodStart).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    var pe = new Date(withPeriod.periodEnd).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('ad-meta').textContent = ps + ' – ' + pe;
+  }
+
+  var html = '';
+
+  // KPI cards from Summary rows
+  var kpiDefs = [
+    { label: 'Mortgage Amount (Total)',   fmt: adFmtGbp },
+    { label: 'Mortgage Amount (Average)', fmt: adFmtGbp },
+    { label: 'Property Value (Average)',  fmt: adFmtGbp },
+    { label: 'Gross Proc Fee (Total)',    fmt: adFmtGbp },
+    { label: 'Net Proc Fee (Total)',      fmt: adFmtGbp },
+    { label: 'Loan To Value (Average)',   fmt: function(n) { return n === null ? '—' : n + '%'; } }
+  ];
+  var kpiHtml = kpiDefs.filter(function(k) { return byLabel[k.label]; }).map(function(k) {
+    return adCard(k.label, k.fmt(byLabel[k.label].value));
+  }).join('');
+  if (kpiHtml) {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">' + kpiHtml + '</div>';
+  }
+
+  // Case Status
+  if (byCat['Case Status'] && byCat['Case Status'].length) {
+    var cs = byCat['Case Status'].slice().sort(function(a,b) { return b.value - a.value; });
+    var maxCs = Math.max.apply(null, cs.map(function(r) { return r.value; }));
+    html += adSectionTitle('Case Status');
+    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + cs.map(function(r) { return adBarRow(r.label.replace(/_/g, ' '), r.value, maxCs, adFmtNum(r.value)); }).join('')
+      + '</div>';
+  }
+
+  // LTV Band + Mortgage Value Band side by side
+  var bandBlocks = [];
+  ['LTV Band', 'Mortgage Value Band'].forEach(function(cat) {
+    if (!byCat[cat] || !byCat[cat].length) return;
+    var items = byCat[cat].slice();
+    var maxV = Math.max.apply(null, items.map(function(r) { return r.value; }));
+    bandBlocks.push('<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:12px;">' + escHtml(cat) + '</div>'
+      + items.map(function(r) { return adBarRow(r.label, r.value, maxV, adFmtNum(r.value), '#3b82f6'); }).join('')
+      + '</div>');
+  });
+  if (bandBlocks.length) {
+    html += adSectionTitle('Loan Breakdown');
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">' + bandBlocks.join('') + '</div>';
+  }
+
+  // Lender Share
+  if (byCat['Lender Share'] && byCat['Lender Share'].length) {
+    var ls = byCat['Lender Share'].slice().sort(function(a,b) { return b.value - a.value; });
+    var maxLs = Math.max.apply(null, ls.map(function(r) { return r.value; }));
+    html += adSectionTitle('Lender Share');
+    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + ls.map(function(r) { return adBarRow(r.label, r.value, maxLs, r.value + '%', '#f59e0b'); }).join('')
+      + '</div>';
+  }
+
+  // Monthly Volume
+  if (byCat['Monthly Volume'] && byCat['Monthly Volume'].length) {
+    var mv = byCat['Monthly Volume'].slice().sort(function(a, b) {
+      var ai = AD_MONTH_ORDER.indexOf(a.label.split(' ')[0]);
+      var bi = AD_MONTH_ORDER.indexOf(b.label.split(' ')[0]);
+      if (ai === -1) ai = 99; if (bi === -1) bi = 99;
+      return ai - bi;
+    });
+    var maxMv = Math.max.apply(null, mv.map(function(r) { return r.value; }));
+    html += adSectionTitle('Monthly Volume');
+    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + mv.map(function(r) {
+          var sub = adFmtGbp(r.value) + (r.cases !== null ? ' · ' + r.cases + ' case' + (r.cases === 1 ? '' : 's') : '');
+          return adBarRow(r.label, r.value, maxMv, sub, '#22c55e');
+        }).join('')
+      + '</div>';
+  }
+
+  // Last 7 Days
+  if (byCat['Last 7 Days'] && byCat['Last 7 Days'].length) {
+    var l7 = byCat['Last 7 Days'].slice().sort(function(a, b) {
+      return new Date(a.periodStart || a.label) - new Date(b.periodStart || b.label);
+    });
+    var maxL7 = Math.max.apply(null, l7.map(function(r) { return r.value; }));
+    html += adSectionTitle('Last 7 Days');
+    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + l7.map(function(r) { return adBarRow(r.label, r.value, maxL7, adFmtNum(r.value), '#8b5cf6'); }).join('')
+      + '</div>';
+  }
+
+  document.getElementById('ad-content').innerHTML = html;
+  document.getElementById('ad-content').style.display = 'block';
 }
 function bpDownloadPdf() {
   if (!_bpCurrentEmail) return;
@@ -10916,6 +11095,7 @@ function bpDownloadPdf() {
 }
 function openBrokerProfile(email, name, keepDateRange) {
   document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
   var panel = document.getElementById('sv-broker-profile');
   panel.style.display = 'block';
   document.getElementById('bp-name').textContent = name || email;
@@ -12662,6 +12842,7 @@ function oppShowPage(page, el) {
 
 function closeBrokerProfile() {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'block';
 }

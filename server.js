@@ -6774,6 +6774,77 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
   }
 });
 
+// ── Adviser Dashboard (Power BI data) ───────────────────────────
+// Per-adviser tables named "Advisor Dashboard - <Full Name>" in the
+// KnowledgeHUB base, populated from Power BI exports. One table per adviser,
+// created manually as needed — most advisers won't have one yet.
+const AD_LABEL    = 'fldtPslIQp2iBeVKv'; // Label — metric/breakdown item name
+const AD_CATEGORY = 'fldR1B0RYBHCxkEe5'; // Category — singleSelect grouping
+const AD_VALUE    = 'fldoRsXWll2MdzHdW'; // Value — primary number
+const AD_VTYPE    = 'fldaLkFUQa5e83RL3'; // Value Type — singleSelect (GBP Total/Average, Percent, Count)
+const AD_CASES    = 'fldiBpW5tso7gIJ4o'; // Cases Count
+const AD_ADVISOR  = 'fldcRskOWJE737D9F'; // Advisor — text
+const AD_PSTART   = 'fld5Rz2ueiJBBHRHQ'; // Period Start
+const AD_PEND     = 'fldsyLGrfKpT5gUHD'; // Period End
+
+app.get('/api/advisor-dashboard', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  try {
+    const requestedEmail = (req.query.email || '').trim().toLowerCase();
+    let targetEmail = (caller.email || '').toLowerCase();
+    if (requestedEmail && requestedEmail !== targetEmail) {
+      if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+      targetEmail = requestedEmail;
+    }
+
+    // Look up the target adviser's full name from Users
+    const uf = encodeURIComponent(`LOWER({Email}) = "${targetEmail.replace(/"/g, '\\"')}"`);
+    const ur = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${uf}&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const ud = await ur.json();
+    const userFields = ((ud.records || [])[0] || {}).fields || {};
+    const fullName = [userFields['First Name'], userFields['Last Name']].filter(Boolean).join(' ');
+    if (!fullName) return res.status(404).json({ error: 'Adviser not found' });
+
+    const tableName = `Advisor Dashboard - ${fullName}`;
+    const baseUrl = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(tableName)}?pageSize=100&returnFieldsByFieldId=true`;
+
+    let allRecords = [];
+    const first = await fetch(baseUrl, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    if (!first.ok) {
+      if (first.status === 404) return res.json({ available: false, adviser: fullName, rows: [] });
+      const errBody = await first.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${first.status}`);
+    }
+    let body = await first.json();
+    allRecords = allRecords.concat(body.records || []);
+    let offset = body.offset || '';
+    while (offset) {
+      const r2 = await fetch(`${baseUrl}&offset=${offset}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const b2 = await r2.json();
+      allRecords = allRecords.concat(b2.records || []);
+      offset = b2.offset || '';
+    }
+
+    const rows = allRecords.map(rec => {
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      return {
+        label:       f[AD_LABEL] || '',
+        category:    f[AD_CATEGORY] || '',
+        value:       typeof f[AD_VALUE] === 'number' ? f[AD_VALUE] : null,
+        valueType:   f[AD_VTYPE] || '',
+        cases:       typeof f[AD_CASES] === 'number' ? f[AD_CASES] : null,
+        periodStart: f[AD_PSTART] || null,
+        periodEnd:   f[AD_PEND] || null
+      };
+    });
+
+    res.json({ available: true, adviser: fullName, rows });
+  } catch (err) {
+    console.error('advisor-dashboard error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ACRE Surveying Stats ───────────────────────────────────────
 const ACRE_BASE        = 'appTQIvpD5TBphlq4';
 const ACRE_LEADS_TBL   = 'tblhGuMyeR3zPBJXe';
