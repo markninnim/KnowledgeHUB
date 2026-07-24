@@ -123,6 +123,24 @@
 
   <p id="intro-paragraph" class="intro-paragraph">Loading project summary&hellip;</p>
 
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v2.1</span>
+      <span class="version-title">Adviser Power BI Dashboards &amp; Compliance Flag Log</span>
+      <span class="version-date">24 July 2026</span>
+    </div>
+    <p class="version-summary">Gave supervisors a dedicated Power BI drill-down for each adviser from their broker profile, plus AI-generated compliance observations, quarterly meeting notes, and a flagged-case log.</p>
+    <ul class="changes">
+      <li>Added a Power BI button to the Broker Profile page, opening a new per-adviser Adviser Dashboard populated from that adviser's own Power BI export data in Airtable.</li>
+      <li>Fixed adviser dashboard data lookup to read Airtable fields by name rather than a hardcoded field ID, so any adviser's table works correctly (not just the first one built).</li>
+      <li>Added an AI Supervisor Summary paragraph, generated live from each adviser's own case status, LTV, lender-share and flag data &mdash; highlighting pipeline bottlenecks, LTV risk skew, lender concentration and flag/self-review concerns.</li>
+      <li>Added quarterly Meeting Notes with agreed action points; incomplete action points automatically carry forward into the next quarter's note.</li>
+      <li>Added a Flag Log section sourced from the Power BI Flag Log page, showing each flagged case's type, status, flag type and created date.</li>
+      <li>Latest quarter's meeting notes and action points now also appear on the Broker Profile PDF export.</li>
+      <li>Refined dashboard card layout: top KPI cards at 33% width, all other card sections at 50/50.</li>
+    </ul>
+  </div>
+
   <div class="version-card milestone">
     <div class="version-head">
       <span class="milestone-tag">v2.0 &mdash; Milestone</span>
