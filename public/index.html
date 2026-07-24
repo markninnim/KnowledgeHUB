@@ -11015,14 +11015,27 @@ function adRenderDashboard(data) {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">' + kpiHtml + '</div>';
   }
 
-  // Case Status
+  // Case Status + Lender Share side by side
+  var csLsBlocks = [];
   if (byCat['Case Status'] && byCat['Case Status'].length) {
     var cs = byCat['Case Status'].slice().sort(function(a,b) { return b.value - a.value; });
     var maxCs = Math.max.apply(null, cs.map(function(r) { return r.value; }));
-    html += adSectionTitle('Case Status');
-    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+    csLsBlocks.push('<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:12px;">Case Status</div>'
       + cs.map(function(r) { return adBarRow(r.label.replace(/_/g, ' '), r.value, maxCs, adFmtNum(r.value)); }).join('')
-      + '</div>';
+      + '</div>');
+  }
+  if (byCat['Lender Share'] && byCat['Lender Share'].length) {
+    var ls = byCat['Lender Share'].slice().sort(function(a,b) { return b.value - a.value; });
+    var maxLs = Math.max.apply(null, ls.map(function(r) { return r.value; }));
+    csLsBlocks.push('<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:12px;">Lender Share</div>'
+      + ls.map(function(r) { return adBarRow(r.label, r.value, maxLs, r.value + '%', '#f59e0b'); }).join('')
+      + '</div>');
+  }
+  if (csLsBlocks.length) {
+    html += adSectionTitle('Case Status & Lender Share');
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' + csLsBlocks.join('') + '</div>';
   }
 
   // LTV Band + Mortgage Value Band side by side
@@ -11041,17 +11054,8 @@ function adRenderDashboard(data) {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' + bandBlocks.join('') + '</div>';
   }
 
-  // Lender Share
-  if (byCat['Lender Share'] && byCat['Lender Share'].length) {
-    var ls = byCat['Lender Share'].slice().sort(function(a,b) { return b.value - a.value; });
-    var maxLs = Math.max.apply(null, ls.map(function(r) { return r.value; }));
-    html += adSectionTitle('Lender Share');
-    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
-      + ls.map(function(r) { return adBarRow(r.label, r.value, maxLs, r.value + '%', '#f59e0b'); }).join('')
-      + '</div>';
-  }
-
-  // Monthly Volume
+  // Monthly Volume + Last 7 Days side by side
+  var mvL7Blocks = [];
   if (byCat['Monthly Volume'] && byCat['Monthly Volume'].length) {
     var mv = byCat['Monthly Volume'].slice().sort(function(a, b) {
       var ai = AD_MONTH_ORDER.indexOf(a.label.split(' ')[0]);
@@ -11060,25 +11064,27 @@ function adRenderDashboard(data) {
       return ai - bi;
     });
     var maxMv = Math.max.apply(null, mv.map(function(r) { return r.value; }));
-    html += adSectionTitle('Monthly Volume');
-    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+    mvL7Blocks.push('<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:12px;">Monthly Volume</div>'
       + mv.map(function(r) {
           var sub = adFmtGbp(r.value) + (r.cases !== null ? ' · ' + r.cases + ' case' + (r.cases === 1 ? '' : 's') : '');
           return adBarRow(r.label, r.value, maxMv, sub, '#22c55e');
         }).join('')
-      + '</div>';
+      + '</div>');
   }
-
-  // Last 7 Days
   if (byCat['Last 7 Days'] && byCat['Last 7 Days'].length) {
     var l7 = byCat['Last 7 Days'].slice().sort(function(a, b) {
       return new Date(a.periodStart || a.label) - new Date(b.periodStart || b.label);
     });
     var maxL7 = Math.max.apply(null, l7.map(function(r) { return r.value; }));
-    html += adSectionTitle('Last 7 Days');
-    html += '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+    mvL7Blocks.push('<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 22px;">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:12px;">Last 7 Days</div>'
       + l7.map(function(r) { return adBarRow(r.label, r.value, maxL7, adFmtNum(r.value), '#8b5cf6'); }).join('')
-      + '</div>';
+      + '</div>');
+  }
+  if (mvL7Blocks.length) {
+    html += adSectionTitle('Volume');
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' + mvL7Blocks.join('') + '</div>';
   }
 
   document.getElementById('ad-content').innerHTML = html;
