@@ -6977,6 +6977,40 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
   }
 });
 
+// ── Case Flags (compliance flag log, pulled from Power BI) ─────
+const CF_TABLE = 'Case Flags';
+
+// GET /api/advisor-flag-log?email=... — list flagged cases for an adviser,
+// newest first. Supervisor/admin only.
+app.get('/api/advisor-flag-log', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const formula = encodeURIComponent(`LOWER({Advisor Email}) = "${email.replace(/"/g, '\\"')}"`);
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(CF_TABLE)}?filterByFormula=${formula}&sort[0][field]=Created At&sort[0][direction]=desc&pageSize=100`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    if (!r.ok) {
+      if (r.status === 404) return res.json({ flags: [] }); // table doesn't exist yet
+      const errBody = await r.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+    }
+    const body = await r.json();
+    const flags = (body.records || []).map(rec => ({
+      caseType: rec.fields['Case Type'] || '',
+      status: rec.fields['Status'] || '',
+      flagType: rec.fields['Flag Type'] || '',
+      createdAt: rec.fields['Created At'] || rec.createdTime,
+      reviewedBy: rec.fields['Reviewed By'] || ''
+    }));
+    res.json({ flags });
+  } catch (err) {
+    console.error('advisor-flag-log GET error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ACRE Surveying Stats ───────────────────────────────────────
 const ACRE_BASE        = 'appTQIvpD5TBphlq4';
 const ACRE_LEADS_TBL   = 'tblhGuMyeR3zPBJXe';

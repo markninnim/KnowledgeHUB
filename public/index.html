@@ -4113,6 +4113,12 @@ select:focus { outline:none; }
       <div id="ad-empty" style="display:none;text-align:center;padding:60px 20px;color:#6b7c8f;font-size:13.5px;background:#f8fafc;border:1px solid #f0f4f8;border-radius:12px;"></div>
       <div id="ad-content" style="display:none;padding-bottom:32px;"></div>
 
+      <!-- Flag Log -->
+      <div id="ad-flags-section" style="display:none;padding-bottom:20px;">
+        <div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin:0 0 14px;">Flag Log</div>
+        <div id="ad-flags-content"></div>
+      </div>
+
       <!-- Quarterly Meeting Notes -->
       <div id="ad-notes-section" style="display:none;padding-bottom:40px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px;">
@@ -10956,6 +10962,7 @@ function bpResetDateRange() {
   document.getElementById('bp-date-to').value = '';
   bpReloadWithDateRange();
 }
+var _adFlags = [];
 function bpOpenPowerBi() {
   if (!_bpCurrentEmail) return;
   document.getElementById('sv-broker-profile').style.display = 'none';
@@ -10967,17 +10974,26 @@ function bpOpenPowerBi() {
   document.getElementById('ad-content').style.display = 'none';
   document.getElementById('ad-content').innerHTML = '';
   document.getElementById('ad-notes-section').style.display = 'none';
+  document.getElementById('ad-flags-section').style.display = 'none';
+  var flagsPromise = fetch('/api/advisor-flag-log?email=' + encodeURIComponent(_bpCurrentEmail))
+    .then(function(r) { return r.json(); })
+    .then(function(d) { return d.flags || []; })
+    .catch(function() { return []; });
   fetch('/api/advisor-dashboard?email=' + encodeURIComponent(_bpCurrentEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      document.getElementById('ad-loading').style.display = 'none';
-      if (!data.available || !data.rows || !data.rows.length) {
-        document.getElementById('ad-empty').style.display = 'block';
-        document.getElementById('ad-empty').textContent = 'No Power BI dashboard data has been set up for ' + (data.adviser || _bpCurrentName) + ' yet.';
-      } else {
-        adRenderDashboard(data);
-      }
-      adLoadNotes(_bpCurrentEmail);
+      return flagsPromise.then(function(flags) {
+        _adFlags = flags;
+        document.getElementById('ad-loading').style.display = 'none';
+        if (!data.available || !data.rows || !data.rows.length) {
+          document.getElementById('ad-empty').style.display = 'block';
+          document.getElementById('ad-empty').textContent = 'No Power BI dashboard data has been set up for ' + (data.adviser || _bpCurrentName) + ' yet.';
+        } else {
+          adRenderDashboard(data, flags);
+        }
+        adRenderFlags();
+        adLoadNotes(_bpCurrentEmail);
+      });
     })
     .catch(function() {
       document.getElementById('ad-loading').style.display = 'none';
@@ -10985,6 +11001,32 @@ function bpOpenPowerBi() {
       document.getElementById('ad-empty').textContent = 'Could not load dashboard data. Please try again.';
       adLoadNotes(_bpCurrentEmail);
     });
+}
+function adRenderFlags() {
+  var section = document.getElementById('ad-flags-section');
+  var content = document.getElementById('ad-flags-content');
+  if (!_adFlags.length) {
+    section.style.display = 'none';
+    return;
+  }
+  var rows = _adFlags.map(function(f) {
+    var dateStr = f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—';
+    return '<tr style="border-top:1px solid #f0f4f8;">'
+      + '<td style="padding:9px 12px;font-size:12.5px;color:var(--brand-navy);">' + escHtml(f.caseType) + '</td>'
+      + '<td style="padding:9px 12px;font-size:12.5px;color:var(--brand-navy);">' + escHtml(f.status.replace(/_/g, ' ')) + '</td>'
+      + '<td style="padding:9px 12px;font-size:12.5px;"><span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 8px;font-weight:700;font-size:11.5px;">' + escHtml(f.flagType) + '</span></td>'
+      + '<td style="padding:9px 12px;font-size:12.5px;color:#6b7c8f;">' + dateStr + '</td>'
+      + '</tr>';
+  }).join('');
+  content.innerHTML = '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;overflow:hidden;">'
+    + '<table style="width:100%;border-collapse:collapse;">'
+    + '<thead><tr style="background:#f8fafc;">'
+    + '<th style="text-align:left;padding:9px 12px;font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.03em;">Case Type</th>'
+    + '<th style="text-align:left;padding:9px 12px;font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.03em;">Status</th>'
+    + '<th style="text-align:left;padding:9px 12px;font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.03em;">Flag Type</th>'
+    + '<th style="text-align:left;padding:9px 12px;font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.03em;">Created</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  section.style.display = 'block';
 }
 function adBackToProfile() {
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
@@ -11117,7 +11159,7 @@ function adSectionTitle(t) {
 }
 // Builds a short, compliance-flavoured supervisor summary paragraph from the
 // adviser's own dashboard rows — no hardcoded adviser-specific figures.
-function adGenerateInsightSummary(byCat, byLabel, adviserName) {
+function adGenerateInsightSummary(byCat, byLabel, adviserName, flags) {
   var caseStatus = byCat['Case Status'] || [];
   if (!caseStatus.length) return '';
   var name = adviserName || 'This adviser';
@@ -11160,9 +11202,18 @@ function adGenerateInsightSummary(byCat, byLabel, adviserName) {
     parts.push('Lender panel usage ' + (topLender.value >= 30 ? 'is concentrated, with ' + escHtml(topLender.label) + ' accounting for ' + topLender.value + '% of business — worth checking this reflects genuinely better client outcomes rather than convenience or habit.' : 'is well diversified, with no single lender above ' + topLender.value + '% share, which supports fair customer outcomes and reduces concentration risk.'));
   }
 
+  if (flags && flags.length) {
+    var flagTypeCounts = {};
+    flags.forEach(function(f) { flagTypeCounts[f.flagType] = (flagTypeCounts[f.flagType] || 0) + 1; });
+    var flagSummary = Object.keys(flagTypeCounts).map(function(t) { return flagTypeCounts[t] + ' ' + t; }).join(', ');
+    var selfReviewed = flags.filter(function(f) { return f.reviewedBy && adviserName && f.reviewedBy.toLowerCase() === adviserName.toLowerCase(); }).length;
+    parts.push(flags.length + ' flagged case' + (flags.length === 1 ? '' : 's') + ' ' + (flags.length === 1 ? 'appears' : 'appear') + ' on the compliance flag log (' + flagSummary + ')'
+      + (selfReviewed ? ', of which ' + selfReviewed + ' ' + (selfReviewed === 1 ? 'was' : 'were') + ' reviewed by ' + escHtml(adviserName) + ' themselves — self-review of your own flagged cases is a segregation-of-duties concern and should be checked.' : ', all reviewed by someone other than the flagged adviser — no segregation-of-duties concern noted.') + '');
+  }
+
   return parts.join(' ');
 }
-function adRenderDashboard(data) {
+function adRenderDashboard(data, flags) {
   var rows = data.rows || [];
   var byCat = {};
   rows.forEach(function(r) {
@@ -11182,10 +11233,10 @@ function adRenderDashboard(data) {
   var html = '';
 
   // Compliance summary paragraph
-  var summaryText = adGenerateInsightSummary(byCat, byLabel, data.adviser);
+  var summaryText = adGenerateInsightSummary(byCat, byLabel, data.adviser, flags);
   if (summaryText) {
-    html += '<div style="background:#f5f7fa;border:1px solid #d1d5db;border-left:4px solid var(--brand-navy);border-radius:10px;padding:16px 20px;margin-bottom:20px;">'
-      + '<div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Supervisor Summary — Compliance Observations</div>'
+    html += '<div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">AI Supervisor Summary</div>'
       + '<div style="font-size:13px;line-height:1.6;color:var(--brand-navy);">' + summaryText + '</div>'
       + '</div>';
   }
