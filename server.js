@@ -5983,6 +5983,34 @@ const CD_Q10     = 'fldAENiQSS9W5Dt8V';   // Q10 Support Required
 const CD_NPS     = 'fldvT8olEjrbOAG52';   // NPS Rating
 const CD_COMMENT = 'fldfsuOr3P3COsXUp';   // Comment
 const CD_RESTORED_KEYS = 'fldjfQetEIQubB2u9'; // Restored Keys — comma-separated flagged question keys marked as remediated
+const CD_Q4_MISMATCH   = 'fld7XnLAiFC7EuVyM'; // Q4 Rate Mismatch — "Client said: X | Record shows: Y" when Q4's answer disagrees with the Suitability Step's actual product type
+
+// Suitability Step table — holds the actual, on-record rate type (Fixed/Variable/SVR)
+// for each client, keyed by client name. Used to detect when a client's own stated
+// belief about their rate type (Q4) doesn't match what's actually on file.
+const SS_BASE    = 'appJEb2mGCdrEKbpY';
+const SS_TABLE   = 'tblLqpRruwm9tRfNb';
+const SS_NAME    = 'fldIOYGf8P7kfjqvN'; // Name (client)
+const SS_ADVISER = 'fld8Gkoy8YT2ncOBz'; // Adviser name
+const SS_TYPE    = 'fldDH96z4ztY3WBlL'; // Type of product — singleSelect: Fixed / Variable / SVR
+
+// Extracts the client's own stated rate-type belief from their free-text Q4 answer.
+// Returns 'Fixed', 'Variable', or null (e.g. "Unsure" or unrecognized — no mismatch check possible).
+function cdClientRateType(q4Answer) {
+  const v = (q4Answer || '').trim().toLowerCase();
+  if (v.startsWith('fixed'))    return 'Fixed';
+  if (v.startsWith('variable')) return 'Variable';
+  return null;
+}
+// Compares the client's stated belief against the actual product type on file.
+// SVR is treated as a variable rate, so "Variable" vs "SVR" is NOT a mismatch —
+// only a genuine Fixed/Variable contradiction is flagged.
+function cdRateMismatchText(clientType, actualType) {
+  if (!clientType || !actualType) return '';
+  if (clientType === 'Fixed'    && actualType !== 'Fixed')    return `Client said: Fixed | Record shows: ${actualType}`;
+  if (clientType === 'Variable' && actualType === 'Fixed')    return `Client said: Variable | Record shows: Fixed`;
+  return '';
+}
 
 // Flagged-question detector per key (mirrors cdIsPerfect's per-question checks)
 // so we can tell whether every flagged question on a record has been ticked
@@ -5990,6 +6018,7 @@ const CD_RESTORED_KEYS = 'fldjfQetEIQubB2u9'; // Restored Keys — comma-separat
 const CD_FLAGGED_CHECKS = {
   q1:  f => !(f[CD_Q1]  || '').trim().toLowerCase().startsWith('yes'),
   q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure',
+  q4mismatch: f => !!(f[CD_Q4_MISMATCH] || '').trim(),
   q5:  f => (f[CD_Q5]  || '').trim().toLowerCase() === 'no',
   q6:  f => (f[CD_Q6]  || '').trim().toLowerCase() === 'no',
   q7:  f => (f[CD_Q7]  || '').trim().toLowerCase() === 'no',
@@ -6011,6 +6040,7 @@ function cdIsPerfect(f) {
   const a = k => (f[k] || '').trim();
   if (!a(CD_Q1).toLowerCase().startsWith('yes'))                                    issues.push('Q1 Adviser Knowledge');
   if (a(CD_Q4).toLowerCase() === 'unsure')                                          issues.push('Q4 Rate Type');
+  if (a(CD_Q4_MISMATCH))                                                            issues.push('Q4 Rate Mismatch');
   if (a(CD_Q5).toLowerCase() === 'no')                                              issues.push('Q5 Future Review');
   if (a(CD_Q6).toLowerCase() === 'no')                                              issues.push('Q6 Home At Risk Warning');
   if (a(CD_Q7).toLowerCase() === 'no')                                              issues.push('Q7 Protection Importance');
@@ -6039,6 +6069,57 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
       offset = body.offset || '';
     } while (offset);
 
+    // Look up the same broker's Suitability Step records so we can tell whether
+    // a client's stated Q4 rate-type belief actually matches what's on file.
+    const ssFormula = encodeURIComponent(`LOWER(TRIM({${SS_ADVISER}})) = "${safeName}"`);
+    let ssRecords = [], ssOffset = '';
+    try {
+      do {
+        const qs  = `?filterByFormula=${ssFormula}&fields[]=${SS_NAME}&fields[]=${SS_TYPE}&returnFieldsByFieldId=true&pageSize=100${ssOffset ? '&offset=' + ssOffset : ''}`;
+        const url = `https://api.airtable.com/v0/${SS_BASE}/${SS_TABLE}${qs}`;
+        const r   = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const body = await r.json();
+        if (!r.ok) { console.error('Suitability Step fetch error:', body); break; }
+        ssRecords = ssRecords.concat(body.records || []);
+        ssOffset = body.offset || '';
+      } while (ssOffset);
+    } catch (e) { console.error('Suitability Step fetch error:', e); }
+
+    const ssTypeByName = {};
+    ssRecords.forEach(rec => {
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      const nm = (f[SS_NAME] || '').trim().toLowerCase();
+      const type = (f[SS_TYPE] || '').toString().trim();
+      if (nm && type) ssTypeByName[nm] = type;
+    });
+
+    // Compute/refresh each record's Q4 Rate Mismatch against the Suitability Step
+    // data, writing back to Airtable only when the stored value is out of date.
+    const mismatchUpdates = [];
+    allRecords.forEach(rec => {
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      const nameKey = (f[CD_NAME] || '').trim().toLowerCase();
+      const actualType = nameKey ? ssTypeByName[nameKey] : null;
+      if (!actualType) return; // no matching Suitability Step record — leave as-is
+      const clientType = cdClientRateType(f[CD_Q4]);
+      const newVal = clientType ? cdRateMismatchText(clientType, actualType) : '';
+      const curVal = (f[CD_Q4_MISMATCH] || '').trim();
+      if (newVal !== curVal) {
+        mismatchUpdates.push({ id: rec.id, fields: { [CD_Q4_MISMATCH]: newVal } });
+        f[CD_Q4_MISMATCH] = newVal; // reflect locally so issues below use the fresh value
+      }
+    });
+    for (let i = 0; i < mismatchUpdates.length; i += 10) {
+      const batch = mismatchUpdates.slice(i, i + 10);
+      try {
+        await fetch(`https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: batch })
+        });
+      } catch (e) { console.error('Q4 Rate Mismatch write error:', e); }
+    }
+
     let fullCount = 0, partialCount = 0;
     const records = allRecords.map(rec => {
       const f      = rec.cellValuesByFieldId || rec.fields || {};
@@ -6052,12 +6133,14 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
         comment:  f[CD_COMMENT] || '',
         perfect,
         issues,
+        rateMismatch: f[CD_Q4_MISMATCH] || '',
         restoredKeys: (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean),
         answers: {
           q1:  f[CD_Q1]  || '',
           q2:  f[CD_Q2]  || '',
           q3:  f[CD_Q3]  || '',
           q4:  f[CD_Q4]  || '',
+          q4mismatch: f[CD_Q4_MISMATCH] || '',
           q5:  f[CD_Q5]  || '',
           q6:  f[CD_Q6]  || '',
           q7:  f[CD_Q7]  || '',

@@ -3900,7 +3900,6 @@ select:focus { outline:none; }
     <div id="sv-broker-profile" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
       <!-- Back + header -->
       <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;">
-        <button onclick="closeBrokerProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;font-family:inherit;flex-shrink:0;">← Back</button>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <div id="bp-name" style="font-size:20px;font-weight:800;color:var(--brand-navy);"></div>
@@ -15730,6 +15729,9 @@ var CD_QUESTIONS = [
   { key:'q4',  label:'Rate Type Understanding',
     question:'Do you understand the type of interest rate recommended to you?',
     flagged: function(a){ return a.toLowerCase() === 'unsure'; } },
+  { key:'q4mismatch', label:'Rate Type Mismatch',
+    question:'Does the client\'s stated rate type match what\'s actually on file?',
+    flagged: function(a){ return !!a; } },
   { key:'q5',  label:'Future Review Awareness',
     question:'Are you aware of when your mortgage deal will end and when it will need to be reviewed?',
     flagged: function(a){ return a.toLowerCase() === 'no'; } },
@@ -16169,7 +16171,11 @@ function openCdDetail(r) {
   // Questions
   var ans = r.answers || {};
   var ticked = _cdGetTicked(r.id);
-  var qHtml = CD_QUESTIONS.map(function(q) {
+  var qHtml = CD_QUESTIONS.filter(function(q) {
+    // The mismatch row is a derived flag, not a real question — only show it
+    // when there's actually a mismatch to report.
+    return q.key !== 'q4mismatch' || !!ans[q.key];
+  }).map(function(q) {
     var answer    = ans[q.key] || '—';
     var isFlagged = q.flagged(answer);
     var isResolved = ticked.indexOf(q.key) !== -1;
