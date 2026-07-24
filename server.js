@@ -6778,14 +6778,19 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
 // Per-adviser tables named "Advisor Dashboard - <Full Name>" in the
 // KnowledgeHUB base, populated from Power BI exports. One table per adviser,
 // created manually as needed — most advisers won't have one yet.
-const AD_LABEL    = 'fldtPslIQp2iBeVKv'; // Label — metric/breakdown item name
-const AD_CATEGORY = 'fldR1B0RYBHCxkEe5'; // Category — singleSelect grouping
-const AD_VALUE    = 'fldoRsXWll2MdzHdW'; // Value — primary number
-const AD_VTYPE    = 'fldaLkFUQa5e83RL3'; // Value Type — singleSelect (GBP Total/Average, Percent, Count)
-const AD_CASES    = 'fldiBpW5tso7gIJ4o'; // Cases Count
-const AD_ADVISOR  = 'fldcRskOWJE737D9F'; // Advisor — text
-const AD_PSTART   = 'fld5Rz2ueiJBBHRHQ'; // Period Start
-const AD_PEND     = 'fldsyLGrfKpT5gUHD'; // Period End
+// NOTE: each table Airtable creates gets its OWN field IDs even when the
+// field NAMES are identical (e.g. Carl Thorne's "Label" field has a
+// different fldXXXXXXXX id than Rob Chart's "Label" field). So we must NOT
+// hardcode field IDs here — we fetch by field NAME instead, which is stable
+// across every per-adviser table.
+const AD_LABEL    = 'Label';        // Label — metric/breakdown item name
+const AD_CATEGORY = 'Category';     // Category — singleSelect grouping
+const AD_VALUE    = 'Value';        // Value — primary number
+const AD_VTYPE    = 'Value Type';   // Value Type — singleSelect (GBP Total/Average, Percent, Count)
+const AD_CASES    = 'Cases Count';  // Cases Count
+const AD_ADVISOR  = 'Advisor';      // Advisor — text
+const AD_PSTART   = 'Period Start'; // Period Start
+const AD_PEND     = 'Period End';   // Period End
 
 app.get('/api/advisor-dashboard', requireAuth, async (req, res) => {
   const caller = req.session.user;
@@ -6806,7 +6811,7 @@ app.get('/api/advisor-dashboard', requireAuth, async (req, res) => {
     if (!fullName) return res.status(404).json({ error: 'Adviser not found' });
 
     const tableName = `Advisor Dashboard - ${fullName}`;
-    const baseUrl = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(tableName)}?pageSize=100&returnFieldsByFieldId=true`;
+    const baseUrl = `https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(tableName)}?pageSize=100`;
 
     let allRecords = [];
     const first = await fetch(baseUrl, { headers: { Authorization: `Bearer ${AT_KEY}` } });
