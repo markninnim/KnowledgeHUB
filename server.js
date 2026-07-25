@@ -6917,6 +6917,21 @@ function adnFormatActionPoints(points) {
   return points.map(p => `${p.done ? '✓ ' : '• '}${p.text}`).join('\n');
 }
 
+// Looks up a Users-table full name (First + Last) for a given email address.
+async function adnLookupUserName(email) {
+  if (!email) return '';
+  try {
+    const f = encodeURIComponent(`LOWER({Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`);
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=${f}&fields[]=${F_FIRST}&fields[]=${F_LAST}&returnFieldsByFieldId=true&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const d = await r.json();
+    const fields = ((d.records || [])[0] || {}).fields || {};
+    return [fields[F_FIRST], fields[F_LAST]].filter(Boolean).join(' ');
+  } catch (e) {
+    console.error('adnLookupUserName error:', e);
+    return '';
+  }
+}
+
 // Looks up an adviser's supervisor's full name via the Users table:
 // adviser email -> Supervisor Email -> supervisor's First/Last Name.
 async function adnLookupSupervisorName(adviserEmail) {
@@ -6926,12 +6941,7 @@ async function adnLookupSupervisorName(adviserEmail) {
     const ad = await ar.json();
     const supervisorEmail = ((ad.records || [])[0] || {}).fields?.[F_SUPERVISOR_EMAIL];
     if (!supervisorEmail) return '';
-
-    const sf = encodeURIComponent(`LOWER({Email}) = "${String(supervisorEmail).toLowerCase().replace(/"/g, '\\"')}"`);
-    const sr = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?filterByFormula=${sf}&fields[]=${F_FIRST}&fields[]=${F_LAST}&returnFieldsByFieldId=true&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
-    const sd = await sr.json();
-    const sFields = ((sd.records || [])[0] || {}).fields || {};
-    return [sFields[F_FIRST], sFields[F_LAST]].filter(Boolean).join(' ');
+    return adnLookupUserName(String(supervisorEmail));
   } catch (e) {
     console.error('adnLookupSupervisorName error:', e);
     return '';
@@ -6996,7 +7006,9 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
     if (!email || !quarter) return res.status(400).json({ error: 'email and quarter required' });
 
     const cleanPoints = actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text);
+    const creatorEmail = (req.session.user.email || '').toLowerCase();
     const supervisorName = await adnLookupSupervisorName(email);
+    const noteTakerName = await adnLookupUserName(creatorEmail);
     const fields = {
       'Adviser Email': email,
       'Quarter': quarter,
@@ -7005,7 +7017,8 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
       'Action Points': JSON.stringify(cleanPoints),
       'Action Points (Formatted)': adnFormatActionPoints(cleanPoints),
       'Supervisor Name': supervisorName,
-      'Created By': (req.session.user.email || '').toLowerCase(),
+      'Note Taker Name': noteTakerName,
+      'Created By': creatorEmail,
       'Created At': new Date().toISOString()
     };
     const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {
