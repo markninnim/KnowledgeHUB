@@ -6914,7 +6914,7 @@ const ADN_TABLE = 'Adviser Dashboard Notes';
 // email automations (Action Points itself is stored as raw JSON).
 function adnFormatActionPoints(points) {
   if (!Array.isArray(points) || !points.length) return '';
-  return points.map(p => `${p.done ? '[Done]' : '[Open]'} ${p.text}`).join('\n');
+  return points.map(p => `${p.done ? '✓ ' : '• '}${p.text}`).join('\n');
 }
 
 function requireSupervisorOrAdmin(req, res) {
