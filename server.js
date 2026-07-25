@@ -6775,10 +6775,23 @@ app.get('/api/supervisor/broker-profile/pdf', requireAuth, async (req, res) => {
         if (latest) {
           const quarter = latest.fields['Quarter'] || '';
           const noteText = latest.fields['Notes'] || '';
+          const summaryText = latest.fields['Summary'] || '';
           let actionPoints = [];
           try { actionPoints = JSON.parse(latest.fields['Action Points'] || '[]'); } catch (e) { actionPoints = []; }
 
           sectionTitle('Meeting Notes' + (quarter ? ' — ' + quarter : ''));
+          if (summaryText) {
+            ensureSpace(16);
+            page.drawText('Summary', { x: 36, y, size: 10, font: fontBold, color: darkBlue });
+            y -= 16;
+            const maxW = W - 72;
+            wrapLabel(summaryText, maxW, fontMed, 10).forEach(line => {
+              ensureSpace(16);
+              page.drawText(line, { x: 36, y, size: 10, font: fontMed, color: darkBlue });
+              y -= 14;
+            });
+            y -= 10;
+          }
           if (noteText) {
             const maxW = W - 72;
             wrapLabel(noteText, maxW, fontMed, 10).forEach(line => {
@@ -6930,6 +6943,7 @@ app.get('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
         id: rec.id,
         quarter: rec.fields['Quarter'] || '',
         notes: rec.fields['Notes'] || '',
+        summary: rec.fields['Summary'] || '',
         actionPoints,
         createdBy: rec.fields['Created By'] || '',
         createdAt: rec.fields['Created At'] || rec.createdTime
@@ -6949,6 +6963,7 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
     const email = (req.body.email || '').trim().toLowerCase();
     const quarter = (req.body.quarter || '').trim();
     const notes = (req.body.notes || '').trim();
+    const summary = (req.body.summary || '').trim();
     const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
     if (!email || !quarter) return res.status(400).json({ error: 'email and quarter required' });
 
@@ -6956,6 +6971,7 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
       'Adviser Email': email,
       'Quarter': quarter,
       'Notes': notes,
+      'Summary': summary,
       'Action Points': JSON.stringify(actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text)),
       'Created By': (req.session.user.email || '').toLowerCase(),
       'Created At': new Date().toISOString()
@@ -6973,6 +6989,60 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
     res.json({ success: true, id: (body.records || [])[0]?.id });
   } catch (err) {
     console.error('advisor-dashboard-notes POST error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/advisor-dashboard-notes/:id — edit an existing quarterly note. Supervisor/admin only.
+app.put('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const id = req.params.id;
+    const quarter = (req.body.quarter || '').trim();
+    const notes = (req.body.notes || '').trim();
+    const summary = (req.body.summary || '').trim();
+    const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
+    if (!id || !quarter) return res.status(400).json({ error: 'id and quarter required' });
+
+    const fields = {
+      'Quarter': quarter,
+      'Notes': notes,
+      'Summary': summary,
+      'Action Points': JSON.stringify(actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text))
+    };
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id, fields }], typecast: true })
+    });
+    if (!r.ok) {
+      const errBody = await r.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('advisor-dashboard-notes PUT error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/advisor-dashboard-notes/:id — remove a quarterly note. Supervisor/admin only.
+app.delete('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const id = req.params.id;
+    if (!id) return res.status(400).json({ error: 'id required' });
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}?records[]=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${AT_KEY}` }
+    });
+    if (!r.ok) {
+      const errBody = await r.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('advisor-dashboard-notes DELETE error:', err);
     res.status(500).json({ error: err.message });
   }
 });

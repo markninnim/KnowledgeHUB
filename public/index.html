@@ -4152,7 +4152,7 @@ select:focus { outline:none; }
         </div>
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #d1d5db;">
           <button onclick="adCloseNoteModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
-          <button onclick="adSubmitNote()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
+          <button id="ad-note-save-btn" onclick="adSubmitNote()" style="background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Note</button>
         </div>
       </div>
     </div>
@@ -11035,6 +11035,7 @@ function adBackToProfile() {
 
 // ── Meeting Notes (quarterly, per adviser) ──────────────────────
 var _adNotes = [];
+var _adCurrentSummary = '';
 function adCurrentQuarter() {
   var d = new Date();
   var q = Math.floor(d.getMonth() / 3) + 1;
@@ -11069,29 +11070,63 @@ function adRenderNotes() {
     return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
       + '<div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(n.quarter) + '</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
       + '<div style="font-size:11.5px;color:#6b7c8f;">' + dateStr + (n.createdBy ? ' · ' + escHtml(n.createdBy) : '') + '</div>'
+      + '<button type="button" onclick="adOpenNoteModal(\'' + n.id + '\')" title="Edit note" style="background:none;border:none;color:#6b7c8f;cursor:pointer;font-size:13px;padding:2px 4px;">✏️</button>'
+      + '<button type="button" onclick="adDeleteNote(\'' + n.id + '\')" title="Delete note" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:13px;padding:2px 4px;">🗑️</button>'
       + '</div>'
+      + '</div>'
+      + (n.summary ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px 12px;margin-bottom:10px;">'
+          + '<div style="font-size:10.5px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Summary</div>'
+          + '<div style="font-size:12.5px;color:var(--brand-navy);line-height:1.5;">' + n.summary + '</div>'
+          + '</div>' : '')
       + (n.notes ? '<div style="font-size:13px;color:var(--brand-navy);white-space:pre-wrap;margin-bottom:' + (pointsHtml ? '10px' : '0') + ';">' + escHtml(n.notes) + '</div>' : '')
       + (pointsHtml ? '<div style="border-top:1px solid #f0f4f8;padding-top:8px;">' + pointsHtml + '</div>' : '')
       + '</div>';
   }).join('');
 }
-function adOpenNoteModal() {
-  document.getElementById('ad-note-quarter').value = adCurrentQuarter();
-  document.getElementById('ad-note-textarea').value = '';
-  document.getElementById('ad-note-subtitle').textContent = (_bpCurrentName || '') + ' — quarterly review';
+var _adEditingNoteId = null;
+function adOpenNoteModal(editId) {
   var pointsContainer = document.getElementById('ad-note-points');
   pointsContainer.innerHTML = '';
-  // Carry forward any incomplete action points from the most recent note
-  if (_adNotes.length && _adNotes[0].actionPoints) {
-    _adNotes[0].actionPoints.filter(function(p) { return !p.done; }).forEach(function(p) {
-      adAddActionPointRow(p.text, false, true);
+  _adEditingNoteId = editId || null;
+  var editingNote = editId ? _adNotes.find(function(n) { return n.id === editId; }) : null;
+  var saveBtn = document.getElementById('ad-note-save-btn');
+  if (editingNote) {
+    document.getElementById('ad-note-quarter').value = editingNote.quarter || '';
+    document.getElementById('ad-note-textarea').value = editingNote.notes || '';
+    document.getElementById('ad-note-subtitle').textContent = (_bpCurrentName || '') + ' — editing note';
+    (editingNote.actionPoints || []).forEach(function(p) {
+      adAddActionPointRow(p.text, p.done, false);
     });
+    if (saveBtn) saveBtn.textContent = 'Save Changes';
+  } else {
+    document.getElementById('ad-note-quarter').value = adCurrentQuarter();
+    document.getElementById('ad-note-textarea').value = '';
+    document.getElementById('ad-note-subtitle').textContent = (_bpCurrentName || '') + ' — quarterly review';
+    // Carry forward any incomplete action points from the most recent note
+    if (_adNotes.length && _adNotes[0].actionPoints) {
+      _adNotes[0].actionPoints.filter(function(p) { return !p.done; }).forEach(function(p) {
+        adAddActionPointRow(p.text, false, true);
+      });
+    }
+    if (saveBtn) saveBtn.textContent = 'Save Note';
   }
   document.getElementById('ad-note-modal').style.display = 'flex';
 }
 function adCloseNoteModal() {
   document.getElementById('ad-note-modal').style.display = 'none';
+  _adEditingNoteId = null;
+}
+function adDeleteNote(id) {
+  if (!confirm('Delete this meeting note? This cannot be undone.')) return;
+  fetch('/api/advisor-dashboard-notes/' + encodeURIComponent(id), { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not delete note: ' + res.error); return; }
+      adLoadNotes(_bpCurrentEmail);
+    })
+    .catch(function() { alert('Could not delete note. Please try again.'); });
 }
 function adAddActionPointRow(text, done, carried) {
   var row = document.createElement('div');
@@ -11114,10 +11149,13 @@ function adSubmitNote() {
       actionPoints.push({ text: textInput.value.trim(), done: checkbox.checked });
     }
   });
-  fetch('/api/advisor-dashboard-notes', {
-    method: 'POST',
+  var isEdit = !!_adEditingNoteId;
+  var url = isEdit ? '/api/advisor-dashboard-notes/' + encodeURIComponent(_adEditingNoteId) : '/api/advisor-dashboard-notes';
+  var method = isEdit ? 'PUT' : 'POST';
+  fetch(url, {
+    method: method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: _bpCurrentEmail, quarter: quarter, notes: notes, actionPoints: actionPoints })
+    body: JSON.stringify({ email: _bpCurrentEmail, quarter: quarter, notes: notes, summary: _adCurrentSummary, actionPoints: actionPoints })
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
@@ -11206,9 +11244,10 @@ function adGenerateInsightSummary(byCat, byLabel, adviserName, flags) {
     var flagTypeCounts = {};
     flags.forEach(function(f) { flagTypeCounts[f.flagType] = (flagTypeCounts[f.flagType] || 0) + 1; });
     var flagSummary = Object.keys(flagTypeCounts).map(function(t) { return flagTypeCounts[t] + ' ' + t; }).join(', ');
-    var selfReviewed = flags.filter(function(f) { return f.reviewedBy && adviserName && f.reviewedBy.toLowerCase() === adviserName.toLowerCase(); }).length;
+    var topFlagType = Object.keys(flagTypeCounts).sort(function(a, b) { return flagTypeCounts[b] - flagTypeCounts[a]; })[0];
+    var topFlagPct = Math.round((flagTypeCounts[topFlagType] / flags.length) * 100);
     parts.push(flags.length + ' flagged case' + (flags.length === 1 ? '' : 's') + ' ' + (flags.length === 1 ? 'appears' : 'appear') + ' on the compliance flag log (' + flagSummary + ')'
-      + (selfReviewed ? ', of which ' + selfReviewed + ' ' + (selfReviewed === 1 ? 'was' : 'were') + ' reviewed by ' + escHtml(adviserName) + ' themselves — self-review of your own flagged cases is a segregation-of-duties concern and should be checked.' : ', all reviewed by someone other than the flagged adviser — no segregation-of-duties concern noted.') + '');
+      + (topFlagPct >= 60 ? ', with ' + escHtml(topFlagType) + ' checks accounting for ' + topFlagPct + '% of all flags — worth discussing whether this reflects the adviser\'s typical client mix or points to something worth a closer look.' : ', a fairly even spread across flag types with nothing that stands out.'));
   }
 
   return parts.join(' ');
@@ -11234,9 +11273,10 @@ function adRenderDashboard(data, flags) {
 
   // Compliance summary paragraph
   var summaryText = adGenerateInsightSummary(byCat, byLabel, data.adviser, flags);
+  _adCurrentSummary = summaryText || '';
   if (summaryText) {
     html += '<div style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">'
-      + '<div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">AI Supervisor Summary</div>'
+      + '<div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Summary</div>'
       + '<div style="font-size:13px;line-height:1.6;color:var(--brand-navy);">' + summaryText + '</div>'
       + '</div>';
   }
