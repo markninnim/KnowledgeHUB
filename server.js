@@ -7059,6 +7059,7 @@ app.put('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
       'Action Points (Formatted)': adnFormatActionPoints(cleanPoints)
     };
     if (email) fields['Supervisor Name'] = await adnLookupSupervisorName(email);
+    fields['Note Taker Name'] = await adnLookupUserName((req.session.user.email || '').toLowerCase());
     const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
