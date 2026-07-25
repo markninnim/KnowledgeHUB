@@ -6910,6 +6910,13 @@ app.get('/api/advisor-dashboard', requireAuth, async (req, res) => {
 // ── Adviser Dashboard Notes (quarterly meeting notes + action points) ──
 const ADN_TABLE = 'Adviser Dashboard Notes';
 
+// Renders action points as a plain-text bulleted list for use in Airtable
+// email automations (Action Points itself is stored as raw JSON).
+function adnFormatActionPoints(points) {
+  if (!Array.isArray(points) || !points.length) return '';
+  return points.map(p => `${p.done ? '[Done]' : '[Open]'} ${p.text}`).join('\n');
+}
+
 function requireSupervisorOrAdmin(req, res) {
   const caller = req.session.user;
   if (!caller.isSupervisor && !caller.isAdmin) {
@@ -6967,12 +6974,14 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
     const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
     if (!email || !quarter) return res.status(400).json({ error: 'email and quarter required' });
 
+    const cleanPoints = actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text);
     const fields = {
       'Adviser Email': email,
       'Quarter': quarter,
       'Notes': notes,
       'Summary': summary,
-      'Action Points': JSON.stringify(actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text)),
+      'Action Points': JSON.stringify(cleanPoints),
+      'Action Points (Formatted)': adnFormatActionPoints(cleanPoints),
       'Created By': (req.session.user.email || '').toLowerCase(),
       'Created At': new Date().toISOString()
     };
@@ -7004,11 +7013,13 @@ app.put('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
     const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
     if (!id || !quarter) return res.status(400).json({ error: 'id and quarter required' });
 
+    const cleanPoints = actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text);
     const fields = {
       'Quarter': quarter,
       'Notes': notes,
       'Summary': summary,
-      'Action Points': JSON.stringify(actionPoints.map(p => ({ text: String(p.text || '').trim(), done: !!p.done })).filter(p => p.text))
+      'Action Points': JSON.stringify(cleanPoints),
+      'Action Points (Formatted)': adnFormatActionPoints(cleanPoints)
     };
     const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {
       method: 'PATCH',
