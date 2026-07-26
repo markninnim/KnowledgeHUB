@@ -37,6 +37,9 @@ const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
 // Set on Railway once available. Until then, /api/help-chat returns 503 and
 // the front-end widget falls back to its local, rule-based keyword matching.
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+// Used only to transcribe recorded 1:1 meetings (Whisper) before Claude
+// summarises them — set on Railway once available, same pattern as above.
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // ── Airtable config ──────────────────────────────────────────
 const AT_KEY      = process.env.AIRTABLE_API_KEY;
@@ -516,7 +519,7 @@ app.use(express.urlencoded({ extended: true }));
 // 20mb (not 2mb) so a base64-encoded PowerPoint presentation attached to a
 // Learning Video (via /api/admin/learning) fits — base64 adds ~33% overhead,
 // so this comfortably covers a ~14MB PPTX file.
-app.use(express.json({ limit: '20mb' }));
+app.use(express.json({ limit: '40mb' }));
 app.set('trust proxy', 1);
 
 // ── Security headers (helmet) ────────────────────────────────
@@ -6957,6 +6960,82 @@ function requireSupervisorOrAdmin(req, res) {
   return true;
 }
 
+// POST /api/advisor-dashboard-notes/transcribe — accepts a recorded 1:1
+// meeting (base64 audio), transcribes it with OpenAI Whisper, then asks
+// Claude to turn the transcript into a short meeting-notes paragraph plus a
+// list of agreed action points. Supervisor/admin only. Nothing is saved to
+// Airtable here — the front-end fills the Add/Edit Note form with the
+// result so the supervisor can review and edit before saving.
+app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  if (!OPENAI_API_KEY) {
+    return res.status(503).json({ error: 'Meeting transcription is not configured yet. Ask an admin to add an OpenAI API key.' });
+  }
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'AI summarising is not configured yet. Ask an admin to add an Anthropic API key.' });
+  }
+  try {
+    const audioBase64 = (req.body && req.body.audioBase64) || '';
+    const mimeType = (req.body && req.body.mimeType) || 'audio/webm';
+    const adviserName = (req.body && req.body.adviserName) || 'the adviser';
+    if (!audioBase64) return res.status(400).json({ error: 'No audio received.' });
+
+    const audioBuffer = Buffer.from(audioBase64, 'base64');
+    const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : mimeType.includes('wav') ? 'wav' : 'webm';
+
+    const form = new FormData();
+    form.append('file', new Blob([audioBuffer], { type: mimeType }), `meeting.${ext}`);
+    form.append('model', 'whisper-1');
+
+    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+      body: form
+    });
+    const whisperData = await whisperRes.json();
+    if (!whisperRes.ok) throw new Error((whisperData.error && whisperData.error.message) || 'Transcription failed');
+    const transcript = (whisperData.text || '').trim();
+    if (!transcript) return res.status(422).json({ error: 'Could not detect any speech in the recording.' });
+
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1200,
+        system: 'You summarise transcripts of quarterly one-to-one supervision meetings between a mortgage/protection adviser and their supervisor, for a UK financial services firm. '
+          + 'Respond with ONLY valid JSON, no markdown fences, in this exact shape: {"notes": "...", "actionPoints": ["...", "..."]}. '
+          + '"notes" should be a well-written summary paragraph (or short set of paragraphs) covering what was discussed, in a professional supervisory tone — do not use bullet points inside "notes". '
+          + '"actionPoints" should be a list of clear, specific action points explicitly agreed during the meeting, each written as a short actionable sentence. If no action points were agreed, return an empty array. '
+          + 'Do not invent detail that is not in the transcript. It is normal and approved practice at this firm for an adviser to review and close their own compliance flags — do not raise this as a concern unless the transcript itself raises it as one.',
+        messages: [{ role: 'user', content: `Adviser: ${adviserName}\n\nMeeting transcript:\n${transcript.slice(0, 12000)}` }]
+      })
+    });
+    const claudeData = await claudeRes.json();
+    if (!claudeRes.ok) throw new Error((claudeData.error && claudeData.error.message) || 'AI summarising failed');
+    const raw = (claudeData.content && claudeData.content[0] && claudeData.content[0].text) || '{}';
+    let parsed;
+    try {
+      parsed = JSON.parse(raw.replace(/^```(json)?/i, '').replace(/```$/, '').trim());
+    } catch (e) {
+      parsed = { notes: raw.trim(), actionPoints: [] };
+    }
+
+    res.json({
+      transcript,
+      notes: (parsed.notes || '').toString().trim(),
+      actionPoints: Array.isArray(parsed.actionPoints) ? parsed.actionPoints.map(t => String(t).trim()).filter(Boolean) : []
+    });
+  } catch (err) {
+    console.error('advisor-dashboard-notes transcribe error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/advisor-dashboard-notes?email=... — list all quarterly notes for
 // an adviser, newest first. Supervisor/admin only.
 app.get('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
@@ -7002,6 +7081,7 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
     const quarter = (req.body.quarter || '').trim();
     const notes = (req.body.notes || '').trim();
     const summary = (req.body.summary || '').trim();
+    const transcript = (req.body.transcript || '').trim();
     const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
     if (!email || !quarter) return res.status(400).json({ error: 'email and quarter required' });
 
@@ -7014,6 +7094,7 @@ app.post('/api/advisor-dashboard-notes', requireAuth, async (req, res) => {
       'Quarter': quarter,
       'Notes': notes,
       'Summary': summary,
+      'Transcript': transcript,
       'Action Points': JSON.stringify(cleanPoints),
       'Action Points (Formatted)': adnFormatActionPoints(cleanPoints),
       'Supervisor Name': supervisorName,
@@ -7046,6 +7127,7 @@ app.put('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
     const quarter = (req.body.quarter || '').trim();
     const notes = (req.body.notes || '').trim();
     const summary = (req.body.summary || '').trim();
+    const transcript = (req.body.transcript || '').trim();
     const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
     if (!id || !quarter) return res.status(400).json({ error: 'id and quarter required' });
 
@@ -7058,6 +7140,7 @@ app.put('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => {
       'Action Points': JSON.stringify(cleanPoints),
       'Action Points (Formatted)': adnFormatActionPoints(cleanPoints)
     };
+    if (transcript) fields['Transcript'] = transcript;
     if (email) fields['Supervisor Name'] = await adnLookupSupervisorName(email);
     fields['Note Taker Name'] = await adnLookupUserName((req.session.user.email || '').toLowerCase());
     const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${encodeURIComponent(ADN_TABLE)}`, {

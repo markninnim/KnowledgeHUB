@@ -4140,6 +4140,18 @@ select:focus { outline:none; }
           <button onclick="adCloseNoteModal()" style="background:none;border:none;color:#6b7c8f;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
         </div>
         <div style="padding:20px 24px;">
+          <div id="ad-record-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:12.5px;font-weight:700;color:var(--brand-navy);">Record this meeting</div>
+                <div id="ad-record-status" style="font-size:11.5px;color:#6b7c8f;margin-top:2px;">Record the conversation and AI will draft the notes and action points for you.</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span id="ad-record-timer" style="display:none;font-size:12.5px;font-weight:700;color:#c0392b;font-variant-numeric:tabular-nums;">00:00</span>
+                <button type="button" id="ad-record-btn" onclick="adToggleRecording()" style="display:flex;align-items:center;gap:6px;background:var(--brand-navy);border:1px solid var(--brand-navy);color:#fff;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">🎙 Record</button>
+              </div>
+            </div>
+          </div>
           <label style="display:block;font-size:12px;font-weight:700;color:#6b7c8f;margin-bottom:6px;">Quarter</label>
           <input type="text" id="ad-note-quarter" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--brand-navy);margin-bottom:16px;" placeholder="e.g. Q3 2026">
 
@@ -11086,10 +11098,17 @@ function adRenderNotes() {
   }).join('');
 }
 var _adEditingNoteId = null;
+var _adCurrentTranscript = '';
+var _adMediaRecorder = null;
+var _adRecordedChunks = [];
+var _adRecordTimerInterval = null;
+var _adRecordSeconds = 0;
 function adOpenNoteModal(editId) {
   var pointsContainer = document.getElementById('ad-note-points');
   pointsContainer.innerHTML = '';
   _adEditingNoteId = editId || null;
+  _adCurrentTranscript = '';
+  adResetRecordUi();
   var editingNote = editId ? _adNotes.find(function(n) { return n.id === editId; }) : null;
   var saveBtn = document.getElementById('ad-note-save-btn');
   if (editingNote) {
@@ -11115,8 +11134,115 @@ function adOpenNoteModal(editId) {
   document.getElementById('ad-note-modal').style.display = 'flex';
 }
 function adCloseNoteModal() {
+  if (_adMediaRecorder && _adMediaRecorder.state !== 'inactive') {
+    _adMediaRecorder.stop();
+    _adMediaRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
+  }
   document.getElementById('ad-note-modal').style.display = 'none';
   _adEditingNoteId = null;
+}
+function adResetRecordUi() {
+  var btn = document.getElementById('ad-record-btn');
+  var status = document.getElementById('ad-record-status');
+  var timer = document.getElementById('ad-record-timer');
+  btn.textContent = '🎙 Record';
+  btn.disabled = false;
+  btn.style.background = 'var(--brand-navy)';
+  btn.style.borderColor = 'var(--brand-navy)';
+  status.textContent = 'Record the conversation and AI will draft the notes and action points for you.';
+  timer.style.display = 'none';
+  timer.textContent = '00:00';
+}
+function adToggleRecording() {
+  if (_adMediaRecorder && _adMediaRecorder.state === 'recording') {
+    adStopRecording();
+  } else {
+    adStartRecording();
+  }
+}
+function adStartRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Audio recording isn\'t supported in this browser.');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    _adRecordedChunks = [];
+    var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+    _adMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+    _adMediaRecorder.ondataavailable = function(e) { if (e.data && e.data.size > 0) _adRecordedChunks.push(e.data); };
+    _adMediaRecorder.onstop = function() { adHandleRecordingStopped(stream); };
+    _adMediaRecorder.start();
+
+    var btn = document.getElementById('ad-record-btn');
+    var status = document.getElementById('ad-record-status');
+    var timer = document.getElementById('ad-record-timer');
+    btn.textContent = '⏹ Stop';
+    btn.style.background = '#c0392b';
+    btn.style.borderColor = '#c0392b';
+    status.textContent = 'Recording… click Stop when the meeting has finished.';
+    timer.style.display = 'inline';
+    _adRecordSeconds = 0;
+    timer.textContent = '00:00';
+    _adRecordTimerInterval = setInterval(function() {
+      _adRecordSeconds++;
+      var m = Math.floor(_adRecordSeconds / 60), s = _adRecordSeconds % 60;
+      timer.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+  }).catch(function() {
+    alert('Microphone access is needed to record the meeting. Please allow microphone access and try again.');
+  });
+}
+function adStopRecording() {
+  if (_adMediaRecorder && _adMediaRecorder.state === 'recording') {
+    _adMediaRecorder.stop();
+  }
+  if (_adRecordTimerInterval) { clearInterval(_adRecordTimerInterval); _adRecordTimerInterval = null; }
+}
+function adHandleRecordingStopped(stream) {
+  stream.getTracks().forEach(function(t) { t.stop(); });
+  var mimeType = (_adMediaRecorder && _adMediaRecorder.mimeType) || 'audio/webm';
+  var blob = new Blob(_adRecordedChunks, { type: mimeType });
+  var btn = document.getElementById('ad-record-btn');
+  var status = document.getElementById('ad-record-status');
+  var timer = document.getElementById('ad-record-timer');
+  btn.disabled = true;
+  btn.textContent = '🎙 Record';
+  btn.style.background = '#9ca3af';
+  btn.style.borderColor = '#9ca3af';
+  timer.style.display = 'none';
+  status.textContent = 'Transcribing and summarising the meeting… this can take a minute.';
+
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    var base64 = reader.result.split(',')[1];
+    fetch('/api/advisor-dashboard-notes/transcribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audioBase64: base64, mimeType: mimeType, adviserName: _bpCurrentName || '' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        btn.disabled = false;
+        btn.style.background = 'var(--brand-navy)';
+        btn.style.borderColor = 'var(--brand-navy)';
+        if (res.error) {
+          status.textContent = 'Could not transcribe the recording: ' + res.error;
+          return;
+        }
+        _adCurrentTranscript = res.transcript || '';
+        var textarea = document.getElementById('ad-note-textarea');
+        textarea.value = textarea.value.trim() ? (textarea.value.trim() + '\n\n' + res.notes) : res.notes;
+        (res.actionPoints || []).forEach(function(text) { adAddActionPointRow(text, false, false); });
+        status.textContent = 'Meeting transcribed — review the notes and action points below before saving.';
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.style.background = 'var(--brand-navy)';
+        btn.style.borderColor = 'var(--brand-navy)';
+        status.textContent = 'Could not transcribe the recording. Please try again.';
+      });
+  };
+  reader.readAsDataURL(blob);
 }
 function adDeleteNote(id) {
   if (!confirm('Delete this meeting note? This cannot be undone.')) return;
@@ -11155,7 +11281,7 @@ function adSubmitNote() {
   fetch(url, {
     method: method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: _bpCurrentEmail, quarter: quarter, notes: notes, summary: _adCurrentSummary, actionPoints: actionPoints })
+    body: JSON.stringify({ email: _bpCurrentEmail, quarter: quarter, notes: notes, summary: _adCurrentSummary, transcript: _adCurrentTranscript, actionPoints: actionPoints })
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
