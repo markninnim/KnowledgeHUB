@@ -689,7 +689,7 @@ select:focus { outline:none; }
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
           </div>
         </div>
-        <div id="home-cd-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
+        <div id="home-cd-list" style="columns:2;column-gap:14px;"></div>
       </div>
 
       <!-- Feefo card (full width) -->
@@ -1604,7 +1604,7 @@ select:focus { outline:none; }
       </div>
       <div id="cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
-      <div id="cd-feedback-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
+      <div id="cd-feedback-list" style="columns:2;column-gap:14px;"></div>
     </div>
   </div>
 
@@ -3947,7 +3947,7 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
             </div>
           </div>
-          <div id="bp-cd-list" style="margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
+          <div id="bp-cd-list" style="margin-top:4px;columns:2;column-gap:14px;"></div>
         </div>
 
         <!-- Feefo Reviews (all — follows the page-level date filter at the top) -->
@@ -13848,7 +13848,7 @@ function cdCardHtml(r, toggleFn) {
       + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : '#c0392b') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
       + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
   }).join('') : '';
-  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;break-inside:avoid;-webkit-column-break-inside:avoid;display:inline-block;width:100%;">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">'
     + '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(r.clientName) + '</div>'
     + '<div style="font-size:12px;color:#6b7c8f;">Adviser: ' + escHtml(r.adviserName) + ' &middot; ' + dateStr + '</div></div>'
