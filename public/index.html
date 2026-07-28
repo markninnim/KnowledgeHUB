@@ -13839,15 +13839,25 @@ function cdStatusPill(status) {
   return '<span style="display:inline-flex;align-items:center;gap:5px;background:' + (bg[status] || '#f5f7fa') + ';color:' + c + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;">'
     + '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';"></span>' + status + '</span>';
 }
+function cdFlagRowHtml(r, f, toggleFn) {
+  var resolved = r.restoredKeys.indexOf(f.key) !== -1;
+  return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #f0f4f8;">'
+    + '<input type="checkbox" ' + (resolved ? 'checked' : '') + ' onchange="' + toggleFn + '(\'' + r.id + '\',\'' + f.key + '\',this.checked)" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;">'
+    + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : '#c0392b') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
+    + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
+}
 function cdCardHtml(r, toggleFn) {
   var dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
-  var flagsHtml = r.flags.length ? r.flags.map(function(f) {
-    var resolved = r.restoredKeys.indexOf(f.key) !== -1;
-    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #f0f4f8;">'
-      + '<input type="checkbox" ' + (resolved ? 'checked' : '') + ' onchange="' + toggleFn + '(\'' + r.id + '\',\'' + f.key + '\',this.checked)" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;">'
-      + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : '#c0392b') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
-      + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
-  }).join('') : '';
+  var VISIBLE_COUNT = 2;
+  var visibleFlags = r.flags.slice(0, VISIBLE_COUNT);
+  var restFlags = r.flags.slice(VISIBLE_COUNT);
+  var flagsHtml = visibleFlags.map(function(f) { return cdFlagRowHtml(r, f, toggleFn); }).join('');
+  if (restFlags.length) {
+    flagsHtml += '<details style="margin-top:2px;">'
+      + '<summary style="cursor:pointer;padding:8px 0;border-top:1px solid #f0f4f8;font-size:12.5px;font-weight:600;color:var(--brand-navy);">Show ' + restFlags.length + ' more flagged answer' + (restFlags.length > 1 ? 's' : '') + '</summary>'
+      + restFlags.map(function(f) { return cdFlagRowHtml(r, f, toggleFn); }).join('')
+      + '</details>';
+  }
   return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">'
     + '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(r.clientName) + '</div>'
