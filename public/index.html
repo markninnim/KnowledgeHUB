@@ -661,41 +661,35 @@ select:focus { outline:none; }
       <!-- Consumer Duty card -->
       <div id="home-cd-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:24px;margin-bottom:20px;display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">Consumer Duty</div>
-              <div style="font-size:12px;color:#6b7c8f;max-width:720px;line-height:1.5;">Each time you issue a suitability report, your client receives a questionnaire confirming their understanding and preventing foreseeable harm. Where partial understanding is identified, you are required to address the areas of concern to restore full compliance.</div>
-            </div>
+          <div>
+            <div id="home-cd-title" style="font-size:14px;font-weight:700;color:var(--brand-navy);margin-bottom:2px;">Consumer Duty questionnaire responses</div>
+            <div id="home-cd-summary" style="font-size:12px;color:#6b7c8f;max-width:640px;line-height:1.5;">Loading summary…</div>
           </div>
-          <div style="text-align:right;">
+          <div style="text-align:right;flex-shrink:0;">
+            <button id="home-cd-archive-btn" onclick="homeCdToggleArchiveView()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:6px;">Show archived</button>
             <div style="font-size:11px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Consumer Duty Score</div>
             <div id="home-cd-pct" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;"></div>
           </div>
         </div>
         <!-- Stat tiles -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div id="cd-tile-full" onclick="filterCdList('full')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onmouseover="this.style.borderColor='var(--brand-navy)';this.style.boxShadow='0 2px 8px rgba(var(--brand-navy-rgb),.08)'" onmouseout="this.style.borderColor=window._cdFilter==='full'?'var(--brand-navy)':'#d1d5db';this.style.boxShadow=''">
+          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
             <div id="home-cd-full-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
             <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Full Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
           </div>
-          <div id="cd-tile-restored" onclick="filterCdList('restored')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onmouseover="this.style.borderColor='var(--brand-navy)';this.style.boxShadow='0 2px 8px rgba(var(--brand-navy-rgb),.08)'" onmouseout="this.style.borderColor=window._cdFilter==='restored'?'var(--brand-navy)':'#d1d5db';this.style.boxShadow=''">
+          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
             <div id="home-cd-restored-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;">0</div>
             <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Understanding Restored</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
           </div>
-          <div id="cd-tile-partial" onclick="filterCdList('partial')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;" onmouseover="this.style.borderColor='#b91c1c';this.style.boxShadow='0 2px 8px rgba(185,28,28,.08)'" onmouseout="this.style.borderColor=window._cdFilter==='partial'?'#b91c1c':'#d1d5db';this.style.boxShadow=''">
+          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
             <div id="home-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
             <div style="font-size:12px;font-weight:600;color:#b91c1c;">Partial Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
           </div>
         </div>
-        <!-- Recent responses -->
-        <div id="home-cd-list-label" style="display:none;font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:10px;">Recent Responses</div>
-        <div id="home-cd-list" style="display:none;flex-direction:column;gap:0;"></div>
+        <div id="home-cd-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
       </div>
 
       <!-- Feefo card (full width) -->
@@ -8690,8 +8684,7 @@ function loadHomeData() {
 
   // Consumer Duty summary
   fetch('/api/consumer-duty').then(function(r) { return r.json(); }).then(function(cd) {
-    var card    = document.getElementById('home-cd-card');
-    var listEl  = document.getElementById('home-cd-list');
+    var card = document.getElementById('home-cd-card');
     if (!card) return;
 
     if (!cd.total) {
@@ -8699,11 +8692,20 @@ function loadHomeData() {
       return;
     }
 
-    window._cdServerData = cd;
-    window._cdRecords    = cd.records || cd.recent || [];
     card.style.display = '';
-    updateCdSummaryTiles();
-    renderCdList();
+    var titleEl = document.getElementById('home-cd-title');
+    if (titleEl) titleEl.textContent = ((_currentUser && [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ')) || 'Your') + ' Consumer Duty questionnaire responses';
+    var summaryEl = document.getElementById('home-cd-summary');
+    if (summaryEl) summaryEl.textContent = cd.summary || '';
+    var pctEl = document.getElementById('home-cd-pct');
+    if (pctEl) {
+      var pct = cd.total ? Math.round((cd.full + (cd.restored || 0)) / cd.total * 100) : null;
+      pctEl.textContent = (pct != null ? pct + '%' : '—');
+      pctEl.style.color = (pct === 100) ? '#22c55e' : 'var(--brand-navy)';
+    }
+    _homeCdRecords = cd.records || [];
+    homeCdUpdateTiles();
+    homeCdRenderCards();
 
   }).catch(function() {
     var card = document.getElementById('home-cd-card');
@@ -13758,6 +13760,8 @@ var _cdFeedback = [];
 var _cdShowArchived = false;
 var _bpCdRecords = [];
 var _bpCdShowArchived = false;
+var _homeCdRecords = [];
+var _homeCdShowArchived = false;
 function showCdFeedback(e, el) {
   if (e) e.preventDefault();
   document.getElementById('tab-sales-process').classList.remove('active');
@@ -13917,6 +13921,68 @@ function bpCdUpdateTiles() {
   if (cdFullEl)  cdFullEl.textContent  = full;
   if (cdRestEl)  cdRestEl.textContent  = restored;
   if (cdPartEl)  cdPartEl.textContent  = partial;
+}
+function homeCdUpdateTiles() {
+  var recs = _homeCdRecords || [];
+  var full = 0, restored = 0, partial = 0;
+  recs.forEach(function(r) {
+    if (r.status === 'Full') full++;
+    else if (r.status === 'Restored') restored++;
+    else partial++;
+  });
+  var fullEl = document.getElementById('home-cd-full-count');
+  var restEl = document.getElementById('home-cd-restored-count');
+  var partEl = document.getElementById('home-cd-partial-count');
+  var pctEl  = document.getElementById('home-cd-pct');
+  var score = recs.length ? Math.round((full + restored) / recs.length * 100) : null;
+  if (pctEl) {
+    pctEl.textContent = (score != null ? score + '%' : '—');
+    pctEl.style.color = (score === 100) ? '#22c55e' : 'var(--brand-navy)';
+  }
+  if (fullEl) fullEl.textContent = full;
+  if (restEl) restEl.textContent = restored;
+  if (partEl) partEl.textContent = partial;
+}
+function homeCdToggleArchiveView() {
+  _homeCdShowArchived = !_homeCdShowArchived;
+  homeCdRenderCards();
+}
+function homeCdRenderCards() {
+  var list = document.getElementById('home-cd-list');
+  if (!list) return;
+  var all = _homeCdRecords || [];
+  var archivedCount = all.filter(function(r) { return r.status === 'Restored'; }).length;
+  var btn = document.getElementById('home-cd-archive-btn');
+  if (btn) btn.textContent = _homeCdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
+  var recs = _homeCdShowArchived ? all : all.filter(function(r) { return r.status !== 'Restored'; });
+  if (!recs.length) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_homeCdShowArchived ? 'No questionnaire responses yet.' : 'No active responses — all resolved items are archived.') + '</div>';
+    return;
+  }
+  list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'homeCdToggleResolved'); }).join('');
+}
+function homeCdToggleResolved(id, key, resolved) {
+  var rec = (_homeCdRecords || []).find(function(x) { return x.id === id; });
+  if (!rec) return;
+  var newKeys = resolved
+    ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
+    : rec.restoredKeys.filter(function(k) { return k !== key; });
+  fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys: newKeys })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not update: ' + res.error); return; }
+      rec.restoredKeys = newKeys;
+      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+      homeCdUpdateTiles();
+      homeCdRenderCards();
+    })
+    .catch(function() { alert('Could not update. Please try again.'); });
 }
 function bpCdToggleArchiveView() {
   _bpCdShowArchived = !_bpCdShowArchived;

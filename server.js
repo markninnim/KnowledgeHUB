@@ -6154,38 +6154,18 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
       } catch (e) { console.error('Q4 Rate Mismatch write error:', e); }
     }
 
-    let fullCount = 0, partialCount = 0;
+    let cdFull = 0, cdPartial = 0, cdRestored = 0;
     const records = allRecords.map(rec => {
-      const f      = rec.cellValuesByFieldId || rec.fields || {};
-      const issues = cdIsPerfect(f);
-      const perfect = issues.length === 0;
-      return {
-        id:       rec.id,
-        consumer: f[CD_NAME]    || 'Unknown',
-        date:     f[CD_DATE]    || rec.createdTime,
-        nps:      f[CD_NPS]     || null,
-        comment:  f[CD_COMMENT] || '',
-        perfect,
-        issues,
-        rateMismatch: f[CD_Q4_MISMATCH] || '',
-        restoredKeys: (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean),
-        answers: {
-          q1:  f[CD_Q1]  || '',
-          q2:  f[CD_Q2]  || '',
-          q3:  f[CD_Q3]  || '',
-          q4:  f[CD_Q4]  || '',
-          q4mismatch: f[CD_Q4_MISMATCH] || '',
-          q5:  f[CD_Q5]  || '',
-          q6:  f[CD_Q6]  || '',
-          q7:  f[CD_Q7]  || '',
-          q8:  f[CD_Q8]  || '',
-          q9:  f[CD_Q9]  || '',
-          q10: f[CD_Q10] || ''
-        }
-      };
+      const f = rec.cellValuesByFieldId || rec.fields || {};
+      const status = cdRecordStatus(f);
+      if (status === 'full') cdFull++;
+      else if (status === 'restored') cdRestored++;
+      else cdPartial++;
+      return cdBuildResponseCard(rec);
     });
+    const summary = await cdBuildBrokerSummary(fullName, records);
 
-    res.json({ total: allRecords.length, records });
+    res.json({ total: allRecords.length, full: cdFull, restored: cdRestored, partial: cdPartial, records, summary });
   } catch (err) {
     console.error('consumer-duty error:', err);
     res.status(500).json({ error: err.message });
