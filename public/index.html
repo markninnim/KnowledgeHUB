@@ -1579,7 +1579,6 @@ select:focus { outline:none; }
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
         <div>
           <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Questionnaire Feedback</h2>
-          <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;max-width:640px;">Consumer Duty client questionnaire responses. Items are flagged automatically where an answer suggests a possible customer understanding or outcome issue — tick them off once you've followed up.</p>
         </div>
         <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d32;margin-right:5px;"></span>Full — no flags</span>
@@ -1588,7 +1587,7 @@ select:focus { outline:none; }
         </div>
       </div>
       <div id="cd-compliance-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-        <div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Compliance Summary</div>
+        <div id="cd-compliance-summary-title" style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Consumer Duty Summary</div>
         <div id="cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
@@ -3936,6 +3935,7 @@ Consolidating debts will increase the loan to value which can impact future deal
               </div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
+              <button id="bp-cd-archive-btn" onclick="bpCdToggleArchiveView()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:6px;">Show archived</button>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Consumer Duty Score</div>
               <div id="bp-cd-score" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;"></div>
             </div>
@@ -3957,7 +3957,7 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
             </div>
           </div>
-          <div id="bp-cd-list" style="margin-top:4px;"></div>
+          <div id="bp-cd-list" style="margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
         </div>
 
         <!-- Feefo Reviews (all — follows the page-level date filter at the top) -->
@@ -13758,6 +13758,7 @@ function resetCrForm() {
 // ── Consumer Duty — Questionnaire Feedback (supervisor/admin only) ──
 var _cdFeedback = [];
 var _bpCdRecords = [];
+var _bpCdShowArchived = false;
 function showCdFeedback(e, el) {
   if (e) e.preventDefault();
   document.getElementById('tab-sales-process').classList.remove('active');
@@ -13849,7 +13850,14 @@ function cdCardHtml(r, toggleFn) {
     + (flagsHtml ? '<div style="margin-top:8px;">' + flagsHtml + '</div>' : '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">No flagged answers.</div>')
     + '</div>';
 }
+function cdUpdateSummaryTitle() {
+  var titleEl = document.getElementById('cd-compliance-summary-title');
+  if (!titleEl) return;
+  var adviser = document.getElementById('cd-filter-adviser').value;
+  titleEl.textContent = adviser ? ('Consumer Duty Summary — for ' + adviser) : 'Consumer Duty Summary';
+}
 function cdRenderFeedback() {
+  cdUpdateSummaryTitle();
   var list = document.getElementById('cd-feedback-list');
   var filtered = cdFilteredFeedback();
   if (!filtered.length) {
@@ -13880,12 +13888,20 @@ function cdToggleResolved(id, key, resolved) {
     })
     .catch(function() { alert('Could not update. Please try again.'); loadCdFeedback(); });
 }
+function bpCdToggleArchiveView() {
+  _bpCdShowArchived = !_bpCdShowArchived;
+  bpCdRenderCards();
+}
 function bpCdRenderCards() {
   var list = document.getElementById('bp-cd-list');
   if (!list) return;
-  var recs = _bpCdRecords || [];
+  var all = _bpCdRecords || [];
+  var archivedCount = all.filter(function(r) { return r.status === 'Restored'; }).length;
+  var btn = document.getElementById('bp-cd-archive-btn');
+  if (btn) btn.textContent = _bpCdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
+  var recs = _bpCdShowArchived ? all : all.filter(function(r) { return r.status !== 'Restored'; });
   if (!recs.length) {
-    list.innerHTML = '<div style="text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">No questionnaire responses for this broker yet.</div>';
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_bpCdShowArchived ? 'No questionnaire responses for this broker yet.' : 'No active responses — all resolved items are archived.') + '</div>';
     return;
   }
   list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'bpCdToggleResolved'); }).join('');
