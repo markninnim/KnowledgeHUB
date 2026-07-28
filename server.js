@@ -6020,7 +6020,7 @@ function cdRateMismatchText(clientType, actualType) {
 // so we can tell whether every flagged question on a record has been ticked
 // as remediated ("restored") vs only some/none ("partial").
 const CD_FLAGGED_CHECKS = {
-  q1:  f => !(f[CD_Q1]  || '').trim().toLowerCase().startsWith('yes'),
+  q1:  f => { const v = (f[CD_Q1] || '').trim().toLowerCase(); return v === 'adequate' || v.includes('needs improvement'); },
   q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure',
   q4mismatch: f => !!(f[CD_Q4_MISMATCH] || '').trim(),
   q5:  f => (f[CD_Q5]  || '').trim().toLowerCase() === 'no',
@@ -6042,7 +6042,7 @@ function cdIsPerfect(f) {
   // Returns array of question labels that are unclear/need attention
   const issues = [];
   const a = k => (f[k] || '').trim();
-  if (!a(CD_Q1).toLowerCase().startsWith('yes'))                                    issues.push('Q1 Adviser Knowledge');
+  if (['adequate'].includes(a(CD_Q1).toLowerCase()) || a(CD_Q1).toLowerCase().includes('needs improvement')) issues.push('Q1 Adviser Knowledge');
   if (a(CD_Q4).toLowerCase() === 'unsure')                                          issues.push('Q4 Rate Type');
   if (a(CD_Q4_MISMATCH))                                                            issues.push('Q4 Rate Mismatch');
   if (a(CD_Q5).toLowerCase() === 'no')                                              issues.push('Q5 Future Review');
