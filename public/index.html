@@ -11606,10 +11606,8 @@ function openBrokerProfile(email, name, keepDateRange) {
           cdScoreEl.textContent = (cdScore != null ? cdScore + '%' : '—');
           cdScoreEl.style.color = (cdScore === 100) ? '#22c55e' : 'var(--brand-navy)';
         }
-        if (cdFullEl)  cdFullEl.textContent  = cd.full || 0;
-        if (cdRestEl)  cdRestEl.textContent  = cd.restored || 0;
-        if (cdPartEl)  cdPartEl.textContent  = cd.partial || 0;
         _bpCdRecords = cd.records || [];
+        bpCdUpdateTiles();
         bpCdRenderCards();
       }
 
@@ -13900,6 +13898,27 @@ function cdToggleResolved(id, key, resolved) {
     })
     .catch(function() { alert('Could not update. Please try again.'); loadCdFeedback(); });
 }
+function bpCdUpdateTiles() {
+  var recs = _bpCdRecords || [];
+  var full = 0, restored = 0, partial = 0;
+  recs.forEach(function(r) {
+    if (r.status === 'Full') full++;
+    else if (r.status === 'Restored') restored++;
+    else partial++;
+  });
+  var cdScoreEl = document.getElementById('bp-cd-score');
+  var cdFullEl  = document.getElementById('bp-cd-full-count');
+  var cdRestEl  = document.getElementById('bp-cd-restored-count');
+  var cdPartEl  = document.getElementById('bp-cd-partial-count');
+  var score = recs.length ? Math.round((full + restored) / recs.length * 100) : null;
+  if (cdScoreEl) {
+    cdScoreEl.textContent = (score != null ? score + '%' : '—');
+    cdScoreEl.style.color = (score === 100) ? '#22c55e' : 'var(--brand-navy)';
+  }
+  if (cdFullEl)  cdFullEl.textContent  = full;
+  if (cdRestEl)  cdRestEl.textContent  = restored;
+  if (cdPartEl)  cdPartEl.textContent  = partial;
+}
 function bpCdToggleArchiveView() {
   _bpCdShowArchived = !_bpCdShowArchived;
   bpCdRenderCards();
@@ -13936,6 +13955,7 @@ function bpCdToggleResolved(id, key, resolved) {
       var flaggedKeys = rec.flags.map(function(f) { return f.key; });
       var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
       rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+      bpCdUpdateTiles();
       bpCdRenderCards();
     })
     .catch(function() { alert('Could not update. Please try again.'); });
