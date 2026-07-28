@@ -5973,20 +5973,25 @@ const CD_TABLE   = 'tbl7G4xOwDvtuqUC1';
 const CD_BROKER  = 'fldGogTq21yQv6cvo';   // Broker Name
 const CD_NAME    = 'flde6kwikjYEnob0j';   // Consumer Name
 const CD_DATE    = 'fldilcNWKz6PHuNmX';   // Submitted At
-const CD_Q1      = 'fld3auyj1YzfuMZgN';   // Q1 Adviser Knowledge
-const CD_Q2      = 'fldgWcvsg4WjrWKIf';   // Q2 Report Accuracy
-const CD_Q3      = 'fldK4CFDTNapm37Wv';   // Q3 Report Walkthrough
-const CD_Q4      = 'fldt8ZfFPggBqoimR';   // Q4 Rate Type
-const CD_Q5      = 'fldrwFb1egdu0z0go';   // Q5 Future Review
-const CD_Q6      = 'fldGa0Rh5RfUotGUV';   // Q6 Home At Risk Warning
-const CD_Q7      = 'fldCEWMMswuYxQmCf';   // Q7 Protection Importance
-const CD_Q8      = 'fldwr5p7c802gejHi';   // Q8 Protection Status
-const CD_Q9      = 'fldGxipBKk94ffhax';   // Q9 Literature Clarity
-const CD_Q10     = 'fldAENiQSS9W5Dt8V';   // Q10 Support Required
+// NOTE: these constant names (CD_Q1..CD_Q10) are historical and do NOT match
+// the real Airtable field numbering one-to-one — the comments below give the
+// true field name for each. Real schema: Q1, Q2, Q2.1, Q2.2, Q3 Rate Type,
+// Q3 Rate Mismatch, Q4 Future Review, Q5 Home At Risk Warning, Q6 Protection
+// Importance, Q7 Protection Status, Q8 Literature Clarity, Q9 Support Required.
+const CD_Q1      = 'fld3auyj1YzfuMZgN';   // real: Q1 Adviser Knowledge
+const CD_Q2      = 'fldgWcvsg4WjrWKIf';   // real: Q2 Report Accuracy
+const CD_Q3      = 'fldK4CFDTNapm37Wv';   // real: Q2.2 Report Walkthrough
+const CD_Q4      = 'fldt8ZfFPggBqoimR';   // real: Q3 Rate Type
+const CD_Q5      = 'fldrwFb1egdu0z0go';   // real: Q4 Future Review
+const CD_Q6      = 'fldGa0Rh5RfUotGUV';   // real: Q5 Home At Risk Warning
+const CD_Q7      = 'fldCEWMMswuYxQmCf';   // real: Q6 Protection Importance
+const CD_Q8      = 'fldwr5p7c802gejHi';   // real: Q7 Protection Status
+const CD_Q9      = 'fldGxipBKk94ffhax';   // real: Q8 Literature Clarity
+const CD_Q10     = 'fldAENiQSS9W5Dt8V';   // real: Q9 Support Required
 const CD_NPS     = 'fldvT8olEjrbOAG52';   // NPS Rating
 const CD_COMMENT = 'fldfsuOr3P3COsXUp';   // Comment
 const CD_RESTORED_KEYS = 'fldjfQetEIQubB2u9'; // Restored Keys — comma-separated flagged question keys marked as remediated
-const CD_Q4_MISMATCH   = 'fld7XnLAiFC7EuVyM'; // Q4 Rate Mismatch — "Client said: X | Record shows: Y" when Q4's answer disagrees with the Suitability Step's actual product type
+const CD_Q4_MISMATCH   = 'fld7XnLAiFC7EuVyM'; // real: Q3 Rate Mismatch (computed) — "Client said: X | Record shows: Y" when Q3 Rate Type disagrees with the Suitability Step's actual product type
 const CD_BROKER_EMAIL  = 'fldihFqVOuFxEzyuK'; // Broker email — used to scope the supervisor/admin-facing Questionnaire Feedback page
 
 // Suitability Step table — holds the actual, on-record rate type (Fixed/Variable/SVR)
@@ -6019,17 +6024,22 @@ function cdRateMismatchText(clientType, actualType) {
 // Flagged-question detector per key (mirrors cdIsPerfect's per-question checks)
 // so we can tell whether every flagged question on a record has been ticked
 // as remediated ("restored") vs only some/none ("partial").
+// Keys here are historical (kept stable because "Restored Keys" values already
+// persisted in Airtable reference them) — see the CD_Q* comments above for
+// what real question each key actually checks.
 const CD_FLAGGED_CHECKS = {
-  q1:  f => { const v = (f[CD_Q1] || '').trim().toLowerCase(); return v === 'adequate' || v.includes('needs improvement'); },
-  q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure',
-  q4mismatch: f => !!(f[CD_Q4_MISMATCH] || '').trim(),
-  q5:  f => (f[CD_Q5]  || '').trim().toLowerCase() === 'no',
-  q6:  f => (f[CD_Q6]  || '').trim().toLowerCase() === 'no',
-  q7:  f => (f[CD_Q7]  || '').trim().toLowerCase() === 'no',
-  q9:  f => (f[CD_Q9]  || '').trim().toLowerCase() === 'unclear',
-  q10: f => (f[CD_Q10] || '').trim().toLowerCase().includes('did not receive adequate'),
-  q3:  f => { const v = (f[CD_Q3] || '').trim().toLowerCase(); return v.includes("i'd like") || v.includes('call me'); },
-  q8:  f => (f[CD_Q8]  || '').trim().toLowerCase().includes('would like to discuss')
+  q1:  f => { const v = (f[CD_Q1] || '').trim().toLowerCase(); return v === 'adequate' || v.includes('needs improvement'); }, // Q1 Adviser Knowledge
+  q2:  f => !(f[CD_Q2] || '').trim().toLowerCase().startsWith('yes'), // Q2 Report Accuracy — client didn't find it clear/accurate
+  q3:  f => { const v = (f[CD_Q3] || '').trim().toLowerCase(); return v.includes("i'd like") || v.includes('call me'); }, // Q2.2 Report Walkthrough — walkthrough requested
+  q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure', // Q3 Rate Type — client unsure
+  q3selfmismatch: f => (f[CD_Q4] || '').trim().toLowerCase() === 'mismatch', // Q3 Rate Type — client self-reports a mismatch
+  q4mismatch: f => !!(f[CD_Q4_MISMATCH] || '').trim(), // Q3 Rate Mismatch (computed) — disagrees with Suitability Step records
+  q7:  f => (f[CD_Q7]  || '').trim().toLowerCase() === 'no', // Q6 Protection Importance
+  q8:  f => (f[CD_Q8]  || '').trim().toLowerCase().includes('would like to discuss'), // Q7 Protection Status
+  q9:  f => (f[CD_Q9]  || '').trim().toLowerCase() === 'unclear', // Q8 Literature Clarity
+  q10: f => (f[CD_Q10] || '').trim().toLowerCase().includes('did not receive adequate'), // Q9 Support Required
+  nps: f => typeof f[CD_NPS] === 'number' && f[CD_NPS] <= 6 // NPS Rating — 6 or below
+  // Q4 Future Review and Q5 Home At Risk Warning are intentionally never flagged.
 };
 function cdRecordStatus(f) {
   const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
@@ -6059,10 +6069,17 @@ function cdIsPerfect(f) {
 // Feedback page, so a "flag" means the same thing and looks the same
 // everywhere in the app.
 const CD_QUESTION_LABELS = {
-  q1: 'Q1 Adviser Knowledge', q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
-  q5: 'Q5 Future Review', q6: 'Q6 Home At Risk Warning', q7: 'Q7 Protection Importance',
-  q9: 'Q9 Literature Clarity', q10: 'Q10 Support Required', q3: 'Q3 Walkthrough Requested',
-  q8: 'Q8 Protection Discussion'
+  q1: 'Q1 Adviser Knowledge',
+  q2: 'Q2 Report Accuracy',
+  q3: 'Q2.2 Walkthrough Requested',
+  q4: 'Q3 Rate Type (Unsure)',
+  q3selfmismatch: 'Q3 Rate Type (Client Reported Mismatch)',
+  q4mismatch: 'Q3 Rate Mismatch (Computed)',
+  q7: 'Q6 Protection Importance',
+  q8: 'Q7 Protection Discussion',
+  q9: 'Q8 Literature Clarity',
+  q10: 'Q9 Support Required',
+  nps: 'NPS Rating'
 };
 // hideKeys lets a caller keep a flag counted toward the record's Full/
 // Restored/Partial status (e.g. Q1 Adviser Knowledge) while excluding it
@@ -6075,8 +6092,9 @@ function cdBuildResponseCard(rec, opts) {
   const visibleFlaggedKeys = flaggedKeys.filter(k => !hideKeys.includes(k));
   const restoredKeys = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
   const CD_ANSWER_BY_KEY = {
-    q1: f[CD_Q1], q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
-    q7: f[CD_Q7], q9: f[CD_Q9], q10: f[CD_Q10], q3: f[CD_Q3], q8: f[CD_Q8]
+    q1: f[CD_Q1], q2: f[CD_Q2], q3: f[CD_Q3], q4: f[CD_Q4], q3selfmismatch: f[CD_Q4],
+    q4mismatch: f[CD_Q4_MISMATCH], q7: f[CD_Q7], q8: f[CD_Q8], q9: f[CD_Q9], q10: f[CD_Q10],
+    nps: typeof f[CD_NPS] === 'number' ? String(f[CD_NPS]) : ''
   };
   const statusRaw = cdRecordStatus(f);
   return {
