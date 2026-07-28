@@ -3957,10 +3957,7 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
             </div>
           </div>
-          <button id="bp-cd-recent-label" onclick="var l=document.getElementById('bp-cd-recent');var open=l.style.display!=='none';l.style.display=open?'none':'flex';this.querySelector('.arr').textContent=open?'▸':'▾';" style="display:none;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;padding:0;width:100%;text-align:left;">
-            <span class="arr">▸</span> Recent Responses
-          </button>
-          <div id="bp-cd-recent" style="display:none;flex-direction:column;gap:0;margin-top:10px;"></div>
+          <div id="bp-cd-list" style="margin-top:4px;"></div>
         </div>
 
         <!-- Feefo Reviews (all — follows the page-level date filter at the top) -->
@@ -11611,25 +11608,8 @@ function openBrokerProfile(email, name, keepDateRange) {
         if (cdFullEl)  cdFullEl.textContent  = cd.full || 0;
         if (cdRestEl)  cdRestEl.textContent  = cd.restored || 0;
         if (cdPartEl)  cdPartEl.textContent  = cd.partial || 0;
-        // Recent responses list
-        var recs = cd.records || [];
-        var recentEl = document.getElementById('bp-cd-recent');
-        var recentLabel = document.getElementById('bp-cd-recent-label');
-        if (recs.length && recentEl) {
-          if (recentLabel) recentLabel.style.display = 'flex';
-          recentEl.innerHTML = recs.map(function(r) {
-            var dateStr = r.date ? new Date(r.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '';
-            var statusColor = r.perfect ? '#22c55e' : '#b91c1c';
-            var statusLabel = r.perfect ? 'Full Understanding' : 'Partial';
-            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f4f8;">' +
-              '<div>' +
-                '<div style="font-size:13px;font-weight:600;color:#6b7c8f;">' + escHtml(r.consumer || 'Unknown') + '</div>' +
-                (dateStr ? '<div style="font-size:11px;color:#6b7c8f;">' + dateStr + '</div>' : '') +
-              '</div>' +
-              '<span style="background:' + (r.perfect?'#f0fdf4':'#fef2f2') + ';color:' + statusColor + ';border:1px solid ' + (r.perfect?'#bbf7d0':'#fecaca') + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;">' + statusLabel + '</span>' +
-            '</div>';
-          }).join('');
-        }
+        _bpCdRecords = cd.records || [];
+        bpCdRenderCards();
       }
 
       // ── Test Results — the 4 named induction knowledge tests, title + score ──
@@ -13777,6 +13757,7 @@ function resetCrForm() {
 
 // ── Consumer Duty — Questionnaire Feedback (supervisor/admin only) ──
 var _cdFeedback = [];
+var _bpCdRecords = [];
 function showCdFeedback(e, el) {
   if (e) e.preventDefault();
   document.getElementById('tab-sales-process').classList.remove('active');
@@ -13849,6 +13830,25 @@ function cdStatusPill(status) {
   return '<span style="display:inline-flex;align-items:center;gap:5px;background:' + (bg[status] || '#f5f7fa') + ';color:' + c + ';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;">'
     + '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';"></span>' + status + '</span>';
 }
+function cdCardHtml(r, toggleFn) {
+  var dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
+  var flagsHtml = r.flags.length ? r.flags.map(function(f) {
+    var resolved = r.restoredKeys.indexOf(f.key) !== -1;
+    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #f0f4f8;">'
+      + '<input type="checkbox" ' + (resolved ? 'checked' : '') + ' onchange="' + toggleFn + '(\'' + r.id + '\',\'' + f.key + '\',this.checked)" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;">'
+      + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : '#c0392b') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
+      + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
+  }).join('') : '';
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">'
+    + '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(r.clientName) + '</div>'
+    + '<div style="font-size:12px;color:#6b7c8f;">Adviser: ' + escHtml(r.adviserName) + ' &middot; ' + dateStr + '</div></div>'
+    + '<div style="display:flex;align-items:center;gap:10px;">' + (r.nps !== null ? '<span style="font-size:12px;color:#6b7c8f;">NPS <strong style="color:var(--brand-navy);">' + r.nps + '</strong></span>' : '') + cdStatusPill(r.status) + '</div>'
+    + '</div>'
+    + (r.comment ? '<div style="font-size:12.5px;color:#6b7c8f;font-style:italic;margin:6px 0 0;">&ldquo;' + escHtml(r.comment) + '&rdquo;</div>' : '')
+    + (flagsHtml ? '<div style="margin-top:8px;">' + flagsHtml + '</div>' : '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">No flagged answers.</div>')
+    + '</div>';
+}
 function cdRenderFeedback() {
   var list = document.getElementById('cd-feedback-list');
   var filtered = cdFilteredFeedback();
@@ -13856,25 +13856,7 @@ function cdRenderFeedback() {
     list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6b7c8f;font-size:13px;">No responses match the selected filters.</div>';
     return;
   }
-  list.innerHTML = filtered.map(function(r) {
-    var dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
-    var flagsHtml = r.flags.length ? r.flags.map(function(f) {
-      var resolved = r.restoredKeys.indexOf(f.key) !== -1;
-      return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #f0f4f8;">'
-        + '<input type="checkbox" ' + (resolved ? 'checked' : '') + ' onchange="cdToggleResolved(\'' + r.id + '\',\'' + f.key + '\',this.checked)" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;">'
-        + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : '#c0392b') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
-        + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
-    }).join('') : '';
-    return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:18px 20px;margin-bottom:14px;">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">'
-      + '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(r.clientName) + '</div>'
-      + '<div style="font-size:12px;color:#6b7c8f;">Adviser: ' + escHtml(r.adviserName) + ' &middot; ' + dateStr + '</div></div>'
-      + '<div style="display:flex;align-items:center;gap:10px;">' + (r.nps !== null ? '<span style="font-size:12px;color:#6b7c8f;">NPS <strong style="color:var(--brand-navy);">' + r.nps + '</strong></span>' : '') + cdStatusPill(r.status) + '</div>'
-      + '</div>'
-      + (r.comment ? '<div style="font-size:12.5px;color:#6b7c8f;font-style:italic;margin:6px 0 0;">&ldquo;' + escHtml(r.comment) + '&rdquo;</div>' : '')
-      + (flagsHtml ? '<div style="margin-top:8px;">' + flagsHtml + '</div>' : '<div style="font-size:12px;color:#2e7d32;margin-top:8px;">No flagged answers.</div>')
-      + '</div>';
-  }).join('');
+  list.innerHTML = filtered.map(function(r) { return cdCardHtml(r, 'cdToggleResolved'); }).join('');
 }
 function cdToggleResolved(id, key, resolved) {
   var rec = _cdFeedback.find(function(x) { return x.id === id; });
@@ -13897,6 +13879,38 @@ function cdToggleResolved(id, key, resolved) {
       cdRenderFeedback();
     })
     .catch(function() { alert('Could not update. Please try again.'); loadCdFeedback(); });
+}
+function bpCdRenderCards() {
+  var list = document.getElementById('bp-cd-list');
+  if (!list) return;
+  var recs = _bpCdRecords || [];
+  if (!recs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">No questionnaire responses for this broker yet.</div>';
+    return;
+  }
+  list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'bpCdToggleResolved'); }).join('');
+}
+function bpCdToggleResolved(id, key, resolved) {
+  var rec = (_bpCdRecords || []).find(function(x) { return x.id === id; });
+  if (!rec) return;
+  var newKeys = resolved
+    ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
+    : rec.restoredKeys.filter(function(k) { return k !== key; });
+  fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys: newKeys })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not update: ' + res.error); return; }
+      rec.restoredKeys = newKeys;
+      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+      bpCdRenderCards();
+    })
+    .catch(function() { alert('Could not update. Please try again.'); });
 }
 
 function submitCrForm() {

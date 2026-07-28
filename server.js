@@ -6055,6 +6055,38 @@ function cdIsPerfect(f) {
   return issues;
 }
 
+// Shared question labels + per-record card shape used both by the personal/
+// broker-profile Consumer Duty view and the supervisor/admin Questionnaire
+// Feedback page, so a "flag" means the same thing and looks the same
+// everywhere in the app.
+const CD_QUESTION_LABELS = {
+  q1: 'Q1 Adviser Knowledge', q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
+  q5: 'Q5 Future Review', q6: 'Q6 Home At Risk Warning', q7: 'Q7 Protection Importance',
+  q9: 'Q9 Literature Clarity', q10: 'Q10 Support Required', q3: 'Q3 Walkthrough Requested',
+  q8: 'Q8 Protection Discussion'
+};
+function cdBuildResponseCard(rec) {
+  const f = rec.cellValuesByFieldId || rec.fields || {};
+  const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
+  const restoredKeys = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
+  const CD_ANSWER_BY_KEY = {
+    q1: f[CD_Q1], q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
+    q7: f[CD_Q7], q9: f[CD_Q9], q10: f[CD_Q10], q3: f[CD_Q3], q8: f[CD_Q8]
+  };
+  const statusRaw = cdRecordStatus(f);
+  return {
+    id: rec.id,
+    clientName: f[CD_NAME] || 'Unknown',
+    adviserName: f[CD_BROKER] || '',
+    submittedAt: f[CD_DATE] || rec.createdTime,
+    nps: typeof f[CD_NPS] === 'number' ? f[CD_NPS] : null,
+    comment: f[CD_COMMENT] || '',
+    restoredKeys,
+    status: statusRaw === 'full' ? 'Full' : statusRaw === 'restored' ? 'Restored' : 'Partial',
+    flags: flaggedKeys.map(k => ({ key: k, label: CD_QUESTION_LABELS[k] || k, answer: CD_ANSWER_BY_KEY[k] || '' }))
+  };
+}
+
 app.get('/api/consumer-duty', requireAuth, async (req, res) => {
   try {
     const user     = req.session.user;
@@ -6412,13 +6444,11 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     let cdFull = 0, cdPartial = 0, cdRestored = 0;
     const cdRecords = cdRecs.map(rec => {
       const f = rec.cellValuesByFieldId || rec.fields || {};
-      const issues  = cdIsPerfect(f);
-      const perfect = issues.length === 0;
-      const status  = cdRecordStatus(f);
+      const status = cdRecordStatus(f);
       if (status === 'full') cdFull++;
       else if (status === 'restored') cdRestored++;
       else cdPartial++;
-      return { consumer: f[CD_NAME] || 'Unknown', date: f[CD_DATE] || rec.createdTime, perfect, issues, status };
+      return cdBuildResponseCard(rec);
     });
 
     // Process Revalidation — returnFieldsByFieldId=true → data is in rec.fields
@@ -6559,7 +6589,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews, rank: feefoRank, totalAdvisers: feefoTotalAdvisers },
-      consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 10) },
+      consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 20) },
       quiz:          quizResults,
       knowledgeTests: knowledgeTests,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
@@ -7079,39 +7109,13 @@ app.get('/api/consumer-duty-feedback', requireAuth, async (req, res) => {
       offset = body.offset || '';
     } while (offset);
 
-    const CD_QUESTION_LABELS = {
-      q1: 'Q1 Adviser Knowledge', q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
-      q5: 'Q5 Future Review', q6: 'Q6 Home At Risk Warning', q7: 'Q7 Protection Importance',
-      q9: 'Q9 Literature Clarity', q10: 'Q10 Support Required', q3: 'Q3 Walkthrough Requested',
-      q8: 'Q8 Protection Discussion'
-    };
-
     const responses = allRecords
       .filter(rec => {
         if (!allowedEmails) return true;
         const f = rec.cellValuesByFieldId || rec.fields || {};
         return allowedEmails.indexOf((f[CD_BROKER_EMAIL] || '').toLowerCase()) !== -1;
       })
-      .map(rec => {
-        const f = rec.cellValuesByFieldId || rec.fields || {};
-        const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
-        const restoredKeys = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
-        const CD_ANSWER_BY_KEY = {
-          q1: f[CD_Q1], q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
-          q7: f[CD_Q7], q9: f[CD_Q9], q10: f[CD_Q10], q3: f[CD_Q3], q8: f[CD_Q8]
-        };
-        return {
-          id: rec.id,
-          clientName: f[CD_NAME] || 'Unknown',
-          adviserName: f[CD_BROKER] || '',
-          submittedAt: f[CD_DATE] || rec.createdTime,
-          nps: typeof f[CD_NPS] === 'number' ? f[CD_NPS] : null,
-          comment: f[CD_COMMENT] || '',
-          restoredKeys,
-          status: cdRecordStatus(f) === 'full' ? 'Full' : cdRecordStatus(f) === 'restored' ? 'Restored' : 'Partial',
-          flags: flaggedKeys.map(k => ({ key: k, label: CD_QUESTION_LABELS[k] || k, answer: CD_ANSWER_BY_KEY[k] || '' }))
-        };
-      });
+      .map(rec => cdBuildResponseCard(rec));
 
     const summary = await cdBuildComplianceSummary(responses, caller.isAdmin);
     res.json({ responses, summary });
