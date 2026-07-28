@@ -7113,12 +7113,79 @@ app.get('/api/consumer-duty-feedback', requireAuth, async (req, res) => {
         };
       });
 
-    res.json({ responses });
+    const summary = await cdBuildComplianceSummary(responses, caller.isAdmin);
+    res.json({ responses, summary });
   } catch (err) {
     console.error('consumer-duty-feedback GET error:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+// Builds a permanent, AI-written compliance summary from the Questionnaire
+// Feedback data currently visible to the caller — aggregating per-adviser
+// stats (flag rate, NPS, outstanding items) against the group average, and
+// asking Claude to write it up the way a compliance analyst would: trends,
+// individuals worth a closer look, nothing alarmist about normal variance.
+async function cdBuildComplianceSummary(responses, isCompanyWide) {
+  if (!responses.length) return '';
+  const byAdviser = {};
+  responses.forEach(r => {
+    const name = r.adviserName || 'Unknown';
+    if (!byAdviser[name]) byAdviser[name] = { total: 0, flagged: 0, flagCounts: {}, npsSum: 0, npsCount: 0, partial: 0 };
+    const a = byAdviser[name];
+    a.total++;
+    if (r.flags.length) a.flagged++;
+    r.flags.forEach(f => { a.flagCounts[f.label] = (a.flagCounts[f.label] || 0) + 1; });
+    if (typeof r.nps === 'number') { a.npsSum += r.nps; a.npsCount++; }
+    if (r.status === 'Partial') a.partial++;
+  });
+
+  const advisers = Object.keys(byAdviser);
+  const totalResponses = responses.length;
+  const totalFlagged = responses.filter(r => r.flags.length).length;
+  const companyFlagRate = totalResponses ? Math.round((totalFlagged / totalResponses) * 100) : 0;
+
+  const companyFlagCounts = {};
+  responses.forEach(r => r.flags.forEach(f => { companyFlagCounts[f.label] = (companyFlagCounts[f.label] || 0) + 1; }));
+
+  const lines = advisers.map(name => {
+    const a = byAdviser[name];
+    const flagRate = a.total ? Math.round((a.flagged / a.total) * 100) : 0;
+    const avgNps = a.npsCount ? (a.npsSum / a.npsCount).toFixed(1) : 'n/a';
+    const topFlags = Object.entries(a.flagCounts).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([k, v]) => `${k} (${v})`).join(', ') || 'none';
+    return `${name}: ${a.total} responses, ${flagRate}% flagged (group avg ${companyFlagRate}%), avg NPS ${avgNps}, ${a.partial} outstanding partial, top flags: ${topFlags}`;
+  }).join('\n');
+
+  const topCompanyFlags = Object.entries(companyFlagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') || 'none';
+
+  if (!ANTHROPIC_API_KEY) {
+    return `${totalResponses} responses across ${advisers.length} adviser(s), ${companyFlagRate}% flagged overall. Most common flags: ${topCompanyFlags}.`;
+  }
+
+  try {
+    const scopeLabel = isCompanyWide ? 'the whole company' : 'this supervisor\'s team';
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 500,
+        system: 'You are writing a short, permanent compliance summary for a UK mortgage/protection firm\'s Consumer Duty questionnaire feedback page, in the voice of a compliance analyst briefing a supervisor. '
+          + 'You are given per-adviser stats (flagged response rate, average NPS, outstanding "partial" items, most common flag types) plus company/team-wide averages and the most common flag types overall. '
+          + 'Write 2-4 sentences of flowing prose (no bullet points, no headers). Compare individuals to the group average by name only where a real, meaningful difference exists (e.g. notably higher flag rate or lower NPS) — do not call out every adviser individually or fabricate concerns where numbers are close to average. '
+          + 'Note any flag type that recurs across multiple advisers as a possible systemic/training issue worth the team\'s attention. '
+          + 'Keep the tone measured and factual, not alarmist — normal variance is normal. Do not invent data not given to you.',
+        messages: [{ role: 'user', content: `Scope: ${scopeLabel}.\nCompany/team flag rate: ${companyFlagRate}% (${totalFlagged}/${totalResponses}).\nMost common flags overall: ${topCompanyFlags}.\n\nPer-adviser breakdown:\n${lines}` }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    return (data.content && data.content[0] && data.content[0].text) || '';
+  } catch (e) {
+    console.error('cdBuildComplianceSummary AI error:', e);
+    return `${totalResponses} responses across ${advisers.length} adviser(s), ${companyFlagRate}% flagged overall. Most common flags: ${topCompanyFlags}.`;
+  }
+}
 
 // GET /api/advisor-dashboard-notes?email=... — list all quarterly notes for
 // an adviser, newest first. Supervisor/admin only.

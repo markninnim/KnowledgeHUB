@@ -1587,6 +1587,10 @@ select:focus { outline:none; }
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#c0392b;margin-right:5px;"></span>Partial — flags outstanding</span>
         </div>
       </div>
+      <div id="cd-compliance-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Compliance Summary</div>
+        <div id="cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
+      </div>
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
@@ -13792,17 +13796,20 @@ function loadCdFeedback() {
   loading.style.display = '';
   empty.style.display = 'none';
   list.innerHTML = '';
+  document.getElementById('cd-compliance-summary-text').textContent = 'Loading…';
   fetch('/api/consumer-duty-feedback')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       loading.style.display = 'none';
       _cdFeedback = data.responses || [];
+      document.getElementById('cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
       cdPopulateAdviserFilter();
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
       cdRenderFeedback();
     })
     .catch(function() {
       loading.style.display = 'none';
+      document.getElementById('cd-compliance-summary-text').textContent = 'Could not load summary.';
       list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback. Please try again.</div>';
     });
 }
