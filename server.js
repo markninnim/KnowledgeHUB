@@ -6448,6 +6448,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       else cdPartial++;
       return cdBuildResponseCard(rec);
     });
+    const cdSummary = await cdBuildBrokerSummary(fullName, cdRecords);
 
     // Process Revalidation — returnFieldsByFieldId=true → data is in rec.fields
     const quizResults = rvRecs.map(rec => {
@@ -6587,7 +6588,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews, rank: feefoRank, totalAdvisers: feefoTotalAdvisers },
-      consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 20) },
+      consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 20), summary: cdSummary },
       quiz:          quizResults,
       knowledgeTests: knowledgeTests,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
@@ -7186,6 +7187,46 @@ async function cdBuildComplianceSummary(responses, isCompanyWide) {
   } catch (e) {
     console.error('cdBuildComplianceSummary AI error:', e);
     return `${totalResponses} responses across ${advisers.length} adviser(s), ${companyFlagRate}% flagged overall. Most common flags: ${topCompanyFlags}.`;
+  }
+}
+
+// Single-adviser Consumer Duty summary — used on the Broker Profile page's
+// Consumer Duty card header. Not comparative (one adviser only); highlights
+// their own trends/recurring flags/outstanding items for a supervisor.
+async function cdBuildBrokerSummary(brokerName, records) {
+  if (!records.length) return '';
+  const total = records.length;
+  const flagged = records.filter(r => r.flags.length).length;
+  const flagRate = Math.round((flagged / total) * 100);
+  const npsVals = records.filter(r => typeof r.nps === 'number').map(r => r.nps);
+  const avgNps = npsVals.length ? (npsVals.reduce((a, b) => a + b, 0) / npsVals.length).toFixed(1) : 'n/a';
+  const partial = records.filter(r => r.status === 'Partial').length;
+  const flagCounts = {};
+  records.forEach(r => r.flags.forEach(f => { flagCounts[f.label] = (flagCounts[f.label] || 0) + 1; }));
+  const topFlags = Object.entries(flagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') || 'none';
+  const fallback = `${total} response(s), ${flagRate}% flagged, avg NPS ${avgNps}, ${partial} outstanding partial item(s). Most common flags: ${topFlags}.`;
+
+  if (!ANTHROPIC_API_KEY) return fallback;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 300,
+        system: 'You are a compliance analyst at a UK mortgage/protection firm writing a short, permanent summary of ONE adviser\'s Consumer Duty client questionnaire history, for their supervisor. '
+          + 'Write 2-3 sentences of flowing prose (no bullet points, no headers). Highlight any recurring flag types, outstanding partial items needing follow-up, or notable NPS trends. '
+          + 'Keep the tone measured and factual, not alarmist. Do not invent data not given to you.',
+        messages: [{ role: 'user', content: `Adviser: ${brokerName}\nTotal responses: ${total}\nFlagged rate: ${flagRate}%\nAverage NPS: ${avgNps}\nOutstanding partial items: ${partial}\nMost common flags: ${topFlags}` }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    return (data.content && data.content[0] && data.content[0].text) || fallback;
+  } catch (e) {
+    console.error('cdBuildBrokerSummary AI error:', e);
+    return fallback;
   }
 }
 
