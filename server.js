@@ -6020,6 +6020,7 @@ function cdRateMismatchText(clientType, actualType) {
 // so we can tell whether every flagged question on a record has been ticked
 // as remediated ("restored") vs only some/none ("partial").
 const CD_FLAGGED_CHECKS = {
+  q1:  f => { const v = (f[CD_Q1] || '').trim().toLowerCase(); return v === 'adequate' || v.includes('needs improvement'); },
   q4:  f => (f[CD_Q4]  || '').trim().toLowerCase() === 'unsure',
   q4mismatch: f => !!(f[CD_Q4_MISMATCH] || '').trim(),
   q5:  f => (f[CD_Q5]  || '').trim().toLowerCase() === 'no',
@@ -6058,17 +6059,23 @@ function cdIsPerfect(f) {
 // Feedback page, so a "flag" means the same thing and looks the same
 // everywhere in the app.
 const CD_QUESTION_LABELS = {
-  q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
+  q1: 'Q1 Adviser Knowledge', q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
   q5: 'Q5 Future Review', q6: 'Q6 Home At Risk Warning', q7: 'Q7 Protection Importance',
   q9: 'Q9 Literature Clarity', q10: 'Q10 Support Required', q3: 'Q3 Walkthrough Requested',
   q8: 'Q8 Protection Discussion'
 };
-function cdBuildResponseCard(rec) {
+// hideKeys lets a caller keep a flag counted toward the record's Full/
+// Restored/Partial status (e.g. Q1 Adviser Knowledge) while excluding it
+// from the visible "flags" list on broker-facing cards — Q1 is an internal
+// compliance signal that should never be shown to the adviser themselves.
+function cdBuildResponseCard(rec, opts) {
+  const hideKeys = (opts && opts.hideKeys) || [];
   const f = rec.cellValuesByFieldId || rec.fields || {};
   const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
+  const visibleFlaggedKeys = flaggedKeys.filter(k => !hideKeys.includes(k));
   const restoredKeys = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
   const CD_ANSWER_BY_KEY = {
-    q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
+    q1: f[CD_Q1], q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
     q7: f[CD_Q7], q9: f[CD_Q9], q10: f[CD_Q10], q3: f[CD_Q3], q8: f[CD_Q8]
   };
   const statusRaw = cdRecordStatus(f);
@@ -6081,7 +6088,7 @@ function cdBuildResponseCard(rec) {
     comment: f[CD_COMMENT] || '',
     restoredKeys,
     status: statusRaw === 'full' ? 'Full' : statusRaw === 'restored' ? 'Restored' : 'Partial',
-    flags: flaggedKeys.map(k => ({ key: k, label: CD_QUESTION_LABELS[k] || k, answer: CD_ANSWER_BY_KEY[k] || '' }))
+    flags: visibleFlaggedKeys.map(k => ({ key: k, label: CD_QUESTION_LABELS[k] || k, answer: CD_ANSWER_BY_KEY[k] || '' }))
   };
 }
 
@@ -6161,7 +6168,7 @@ app.get('/api/consumer-duty', requireAuth, async (req, res) => {
       if (status === 'full') cdFull++;
       else if (status === 'restored') cdRestored++;
       else cdPartial++;
-      return cdBuildResponseCard(rec);
+      return cdBuildResponseCard(rec, { hideKeys: ['q1'] });
     });
     const summary = await cdBuildBrokerSummary(fullName, records);
 
