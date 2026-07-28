@@ -666,24 +666,23 @@ select:focus { outline:none; }
             <div id="home-cd-summary" style="font-size:12px;color:#6b7c8f;line-height:1.5;">Loading summary…</div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <button id="home-cd-archive-btn" onclick="homeCdToggleArchiveView()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:6px;">Show archived</button>
             <div style="font-size:11px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Consumer Duty Score</div>
             <div id="home-cd-pct" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;"></div>
           </div>
         </div>
         <!-- Stat tiles -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+          <div id="home-cd-tile-Full" onclick="homeCdFilterByStatus('Full')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
             <div id="home-cd-full-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
             <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Full Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
           </div>
-          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+          <div id="home-cd-tile-Restored" onclick="homeCdFilterByStatus('Restored')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
             <div id="home-cd-restored-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;">0</div>
             <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Understanding Restored</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
           </div>
-          <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+          <div id="home-cd-tile-Partial" onclick="homeCdFilterByStatus('Partial')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
             <div id="home-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
             <div style="font-size:12px;font-weight:600;color:#b91c1c;">Partial Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
@@ -1594,10 +1593,10 @@ select:focus { outline:none; }
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
           <select id="cd-filter-status" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:150px;">
-            <option value="">All statuses</option>
+            <option value="Partial">Partial (default)</option>
             <option value="Full">Full</option>
             <option value="Restored">Restored</option>
-            <option value="Partial">Partial</option>
+            <option value="all">All statuses</option>
           </select>
         </div>
         <div>
@@ -1609,7 +1608,6 @@ select:focus { outline:none; }
           <input id="cd-filter-to" type="date" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
         </div>
         <button onclick="cdClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
-        <button id="cd-archive-btn" onclick="cdToggleArchiveView()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Show archived</button>
       </div>
       <div id="cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
@@ -3934,7 +3932,6 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div id="bp-cd-summary" style="font-size:12px;color:#6b7c8f;line-height:1.5;">Loading summary…</div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
-              <button id="bp-cd-archive-btn" onclick="bpCdToggleArchiveView()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:6px;">Show archived</button>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Consumer Duty Score</div>
               <div id="bp-cd-score" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;"></div>
             </div>
@@ -11423,7 +11420,6 @@ function openBrokerProfile(email, name, keepDateRange) {
   _bpCurrentEmail = email;
   _bpCurrentName = name;
   _bpCdStatusFilter = null;
-  _bpCdShowArchived = false;
 
   var fromInput = document.getElementById('bp-date-from');
   var toInput   = document.getElementById('bp-date-to');
@@ -13768,12 +13764,10 @@ function resetCrForm() {
 
 // ── Consumer Duty — Questionnaire Feedback (supervisor/admin only) ──
 var _cdFeedback = [];
-var _cdShowArchived = false;
 var _bpCdRecords = [];
-var _bpCdShowArchived = false;
 var _bpCdStatusFilter = null;
 var _homeCdRecords = [];
-var _homeCdShowArchived = false;
+var _homeCdStatusFilter = null;
 function showCdFeedback(e, el) {
   if (e) e.preventDefault();
   document.getElementById('tab-sales-process').classList.remove('active');
@@ -13821,7 +13815,7 @@ function cdPopulateAdviserFilter() {
 }
 function cdClearFilters() {
   document.getElementById('cd-filter-adviser').value = '';
-  document.getElementById('cd-filter-status').value = '';
+  document.getElementById('cd-filter-status').value = 'Partial';
   document.getElementById('cd-filter-from').value = '';
   document.getElementById('cd-filter-to').value = '';
   cdRenderFeedback();
@@ -13832,8 +13826,7 @@ function cdFilteredFeedback() {
   var from = document.getElementById('cd-filter-from').value;
   var to = document.getElementById('cd-filter-to').value;
   return _cdFeedback.filter(function(r) {
-    if (status) { if (r.status !== status) return false; }
-    else if (!_cdShowArchived && r.status === 'Restored') return false;
+    if (status && status !== 'all' && r.status !== status) return false;
     if (adviser && r.adviserName !== adviser) return false;
     if (r.submittedAt) {
       var d = r.submittedAt.slice(0, 10);
@@ -13842,10 +13835,6 @@ function cdFilteredFeedback() {
     }
     return true;
   });
-}
-function cdToggleArchiveView() {
-  _cdShowArchived = !_cdShowArchived;
-  cdRenderFeedback();
 }
 function cdStatusPill(status) {
   var colors = { Full: '#2e7d32', Restored: '#e67e22', Partial: '#c0392b' };
@@ -13891,11 +13880,6 @@ function cdUpdateSummaryTitle() {
 }
 function cdRenderFeedback() {
   cdUpdateSummaryTitle();
-  var archiveBtn = document.getElementById('cd-archive-btn');
-  if (archiveBtn) {
-    var archivedCount = _cdFeedback.filter(function(r) { return r.status === 'Restored'; }).length;
-    archiveBtn.textContent = _cdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
-  }
   var list = document.getElementById('cd-feedback-list');
   var filtered = cdFilteredFeedback();
   if (!filtered.length) {
@@ -13968,20 +13952,28 @@ function homeCdUpdateTiles() {
   if (restEl) restEl.textContent = restored;
   if (partEl) partEl.textContent = partial;
 }
-function homeCdToggleArchiveView() {
-  _homeCdShowArchived = !_homeCdShowArchived;
+function homeCdFilterByStatus(status) {
+  _homeCdStatusFilter = (_homeCdStatusFilter === status) ? null : status;
   homeCdRenderCards();
 }
 function homeCdRenderCards() {
   var list = document.getElementById('home-cd-list');
   if (!list) return;
   var all = _homeCdRecords || [];
-  var archivedCount = all.filter(function(r) { return r.status === 'Restored'; }).length;
-  var btn = document.getElementById('home-cd-archive-btn');
-  if (btn) btn.textContent = _homeCdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
-  var recs = _homeCdShowArchived ? all : all.filter(function(r) { return r.status !== 'Restored'; });
+  var activeStatus = _homeCdStatusFilter || 'Partial';
+
+  ['Full', 'Restored', 'Partial'].forEach(function(s) {
+    var tile = document.getElementById('home-cd-tile-' + s);
+    if (!tile) return;
+    var active = activeStatus === s;
+    var col = s === 'Partial' ? '#b91c1c' : s === 'Restored' ? '#f59e0b' : 'var(--brand-navy)';
+    tile.style.borderColor = active ? col : '#d1d5db';
+    tile.style.boxShadow = active ? '0 0 0 3px rgba(0,0,0,.06)' : '';
+  });
+
+  var recs = all.filter(function(r) { return r.status === activeStatus; });
   if (!recs.length) {
-    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_homeCdShowArchived ? 'No questionnaire responses yet.' : 'No active responses — all resolved items are archived.') + '</div>';
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">No ' + activeStatus.toLowerCase() + ' responses.</div>';
     return;
   }
   list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'homeCdToggleResolved'); }).join('');
@@ -14009,10 +14001,6 @@ function homeCdToggleResolved(id, key, resolved) {
     })
     .catch(function() { alert('Could not update. Please try again.'); });
 }
-function bpCdToggleArchiveView() {
-  _bpCdShowArchived = !_bpCdShowArchived;
-  bpCdRenderCards();
-}
 function bpCdFilterByStatus(status) {
   _bpCdStatusFilter = (_bpCdStatusFilter === status) ? null : status;
   bpCdRenderCards();
@@ -14021,27 +14009,20 @@ function bpCdRenderCards() {
   var list = document.getElementById('bp-cd-list');
   if (!list) return;
   var all = _bpCdRecords || [];
-  var archivedCount = all.filter(function(r) { return r.status === 'Restored'; }).length;
-  var btn = document.getElementById('bp-cd-archive-btn');
-  if (btn) btn.textContent = _bpCdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
+  var activeStatus = _bpCdStatusFilter || 'Partial';
 
   ['Full', 'Restored', 'Partial'].forEach(function(s) {
     var tile = document.getElementById('bp-cd-tile-' + s);
     if (!tile) return;
-    var active = _bpCdStatusFilter === s;
+    var active = activeStatus === s;
     var col = s === 'Partial' ? '#b91c1c' : s === 'Restored' ? '#f59e0b' : 'var(--brand-navy)';
     tile.style.borderColor = active ? col : '#d1d5db';
     tile.style.boxShadow = active ? '0 0 0 3px rgba(0,0,0,.06)' : '';
   });
 
-  var recs = all;
-  if (_bpCdStatusFilter) {
-    recs = recs.filter(function(r) { return r.status === _bpCdStatusFilter; });
-  } else if (!_bpCdShowArchived) {
-    recs = recs.filter(function(r) { return r.status !== 'Restored'; });
-  }
+  var recs = all.filter(function(r) { return r.status === activeStatus; });
   if (!recs.length) {
-    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_bpCdStatusFilter ? 'No ' + _bpCdStatusFilter.toLowerCase() + ' responses.' : (_bpCdShowArchived ? 'No questionnaire responses for this broker yet.' : 'No active responses — all resolved items are archived.')) + '</div>';
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">No ' + activeStatus.toLowerCase() + ' responses.</div>';
     return;
   }
   list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'bpCdToggleResolved'); }).join('');
