@@ -3940,17 +3940,17 @@ Consolidating debts will increase the loan to value which can impact future deal
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
-            <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+            <div id="bp-cd-tile-Full" onclick="bpCdFilterByStatus('Full')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
               <div id="bp-cd-full-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
               <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Full Understanding</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
             </div>
-            <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+            <div id="bp-cd-tile-Restored" onclick="bpCdFilterByStatus('Restored')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
               <div id="bp-cd-restored-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;margin-bottom:4px;"></div>
               <div style="font-size:12px;font-weight:600;color:#b45309;">Understanding Restored</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
             </div>
-            <div style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;">
+            <div id="bp-cd-tile-Partial" onclick="bpCdFilterByStatus('Partial')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
               <div id="bp-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
               <div style="font-size:12px;font-weight:600;color:#b91c1c;">Partial Understanding</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
@@ -11422,6 +11422,8 @@ function openBrokerProfile(email, name, keepDateRange) {
   document.getElementById('bp-content').style.display = 'none';
   _bpCurrentEmail = email;
   _bpCurrentName = name;
+  _bpCdStatusFilter = null;
+  _bpCdShowArchived = false;
 
   var fromInput = document.getElementById('bp-date-from');
   var toInput   = document.getElementById('bp-date-to');
@@ -13769,6 +13771,7 @@ var _cdFeedback = [];
 var _cdShowArchived = false;
 var _bpCdRecords = [];
 var _bpCdShowArchived = false;
+var _bpCdStatusFilter = null;
 var _homeCdRecords = [];
 var _homeCdShowArchived = false;
 function showCdFeedback(e, el) {
@@ -14010,6 +14013,10 @@ function bpCdToggleArchiveView() {
   _bpCdShowArchived = !_bpCdShowArchived;
   bpCdRenderCards();
 }
+function bpCdFilterByStatus(status) {
+  _bpCdStatusFilter = (_bpCdStatusFilter === status) ? null : status;
+  bpCdRenderCards();
+}
 function bpCdRenderCards() {
   var list = document.getElementById('bp-cd-list');
   if (!list) return;
@@ -14017,9 +14024,24 @@ function bpCdRenderCards() {
   var archivedCount = all.filter(function(r) { return r.status === 'Restored'; }).length;
   var btn = document.getElementById('bp-cd-archive-btn');
   if (btn) btn.textContent = _bpCdShowArchived ? ('Hide archived (' + archivedCount + ')') : ('Show archived (' + archivedCount + ')');
-  var recs = _bpCdShowArchived ? all : all.filter(function(r) { return r.status !== 'Restored'; });
+
+  ['Full', 'Restored', 'Partial'].forEach(function(s) {
+    var tile = document.getElementById('bp-cd-tile-' + s);
+    if (!tile) return;
+    var active = _bpCdStatusFilter === s;
+    var col = s === 'Partial' ? '#b91c1c' : s === 'Restored' ? '#f59e0b' : 'var(--brand-navy)';
+    tile.style.borderColor = active ? col : '#d1d5db';
+    tile.style.boxShadow = active ? '0 0 0 3px rgba(0,0,0,.06)' : '';
+  });
+
+  var recs = all;
+  if (_bpCdStatusFilter) {
+    recs = recs.filter(function(r) { return r.status === _bpCdStatusFilter; });
+  } else if (!_bpCdShowArchived) {
+    recs = recs.filter(function(r) { return r.status !== 'Restored'; });
+  }
   if (!recs.length) {
-    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_bpCdShowArchived ? 'No questionnaire responses for this broker yet.' : 'No active responses — all resolved items are archived.') + '</div>';
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#6b7c8f;font-size:13px;">' + (_bpCdStatusFilter ? 'No ' + _bpCdStatusFilter.toLowerCase() + ' responses.' : (_bpCdShowArchived ? 'No questionnaire responses for this broker yet.' : 'No active responses — all resolved items are archived.')) + '</div>';
     return;
   }
   list.innerHTML = recs.map(function(r) { return cdCardHtml(r, 'bpCdToggleResolved'); }).join('');
