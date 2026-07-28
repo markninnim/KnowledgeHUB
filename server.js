@@ -5987,6 +5987,7 @@ const CD_NPS     = 'fldvT8olEjrbOAG52';   // NPS Rating
 const CD_COMMENT = 'fldfsuOr3P3COsXUp';   // Comment
 const CD_RESTORED_KEYS = 'fldjfQetEIQubB2u9'; // Restored Keys — comma-separated flagged question keys marked as remediated
 const CD_Q4_MISMATCH   = 'fld7XnLAiFC7EuVyM'; // Q4 Rate Mismatch — "Client said: X | Record shows: Y" when Q4's answer disagrees with the Suitability Step's actual product type
+const CD_BROKER_EMAIL  = 'fldihFqVOuFxEzyuK'; // Broker email — used to scope the supervisor/admin-facing Questionnaire Feedback page
 
 // Suitability Step table — holds the actual, on-record rate type (Fixed/Variable/SVR)
 // for each client, keyed by client name. Used to detect when a client's own stated
@@ -7036,62 +7037,22 @@ app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res
   }
 });
 
-// ── Consumer Duty — Questionnaire Feedback (separate Airtable base) ──
-// Lives in its own base since it's populated by an external client
-// questionnaire flow, not by KnowledgeHUB itself.
-const CD_BASE = 'appJEb2mGCdrEKbpY';
-const CD_TABLE = 'Responses';
-
-// Answers that suggest a possible customer-understanding or outcome issue.
-// Each rule: { key, field, label, test(value, fields) }
-const CD_FLAG_RULES = [
-  {
-    key: 'q2_accuracy', field: 'Q2 Report Accuracy', label: 'Report Accuracy — client did not find the report clear',
-    test: v => /did not|didn.t|not really|unclear|confus/i.test(v || '')
-  },
-  {
-    key: 'q3_mismatch', field: 'Q3 Rate Mismatch', label: 'Rate details given by client do not match our records',
-    test: v => !!(v && v.trim())
-  },
-  {
-    key: 'q4_review', field: 'Q4 Future Review', label: 'Client says they were not told about a future review',
-    test: v => /^no\b/i.test(v || '')
-  },
-  {
-    key: 'q5_risk', field: 'Q5 Home At Risk Warning', label: 'Client says they were not given the "home at risk" warning',
-    test: v => /^no\b/i.test(v || '')
-  },
-  {
-    key: 'q8_clarity', field: 'Q8 Literature Clarity', label: 'Client found the literature unclear',
-    test: v => v && !/^clear$/i.test(v.trim())
-  },
-  {
-    key: 'q2_2_walkthrough', field: 'Q2.2 Report Walkthrough', label: 'Client has asked their adviser to call and walk through the report',
-    test: v => /call me|please call|walk.?through/i.test(v || '') && !/^n\/?a\b|not needed|no thanks/i.test(v || '')
-  },
-  {
-    key: 'nps_low', field: 'NPS Rating', label: 'Low NPS score (detractor)',
-    test: (v) => typeof v === 'number' && v <= 6
-  }
-];
-
-function cdBuildFlags(fields) {
-  return CD_FLAG_RULES
-    .filter(rule => rule.test(fields[rule.field]))
-    .map(rule => ({ key: rule.key, label: rule.label, answer: (fields[rule.field] === undefined || fields[rule.field] === null) ? '' : String(fields[rule.field]) }));
-}
-
-// GET /api/consumer-duty-feedback — supervisor sees their own team's
-// responses (matched by Broker email -> Users Supervisor Email); admin sees all.
+// GET /api/consumer-duty-feedback — the supervisor/admin-facing Questionnaire
+// Feedback page (Compliance > Consumer Duty). Unlike /api/consumer-duty
+// (which scopes to the CALLER's own broker name for their personal Home
+// dashboard card), this scopes by team: supervisors see responses for
+// advisers who report to them, admins see everyone. Reuses the same
+// CD_* field constants, cdIsPerfect()/CD_FLAGGED_CHECKS/cdRecordStatus()
+// flag logic as the personal view, so "flagged" means the same thing
+// everywhere in the app.
 app.get('/api/consumer-duty-feedback', requireAuth, async (req, res) => {
   if (!requireSupervisorOrAdmin(req, res)) return;
   try {
     const caller = req.session.user;
-    let allowedEmails = null; // null = no restriction (admin)
+    let allowedEmails = null; // null = no restriction (admin sees everyone)
     if (!caller.isAdmin) {
       const usersUrl = `https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?pageSize=100&returnFieldsByFieldId=true`;
-      let uRecords = [];
-      let uOffset = '';
+      let uRecords = [], uOffset = '';
       do {
         const ur = await fetch(usersUrl + (uOffset ? `&offset=${uOffset}` : ''), { headers: { Authorization: `Bearer ${AT_KEY}` } });
         const ud = await ur.json();
@@ -7105,85 +7066,56 @@ app.get('/api/consumer-duty-feedback', requireAuth, async (req, res) => {
       allowedEmails.push((caller.email || '').toLowerCase());
     }
 
-    let records = [];
-    let offset = '';
+    let allRecords = [], offset = '';
     do {
-      const url = `https://api.airtable.com/v0/${CD_BASE}/${encodeURIComponent(CD_TABLE)}?sort[0][field]=Submitted At&sort[0][direction]=desc&pageSize=100${offset ? '&offset=' + offset : ''}`;
-      const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const qs = `?sort[0][field]=${CD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const r = await fetch(`https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
       if (!r.ok) {
         const errBody = await r.json().catch(() => ({}));
         throw new Error(errBody.error?.message || `Airtable ${r.status}`);
       }
       const body = await r.json();
-      records = records.concat(body.records || []);
+      allRecords = allRecords.concat(body.records || []);
       offset = body.offset || '';
     } while (offset);
 
-    const responses = records
+    const CD_QUESTION_LABELS = {
+      q1: 'Q1 Adviser Knowledge', q4: 'Q4 Rate Type', q4mismatch: 'Q4 Rate Mismatch',
+      q5: 'Q5 Future Review', q6: 'Q6 Home At Risk Warning', q7: 'Q7 Protection Importance',
+      q9: 'Q9 Literature Clarity', q10: 'Q10 Support Required', q3: 'Q3 Walkthrough Requested',
+      q8: 'Q8 Protection Discussion'
+    };
+
+    const responses = allRecords
       .filter(rec => {
         if (!allowedEmails) return true;
-        return allowedEmails.indexOf((rec.fields['Broker email'] || '').toLowerCase()) !== -1;
+        const f = rec.cellValuesByFieldId || rec.fields || {};
+        return allowedEmails.indexOf((f[CD_BROKER_EMAIL] || '').toLowerCase()) !== -1;
       })
       .map(rec => {
-        const f = rec.fields;
-        const flags = cdBuildFlags(f);
-        const restoredKeys = (f['Restored Keys'] || '').split(',').map(s => s.trim()).filter(Boolean);
-        const flaggedKeys = flags.map(fl => fl.key);
-        const status = !flaggedKeys.length ? 'Full' : (flaggedKeys.every(k => restoredKeys.indexOf(k) !== -1) ? 'Restored' : 'Partial');
+        const f = rec.cellValuesByFieldId || rec.fields || {};
+        const flaggedKeys = Object.keys(CD_FLAGGED_CHECKS).filter(k => CD_FLAGGED_CHECKS[k](f));
+        const restoredKeys = (f[CD_RESTORED_KEYS] || '').split(',').map(s => s.trim()).filter(Boolean);
+        const CD_ANSWER_BY_KEY = {
+          q1: f[CD_Q1], q4: f[CD_Q4], q4mismatch: f[CD_Q4_MISMATCH], q5: f[CD_Q5], q6: f[CD_Q6],
+          q7: f[CD_Q7], q9: f[CD_Q9], q10: f[CD_Q10], q3: f[CD_Q3], q8: f[CD_Q8]
+        };
         return {
           id: rec.id,
-          clientName: f['Name'] || '',
-          adviserName: f['Broker Name'] || '',
-          adviserEmail: f['Broker email'] || '',
-          submittedAt: f['Submitted At'] || rec.createdTime,
-          nps: typeof f['NPS Rating'] === 'number' ? f['NPS Rating'] : null,
-          comment: f['Comment'] || '',
-          flags,
+          clientName: f[CD_NAME] || 'Unknown',
+          adviserName: f[CD_BROKER] || '',
+          submittedAt: f[CD_DATE] || rec.createdTime,
+          nps: typeof f[CD_NPS] === 'number' ? f[CD_NPS] : null,
+          comment: f[CD_COMMENT] || '',
           restoredKeys,
-          status
+          status: cdRecordStatus(f) === 'full' ? 'Full' : cdRecordStatus(f) === 'restored' ? 'Restored' : 'Partial',
+          flags: flaggedKeys.map(k => ({ key: k, label: CD_QUESTION_LABELS[k] || k, answer: CD_ANSWER_BY_KEY[k] || '' }))
         };
       });
 
     res.json({ responses });
   } catch (err) {
     console.error('consumer-duty-feedback GET error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/consumer-duty-feedback/:id/resolve — { key, resolved } toggles a
-// flagged question as followed-up/resolved. Supervisor/admin only.
-app.post('/api/consumer-duty-feedback/:id/resolve', requireAuth, async (req, res) => {
-  if (!requireSupervisorOrAdmin(req, res)) return;
-  try {
-    const id = req.params.id;
-    const key = (req.body.key || '').trim();
-    const resolved = !!req.body.resolved;
-    if (!id || !key) return res.status(400).json({ error: 'id and key required' });
-
-    const getUrl = `https://api.airtable.com/v0/${CD_BASE}/${encodeURIComponent(CD_TABLE)}/${id}`;
-    const getRes = await fetch(getUrl, { headers: { Authorization: `Bearer ${AT_KEY}` } });
-    if (!getRes.ok) {
-      const errBody = await getRes.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Airtable ${getRes.status}`);
-    }
-    const rec = await getRes.json();
-    let keys = (rec.fields['Restored Keys'] || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (resolved && keys.indexOf(key) === -1) keys.push(key);
-    if (!resolved) keys = keys.filter(k => k !== key);
-
-    const patchRes = await fetch(getUrl, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { 'Restored Keys': keys.join(',') } })
-    });
-    if (!patchRes.ok) {
-      const errBody = await patchRes.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Airtable ${patchRes.status}`);
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error('consumer-duty-feedback resolve error:', err);
     res.status(500).json({ error: err.message });
   }
 });

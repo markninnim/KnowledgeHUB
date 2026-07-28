@@ -13818,22 +13818,23 @@ function cdRenderFeedback() {
   }).join('');
 }
 function cdToggleResolved(id, key, resolved) {
-  fetch('/api/consumer-duty-feedback/' + encodeURIComponent(id) + '/resolve', {
-    method: 'POST',
+  var rec = _cdFeedback.find(function(x) { return x.id === id; });
+  if (!rec) return;
+  var newKeys = resolved
+    ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
+    : rec.restoredKeys.filter(function(k) { return k !== key; });
+  fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: key, resolved: resolved })
+    body: JSON.stringify({ keys: newKeys })
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.error) { alert('Could not update: ' + res.error); loadCdFeedback(); return; }
-      var rec = _cdFeedback.find(function(x) { return x.id === id; });
-      if (rec) {
-        if (resolved && rec.restoredKeys.indexOf(key) === -1) rec.restoredKeys.push(key);
-        if (!resolved) rec.restoredKeys = rec.restoredKeys.filter(function(k) { return k !== key; });
-        var flaggedKeys = rec.flags.map(function(f) { return f.key; });
-        var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
-        rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
-      }
+      rec.restoredKeys = newKeys;
+      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
       cdRenderFeedback();
     })
     .catch(function() { alert('Could not update. Please try again.'); loadCdFeedback(); });
