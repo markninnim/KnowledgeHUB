@@ -1592,6 +1592,15 @@ select:focus { outline:none; }
           </select>
         </div>
         <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
+          <select id="cd-filter-status" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:150px;">
+            <option value="">All statuses</option>
+            <option value="Full">Full</option>
+            <option value="Restored">Restored</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+        <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
           <input id="cd-filter-from" type="date" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
         </div>
@@ -13809,16 +13818,19 @@ function cdPopulateAdviserFilter() {
 }
 function cdClearFilters() {
   document.getElementById('cd-filter-adviser').value = '';
+  document.getElementById('cd-filter-status').value = '';
   document.getElementById('cd-filter-from').value = '';
   document.getElementById('cd-filter-to').value = '';
   cdRenderFeedback();
 }
 function cdFilteredFeedback() {
   var adviser = document.getElementById('cd-filter-adviser').value;
+  var status = document.getElementById('cd-filter-status').value;
   var from = document.getElementById('cd-filter-from').value;
   var to = document.getElementById('cd-filter-to').value;
   return _cdFeedback.filter(function(r) {
-    if (!_cdShowArchived && r.status === 'Restored') return false;
+    if (status) { if (r.status !== status) return false; }
+    else if (!_cdShowArchived && r.status === 'Restored') return false;
     if (adviser && r.adviserName !== adviser) return false;
     if (r.submittedAt) {
       var d = r.submittedAt.slice(0, 10);
