@@ -1587,9 +1587,26 @@ select:focus { outline:none; }
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#c0392b;margin-right:5px;"></span>Partial — flags outstanding</span>
         </div>
       </div>
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
+          <select id="cd-filter-adviser" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;">
+            <option value="">All advisers</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+          <input id="cd-filter-from" type="date" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+          <input id="cd-filter-to" type="date" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <button onclick="cdClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+      </div>
       <div id="cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
-      <div id="cd-feedback-list"></div>
+      <div id="cd-feedback-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;"></div>
     </div>
   </div>
 
@@ -13780,6 +13797,7 @@ function loadCdFeedback() {
     .then(function(data) {
       loading.style.display = 'none';
       _cdFeedback = data.responses || [];
+      cdPopulateAdviserFilter();
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
       cdRenderFeedback();
     })
@@ -13787,6 +13805,35 @@ function loadCdFeedback() {
       loading.style.display = 'none';
       list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback. Please try again.</div>';
     });
+}
+function cdPopulateAdviserFilter() {
+  var sel = document.getElementById('cd-filter-adviser');
+  var current = sel.value;
+  var advisers = Array.from(new Set(_cdFeedback.map(function(r) { return r.adviserName; }).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">All advisers</option>' + advisers.map(function(a) {
+    return '<option value="' + escHtml(a) + '">' + escHtml(a) + '</option>';
+  }).join('');
+  sel.value = advisers.indexOf(current) !== -1 ? current : '';
+}
+function cdClearFilters() {
+  document.getElementById('cd-filter-adviser').value = '';
+  document.getElementById('cd-filter-from').value = '';
+  document.getElementById('cd-filter-to').value = '';
+  cdRenderFeedback();
+}
+function cdFilteredFeedback() {
+  var adviser = document.getElementById('cd-filter-adviser').value;
+  var from = document.getElementById('cd-filter-from').value;
+  var to = document.getElementById('cd-filter-to').value;
+  return _cdFeedback.filter(function(r) {
+    if (adviser && r.adviserName !== adviser) return false;
+    if (r.submittedAt) {
+      var d = r.submittedAt.slice(0, 10);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
 }
 function cdStatusPill(status) {
   var colors = { Full: '#2e7d32', Restored: '#e67e22', Partial: '#c0392b' };
@@ -13797,7 +13844,12 @@ function cdStatusPill(status) {
 }
 function cdRenderFeedback() {
   var list = document.getElementById('cd-feedback-list');
-  list.innerHTML = _cdFeedback.map(function(r) {
+  var filtered = cdFilteredFeedback();
+  if (!filtered.length) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6b7c8f;font-size:13px;">No responses match the selected filters.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(r) {
     var dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
     var flagsHtml = r.flags.length ? r.flags.map(function(f) {
       var resolved = r.restoredKeys.indexOf(f.key) !== -1;
