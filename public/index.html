@@ -9066,6 +9066,7 @@ var SIM_MESSAGES = {
   'lab': "Lab is where we're doing top-secret experimental stuff — think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming."
 };
 function simMaybeShow(tab) {
+  if (typeof SIM_MESSAGES === 'undefined') return;
   _simCurrentTab = tab;
   var widget = document.getElementById('sim-widget');
   if (!widget) return;
