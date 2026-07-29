@@ -134,6 +134,7 @@ const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching
 const F_BUDDY_EMAIL          = 'fldhw8BOP43FdBePg'; // Buddy Email — colleague chosen for lead-sharing in Engage™
 const F_BUDDY_LINK           = 'fldSWadRr1KAZTrzE'; // Buddy — linked record mirror of Buddy Email, readable in Airtable
 const F_ONBOARDING_SEEN      = 'fldljTssnyehQLvr8'; // Onboarding Seen — true once the first-login welcome tour has been completed/skipped
+const F_SIM_TABS_SEEN        = 'fld6pNfieh8ymdF07'; // Sim Tabs Seen — comma-separated tab keys the Sim mascot has already introduced to this user
 const F_QL_ORDER             = 'fld1QTI4dYsU463CA'; // Quick Links Order — JSON array of tile keys, stored in Airtable (not a local file — Railway's filesystem is ephemeral and wipes local JSON on every redeploy)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -507,7 +508,8 @@ function recordToUser(record) {
     trusts:              f[F_TRUSTS]               || false,
     avgPayaway:          f[F_AVG_PAYAWAY]          || '',
     buddyEmail:          f[F_BUDDY_EMAIL]          || '',
-    onboardingSeen:      f[F_ONBOARDING_SEEN]      || false
+    onboardingSeen:      f[F_ONBOARDING_SEEN]      || false,
+    simTabsSeen:         (f[F_SIM_TABS_SEEN] || '').split(',').map(s => s.trim()).filter(Boolean)
   };
 }
 
@@ -627,6 +629,27 @@ app.post('/api/onboarding-complete', requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Onboarding complete save error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// Marks a single tab's Sim mascot tip as seen, so it doesn't repeat on
+// future visits to that tab. Additive — never removes previously-seen tabs.
+app.post('/api/sim-tab-seen', requireAuth, async (req, res) => {
+  const tab = (req.body && req.body.tab || '').trim();
+  if (!tab) return res.status(400).json({ error: 'tab required' });
+  try {
+    const id = req.session.user.id;
+    const current = Array.isArray(req.session.user.simTabsSeen) ? req.session.user.simTabsSeen.slice() : [];
+    if (current.indexOf(tab) === -1) current.push(tab);
+    await atFetch(`/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_SIM_TABS_SEEN]: current.join(',') } })
+    });
+    req.session.user.simTabsSeen = current;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Sim tab seen save error:', err);
     res.status(500).json({ error: 'Failed to save.' });
   }
 });
