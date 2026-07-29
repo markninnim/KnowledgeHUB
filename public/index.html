@@ -4784,19 +4784,17 @@ Consolidating debts will increase the loan to value which can impact future deal
   </div>
 </div>
 
-<!-- Sim, the KnowledgeHUB mascot — pops up on each page with a tailored tip -->
-<div id="sim-widget" style="display:none;position:fixed;bottom:96px;right:26px;z-index:3999;">
-  <div id="sim-bubble" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:16px 16px 4px 16px;box-shadow:0 14px 34px rgba(0,0,0,.18);padding:20px 22px;width:340px;margin-bottom:14px;position:relative;">
-    <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Sim says</div>
-    <div id="sim-bubble-text" style="font-size:13.5px;line-height:1.65;color:var(--brand-navy);margin-bottom:16px;"></div>
-    <button onclick="simDismiss()" style="background:var(--brand-orange);border:none;color:#fff;padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Got it, thanks!</button>
-  </div>
-  <div id="sim-avatar" onclick="simReplay()" title="Sim" style="width:56px;height:56px;border-radius:16px;background:var(--brand-navy);box-shadow:0 8px 20px rgba(0,0,0,.25);cursor:pointer;margin-left:auto;position:relative;display:flex;align-items:center;justify-content:center;">
-    <div style="width:30px;height:18px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:space-evenly;">
-      <span style="width:6px;height:6px;border-radius:50%;background:var(--brand-navy);display:inline-block;"></span>
-      <span style="width:6px;height:6px;border-radius:50%;background:var(--brand-navy);display:inline-block;"></span>
+<!-- Sim, your personal KnowledgeHUB assistant — first-login welcome tour -->
+<div id="sim-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;max-width:460px;width:92%;padding:36px 34px 28px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Sim, your personal assistant</div>
+    <div id="sim-slide-title" style="font-size:20px;font-weight:800;color:var(--brand-navy);margin-bottom:14px;"></div>
+    <div id="sim-slide-body" style="font-size:14px;line-height:1.7;color:#475569;margin-bottom:26px;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <button id="sim-back-btn" onclick="simBack()" style="background:none;border:none;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Back</button>
+      <div id="sim-dots" style="display:flex;gap:6px;"></div>
+      <button id="sim-next-btn" onclick="simNext()" style="background:var(--brand-orange);border:none;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Next</button>
     </div>
-    <div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:3px;height:8px;background:#fff;border-radius:2px;"></div>
   </div>
 </div>
 
@@ -7166,7 +7164,6 @@ function generateBrokerBrand() {
 // ── Tab switching ─────────────────────────────────────────────
 var TAB_IDS = ['home','marketing','compliance','learning','surveying','lab','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','reengage','muttuo','leadgen'];
 function switchTab(tab, skipLeadSeen) {
-  if (typeof simMaybeShow === 'function') simMaybeShow(tab);
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
     var sidebar = document.getElementById('sidebar-' + t);
@@ -9047,11 +9044,14 @@ var _currentUser = null;
     loadHomeData();
     // Pre-load surveying so the tab button shows fees on arrival
     loadSurveying();
+    // First-login welcome tour — advisers only, once, skips force-reset flow
+    if (user && !user.isAdmin && !user.onboardingSeen && !user._forceReset) {
+      simShow();
+    }
   }).catch(function(){});
 })();
 
-// ── Sim, the KnowledgeHUB mascot ──────────────────────────────
-var _simCurrentTab = null;
+// ── Sim, your personal KnowledgeHUB assistant ─────────────────
 var SIM_MESSAGES = {
   'home': "Welcome to my KnowledgeHUB™ — oh wait, I mean your KnowledgeHUB™! I'm Sim, and Mark's programmed me to point out the good stuff so you don't have to go hunting for it. Your Home page is packed: AutoCRM™ renewal customers, FPG news, Surveying leads and commission, your CPD summary, today's social post suggestion, your Consumer Duty responses, Feefo results, and ReEngagement opportunities — all in one place. You can customise the menu too, and the main menu button on the left has plenty more where that came from.",
   'compliance': "This is Compliance — stick with me, it's better than it sounds. AutoCPD™ is your new CPD collection tool, and here's the twist: it records your learning as you go, so all you have to do is add a note of what you picked up. Watch a video and give it a go. As if that wasn't exciting enough, you can also read the latest Advice Standards documents and report anything Compliance needs to know about.",
@@ -9065,42 +9065,50 @@ var SIM_MESSAGES = {
   'reengage': "ReEngage™ is new here at FPG. From time to time, opportunities slip through the cracks and we lose touch with clients — sometimes on purpose, sometimes not. ReEngage shows you who you've done business with before but who may not have renewed at review stage, giving you a second bite at the cherry. Not for you? Hand it off to the LeadGEN crew — they'll try to win the business back, and you'll still earn a payaway.",
   'lab': "Lab is where we're doing top-secret experimental stuff — think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming."
 };
-function simMaybeShow(tab) {
-  if (typeof SIM_MESSAGES === 'undefined') return;
-  _simCurrentTab = tab;
-  var widget = document.getElementById('sim-widget');
-  if (!widget) return;
-  if (!SIM_MESSAGES[tab]) { widget.style.display = 'none'; return; }
-  widget.style.display = 'block';
-  var seen = (_currentUser && _currentUser.simTabsSeen) || [];
-  if (seen.indexOf(tab) === -1) {
-    simRender(tab);
-    document.getElementById('sim-bubble').style.display = 'block';
-  } else {
-    document.getElementById('sim-bubble').style.display = 'none';
-  }
+var _simSlideIdx = 0;
+function simSlides() {
+  return [
+    { title: 'Home',        body: SIM_MESSAGES['home'] },
+    { title: 'Compliance',  body: SIM_MESSAGES['compliance'] },
+    { title: 'Earn',        body: SIM_MESSAGES['selling-zone'] },
+    { title: 'Learn',       body: SIM_MESSAGES['learning'] },
+    { title: 'Marketing',   body: SIM_MESSAGES['marketing'] },
+    { title: 'Pay',         body: SIM_MESSAGES['pay'] },
+    { title: 'Surveying',   body: SIM_MESSAGES['surveying'] },
+    { title: 'AutoCRM™',    body: SIM_MESSAGES['autocrm'] },
+    { title: 'Engage™',     body: SIM_MESSAGES['leadgen'] },
+    { title: 'ReEngage™',   body: SIM_MESSAGES['reengage'] },
+    { title: 'Lab',         body: SIM_MESSAGES['lab'] }
+  ];
 }
-function simRender(tab) {
-  document.getElementById('sim-bubble-text').textContent = SIM_MESSAGES[tab] || '';
+function simShow() {
+  _simSlideIdx = 0;
+  simRenderModal();
+  document.getElementById('sim-overlay').style.display = 'flex';
 }
-function simReplay() {
-  if (!_simCurrentTab || !SIM_MESSAGES[_simCurrentTab]) return;
-  simRender(_simCurrentTab);
-  document.getElementById('sim-bubble').style.display = 'block';
+function simRenderModal() {
+  var slides = simSlides();
+  var s = slides[_simSlideIdx];
+  document.getElementById('sim-slide-title').textContent = s.title;
+  document.getElementById('sim-slide-body').textContent = s.body;
+  document.getElementById('sim-dots').innerHTML = slides.map(function(_, i) {
+    return '<span style="width:7px;height:7px;border-radius:50%;background:' + (i === _simSlideIdx ? 'var(--brand-orange)' : '#e2e6ea') + ';display:inline-block;"></span>';
+  }).join('');
+  document.getElementById('sim-back-btn').style.visibility = _simSlideIdx === 0 ? 'hidden' : 'visible';
+  document.getElementById('sim-next-btn').textContent = (_simSlideIdx === slides.length - 1) ? "Let's go" : 'Next';
 }
-function simDismiss() {
-  document.getElementById('sim-bubble').style.display = 'none';
-  var tab = _simCurrentTab;
-  if (!tab) return;
-  if (_currentUser) {
-    _currentUser.simTabsSeen = _currentUser.simTabsSeen || [];
-    if (_currentUser.simTabsSeen.indexOf(tab) === -1) _currentUser.simTabsSeen.push(tab);
-  }
-  fetch('/api/sim-tab-seen', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tab: tab })
-  }).catch(function() {});
+function simNext() {
+  var slides = simSlides();
+  if (_simSlideIdx < slides.length - 1) { _simSlideIdx++; simRenderModal(); }
+  else { simFinish(); }
+}
+function simBack() {
+  if (_simSlideIdx > 0) { _simSlideIdx--; simRenderModal(); }
+}
+function simFinish() {
+  document.getElementById('sim-overlay').style.display = 'none';
+  fetch('/api/onboarding-complete', { method: 'POST' }).catch(function() {});
+  if (_currentUser) _currentUser.onboardingSeen = true;
 }
 
 function updateNavUser(user) {
