@@ -133,6 +133,7 @@ const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
 const F_BUDDY_EMAIL          = 'fldhw8BOP43FdBePg'; // Buddy Email — colleague chosen for lead-sharing in Engage™
 const F_BUDDY_LINK           = 'fldSWadRr1KAZTrzE'; // Buddy — linked record mirror of Buddy Email, readable in Airtable
+const F_ONBOARDING_SEEN      = 'fldljTssnyehQLvr8'; // Onboarding Seen — true once the first-login welcome tour has been completed/skipped
 const F_QL_ORDER             = 'fld1QTI4dYsU463CA'; // Quick Links Order — JSON array of tile keys, stored in Airtable (not a local file — Railway's filesystem is ephemeral and wipes local JSON on every redeploy)
 
 // ── CAS Path table ────────────────────────────────────────────
@@ -505,7 +506,8 @@ function recordToUser(record) {
     surveying:           f[F_SURVEYING]            || false,
     trusts:              f[F_TRUSTS]               || false,
     avgPayaway:          f[F_AVG_PAYAWAY]          || '',
-    buddyEmail:          f[F_BUDDY_EMAIL]          || ''
+    buddyEmail:          f[F_BUDDY_EMAIL]          || '',
+    onboardingSeen:      f[F_ONBOARDING_SEEN]      || false
   };
 }
 
@@ -608,6 +610,23 @@ app.post('/api/quick-links', requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Quick links save error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// Marks the first-login welcome tour as seen (completed or skipped) so it
+// never shows again for this user. Called once from the tour's Finish/Skip.
+app.post('/api/onboarding-complete', requireAuth, async (req, res) => {
+  try {
+    const id = req.session.user.id;
+    await atFetch(`/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { [F_ONBOARDING_SEEN]: true } })
+    });
+    req.session.user.onboardingSeen = true;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Onboarding complete save error:', err);
     res.status(500).json({ error: 'Failed to save.' });
   }
 });
