@@ -4784,10 +4784,13 @@ Consolidating debts will increase the loan to value which can impact future deal
   </div>
 </div>
 
-<!-- Sim, your personal KnowledgeHUB assistant — first-login welcome tour -->
+<!-- Sim, your personal KnowledgeHUB assistant - first-login welcome tour -->
 <div id="sim-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:20px;max-width:460px;width:92%;padding:36px 34px 28px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
-    <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Sim, your personal assistant</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <img src="/static/knowledgeHELPER@2x.png" alt="Sim" style="width:32px;height:32px;object-fit:contain;flex-shrink:0;">
+      <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;">Sim, your personal assistant</div>
+    </div>
     <div id="sim-slide-title" style="font-size:20px;font-weight:800;color:var(--brand-navy);margin-bottom:14px;"></div>
     <div id="sim-slide-body" style="font-size:14px;line-height:1.7;color:#475569;margin-bottom:26px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -9053,17 +9056,17 @@ var _currentUser = null;
 
 // ── Sim, your personal KnowledgeHUB assistant ─────────────────
 var SIM_MESSAGES = {
-  'home': "Welcome to my KnowledgeHUB™ — oh wait, I mean your KnowledgeHUB™! I'm Sim, and Mark's programmed me to point out the good stuff so you don't have to go hunting for it. Your Home page is packed: AutoCRM™ renewal customers, FPG news, Surveying leads and commission, your CPD summary, today's social post suggestion, your Consumer Duty responses, Feefo results, and ReEngagement opportunities — all in one place. You can customise the menu too, and the main menu button on the left has plenty more where that came from.",
-  'compliance': "This is Compliance — stick with me, it's better than it sounds. AutoCPD™ is your new CPD collection tool, and here's the twist: it records your learning as you go, so all you have to do is add a note of what you picked up. Watch a video and give it a go. As if that wasn't exciting enough, you can also read the latest Advice Standards documents and report anything Compliance needs to know about.",
-  'selling-zone': "Earn is all about opportunities and who can help you in the group — it's your directory of licenced advisers. Pick a colleague based on reviews, payaway, or honestly, what they look like! FPG has every licence type covered, so I'd encourage you to hook up with a colleague and boost those earnings.",
-  'learning': "Learn is where you catch up on the Weekly Team Meetings, Monthly Newsletters, Compliance updates, and yes, we've even thrown in some Industry Reading. You guessed it — each activity you start goes towards your CPD. And if you fancy testing your knowledge, there are Knowledge Tests lined up too.",
-  'marketing': "Marketing has everything you could ever want to promote yourself and build your brand. We work with a marketing team called SimFlex (no relation, honestly), and they've been busy curating a whole library of posts for you to share, personalised to you. This is also where you'll find personalised brochures, logos, and business cards — you're in the driving seat here.",
+  'home': "Welcome to my KnowledgeHUB™, oh wait, I mean your KnowledgeHUB™! I'm Sim, and Mark's programmed me to point out the good stuff so you don't have to go hunting for it. Your Home page is packed: AutoCRM™ renewal customers, FPG news, Surveying leads and commission, your CPD summary, today's social post suggestion, your Consumer Duty responses, Feefo results, and ReEngagement opportunities, all in one place. You can customise the menu too, and the main menu button on the left has plenty more where that came from.",
+  'compliance': "This is Compliance, stick with me, it's better than it sounds. AutoCPD™ is your new CPD collection tool, and here's the twist: it records your learning as you go, so all you have to do is add a note of what you picked up. Watch a video and give it a go. As if that wasn't exciting enough, you can also read the latest Advice Standards documents and report anything Compliance needs to know about.",
+  'selling-zone': "Earn is all about opportunities and who can help you in the group, it's your directory of licenced advisers. Pick a colleague based on reviews, payaway, or honestly, what they look like! FPG has every licence type covered, so I'd encourage you to hook up with a colleague and boost those earnings.",
+  'learning': "Learn is where you catch up on the Weekly Team Meetings, Monthly Newsletters, Compliance updates, and yes, we've even thrown in some Industry Reading. You guessed it, each activity you start goes towards your CPD. And if you fancy testing your knowledge, there are Knowledge Tests lined up too.",
+  'marketing': "Marketing has everything you could ever want to promote yourself and build your brand. We work with a marketing team called SimFlex (no relation, honestly), and they've been busy curating a whole library of posts for you to share, personalised to you. This is also where you'll find personalised brochures, logos, and business cards, you're in the driving seat here.",
   'pay': "Pay gives you your statements right at your fingertips, plus a handy tax calculation so you're not doing that maths yourself. If you'd rather do things the old-fashioned way, the download buttons are right there too.",
-  'surveying': "Surveying tells you how many leads you've got on the go and which ones have converted into cold hard cash. Oh, and keep an eye out — it's also an opportunity to win the odd random prize.",
-  'autocrm': "AutoCRM™ — you're going to love this one. It shows your renewal customers lining up at the 6, 5, 4, 3, 2, and 1-month stages before renewal. I reckon you'll find this genuinely useful.",
-  'leadgen': "Engage™ is a simple lead management tool for the time between a lead landing and it becoming a sale. Mark leads Hot, Warm, or Cold so you can stay on top of the ones that matter. If you're taking part in web leads, this is where your customer info shows up — keep an eye out for the red dot!",
-  'reengage': "ReEngage™ is new here at FPG. From time to time, opportunities slip through the cracks and we lose touch with clients — sometimes on purpose, sometimes not. ReEngage shows you who you've done business with before but who may not have renewed at review stage, giving you a second bite at the cherry. Not for you? Hand it off to the LeadGEN crew — they'll try to win the business back, and you'll still earn a payaway.",
-  'lab': "Lab is where we're doing top-secret experimental stuff — think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming."
+  'surveying': "Surveying tells you how many leads you've got on the go and which ones have converted into cold hard cash. Oh, and keep an eye out, it's also an opportunity to win the odd random prize.",
+  'autocrm': "AutoCRM™, you're going to love this one. It shows your renewal customers lining up at the 6, 5, 4, 3, 2, and 1-month stages before renewal. I reckon you'll find this genuinely useful.",
+  'leadgen': "Engage™ is a simple lead management tool for the time between a lead landing and it becoming a sale. Mark leads Hot, Warm, or Cold so you can stay on top of the ones that matter. If you're taking part in web leads, this is where your customer info shows up, keep an eye out for the red dot!",
+  'reengage': "ReEngage™ is new here at FPG. From time to time, opportunities slip through the cracks and we lose touch with clients, sometimes on purpose, sometimes not. ReEngage shows you who you've done business with before but who may not have renewed at review stage, giving you a second bite at the cherry. Not for you? Hand it off to the LeadGEN crew, they'll try to win the business back, and you'll still earn a payaway.",
+  'lab': "Lab is where we're doing top-secret experimental stuff, think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming."
 };
 var _simSlideIdx = 0;
 function simSlides() {
