@@ -4830,8 +4830,8 @@ Consolidating debts will increase the loan to value which can impact future deal
   <div style="background:#fff;border-radius:12px;width:100%;max-width:760px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #d1d5db;">
       <div>
-        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">AI KnowledgeHELPER&#8482; Parameters</h2>
-        <p style="color:#6b7c8f;font-size:13px;margin:0;" id="help-kb-modal-subtitle">The whitelist of content the KnowledgeHELPER&#8482; is allowed to answer from. Nothing outside this list is used.</p>
+        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">AI Sim Parameters</h2>
+        <p style="color:#6b7c8f;font-size:13px;margin:0;" id="help-kb-modal-subtitle">The whitelist of content Sim is allowed to answer from. Nothing outside this list is used.</p>
       </div>
       <button onclick="closeHelpKbAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
     </div>
@@ -4844,7 +4844,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="help-kb-list" style="display:flex;flex-direction:column;gap:14px;"></div>
     </div>
     <div id="help-personality-tab-content" style="display:none;padding:20px 28px;">
-      <p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Editable tone/sarcasm rules for KnowledgeHELPER™ — off-topic handling, inappropriate-request handling, jokey questions, general personality. The core safety rule (never disclosing personal/customer/lead data) is fixed in code and can't be changed here.</p>
+      <p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Editable tone/sarcasm rules for Sim — off-topic handling, inappropriate-request handling, jokey questions, general personality. The core safety rule (never disclosing personal/customer/lead data) is fixed in code and can't be changed here.</p>
       <button onclick="helpPersonalityAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Section</button>
       <div id="help-personality-list" style="display:flex;flex-direction:column;gap:14px;"></div>
     </div>
@@ -5227,16 +5227,16 @@ Consolidating debts will increase the loan to value which can impact future deal
 <div id="toast" style="position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;"></div>
 
 <!-- ── KnowledgeHUB Help widget (rule-based, not AI) ─────────────────────── -->
-<div id="kh-bubble" onclick="khToggle()" title="KnowledgeHELPER™" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;overflow:hidden;">
-  <img src="/static/knowledgeHELPER@2x.png" alt="KnowledgeHELPER&#8482;" style="width:78%;height:78%;object-fit:contain;">
+<div id="kh-bubble" onclick="khToggle()" title="Sim" style="position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:var(--brand-navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:4000;overflow:hidden;">
+  <img src="/static/knowledgeHELPER@2x.png" alt="Sim" style="width:78%;height:78%;object-fit:contain;">
 </div>
 <div id="kh-panel" style="display:none;flex-direction:column;position:fixed;bottom:88px;right:24px;width:340px;max-width:92vw;max-height:70vh;background:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.28);z-index:4001;overflow:hidden;">
   <div style="background:var(--brand-navy);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
       <img src="/static/knowledgeHELPER@2x.png" alt="" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;">
       <div>
-        <div style="font-size:14px;font-weight:700;">KnowledgeHELPER&#8482;</div>
-        <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Your AI assistant (on a short leash)</div>
+        <div style="font-size:14px;font-weight:700;">Sim</div>
+        <div style="font-size:10.5px;opacity:.75;margin-top:1px;">Your personal assistant (on a short leash)</div>
       </div>
     </div>
     <button onclick="khClose()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1;padding:4px;">&#x2715;</button>
@@ -9624,13 +9624,13 @@ function helpKbSwitchTab(tab) {
     kbBtn.style.borderBottomColor = 'transparent'; kbBtn.style.color = '#6b7c8f';
     pBtn.style.borderBottomColor = 'var(--brand-navy)'; pBtn.style.color = 'var(--brand-navy)';
     kbContent.style.display = 'none'; pContent.style.display = 'block';
-    subtitle.textContent = "Tone, sarcasm and personality rules for KnowledgeHELPER™. The core data-privacy safety rule is fixed in code and isn't shown here.";
+    subtitle.textContent = "Tone, sarcasm and personality rules for Sim. The core data-privacy safety rule is fixed in code and isn't shown here.";
     helpPersonalityLoad();
   } else {
     pBtn.style.borderBottomColor = 'transparent'; pBtn.style.color = '#6b7c8f';
     kbBtn.style.borderBottomColor = 'var(--brand-navy)'; kbBtn.style.color = 'var(--brand-navy)';
     pContent.style.display = 'none'; kbContent.style.display = 'block';
-    subtitle.textContent = 'The whitelist of content the KnowledgeHELPER™ is allowed to answer from. Nothing outside this list is used.';
+    subtitle.textContent = 'The whitelist of content Sim is allowed to answer from. Nothing outside this list is used.';
   }
 }
 
@@ -16389,7 +16389,7 @@ function khSubmit() {
 function khGreet() {
   var firstName = (_currentUser && _currentUser.firstName) || '';
   var hello = firstName ? ('Hi ' + firstName + '! ') : 'Hi! ';
-  khAddBotMessage(hello + 'I\'m KnowledgeHELPER™ - ask me anything about the Hub and I\'ll do my best* to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.\n\n*Fair warning: Mark has been very strict about what I am, and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
+  khAddBotMessage(hello + 'I\'m Sim, your personal assistant - ask me anything about the Hub and I\'ll do my best* to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.\n\n*Fair warning: Mark has been very strict about what I am, and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
 }
 
 function khOpen() {
