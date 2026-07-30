@@ -4795,9 +4795,9 @@ Consolidating debts will increase the loan to value which can impact future deal
 <!-- Sim, your personal KnowledgeHUB assistant - first-login welcome tour -->
 <div id="sim-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:20px;max-width:460px;width:92%;padding:36px 34px 28px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <img src="/static/sim-waving.png" alt="Sim" style="width:40px;height:40px;object-fit:contain;flex-shrink:0;">
-      <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;">Sim, your personal assistant</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <img id="sim-slide-img" src="/static/sim-waving.png" alt="Sim" style="width:56px;height:56px;object-fit:contain;flex-shrink:0;">
+      <div style="font-size:11px;font-weight:800;color:var(--brand-orange);text-transform:uppercase;letter-spacing:.06em;">I'm Sim - your KnowledgeHUB&#8482; helper</div>
     </div>
     <div id="sim-slide-title" style="font-size:20px;font-weight:800;color:var(--brand-navy);margin-bottom:14px;"></div>
     <div id="sim-slide-body" style="font-size:14px;line-height:1.7;color:#475569;margin-bottom:26px;"></div>
@@ -9164,32 +9164,49 @@ var SIM_MESSAGES = {
   'compliance': "This is Compliance, stick with me, it's better than it sounds. AutoCPD™ is your new CPD collection tool, and here's the twist: it records your learning as you go, so all you have to do is add a note of what you picked up. Watch a video and give it a go. As if that wasn't exciting enough, you can also read the latest Advice Standards documents and report anything Compliance needs to know about.",
   'selling-zone': "Earn is all about opportunities and who can help you in the group, it's your directory of licenced advisers. Pick a colleague based on reviews, payaway, or honestly, what they look like! FPG has every licence type covered, so I'd encourage you to hook up with a colleague and boost those earnings.",
   'learning': "Learn is where you catch up on the Weekly Team Meetings, Monthly Newsletters, Compliance updates, and yes, we've even thrown in some Industry Reading. You guessed it, each activity you start goes towards your CPD. And if you fancy testing your knowledge, there are Knowledge Tests lined up too.",
-  'marketing': "Marketing has everything you could ever want to promote yourself and build your brand. We work with a marketing team called SimFlex (no relation, honestly), and they've been busy curating a whole library of posts for you to share, personalised to you. This is also where you'll find personalised brochures, logos, and business cards, you're in the driving seat here.",
-  'pay': "Pay gives you your statements right at your fingertips, plus a handy tax calculation so you're not doing that maths yourself. If you'd rather do things the old-fashioned way, the download buttons are right there too.",
+  'pay': "Pay gives you your statements right at your fingertips, plus a handy tax calculation so you're not doing that maths yourself, plus a handy end of year income summary saving you some time when doing your tax returns. If you'd rather do things the old-fashioned way, the download buttons are right there too.",
   'surveying': "Surveying tells you how many leads you've got on the go and which ones have converted into cold hard cash. Oh, and keep an eye out, it's also an opportunity to win the odd random prize.",
   'autocrm': "AutoCRM™, you're going to love this one. It shows your renewal customers lining up at the 6, 5, 4, 3, 2, and 1-month stages before renewal. I reckon you'll find this genuinely useful.",
-  'leadgen': "Engage™ is a simple lead management tool for the time between a lead landing and it becoming a sale. Mark leads Hot, Warm, or Cold so you can stay on top of the ones that matter. If you're taking part in web leads, this is where your customer info shows up, keep an eye out for the red dot!",
+  'leadgen': "Engage™ is a simple lead management tool for the time between a lead landing and it becoming a sale. Mark leads hot, warm, or cold so you can stay on top of the ones that matter. If you're taking part in web leads, this is where your customer info shows up, keep an eye out for the red dot!",
   'reengage': "ReEngage™ is new here at FPG. From time to time, opportunities slip through the cracks and we lose touch with clients, sometimes on purpose, sometimes not. ReEngage shows you who you've done business with before but who may not have renewed at review stage, giving you a second bite at the cherry. Not for you? Hand it off to the LeadGEN crew, they'll try to win the business back, and you'll still earn a payaway.",
-  'lab': "Lab is where we're doing top-secret experimental stuff, think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming."
+  'lab': "Lab is where we're doing top-secret experimental stuff, think Q from James Bond. Expect things like a payslip checker, a bank statement checker, and even a tool to compare the two for consistency. Keep an eye on this space, there's plenty of AI goodness coming.",
+  'profile': "Your profile. Please take a moment to update your profile by clicking on your name, top right, and add anything that's missing. You're welcome to add your commission split if someone refers to you, and an average payaway, which is great for our specialists.\n\nAbout Me shows in your profile area in the specialist sections and helps advisers choose who to refer to.\n\nIf you have a regular buddy, you can transfer leads to each other with one simple click, all you need to do is nominate them.\n\nFinally, upload a picture if you wish to take advantage of personalised brochures and other fun stuff."
 };
+
+var _simPostCount = null;
+function simMarketingBody() {
+  var n = _simPostCount;
+  var lib = n ? ('a whole library of posts for you to share (' + n + ' so far)') : 'a whole library of posts for you to share';
+  return "Marketing has everything you could ever want to promote yourself and build your brand. We work with a marketing team called SimFlex (no relation, honestly), and they've been busy curating " + lib + ", personalised to you. This is also where you'll find personalised brochures, logos, and business cards, you're in the driving seat here.";
+}
+function simFetchPostCount() {
+  fetch('/api/social-content').then(function(r){ return r.json(); }).then(function(list) {
+    _simPostCount = Array.isArray(list) ? list.length : null;
+    var slides = simSlides();
+    if (document.getElementById('sim-overlay').style.display !== 'none' && slides[_simSlideIdx] && slides[_simSlideIdx].title === 'Marketing') simRenderModal();
+  }).catch(function() {});
+}
 var _simSlideIdx = 0;
+var SIM_POSES = ['/static/sim-idle.png', '/static/sim-listening.png', '/static/sim-waving.png', '/static/sim-listening-right.png'];
 function simSlides() {
   return [
     { title: 'Home',        body: SIM_MESSAGES['home'] },
     { title: 'Compliance',  body: SIM_MESSAGES['compliance'] },
     { title: 'Earn',        body: SIM_MESSAGES['selling-zone'] },
     { title: 'Learn',       body: SIM_MESSAGES['learning'] },
-    { title: 'Marketing',   body: SIM_MESSAGES['marketing'] },
+    { title: 'Marketing',   body: simMarketingBody() },
     { title: 'Pay',         body: SIM_MESSAGES['pay'] },
     { title: 'Surveying',   body: SIM_MESSAGES['surveying'] },
     { title: 'AutoCRM™',    body: SIM_MESSAGES['autocrm'] },
     { title: 'Engage™',     body: SIM_MESSAGES['leadgen'] },
     { title: 'ReEngage™',   body: SIM_MESSAGES['reengage'] },
-    { title: 'Lab',         body: SIM_MESSAGES['lab'] }
+    { title: 'Lab',         body: SIM_MESSAGES['lab'] },
+    { title: 'Your profile', body: SIM_MESSAGES['profile'] }
   ];
 }
 function simShow() {
   _simSlideIdx = 0;
+  simFetchPostCount();
   simRenderModal();
   document.getElementById('sim-overlay').style.display = 'flex';
 }
@@ -9198,6 +9215,8 @@ function simRenderModal() {
   var s = slides[_simSlideIdx];
   document.getElementById('sim-slide-title').textContent = s.title;
   document.getElementById('sim-slide-body').textContent = s.body;
+  var img = document.getElementById('sim-slide-img');
+  if (img) img.src = SIM_POSES[_simSlideIdx % SIM_POSES.length];
   document.getElementById('sim-dots').innerHTML = slides.map(function(_, i) {
     return '<span style="width:7px;height:7px;border-radius:50%;background:' + (i === _simSlideIdx ? 'var(--brand-orange)' : '#e2e6ea') + ';display:inline-block;"></span>';
   }).join('');
