@@ -5261,7 +5261,7 @@ Consolidating debts will increase the loan to value which can impact future deal
   <div style="background:#1e3a5f;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
       <div style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <img src="/static/sim-listening.png" alt="" style="width:38px;height:38px;object-fit:contain;">
+        <img src="/static/sim-listening.png" alt="" class="sim-bob" style="width:38px;height:38px;object-fit:contain;">
       </div>
       <div>
         <div style="font-size:14px;font-weight:700;">Sim</div>
@@ -16546,7 +16546,7 @@ function khSubmit() {
 function khGreet() {
   var firstName = (_currentUser && _currentUser.firstName) || '';
   var hello = firstName ? ('Hi ' + firstName + '! ') : 'Hi! ';
-  khAddBotMessage(hello + 'I\'m Sim, your personal assistant - ask me anything about the Hub and I\'ll do my best* to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.\n\n*Fair warning: Mark has been very strict about what I am, and am not allowed to do around here, and has threatened to connect me to Acre if I misbehave. So please bear with me.');
+  khAddBotMessage(hello + 'I\'m Sim, your personal assistant - ask me anything about the Hub and I\'ll do my best* to help, or point you in the right direction. If I genuinely don\'t know, I\'ll say so rather than guess.\n\n*Fair warning: Mark has been very strict about what I am, and am not allowed to do around here, and has threatened to API me into Acre if I misbehave. So please bear with me.');
 }
 
 function khOpen() {
