@@ -7852,9 +7852,11 @@ function loadSurveying() {
 var _nlLoaded = false;
 
 // ── Industry Reading timed CPD ────────────────────────────────
-var _msInterval   = null;
-var _msSeconds    = 0;
-var _msSourceName = '';
+var _msInterval     = null;
+var _msCloseWatcher = null;
+var _msSeconds      = 0;
+var _msSourceName   = '';
+var _msWin          = null;
 
 function msTtartReading(url, sourceName) {
   _msSeconds    = 0;
@@ -7863,17 +7865,31 @@ function msTtartReading(url, sourceName) {
   document.getElementById('ms-state-idle').style.display    = 'none';
   document.getElementById('ms-state-reading').style.display = '';
   document.getElementById('ms-state-done').style.display    = 'none';
-  window.open(url, '_blank', 'noopener');
+  // noopener would stop us getting a window handle back, so we can't detect when it's
+  // closed — omit it here (the reading link is our own trusted static content).
+  _msWin = window.open(url, '_blank');
   _msInterval = setInterval(function() {
     _msSeconds++;
     var m = Math.floor(_msSeconds / 60), s = _msSeconds % 60;
     document.getElementById('ms-timer-display').textContent =
       (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }, 1000);
+  // Auto-log as soon as they close the article tab, so they don't have to
+  // remember to come back and click "Stop and Log".
+  clearInterval(_msCloseWatcher);
+  if (_msWin) {
+    _msCloseWatcher = setInterval(function() {
+      if (_msWin && _msWin.closed) {
+        clearInterval(_msCloseWatcher);
+        msStopAndLog();
+      }
+    }, 1000);
+  }
 }
 
 function msStopAndLog() {
   clearInterval(_msInterval);
+  clearInterval(_msCloseWatcher);
   var mins = Math.round(_msSeconds / 60);
   if (mins < 1) mins = 1;
   var today = new Date().toISOString().split('T')[0];
@@ -7904,6 +7920,7 @@ function msStopAndLog() {
 
 function msCancel() {
   clearInterval(_msInterval);
+  clearInterval(_msCloseWatcher);
   msReset();
 }
 
