@@ -620,7 +620,7 @@ select:focus { outline:none; }
           <!-- CPD Summary (top half) + ReEngage (bottom half) — directly below Surveying -->
           <div style="display:flex;flex-direction:column;gap:20px;flex:1;">
 
-            <div id="home-cpd-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1;min-width:0;">
+            <div id="home-cpd-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1.4;min-width:0;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -637,7 +637,7 @@ select:focus { outline:none; }
             </div>
 
             <!-- ReEngage™ — past-completion buckets, clickable through to filtered customer list -->
-            <div id="home-reengage-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:1;min-width:0;">
+            <div id="home-reengage-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:0.6;min-width:0;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -1447,8 +1447,8 @@ select:focus { outline:none; }
             <input id="cpdf-activity" list="cpdf-activity-list" placeholder="Select or type an activity…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
           </div>
           <div style="grid-column:1/-1;">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">What did you learn?</label>
-            <textarea id="cpdf-learned" rows="3" placeholder="Briefly describe the key things you took away from this activity…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'"></textarea>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">What did you learn? <span id="cpdf-learned-dot" style="display:none;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-left:2px;vertical-align:middle;" title="No note recorded yet"></span></label>
+            <textarea id="cpdf-learned" rows="3" placeholder="Briefly describe the key things you took away from this activity…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'" oninput="if(this.value.trim())document.getElementById('cpdf-learned-dot').style.display='none';"></textarea>
           </div>
           <div>
             <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Date *</label>
@@ -8638,6 +8638,13 @@ function loadHomeData() {
     }).join('')
     + '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f4f8;font-size:12px;">' + paceText + '</div>';
 
+    var needsLearnedCount = (cpd.entries || []).filter(function(e) { return e.source === 'Learning Zone' && !(e.learned && e.learned.trim()); }).length;
+    if (needsLearnedCount) {
+      barsEl.innerHTML += '<div onclick="switchTab(\'compliance\');return false;" style="margin-top:10px;padding:10px 12px;background:#fef2f2;border-radius:8px;font-size:12px;color:#991b1b;cursor:pointer;display:flex;align-items:center;gap:7px;">'
+        + '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>'
+        + '<span>' + needsLearnedCount + ' ' + (needsLearnedCount === 1 ? 'entry needs' : 'entries need') + ' a learning note — click to review</span></div>';
+    }
+
     card.style.display = types.length ? '' : 'none';
 
     // Recommend videos for any type behind pace — exclude already-logged titles
@@ -14574,6 +14581,7 @@ function openCpdForm() {
   document.getElementById('cpdf-minutes').value = '60';
   document.getElementById('cpdf-activity').value = '';
   document.getElementById('cpdf-learned').value = '';
+  document.getElementById('cpdf-learned-dot').style.display = 'none';
   document.getElementById('cpdf-category').value = 'Technical Knowledge';
   document.getElementById('cpdf-specialist').value = '';
   document.getElementById('cpd-form-error').style.display = 'none';
@@ -14596,6 +14604,7 @@ function openCpdFormEdit(idx) {
   document.getElementById('cpdf-cpdtype').value  = e.cpdType  || 'Mortgage';
   document.getElementById('cpdf-specialist').value = e.specialist || '';
   document.getElementById('cpdf-learned').value  = e.learned  || '';
+  document.getElementById('cpdf-learned-dot').style.display = cpdNeedsLearned(e) ? 'inline-block' : 'none';
   document.getElementById('cpd-form-error').style.display = 'none';
   document.getElementById('cpd-form').style.display = 'block';
   document.getElementById('cpd-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
