@@ -4638,10 +4638,22 @@ app.get('/api/compliance-reports', requireAdmin, async (req, res) => {
 });
 
 // POST /api/cpd/video — auto-log a Learning Zone video (supports 50/50)
+// Minutes logged reflect actual watch time (sent by the client as `watchedMinutes`),
+// capped at the standard allocation (60 min, or 30/30 for 50/50) and requiring at
+// least 1 minute watched. Callers that don't track watch time (e.g. the Live
+// Weekly Training link) omit watchedMinutes and get the full standard allocation.
 app.post('/api/cpd/video', requireAuth, async (req, res) => {
-  const { videoTitle, cpdType } = req.body;
+  const { videoTitle, cpdType, watchedMinutes } = req.body;
   try {
     const today = new Date().toISOString().split('T')[0];
+    const CAP_TOTAL = 60;
+    let totalMinutes = CAP_TOTAL;
+    if (typeof watchedMinutes === 'number' && isFinite(watchedMinutes)) {
+      totalMinutes = Math.min(CAP_TOTAL, Math.max(0, Math.round(watchedMinutes)));
+    }
+    if (totalMinutes < 1) {
+      return res.json({ success: true, skipped: true });
+    }
     const makeRecord = (type, mins) => ({ fields: {
       [CPD_ACTIVITY]: videoTitle || 'Learning video',
       [CPD_EMAIL]:    req.session.user.email,
@@ -4652,9 +4664,10 @@ app.post('/api/cpd/video', requireAuth, async (req, res) => {
       [CPD_VTITLE]:   videoTitle || '',
       [CPD_TYPE]:     type
     }});
+    const mortgageMins = Math.round(totalMinutes / 2);
     const records = cpdType === '50/50'
-      ? [makeRecord('Mortgage', 30), makeRecord('Protection', 30)]
-      : [makeRecord(cpdType || 'Mortgage', 60)];
+      ? [makeRecord('Mortgage', mortgageMins), makeRecord('Protection', totalMinutes - mortgageMins)]
+      : [makeRecord(cpdType || 'Mortgage', totalMinutes)];
     const data = await cpdFetch('', {
       method: 'POST',
       body: JSON.stringify({ records, returnFieldsByFieldId: true })

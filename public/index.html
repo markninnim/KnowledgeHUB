@@ -1823,7 +1823,7 @@ select:focus { outline:none; }
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:0;">
           <div>
             <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Monthly Newsletters</h2>
-            <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 20px;line-height:1.6;">Read the latest CPD Round-up newsletters. Opening a newsletter logs <strong>20 minutes CPD</strong> — 10 minutes Mortgage and 10 minutes Protection.</p>
+            <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 20px;line-height:1.6;">Read the latest CPD Round-up newsletters. CPD is logged for the time you spend reading, up to <strong>20 minutes</strong> — split evenly between Mortgage and Protection.</p>
           </div>
           <!-- Upload button: supervisors/admins only -->
           <div id="nl-upload-wrap" style="display:none;flex-shrink:0;">
@@ -8006,8 +8006,11 @@ function toggleNlArchive() {
     : 'Hide Archive';
 }
 
+var NL_CAP_TOTAL = 20; // minutes — max CPD a newsletter can award, however long it's left open
+var _nlWatchTimer = null;
+
 function openNewsletter(url, title, monthLabel) {
-  window.open(url, '_blank');
+  var newWin = window.open(url, '_blank');
   var toast = document.getElementById('toast');
 
   function alreadyCredited() {
@@ -8016,39 +8019,56 @@ function openNewsletter(url, title, monthLabel) {
     });
   }
 
-  function doLog() {
+  function doLog(readMinutes) {
     // Only credit CPD the first time this newsletter is opened — re-opening
     // it later (e.g. to re-read) shouldn't log CPD again.
     if (alreadyCredited()) {
       if (toast) { toast.textContent = 'CPD already logged for this newsletter'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 4000); }
       return;
     }
+    var total = Math.min(NL_CAP_TOTAL, Math.max(0, Math.round(readMinutes)));
+    if (total < 1) return; // closed too quickly to count as reading it
+    var mortgageMins = Math.round(total / 2);
+    var protectionMins = total - mortgageMins;
     var today = new Date().toISOString().split('T')[0];
-    // Log 10 min Mortgage CPD
     fetch('/api/cpd', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Mortgage', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
+      body: JSON.stringify({ activity: title, date: today, minutes: mortgageMins, category: 'Technical Knowledge', cpdType: 'Mortgage', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
     });
-    // Log 10 min Protection CPD
     fetch('/api/cpd', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ activity: title, date: today, minutes: 10, category: 'Technical Knowledge', cpdType: 'Protection', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
+      body: JSON.stringify({ activity: title, date: today, minutes: protectionMins, category: 'Technical Knowledge', cpdType: 'Protection', source: 'Learning Zone', learned: 'Read FPG ' + monthLabel + ' CPD Round-up newsletter' })
     }).then(function() {
       _cpdLoaded = false; loadCpd();
-      if (toast) { toast.textContent = '✓ 20 min CPD logged (10 Mortgage + 10 Protection)'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 5000); }
+      if (toast) { toast.textContent = '✓ ' + total + ' min CPD logged (' + mortgageMins + ' Mortgage + ' + protectionMins + ' Protection)'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 5000); }
     }).catch(function() {
       if (toast) { toast.textContent = 'CPD log failed – try again'; toast.style.opacity = 1; setTimeout(function(){ toast.style.opacity = 0; }, 3000); }
     });
   }
 
+  function startTracking() {
+    if (alreadyCredited() || !newWin) return; // pop-up blocked or already read — nothing to track
+    var start = Date.now();
+    clearInterval(_nlWatchTimer);
+    _nlWatchTimer = setInterval(function() {
+      if (newWin.closed) {
+        clearInterval(_nlWatchTimer);
+        doLog(Math.round((Date.now() - start) / 60000));
+      }
+    }, 1000);
+  }
+
   if (_cpdLoaded) {
-    doLog();
+    startTracking();
   } else {
     fetch('/api/cpd').then(function(r){ return r.json(); }).then(function(data) {
       _cpdAllEntries = data.entries || [];
       _cpdLoaded = true;
-      doLog();
-    }).catch(doLog); // if the pre-check fails, fall back to logging as before
+      startTracking();
+    }).catch(function() {
+      // If the pre-check fails, fall back to the full standard allocation on open
+      doLog(NL_CAP_TOTAL);
+    });
   }
 }
 
@@ -8265,14 +8285,37 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
     if (el) { el.textContent = typeLabel + ' CPD'; el.style.color = 'rgba(255,255,255,.5)'; }
   });
   document.getElementById('lv-player-modal').style.display = 'flex';
-  // Auto-log CPD immediately on play
+  // Start tracking watch time — CPD is logged for the actual time watched when
+  // the player is closed (or the tab is closed), not immediately on play.
+  _lvWatchStart = Date.now();
+  _lvWatchLogged = false;
+  ['lv-cpd-status-strip', 'lv-cpd-status-strip-s'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = typeLabel + ' CPD — tracking your watch time'; el.style.color = 'rgba(255,255,255,.5)'; }
+  });
+}
+
+var _lvWatchStart  = null;
+var _lvWatchLogged = false;
+function lvLogWatchedCpd(useBeacon) {
+  if (_lvWatchLogged || !_lvWatchStart) return;
+  var watchedMinutes = Math.round((Date.now() - _lvWatchStart) / 60000);
+  _lvWatchLogged = true;
+  _lvWatchStart = null;
+  if (watchedMinutes < 1) return;
+  var payload = JSON.stringify({ videoTitle: _lvCurrentTitle, cpdType: _lvCurrentCpdType, watchedMinutes: watchedMinutes });
+  if (useBeacon && navigator.sendBeacon) {
+    navigator.sendBeacon('/api/cpd/video', new Blob([payload], { type: 'application/json' }));
+    return;
+  }
   fetch('/api/cpd/video', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ videoTitle: _lvCurrentTitle, cpdType: _lvCurrentCpdType })
+    body: payload
   }).then(function(r) {
     if (r.ok) {
-      var loggedLabel = '✓ ' + typeLabel + ' CPD logged';
+      var typeLabel = _lvCurrentCpdType === '50/50' ? 'Mortgage + Protection' : (_lvCurrentCpdType || 'Mortgage');
+      var loggedLabel = '✓ ' + typeLabel + ' CPD logged (' + watchedMinutes + ' min)';
       ['lv-cpd-status-strip', 'lv-cpd-status-strip-s'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) { el.textContent = loggedLabel; el.style.color = '#22c55e'; }
@@ -8281,6 +8324,7 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
     }
   }).catch(function() {});
 }
+window.addEventListener('pagehide', function() { lvLogWatchedCpd(true); });
 
 function toggleLvSplit() {
   _lvSplit = !_lvSplit;
@@ -8313,6 +8357,7 @@ function toggleLvSplit() {
 
 function closeLvPlayer() {
   clearInterval(_lvTimerInterval);
+  lvLogWatchedCpd(false);
   document.getElementById('lv-player-modal').style.display = 'none';
   document.getElementById('lv-iframe').src = '';
   document.getElementById('lv-iframe-split').src = '';
