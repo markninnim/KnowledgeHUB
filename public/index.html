@@ -8053,7 +8053,8 @@ function openNewsletter(url, title, monthLabel) {
     _nlWatchTimer = setInterval(function() {
       if (newWin.closed) {
         clearInterval(_nlWatchTimer);
-        doLog(Math.round((Date.now() - start) / 60000));
+        var elapsedMs = Date.now() - start;
+        doLog(elapsedMs < 5000 ? 0 : Math.ceil(elapsedMs / 60000));
       }
     }, 1000);
   }
@@ -8299,10 +8300,11 @@ var _lvWatchStart  = null;
 var _lvWatchLogged = false;
 function lvLogWatchedCpd(useBeacon) {
   if (_lvWatchLogged || !_lvWatchStart) return;
-  var watchedMinutes = Math.round((Date.now() - _lvWatchStart) / 60000);
+  var elapsedMs = Date.now() - _lvWatchStart;
   _lvWatchLogged = true;
   _lvWatchStart = null;
-  if (watchedMinutes < 1) return;
+  if (elapsedMs < 5000) return; // closed almost instantly — don't count it
+  var watchedMinutes = Math.ceil(elapsedMs / 60000); // round up so any real viewing counts as at least 1 minute
   var payload = JSON.stringify({ videoTitle: _lvCurrentTitle, cpdType: _lvCurrentCpdType, watchedMinutes: watchedMinutes });
   if (useBeacon && navigator.sendBeacon) {
     navigator.sendBeacon('/api/cpd/video', new Blob([payload], { type: 'application/json' }));
