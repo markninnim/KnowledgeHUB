@@ -620,7 +620,7 @@ select:focus { outline:none; }
           <!-- CPD Summary (top half) + ReEngage (bottom half) — directly below Surveying -->
           <div style="display:flex;flex-direction:column;gap:20px;flex:1;">
 
-            <div id="home-cpd-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1.4;min-width:0;">
+            <div id="home-cpd-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1.15;min-width:0;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -637,7 +637,7 @@ select:focus { outline:none; }
             </div>
 
             <!-- ReEngage™ — past-completion buckets, clickable through to filtered customer list -->
-            <div id="home-reengage-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:0.6;min-width:0;">
+            <div id="home-reengage-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:0.85;min-width:0;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -8492,6 +8492,10 @@ function loadHomeReengage() {
       rowWrap.appendChild(tile);
     });
     box.appendChild(rowWrap);
+    var note = document.createElement('div');
+    note.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:8px;';
+    note.textContent = "These are cases where we haven't updated their record with a new sale.";
+    box.appendChild(note);
   }).catch(function() {
     box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load ReEngage&#8482; data.</div>';
   });
@@ -8657,9 +8661,9 @@ function loadHomeData() {
 
     var needsLearnedCount = (cpd.entries || []).filter(function(e) { return e.source === 'Learning Zone' && !(e.learned && e.learned.trim()); }).length;
     if (needsLearnedCount) {
-      barsEl.innerHTML += '<div onclick="switchTab(\'compliance\');return false;" style="margin-top:10px;padding:10px 12px;background:#fef2f2;border-radius:8px;font-size:12px;color:#991b1b;cursor:pointer;display:flex;align-items:center;gap:7px;">'
+      barsEl.innerHTML += '<div onclick="switchTab(\'compliance\');return false;" style="margin-top:10px;font-size:12px;font-weight:700;color:#991b1b;cursor:pointer;display:flex;align-items:center;gap:7px;">'
         + '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>'
-        + '<span>' + needsLearnedCount + ' ' + (needsLearnedCount === 1 ? 'entry needs' : 'entries need') + ' a learning note — click to review</span></div>';
+        + '<span>' + needsLearnedCount + ' ' + (needsLearnedCount === 1 ? 'entry needs' : 'entries need') + ' a learning note</span></div>';
     }
 
     card.style.display = types.length ? '' : 'none';
