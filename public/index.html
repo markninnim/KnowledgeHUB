@@ -8494,7 +8494,7 @@ function loadHomeReengage() {
     box.appendChild(rowWrap);
     var note = document.createElement('div');
     note.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:8px;';
-    note.textContent = "These are cases where we haven't updated their record with a new sale.";
+    note.textContent = "These are clients whose record hasn't been updated with a new sale — they may have gone direct at renewal or repaid their loan in full. It's simply a way to spot opportunities to reconnect.";
     box.appendChild(note);
   }).catch(function() {
     box.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Could not load ReEngage&#8482; data.</div>';
