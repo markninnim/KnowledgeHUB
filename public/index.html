@@ -75,8 +75,11 @@ html { height: 100%; }
 @keyframes kh-spin { to { transform: rotate(360deg); } }
 .kh-spinner { display:inline-block; width:18px; height:18px; border:2.5px solid #e2e8f0; border-top-color:var(--brand-navy); border-radius:50%; animation:kh-spin .7s linear infinite; vertical-align:middle; }
 @keyframes lab-magnify-scan { 0%,100% { transform:translateX(-14px) rotate(-8deg); } 50% { transform:translateX(14px) rotate(8deg); } }
-@keyframes sim-cycle-fade { 0%, 27% { opacity:1; } 33%, 100% { opacity:0; } }
-.sim-cycle-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); animation:sim-cycle-fade 9s infinite; }
+@keyframes sim-cycle-fade { 0%, 22% { opacity:1; } 33%, 100% { opacity:0; } }
+@keyframes sim-bob { 0%, 100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-6px) rotate(-2deg); } }
+#kh-bubble { animation:sim-bob 2.4s ease-in-out infinite; }
+.sim-cycle-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); opacity:0; animation:sim-cycle-fade 9s ease-in-out infinite; }
+.sim-cycle-img.sim-cycle-1 { animation-delay:0s; }
 .sim-cycle-img.sim-cycle-2 { animation-delay:3s; }
 .sim-cycle-img.sim-cycle-3 { animation-delay:6s; }
 .lab-magnify-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; padding:26px 0; }
