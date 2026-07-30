@@ -164,6 +164,7 @@ async function casPathFetch(endpoint, options = {}) {
 // Users table so it's permanent.)
 const F_IS_MARKETING       = 'fldzlNzW2l0kAcK4v'; // Is Marketing
 const F_IS_LEADGEN         = 'fldpnrV5krN03XAjN'; // Is LeadGen
+const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true if employed rather than self-employed/AR
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'adviceStandards', 'compliance', 'learning', 'surveying', 'sellingZone',
@@ -489,6 +490,7 @@ function recordToUser(record) {
     avatarUrl:        f[F_AVATAR]           || '',
     isMarketing:      f[F_IS_MARKETING]     || false,
     isLeadGen:        f[F_IS_LEADGEN]       || false,
+    employedAdviser:  f[F_EMPLOYED_ADVISER] || false,
     cas:              f[F_CAS]              || false,
     predictedCasDate: f[F_PREDICTED_CAS_DATE] || null,
     birthday:         f[F_BIRTHDAY]           || null,
@@ -3399,7 +3401,8 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
-      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true'
+      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
+      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true'
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -3520,7 +3523,8 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
-      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true'
+      [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
+      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true'
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
