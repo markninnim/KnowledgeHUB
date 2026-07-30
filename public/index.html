@@ -77,7 +77,7 @@ html { height: 100%; }
 @keyframes lab-magnify-scan { 0%,100% { transform:translateX(-14px) rotate(-8deg); } 50% { transform:translateX(14px) rotate(8deg); } }
 @keyframes sim-cycle-fade { 0%, 17% { opacity:1; } 25%, 100% { opacity:0; } }
 @keyframes sim-bob { 0%, 100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-6px) rotate(-2deg); } }
-#kh-bubble { animation:sim-bob 2.4s ease-in-out infinite; }
+#kh-bubble, .sim-bob { animation:sim-bob 2.4s ease-in-out infinite; }
 .sim-cycle-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 14px rgba(0,0,0,.3)); opacity:0; animation:sim-cycle-fade 8s ease-in-out infinite; }
 .sim-cycle-img.sim-cycle-1 { animation-delay:0s; }
 .sim-cycle-img.sim-cycle-2 { animation-delay:2s; }
@@ -15925,6 +15925,7 @@ function khAddBotMessage(text) {
   var avatar = document.createElement('img');
   avatar.src = '/static/sim-listening.png';
   avatar.alt = '';
+  avatar.className = 'sim-bob';
   avatar.style.cssText = 'width:30px;height:30px;object-fit:contain;flex-shrink:0;margin-bottom:2px;';
   var el = document.createElement('div');
   el.style.cssText = 'background:#fff;border:1px solid #e8ecf0;color:#3d4c5c;padding:9px 13px;border-radius:14px 14px 14px 3px;font-size:13px;line-height:1.6;white-space:pre-line;min-width:0;';
