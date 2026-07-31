@@ -1725,7 +1725,16 @@ select:focus { outline:none; }
       <div style="font-size:13px;color:#6b7c8f;margin-bottom:20px;">Every compliance report you've submitted, with its current status and any note left by the compliance team.</div>
       <div id="cr-mine-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="cr-mine-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">You haven't submitted any compliance reports yet.</div>
-      <div id="cr-mine-rows"></div>
+      <div id="cr-mine-table-wrap" style="display:none;">
+        <div style="display:flex;align-items:center;gap:14px;padding:8px 16px;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">
+          <span style="width:8px;flex-shrink:0;"></span>
+          <span style="width:100px;flex-shrink:0;">Date</span>
+          <span style="width:180px;flex-shrink:0;">Type</span>
+          <span style="flex:1;">Client / Summary</span>
+          <span>Status</span>
+        </div>
+        <div id="cr-mine-rows"></div>
+      </div>
     </div>
 
     <!-- Consumer Duty — Questionnaire Feedback (personal: logged-in adviser's own responses only) -->
@@ -14772,6 +14781,7 @@ var _crMineData = [];
 function loadCrMine() {
   document.getElementById('cr-mine-loading').style.display = '';
   document.getElementById('cr-mine-empty').style.display = 'none';
+  document.getElementById('cr-mine-table-wrap').style.display = 'none';
   document.getElementById('cr-mine-rows').innerHTML = '';
   fetch('/api/compliance-report-mine')
     .then(function(r) { return r.json(); })
@@ -14779,6 +14789,7 @@ function loadCrMine() {
       document.getElementById('cr-mine-loading').style.display = 'none';
       _crMineData = Array.isArray(data) ? data : [];
       if (!_crMineData.length) { document.getElementById('cr-mine-empty').style.display = ''; return; }
+      document.getElementById('cr-mine-table-wrap').style.display = '';
       crMineRender();
     })
     .catch(function() {
@@ -14792,16 +14803,35 @@ function crMineRender() {
     var rowId = 'cr-mine-row-' + idx;
     var statusColor = statusColors[r.status || 'New'] || '#6b7c8f';
     var dot = r.unread ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:8px;flex-shrink:0;"></span>' : '<span style="display:inline-block;width:8px;margin-right:8px;flex-shrink:0;"></span>';
-    var noteHtml = r.note ? '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:var(--brand-navy);line-height:1.6;"><span style="font-weight:700;">Compliance note:</span> ' + escHtml(r.note) + '</div>' : '';
+    // Combine client name + summary so the column reads consistently across
+    // report types — some (SARs, Vulnerable Persons) have a client name,
+    // others (Whistleblowing, Conflict of Interest) only have a summary.
+    var subjectParts = [];
+    if (r.clientName) subjectParts.push(r.clientName);
+    if (r.summary && r.summary !== r.clientName) subjectParts.push(r.summary);
+    var subject = subjectParts.join(' — ') || '—';
+    var detailRows = [
+      r.incidentDate ? ['Incident / activity date', r.incidentDate] : null,
+      r.dateSubmitted ? ['Date submitted', r.dateSubmitted] : null,
+      r.summary ? ['Summary', r.summary] : null,
+      r.details ? ['Details', r.details] : null,
+      r.actionTaken ? ['Action taken', r.actionTaken] : null
+    ].filter(Boolean);
+    var detailHtml = '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
+      detailRows.map(function(d) { return '<div><span style="font-weight:600;color:var(--brand-navy);">' + escHtml(d[0]) + ':</span> ' + escHtml(d[1]) + '</div>'; }).join('') +
+      (r.note
+        ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #e3e8ef;color:var(--brand-navy);"><span style="font-weight:700;">Compliance note:</span> ' + escHtml(r.note) + '</div>'
+        : '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #e3e8ef;">No note from compliance yet.</div>') +
+    '</div>';
     return '<div style="border:1px solid #e3e8ef;border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff;">' +
       '<div onclick="crMineToggleRow(\'' + r.id + '\',\'' + rowId + '\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;font-size:13px;color:var(--brand-navy);">' +
         dot +
         '<div style="width:100px;flex-shrink:0;color:#6b7c8f;">' + escHtml(r.dateSubmitted || '—') + '</div>' +
         '<div style="width:180px;flex-shrink:0;font-weight:600;">' + escHtml(r.type || '') + '</div>' +
-        '<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7c8f;">' + escHtml(r.clientName || r.summary || '') + '</div>' +
+        '<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7c8f;">' + escHtml(subject) + '</div>' +
         '<span style="font-size:11px;font-weight:700;color:' + statusColor + ';">' + escHtml(r.status || 'New') + '</span>' +
       '</div>' +
-      '<div id="' + rowId + '" style="display:none;">' + (noteHtml || '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;">No note from compliance yet.</div>') + '</div>' +
+      '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
     '</div>';
   }).join('');
 }
