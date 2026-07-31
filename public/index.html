@@ -4254,6 +4254,10 @@ Consolidating debts will increase the loan to value which can impact future deal
         <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Compliance Log</h2>
         <button id="sv-cl-refresh-btn" onclick="loadComplianceLog(true)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       </div>
+      <div id="cl-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Compliance Overview</div>
+        <div id="cl-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
+      </div>
       <!-- Filter bar -->
       <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">
         <div style="position:relative;">
@@ -13662,17 +13666,20 @@ function loadComplianceLog(forceReload) {
   document.getElementById('cl-loading').style.display = '';
   document.getElementById('cl-empty').style.display = 'none';
   document.getElementById('cl-table-wrap').style.display = 'none';
+  document.getElementById('cl-summary-text').textContent = 'Loading…';
   fetch('/api/compliance-log').then(function(r) {
     if (r.status === 401) { return Promise.reject('unauthorized'); }
     return r.json();
   }).then(function(data) {
-    _complogData = Array.isArray(data) ? data : [];
+    _complogData = Array.isArray(data) ? data : (data.rows || []);
     _complogLoaded = true;
     document.getElementById('cl-loading').style.display = 'none';
+    document.getElementById('cl-summary-text').textContent = (data && data.summary) || 'No summary available yet.';
     complogPopulateFilters();
     complogRender();
   }).catch(function() {
     document.getElementById('cl-loading').textContent = 'Could not load compliance log.';
+    document.getElementById('cl-summary-text').textContent = 'Could not load summary.';
   });
 }
 

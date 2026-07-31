@@ -4723,11 +4723,68 @@ app.get('/api/compliance-log', requireAuth, async (req, res) => {
       const supervisorName = (supervisorEmail && userByEmail[supervisorEmail]) ? userByEmail[supervisorEmail].fullName : (supervisorEmail || '');
       return Object.assign({}, row, { adviserName, supervisorEmail, supervisorName });
     });
-    res.json(rows);
+    const summary = await crBuildComplianceLogSummary(rows);
+    res.json({ rows, summary });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Builds a short, permanent AI overview for the Compliance Log page (Supervise),
+// read by the whole team on open. Gives priority to Complaints — they're
+// called out first and by name/count even when other types are quieter —
+// then covers other outstanding (non-Resolved) reported activity. Falls back
+// to a plain stats sentence if ANTHROPIC_API_KEY is unset or the call fails.
+async function crBuildComplianceLogSummary(rows) {
+  if (!rows.length) return 'No compliance reports on file yet.';
+
+  const outstanding = rows.filter(r => (r.status || 'New') !== 'Resolved');
+  const byType = {};
+  rows.forEach(r => {
+    const t = r.type || 'Unknown';
+    if (!byType[t]) byType[t] = { total: 0, outstanding: 0 };
+    byType[t].total++;
+    if ((r.status || 'New') !== 'Resolved') byType[t].outstanding++;
+  });
+
+  const complaints = rows.filter(r => r.type === 'Complaint');
+  const outstandingComplaints = complaints.filter(r => (r.status || 'New') !== 'Resolved');
+
+  const typeLines = Object.keys(byType).sort().map(t => `${t}: ${byType[t].total} total, ${byType[t].outstanding} outstanding`).join('\n');
+
+  const complaintDetail = outstandingComplaints.map(r => {
+    const parts = [r.adviserName || r.email || 'Unknown adviser', r.clientName || 'no client name', r.status || 'New'];
+    if (r.settlementAmount) parts.push(`settlement £${r.settlementAmount}`);
+    return parts.join(' — ');
+  }).join('\n');
+
+  const fallback = `${rows.length} reports on file, ${outstanding.length} outstanding. ${outstandingComplaints.length} outstanding complaint(s) out of ${complaints.length} total.`;
+
+  if (!ANTHROPIC_API_KEY) return fallback;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 400,
+        system: 'You are writing a short, permanent overview for a UK mortgage/protection firm\'s Compliance Log page, read by supervisors and compliance staff each time they open it. '
+          + 'You are given a breakdown of reported compliance activity by type (Complaint, Breach, Conflict of Interest, Gifts & Hospitality, SARs, Self Sale, Vulnerable Persons, Whistleblowing), each with a total and how many are outstanding (not yet Resolved), plus specific detail on any outstanding complaints. '
+          + 'Write 2-4 sentences of flowing prose (no bullet points, no headers). Complaints are the priority — mention them first and be specific (how many outstanding, and by whom/client if given) even if the numbers are small. '
+          + 'Then briefly cover other outstanding activity worth attention (e.g. any Breach, SAR, or Whistleblowing items still open), and note if everything else is quiet/resolved. '
+          + 'Keep the tone measured and factual, like a compliance analyst briefing the team, not alarmist. Do not invent data not given to you.',
+        messages: [{ role: 'user', content: `Totals by type:\n${typeLines}\n\nOutstanding complaints detail:\n${complaintDetail || 'None outstanding.'}` }]
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    return (data.content && data.content[0] && data.content[0].text) || fallback;
+  } catch (e) {
+    console.error('crBuildComplianceLogSummary AI error:', e);
+    return fallback;
+  }
+}
 
 // POST /api/cpd/video — auto-log a Learning Zone video (supports 50/50)
 // Minutes logged reflect actual watch time (sent by the client as `watchedMinutes`),
