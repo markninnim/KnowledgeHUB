@@ -9797,20 +9797,26 @@ var _editingUserId = null;
 
 // ── Feature flags ────────────────────────────────────────────
 var _features = {};
+// Keys here match the Feature Flags Airtable table's "Key" column, which is
+// now kept identical to its "Label" column for consistency. Each entry's
+// accessKey is the SEPARATE, unrelated camelCase identifier used by the
+// per-adviser Access toggle system (NAV_TOGGLE_KEYS in server.js) — the two
+// systems happen to cover the same tabs but are independent, so this is the
+// bridge between them.
 var FEATURE_LABELS = {
-  marketing:       { label: 'Marketing',        tab: 'tab-btn-marketing',         pane: 'tab-marketing' },
-  compliance:      { label: 'Compliance',        tab: 'tab-btn-compliance',        pane: 'tab-compliance' },
-  learning:        { label: 'Learn',             tab: 'tab-btn-learning',          pane: 'tab-learning' },
-  surveying:       { label: 'Surveying',         tab: 'tab-btn-surveying',         pane: 'tab-surveying' },
-  lab:             { label: 'Lab',               tab: 'tab-btn-lab',               pane: 'tab-lab' },
-  sellingZone:     { label: 'Earn',               tab: 'tab-btn-selling-zone',      pane: 'tab-selling-zone' },
-  performanceZone: { label: 'Numbers',            tab: 'tab-btn-performance-zone',  pane: 'tab-performance-zone' },
-  supervisorZone:  { label: 'Supervise',          tab: 'tab-btn-supervisor-zone',   pane: 'tab-supervisor-zone' },
-  pay:             { label: 'Pay',                tab: 'tab-btn-pay',               pane: 'tab-pay' },
-  autocrm:         { label: 'AutoCRM™',           tab: 'tab-btn-autocrm',           pane: 'tab-autocrm' },
-  reEngage:        { label: 'ReEngage™',          tab: 'tab-btn-reengage',          pane: 'tab-reengage' },
-  muttuo:          { label: 'Muttuo',             tab: 'tab-btn-muttuo',            pane: 'tab-muttuo' },
-  whereabouts:     { label: 'Whereabouts',        tab: 'tab-btn-whereabouts',       pane: 'tab-whereabouts' }
+  Marketing:   { label: 'Marketing',   tab: 'tab-btn-marketing',        pane: 'tab-marketing',        accessKey: 'marketing' },
+  Compliance:  { label: 'Compliance',  tab: 'tab-btn-compliance',       pane: 'tab-compliance',       accessKey: 'compliance' },
+  Learn:       { label: 'Learn',       tab: 'tab-btn-learning',         pane: 'tab-learning',         accessKey: 'learning' },
+  Surveying:   { label: 'Surveying',   tab: 'tab-btn-surveying',        pane: 'tab-surveying',        accessKey: 'surveying' },
+  Lab:         { label: 'Lab',         tab: 'tab-btn-lab',              pane: 'tab-lab',              accessKey: 'lab' },
+  Earn:        { label: 'Earn',        tab: 'tab-btn-selling-zone',     pane: 'tab-selling-zone',     accessKey: 'sellingZone' },
+  Numbers:     { label: 'Numbers',     tab: 'tab-btn-performance-zone', pane: 'tab-performance-zone', accessKey: 'performanceZone' },
+  Supervise:   { label: 'Supervise',   tab: 'tab-btn-supervisor-zone',  pane: 'tab-supervisor-zone',  accessKey: 'supervisorZone' },
+  Pay:         { label: 'Pay',         tab: 'tab-btn-pay',              pane: 'tab-pay',              accessKey: 'pay' },
+  'AutoCRM™':  { label: 'AutoCRM™',    tab: 'tab-btn-autocrm',          pane: 'tab-autocrm',          accessKey: 'autocrm' },
+  'ReEngage™': { label: 'ReEngage™',   tab: 'tab-btn-reengage',         pane: 'tab-reengage',         accessKey: 'reEngage' },
+  Muttuo:      { label: 'Muttuo',      tab: 'tab-btn-muttuo',           pane: 'tab-muttuo',           accessKey: 'muttuo' },
+  Whereabouts: { label: 'Whereabouts', tab: 'tab-btn-whereabouts',      pane: 'tab-whereabouts',      accessKey: 'whereabouts' }
 };
 // Leads is handled separately below — visibility also requires the per-user
 // isLeadGen toggle (or admin), on top of this site-wide flag.
@@ -9822,15 +9828,16 @@ function applyFeatureFlags() {
     var activePaneId = activePane ? activePane.id : null;
     var activeDisabled = false;
     var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
-    var supervisorOnlyTabs = { performanceZone: true, supervisorZone: true, whereabouts: true, lab: true };
+    var supervisorOnlyTabs = { Numbers: true, Supervise: true, Whereabouts: true, Lab: true };
     var userNav = (_currentUser && _currentUser.navAccess) || {};
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
       var enabled = f[key] !== false;
       // Per-user "Access" toggles (user management) take precedence — a
       // site-wide feature flag can never re-show a tab a user's own access
-      // has switched off, only hide tabs further.
-      var userAllowed = userNav[key] !== false;
+      // has switched off, only hide tabs further. That system uses its own
+      // separate camelCase keys, bridged here via cfg.accessKey.
+      var userAllowed = userNav[cfg.accessKey] !== false;
       var btn = document.getElementById(cfg.tab);
       // Supervisor-only tabs must never be shown to regular brokers
       if (btn) btn.style.display = (enabled && userAllowed && (!supervisorOnlyTabs[key] || isSupervisorOrAdmin)) ? '' : 'none';
@@ -9841,7 +9848,7 @@ function applyFeatureFlags() {
     // "member" toggle or whether they have any leads yet.
     var lgbtn = document.getElementById('tab-btn-leadgen');
     if (lgbtn) {
-      var leadsEnabled = f.leadgen !== false && !!_currentUser;
+      var leadsEnabled = f['Engage™'] !== false && !!_currentUser;
       lgbtn.style.display = leadsEnabled ? '' : 'none';
     }
     // If the currently-visible tab was disabled, jump to the first enabled one
@@ -9854,7 +9861,7 @@ function applyFeatureFlags() {
 
 // Rollout-panel-only entries that aren't nav-tab toggles managed by
 // applyFeatureFlags() directly (Engage™ has its own combined gating logic).
-var FEATURE_TOGGLE_EXTRA_LABELS = { leadgen: 'Engage™' };
+var FEATURE_TOGGLE_EXTRA_LABELS = { 'Engage™': 'Engage™' };
 function renderFeatureToggles() {
   var container = document.getElementById('admin-feature-toggles');
   if (!container) return;

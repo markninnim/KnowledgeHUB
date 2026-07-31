@@ -399,11 +399,17 @@ try { _featuredSocial = JSON.parse(fs.readFileSync(FEATURED_SOCIAL_PATH, 'utf8')
 const FEATURE_FLAGS_TABLE = 'tblMUgxkEbVgg7FMU';
 const F_FF_KEY     = 'fldH8hsfwBN7BmwHe';
 const F_FF_ENABLED = 'fldsAR1VDJfitNqq9';
+// Keys here match the "Key" column in the Feature Flags Airtable table
+// exactly (kept in sync with the "Label" column for consistency — an admin
+// reading the Airtable table should see the same string in both columns).
+// Where a key is also used as a per-adviser Access toggle (see NAV_TOGGLE_KEYS
+// below), that's a SEPARATE, differently-named system — index.html bridges
+// the two via each FEATURE_LABELS entry's accessKey field.
 const FEATURES_DEFAULT = {
-  marketing: true, compliance: true,
-  learning: true, surveying: true, lab: true, sellingZone: true,
-  performanceZone: true, supervisorZone: true,
-  pay: true, autocrm: true, reEngage: true, muttuo: true, whereabouts: true, leadgen: true
+  Marketing: true, Compliance: true,
+  Learn: true, Surveying: true, Lab: true, Earn: true,
+  Numbers: true, Supervise: true,
+  Pay: true, 'AutoCRM™': true, 'ReEngage™': true, Muttuo: true, Whereabouts: true, 'Engage™': true
 };
 let _features = { ...FEATURES_DEFAULT };
 let _featureFlagRecordIds = {}; // key -> Airtable record id, so writes PATCH the right row
