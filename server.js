@@ -168,7 +168,7 @@ const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true i
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'marketing', 'compliance', 'learning', 'surveying', 'lab', 'sellingZone',
-  'pay', 'autocrm', 'reEngage', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
+  'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
 ];
 // Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
 const F_ACCESS = {
@@ -181,6 +181,7 @@ const F_ACCESS = {
   pay:              'fldQfKu8q4d1FwZ1s',
   autocrm:          'fldO1nIvILmgnAbYi',
   reEngage:         'fldmKXQipCzEuTBVG',
+  engage:           'fldWAyCsuGjqwLbqZ',
   muttuo:           'fld43JfbHdXVVRICX',
   whereabouts:      'fld55LR2YmiAoar8I',
   performanceZone:  'fldCXyV5roVcw8hQv',
@@ -201,6 +202,7 @@ function computeNavDefaults(f) {
     pay:             true,
     autocrm:         true,
     reEngage:        true,
+    engage:          true,
     muttuo:          isAdmin || business === 'fitch and fitch',
     whereabouts:     supervisorOrAdmin,
     performanceZone: supervisorOrAdmin,

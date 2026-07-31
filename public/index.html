@@ -9116,6 +9116,7 @@ var _currentUser = null;
       pay:              'tab-btn-pay',
       autocrm:          'tab-btn-autocrm',
       reEngage:         'tab-btn-reengage',
+      engage:           'tab-btn-leadgen',
       muttuo:           'tab-btn-muttuo',
       whereabouts:      'tab-btn-whereabouts',
       performanceZone:  'tab-btn-performance-zone',
@@ -9132,12 +9133,11 @@ var _currentUser = null;
       var wbsb = document.getElementById('sidebar-home-whereabouts');
       if (wbsb) wbsb.style.display = nav.whereabouts ? '' : 'none';
     }
-    // Engage™ tab — visible to every adviser (own leads only, unless they're
-    // an admin/supervisor), regardless of the per-user LeadGen "member" toggle
-    // and regardless of whether they currently have any leads assigned.
-    if (user) {
-      var lgbtn = document.getElementById('tab-btn-leadgen');
-      if (lgbtn) lgbtn.style.display = '';
+    // Engage™ tab — visibility now driven by the per-adviser "Access: Engage"
+    // toggle (nav.engage), same as every other tab. Separate from the
+    // "Is LeadGen" / LeadGEN member flag, which controls eligibility to
+    // receive centrally-distributed leads, not whether the tab shows at all.
+    if (user && (user.navAccess || {}).engage) {
       if (typeof lgStartNewLeadWatch === 'function') lgStartNewLeadWatch();
     }
     updateNavUser(user);
@@ -10071,6 +10071,7 @@ var NAV_TOGGLE_LABELS = {
   pay:              'Pay',
   autocrm:          'AutoCRM™',
   reEngage:         'ReEngage™',
+  engage:           'Engage™',
   muttuo:           'Muttuo',
   whereabouts:      'Whereabouts',
   performanceZone:  'Numbers',
