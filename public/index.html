@@ -14577,10 +14577,91 @@ function resetCrForm() {
   });
   var vulnSel = document.getElementById('cr-vulnerability');
   if (vulnSel) Array.prototype.forEach.call(vulnSel.options, function(o){ o.selected = false; });
+  ['cr-reason','cr-outcome'].forEach(khRefreshEnhancedSelect);
   document.getElementById('cr-error').style.display   = 'none';
   document.getElementById('cr-form').style.display    = '';
   document.getElementById('cr-success').style.display = 'none';
 }
+
+// ── Generic scrollable-dropdown enhancer ────────────────────────
+// Native <select> popups can render past the bottom of the viewport with
+// no way to scroll to the remaining options (reported bug on longer lists
+// like Reason for suspicion / Outcome). This swaps the native popup for a
+// custom button + scrollable list, while keeping the original <select>
+// (hidden) as the source of truth so every existing .value read/write,
+// onchange handler, and form-submit reference keeps working unchanged.
+function khEnhanceSelect(id) {
+  var sel = document.getElementById(id);
+  if (!sel || sel.multiple || sel.dataset.khEnhanced) return;
+  sel.dataset.khEnhanced = '1';
+  var baseStyle = sel.getAttribute('style') || '';
+  var wrap = document.createElement('div');
+  wrap.style.position = 'relative';
+  sel.parentNode.insertBefore(wrap, sel);
+  sel.style.display = 'none';
+  wrap.appendChild(sel);
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('style', baseStyle + ';display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left;');
+  var labelSpan = document.createElement('span');
+  labelSpan.style.overflow = 'hidden';
+  labelSpan.style.textOverflow = 'ellipsis';
+  labelSpan.style.whiteSpace = 'nowrap';
+  var arrow = document.createElement('span');
+  arrow.textContent = '▾';
+  arrow.style.cssText = 'color:#6b7c8f;font-size:11px;margin-left:8px;flex-shrink:0;';
+  btn.appendChild(labelSpan);
+  btn.appendChild(arrow);
+  wrap.appendChild(btn);
+
+  var list = document.createElement('div');
+  list.className = 'kh-enhanced-list';
+  list.style.cssText = 'display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:240px;overflow-y:auto;z-index:60;box-shadow:0 6px 16px rgba(0,0,0,.12);';
+  wrap.appendChild(list);
+
+  function rebuildList() {
+    list.innerHTML = '';
+    Array.prototype.forEach.call(sel.options, function(o, idx) {
+      var item = document.createElement('div');
+      item.textContent = o.textContent || '—';
+      var active = idx === sel.selectedIndex;
+      item.style.cssText = 'padding:9px 14px;font-size:14px;color:var(--brand-navy);cursor:pointer;background:' + (active ? '#eef0ff' : '#fff') + ';font-weight:' + (active ? '700' : '400') + ';';
+      item.onmouseover = function() { item.style.background = '#f5f7fa'; };
+      item.onmouseout = function() { item.style.background = (idx === sel.selectedIndex) ? '#eef0ff' : '#fff'; };
+      item.onclick = function() {
+        sel.selectedIndex = idx;
+        list.style.display = 'none';
+        syncLabel();
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      list.appendChild(item);
+    });
+  }
+  function syncLabel() {
+    var opt = sel.options[sel.selectedIndex];
+    labelSpan.textContent = opt ? (opt.textContent || '—') : '—';
+  }
+  syncLabel();
+  rebuildList();
+
+  btn.onclick = function() {
+    var open = list.style.display !== 'none';
+    document.querySelectorAll('.kh-enhanced-list').forEach(function(l) { l.style.display = 'none'; });
+    if (!open) { rebuildList(); list.style.display = 'block'; }
+  };
+  document.addEventListener('click', function(e) {
+    if (!wrap.contains(e.target)) list.style.display = 'none';
+  });
+  sel._khSync = syncLabel;
+}
+function khRefreshEnhancedSelect(id) {
+  var sel = document.getElementById(id);
+  if (sel && sel._khSync) sel._khSync();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  ['cr-givenrec','cr-reason','cr-mlro','cr-nca','cr-fine-paidby','cr-settlement-paidby','cr-outcome'].forEach(khEnhanceSelect);
+});
 
 // ── Consumer Duty — Questionnaire Feedback (supervisor/admin only) ──
 var _cdFeedback = [];
