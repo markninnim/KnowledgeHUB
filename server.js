@@ -4565,7 +4565,12 @@ const CR_VALUE      = 'fldjZTajLEasDx1lf';
 const CR_DETAILS    = 'fldLdvEJUnmQ7DBY9';
 const CR_ACTION     = 'fld1ap3YFBgR4FThG';
 const CR_STATUS     = 'fldEM5lsh19rbLB2k';
-const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing'];
+const CR_VULNERABILITY = 'fldWaSgK78TQGzJmU'; // Client Vulnerability (multipleSelects) — Vulnerable Persons only
+const CR_OUTCOME       = 'fld7RbYFpXWJlQCMM'; // Outcome — Vulnerable Persons + SARs
+const CR_REASON        = 'fld9wgqyWQx0JE4BW'; // Reason for Suspicion — SARs only
+const CR_MLRO          = 'fldoUpUAOHFbNzciC'; // Reported to MLRO — SARs only
+const CR_MLRO_DATE     = 'fldSgHlde0BNTFbnB'; // MLRO Report Date — SARs only
+const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
 
 async function crFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${CR_TABLE}${endpoint}`;
@@ -4580,7 +4585,7 @@ async function crFetch(endpoint, options = {}) {
 
 // POST /api/compliance-report — submit a compliance reporting form
 app.post('/api/compliance-report', requireAuth, async (req, res) => {
-  const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken } = req.body;
+  const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken, vulnerability, outcome, reasonForSuspicion, reportedToMlro, mlroDate } = req.body;
   if (!CR_TYPES.includes(type)) return res.status(400).json({ error: 'Invalid report type' });
   if (!summary || !details)     return res.status(400).json({ error: 'Summary and details are required' });
   try {
@@ -4598,6 +4603,11 @@ app.post('/api/compliance-report', requireAuth, async (req, res) => {
     if (givenReceived) fields[CR_GIVENREC]   = givenReceived;
     if (value !== undefined && value !== null && value !== '') fields[CR_VALUE] = parseFloat(value) || 0;
     if (actionTaken)   fields[CR_ACTION]     = actionTaken;
+    if (Array.isArray(vulnerability) && vulnerability.length) fields[CR_VULNERABILITY] = vulnerability;
+    if (outcome)             fields[CR_OUTCOME] = outcome;
+    if (reasonForSuspicion)  fields[CR_REASON]  = reasonForSuspicion;
+    if (reportedToMlro)      fields[CR_MLRO]    = reportedToMlro;
+    if (mlroDate)            fields[CR_MLRO_DATE] = mlroDate;
     await crFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields }], typecast: true }) });
     res.json({ ok: true });
   } catch (err) {
@@ -4629,7 +4639,12 @@ app.get('/api/compliance-reports', requireAdmin, async (req, res) => {
       value:         r.fields[CR_VALUE],
       details:       r.fields[CR_DETAILS]    || '',
       actionTaken:   r.fields[CR_ACTION]     || '',
-      status:        r.fields[CR_STATUS]     || 'New'
+      status:        r.fields[CR_STATUS]     || 'New',
+      vulnerability: r.fields[CR_VULNERABILITY] || [],
+      outcome:       r.fields[CR_OUTCOME]       || '',
+      reasonForSuspicion: r.fields[CR_REASON]   || '',
+      reportedToMlro: r.fields[CR_MLRO]         || '',
+      mlroDate:      r.fields[CR_MLRO_DATE]     || ''
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -6637,7 +6652,11 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
         incidentDate: f[CR_INCIDENT] || '',
         clientName: f[CR_CLIENT] || '',
         details: f[CR_DETAILS] || '',
-        status: f[CR_STATUS] || 'New'
+        status: f[CR_STATUS] || 'New',
+        vulnerability: f[CR_VULNERABILITY] || [],
+        outcome: f[CR_OUTCOME] || '',
+        reasonForSuspicion: f[CR_REASON] || '',
+        reportedToMlro: f[CR_MLRO] || ''
       });
     });
     const crCounts = {};

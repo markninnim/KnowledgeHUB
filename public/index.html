@@ -313,6 +313,8 @@ select:focus { outline:none; }
     <a href="#" id="cr-nav-gifts" onclick="return showCrForm('Gifts & Hospitality', this)">Gifts &amp; Hospitality</a>
     <a href="#" id="cr-nav-selfsale" onclick="return showCrForm('Self Sale', this)">Self Sale</a>
     <a href="#" id="cr-nav-whistle" onclick="return showCrForm('Whistleblowing', this)">Whistleblowing</a>
+    <a href="#" id="cr-nav-vulnerable" onclick="return showCrForm('Vulnerable Persons', this)">Vulnerable Persons</a>
+    <a href="#" id="cr-nav-sars" onclick="return showCrForm('SARs', this)">SARs</a>
     <div id="cd-nav-block" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">CONSUMER DUTY</span></div>
       <a href="#" id="cd-nav-feedback" onclick="return showCdFeedback(event, this)">Questionnaire Feedback</a>
@@ -1556,6 +1558,61 @@ select:focus { outline:none; }
               <input id="cr-value" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
             </div>
           </div>
+          <div id="cr-row-vulnerability" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Client vulnerability <span style="font-weight:400;color:#6b7c8f;">(select all that apply)</span></label>
+            <select id="cr-vulnerability" multiple size="6" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13.5px;font-family:inherit;box-sizing:border-box;background:#fff;">
+              <optgroup label="Health">
+                <option>Health: Physical disability</option>
+                <option>Health: Long-term or severe illness</option>
+                <option>Health: Hearing or visual impairment</option>
+                <option>Health: Poor mental health</option>
+                <option>Health: Low mental capacity / cognitive impairment</option>
+                <option>Health: Addiction</option>
+              </optgroup>
+              <optgroup label="Life events">
+                <option>Life events: Bereavement</option>
+                <option>Life events: Income shock or job loss</option>
+                <option>Life events: Relationship breakdown</option>
+                <option>Life events: Domestic or financial abuse</option>
+                <option>Life events: New caring responsibilities</option>
+                <option>Life events: Retirement</option>
+              </optgroup>
+              <optgroup label="Resilience">
+                <option>Resilience: Low or erratic income</option>
+                <option>Resilience: Low savings or over-indebtedness</option>
+                <option>Resilience: Low emotional resilience</option>
+              </optgroup>
+              <optgroup label="Capability">
+                <option>Capability: Low knowledge or confidence in financial matters</option>
+                <option>Capability: Poor literacy or numeracy skills</option>
+                <option>Capability: Learning difficulties</option>
+                <option>Capability: Poor English language skills</option>
+                <option>Capability: No or low access to help (isolated)</option>
+                <option>Capability: Non-standard needs requiring extra support</option>
+              </optgroup>
+            </select>
+            <div style="font-size:11px;color:#6b7c8f;margin-top:4px;">Hold Ctrl/Cmd to select more than one. Categories are the FCA's recognised drivers of vulnerability (FG21/1).</div>
+          </div>
+          <div id="cr-row-reason" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Reason for suspicion</label>
+            <select id="cr-reason" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+              <option value=""></option>
+              <option>Unexplained source of funds</option>
+              <option>Unusual transaction pattern</option>
+              <option>Structuring to avoid reporting thresholds</option>
+              <option>Client reluctant to provide ID/verification</option>
+              <option>Third-party payments with no clear rationale</option>
+              <option>Politically Exposed Person (PEP) concern</option>
+              <option>Mismatch between activity and known client profile</option>
+              <option>Cash-intensive or unusual payment method</option>
+              <option>Known or suspected fraud</option>
+              <option>Other (see details)</option>
+            </select>
+          </div>
+          <div id="cr-row-sarvalue" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Approx. value involved (&pound;) <span style="font-weight:400;color:#6b7c8f;">(if known)</span></label>
+            <input id="cr-sarvalue" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+          </div>
           <div style="margin-bottom:14px;">
             <label id="cr-details-label" style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Details <span style="color:#b91c1c;">*</span></label>
             <textarea id="cr-details" rows="5" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
@@ -1563,6 +1620,34 @@ select:focus { outline:none; }
           <div id="cr-row-action" style="margin-bottom:14px;">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Action already taken (if any)</label>
             <textarea id="cr-action" rows="3" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+          <div id="cr-row-mlro" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Reported to MLRO</label>
+              <select id="cr-mlro" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+                <option value="">— Select —</option>
+                <option>Yes</option>
+                <option>No</option>
+                <option>Pending</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Date reported to MLRO</label>
+              <input id="cr-mlro-date" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+          </div>
+          <div id="cr-row-outcome" style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Outcome</label>
+            <select id="cr-outcome" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+              <option value="">— Select —</option>
+              <option>Ongoing support provided</option>
+              <option>Referred to specialist team</option>
+              <option>Escalated to Compliance</option>
+              <option>Reported to MLRO</option>
+              <option>Resolved</option>
+              <option>No further action</option>
+              <option>Under review</option>
+            </select>
           </div>
           <div id="cr-error" style="display:none;color:#b91c1c;font-size:13px;margin-bottom:12px;"></div>
           <button id="cr-submit" onclick="submitCrForm()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Submit Report</button>
@@ -3917,7 +4002,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           </div>
           <div id="bp-reporting-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:1 1 auto;min-width:0;">
             <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Reporting</div>
-            <div id="bp-reporting" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;"></div>
+            <div id="bp-reporting" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;"></div>
           </div>
         </div>
 
@@ -12043,6 +12128,10 @@ function openBrokerProfile(email, name, keepDateRange) {
                 '</div>' +
                 (r.clientName ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:4px;">Client: ' + escHtml(r.clientName) + '</div>' : '') +
                 '<div style="font-size:12px;color:#6b7c8f;margin-bottom:6px;">Submitted: ' + (r.dateSubmitted || '—') + (r.incidentDate ? ' · Incident: ' + r.incidentDate : '') + '</div>' +
+                (r.vulnerability && r.vulnerability.length ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:4px;">Vulnerability: ' + escHtml(r.vulnerability.join(', ')) + '</div>' : '') +
+                (r.reasonForSuspicion ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:4px;">Reason: ' + escHtml(r.reasonForSuspicion) + '</div>' : '') +
+                (r.reportedToMlro ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:4px;">Reported to MLRO: ' + escHtml(r.reportedToMlro) + '</div>' : '') +
+                (r.outcome ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:4px;">Outcome: ' + escHtml(r.outcome) + '</div>' : '') +
                 (r.details ? '<div style="font-size:12.5px;color:#6b7c8f;line-height:1.5;">' + escHtml(r.details) + '</div>' : '') +
               '</div>';
             }).join('');
@@ -12126,7 +12215,7 @@ function openBrokerProfile(email, name, keepDateRange) {
       window._bpReportingRows = (d.reporting && d.reporting.rows) || {};
       var reportingEl = document.getElementById('bp-reporting');
       if (reportingEl) {
-        var crTypes = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing'];
+        var crTypes = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
         var crCounts = (d.reporting && d.reporting.counts) || {};
         reportingEl.innerHTML = crTypes.map(function(type) {
           var count = crCounts[type] || 0;
@@ -13966,6 +14055,18 @@ var CR_CONFIG = {
     incidentLabel: 'Date of concern',
     detailsLabel: 'Your concern',
     show: { client: false, thirdparty: false, givenrec: false, action: false }
+  },
+  'Vulnerable Persons': {
+    subtitle: 'Record any client you identify as vulnerable, so Compliance can ensure they receive appropriate support and their needs are met in line with FCA guidance (FG21/1). Select every vulnerability characteristic that applies — clients often have more than one.',
+    incidentLabel: 'Date identified',
+    detailsLabel: 'Details of the vulnerability and support needed',
+    show: { client: true, thirdparty: false, givenrec: false, action: true, vulnerability: true, outcome: true, reason: false, mlro: false, sarvalue: false }
+  },
+  'SARs': {
+    subtitle: 'Report any activity that gives rise to knowledge or suspicion of money laundering, terrorist financing, or other financial crime. All SARs are reviewed by the Money Laundering Reporting Officer (MLRO) — do not tip off the client that a report has been made.',
+    incidentLabel: 'Date of suspicious activity',
+    detailsLabel: 'Details of the suspicious activity',
+    show: { client: true, thirdparty: false, givenrec: false, action: false, vulnerability: false, outcome: true, reason: true, mlro: true, sarvalue: true }
   }
 };
 
@@ -13986,14 +14087,21 @@ function showCrForm(type, el) {
   document.getElementById('cr-row-thirdparty').style.display = cfg.show.thirdparty ? '' : 'none';
   document.getElementById('cr-row-givenrec').style.display   = cfg.show.givenrec   ? 'flex' : 'none';
   document.getElementById('cr-row-action').style.display     = cfg.show.action     ? '' : 'none';
+  document.getElementById('cr-row-vulnerability').style.display = cfg.show.vulnerability ? '' : 'none';
+  document.getElementById('cr-row-outcome').style.display       = cfg.show.outcome       ? '' : 'none';
+  document.getElementById('cr-row-reason').style.display        = cfg.show.reason        ? '' : 'none';
+  document.getElementById('cr-row-mlro').style.display          = cfg.show.mlro          ? 'flex' : 'none';
+  document.getElementById('cr-row-sarvalue').style.display      = cfg.show.sarvalue      ? '' : 'none';
   resetCrForm();
   return false;
 }
 
 function resetCrForm() {
-  ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action'].forEach(function(id){
+  ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action','cr-reason','cr-sarvalue','cr-mlro','cr-mlro-date','cr-outcome'].forEach(function(id){
     document.getElementById(id).value = '';
   });
+  var vulnSel = document.getElementById('cr-vulnerability');
+  if (vulnSel) Array.prototype.forEach.call(vulnSel.options, function(o){ o.selected = false; });
   document.getElementById('cr-error').style.display   = 'none';
   document.getElementById('cr-form').style.display    = '';
   document.getElementById('cr-success').style.display = 'none';
@@ -14298,6 +14406,11 @@ function submitCrForm() {
     return;
   }
   var cfg = CR_CONFIG[_crType];
+  var vulnValues = [];
+  if (cfg.show.vulnerability) {
+    var vulnSel = document.getElementById('cr-vulnerability');
+    vulnValues = Array.prototype.filter.call(vulnSel.options, function(o){ return o.selected; }).map(function(o){ return o.value; });
+  }
   var body = {
     type: _crType,
     summary: summary,
@@ -14306,8 +14419,13 @@ function submitCrForm() {
     clientName:   cfg.show.client     ? document.getElementById('cr-client').value.trim()     : null,
     thirdParty:   cfg.show.thirdparty ? document.getElementById('cr-thirdparty').value.trim() : null,
     givenReceived:cfg.show.givenrec   ? document.getElementById('cr-givenrec').value          : null,
-    value:        cfg.show.givenrec   ? document.getElementById('cr-value').value             : null,
-    actionTaken:  cfg.show.action     ? document.getElementById('cr-action').value.trim()     : null
+    value:        cfg.show.givenrec   ? document.getElementById('cr-value').value             : (cfg.show.sarvalue ? document.getElementById('cr-sarvalue').value : null),
+    actionTaken:  cfg.show.action     ? document.getElementById('cr-action').value.trim()     : null,
+    vulnerability:       cfg.show.vulnerability ? vulnValues : null,
+    outcome:             cfg.show.outcome       ? document.getElementById('cr-outcome').value : null,
+    reasonForSuspicion:  cfg.show.reason        ? document.getElementById('cr-reason').value  : null,
+    reportedToMlro:      cfg.show.mlro          ? document.getElementById('cr-mlro').value    : null,
+    mlroDate:            cfg.show.mlro          ? (document.getElementById('cr-mlro-date').value || null) : null
   };
   var btn = document.getElementById('cr-submit');
   btn.disabled = true; btn.textContent = 'Submitting…';
