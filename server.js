@@ -400,7 +400,7 @@ const FEATURE_FLAGS_TABLE = 'tblMUgxkEbVgg7FMU';
 const F_FF_KEY     = 'fldH8hsfwBN7BmwHe';
 const F_FF_ENABLED = 'fldsAR1VDJfitNqq9';
 const FEATURES_DEFAULT = {
-  marketing: true, compliance: true, adviceStandards: true,
+  marketing: true, compliance: true,
   learning: true, surveying: true, lab: true, sellingZone: true,
   performanceZone: true, supervisorZone: true,
   pay: true, autocrm: true, reEngage: true, muttuo: true, whereabouts: true, leadgen: true
