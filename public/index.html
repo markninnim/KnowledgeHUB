@@ -554,7 +554,7 @@ select:focus { outline:none; }
           </div>
 
           <!-- Video + Newsletter side by side -->
-          <div style="display:flex;gap:20px;">
+          <div id="home-video-newsletter-row" style="display:flex;gap:20px;">
 
             <!-- Latest Video -->
             <div id="home-video-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;display:none;flex:1;min-width:0;">
@@ -14882,19 +14882,23 @@ document.addEventListener('DOMContentLoaded', crMineCheckUnread);
 // lines up with whichever right-column card sits opposite it.
 function homeAlignColumns() {
   var postCard = document.getElementById('home-today-post-card');
-  if (!postCard || postCard.offsetParent === null) return;
+  var videoRow = document.getElementById('home-video-newsletter-row');
+  var rightCol = document.getElementById('home-right-col');
+  if (!postCard || !videoRow || !rightCol || postCard.offsetParent === null) return;
   postCard.style.minHeight = '';
   requestAnimationFrame(function() {
-    var cpdCard = document.getElementById('home-cpd-card');
-    var reengageCard = document.getElementById('home-reengage-card');
-    var target = (cpdCard && cpdCard.offsetParent !== null) ? cpdCard
-      : (reengageCard && reengageCard.offsetParent !== null) ? reengageCard
-      : null;
-    if (!target) return;
-    var targetBottom = target.getBoundingClientRect().bottom;
-    var postRect = postCard.getBoundingClientRect();
-    var needed = targetBottom - postRect.top;
-    if (needed > postRect.height) postCard.style.minHeight = needed + 'px';
+    // Bottom of the whole right column (last visible card in it) is the
+    // target — grow Today's Post so the whole left column (which ends with
+    // the Video/Newsletter row) reaches the same bottom edge.
+    var rightChildren = Array.prototype.filter.call(rightCol.children, function(el) { return el.offsetParent !== null; });
+    if (!rightChildren.length) return;
+    var rightBottom = rightChildren[rightChildren.length - 1].getBoundingClientRect().bottom;
+    var leftBottom = videoRow.getBoundingClientRect().bottom;
+    var shortfall = rightBottom - leftBottom;
+    if (shortfall > 1) {
+      var postRect = postCard.getBoundingClientRect();
+      postCard.style.minHeight = (postRect.height + shortfall) + 'px';
+    }
   });
 }
 (function() {
