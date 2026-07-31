@@ -9107,9 +9107,11 @@ var _currentUser = null;
     // management → Access). navAccess is computed server-side with sensible
     // defaults (see computeNavDefaults in server.js) and can be overridden.
     var NAV_TAB_IDS = {
+      marketing:        'tab-btn-marketing',
       compliance:       'tab-btn-compliance',
       learning:         'tab-btn-learning',
       surveying:        'tab-btn-surveying',
+      lab:              'tab-btn-lab',
       sellingZone:      'tab-btn-selling-zone',
       pay:              'tab-btn-pay',
       autocrm:          'tab-btn-autocrm',
@@ -10060,9 +10062,11 @@ function populateSupervisorDropdown(selected) {
 
 // Per-user "Top Nav Tabs" toggles — keys must match NAV_TOGGLE_KEYS in server.js
 var NAV_TOGGLE_LABELS = {
+  marketing:        'Marketing',
   compliance:       'Compliance',
   learning:         'Learn',
   surveying:        'Surveying',
+  lab:              'Lab',
   sellingZone:      'Earn',
   pay:              'Pay',
   autocrm:          'AutoCRM™',

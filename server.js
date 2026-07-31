@@ -167,14 +167,16 @@ const F_IS_LEADGEN         = 'fldpnrV5krN03XAjN'; // Is LeadGen
 const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true if employed rather than self-employed/AR
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
-  'compliance', 'learning', 'surveying', 'sellingZone',
+  'marketing', 'compliance', 'learning', 'surveying', 'lab', 'sellingZone',
   'pay', 'autocrm', 'reEngage', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
 ];
 // Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
 const F_ACCESS = {
+  marketing:        'fldF0ckX8WLChC3uv',
   compliance:       'fldEr8JXW2GFqV6xm',
   learning:         'fldL0XxZ7ZX4bbjQe',
   surveying:        'fld8rOdqE8N8oC554',
+  lab:              'fldpaoRR9XiF3uP6Q',
   sellingZone:      'fldwb7b8bQyvYBTX0',
   pay:              'fldQfKu8q4d1FwZ1s',
   autocrm:          'fldO1nIvILmgnAbYi',
@@ -190,9 +192,11 @@ function computeNavDefaults(f) {
   const business = (f[F_BUSINESS] || '').trim().toLowerCase();
   const supervisorOrAdmin = isAdmin || isSupervisor;
   return {
+    marketing:       true,
     compliance:      true,
     learning:        true,
     surveying:       true,
+    lab:             false,
     sellingZone:     true,
     pay:             true,
     autocrm:         true,
