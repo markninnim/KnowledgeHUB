@@ -4080,6 +4080,16 @@ const LV_ADDED    = 'fldBykZ17cGbybYAp';
 const LV_CPD_TYPE = 'fldQoRx2AsSvTdwY6';
 const LV_ATTACH1  = 'fldhaE5zoVgOiiZva'; // Presentation 1 — attachment (pptx or pdf)
 const LV_ATTACH2  = 'fldfD0bu5TjYChyfL'; // Presentation 2 — attachment (pptx or pdf)
+// AI fields (Airtable "AI text") that auto-analyse the attached presentation.
+// Only populated once a presentation is uploaded — otherwise Airtable reports
+// state "error"/"emptyDependency" with a null value, which we treat as blank.
+const LV_AI_TITLE   = 'fldEIHek0hAMaoauS'; // Title 2 — AI-extracted document title
+const LV_AI_DATE    = 'fldCdA4ePEULOUmqM'; // Date — AI-extracted document date
+const LV_KEY_TOPICS = 'fldBUnNFmMYzM2XNp'; // Key Topics — AI-extracted topic list
+const LV_SUMMARY    = 'fldqpouSLI8FS0uug'; // Summary — AI-generated summary
+function lvAiText(v) {
+  return (v && v.state === 'generated' && v.value) ? String(v.value).trim() : '';
+}
 const FEATURED_COUNT = 8;
 
 // Uploads a base64 file directly to an Airtable attachment field, using
@@ -4122,7 +4132,11 @@ function lvRecordToVideo(record) {
     added:       f[LV_ADDED]   || record.createdTime || '',
     cpdType:     f[LV_CPD_TYPE]|| 'Mortgage',
     presentation1: lvAttachmentSummary(f[LV_ATTACH1]),
-    presentation2: lvAttachmentSummary(f[LV_ATTACH2])
+    presentation2: lvAttachmentSummary(f[LV_ATTACH2]),
+    docTitle:    lvAiText(f[LV_AI_TITLE]),
+    docDate:     lvAiText(f[LV_AI_DATE]),
+    keyTopics:   lvAiText(f[LV_KEY_TOPICS]),
+    summary:     lvAiText(f[LV_SUMMARY])
   };
 }
 

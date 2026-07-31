@@ -4595,6 +4595,12 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div style="color:rgba(255,255,255,.6);font-size:13px;margin-top:2px;margin-bottom:10px;">Download the presenters slides direct to your computer.</div>
         <div id="lv-presentations" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
+      <!-- AI-extracted summary of the attached presentation -->
+      <div id="lv-ai-wrap" style="display:none;margin-top:14px;background:rgba(255,255,255,.06);border-radius:10px;padding:16px;">
+        <div style="color:#fff;font-size:14px;font-weight:700;margin-bottom:8px;">What this covers</div>
+        <div id="lv-ai-summary" style="color:rgba(255,255,255,.75);font-size:13px;line-height:1.6;margin-bottom:8px;"></div>
+        <div id="lv-ai-topics" style="color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;"></div>
+      </div>
     </div>
 
     <!-- 50/50 split layout (hidden by default) -->
@@ -4619,6 +4625,12 @@ Consolidating debts will increase the loan to value which can impact future deal
             <div style="color:#fff;font-size:16px;font-weight:700;">Download slide decks</div>
             <div style="color:rgba(255,255,255,.6);font-size:13px;margin-top:2px;margin-bottom:10px;">Download the presenters slides direct to your computer.</div>
             <div id="lv-presentations-s" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+          </div>
+          <!-- AI-extracted summary of the attached presentation -->
+          <div id="lv-ai-s-wrap" style="display:none;border-top:1px solid rgba(255,255,255,.12);padding-top:14px;">
+            <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:6px;">What this covers</div>
+            <div id="lv-ai-summary-s" style="color:rgba(255,255,255,.75);font-size:12.5px;line-height:1.6;margin-bottom:6px;"></div>
+            <div id="lv-ai-topics-s" style="color:rgba(255,255,255,.55);font-size:11.5px;line-height:1.6;"></div>
           </div>
         </div>
       </div>
@@ -8188,8 +8200,9 @@ function renderLvGrid(containerId, videos, isFeatured) {
     var thumb = makeLvThumb(v.title);
     var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
     var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
+    _lvMeta[v.id] = { summary: v.summary || '', keyTopics: v.keyTopics || '' };
     cards.push(
-      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
         '</div>' +
@@ -8299,6 +8312,10 @@ function escAttr(s) {
 var _lvCurrentTitle  = '';
 var _lvCurrentCpdType = 'Mortgage';
 var _lvSplit = false;
+// AI-extracted summary/topics per video id (populated as video lists load),
+// looked up by openLvPlayer — kept out of the onclick string since summaries
+// are free-text prose that would be unsafe/fragile to inline-escape.
+var _lvMeta = {};
 
 function lvPresentationBtn(pres, label) {
   if (!pres || !pres.url) return '';
@@ -8309,7 +8326,7 @@ function lvPresentationBtn(pres, label) {
     '</a>';
 }
 
-function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
+function openLvPlayer(url, title, desc, cpdType, pres1, pres2, id) {
   _lvCurrentTitle   = title   || 'Learning video';
   _lvCurrentCpdType = cpdType || 'Mortgage';
   var embedUrl = getEmbedUrl(url);
@@ -8325,6 +8342,18 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2) {
     var wrap = document.getElementById(pair[1]);
     if (el) el.innerHTML = presHtml;
     if (wrap) wrap.style.display = presHtml ? 'block' : 'none';
+  });
+  // AI-extracted summary/key topics of the attached presentation, if any —
+  // only populated once Airtable has processed a Presentation 1 attachment.
+  var meta = (id && _lvMeta[id]) || {};
+  var hasAi = !!(meta.summary || meta.keyTopics);
+  [['lv-ai-summary', 'lv-ai-topics', 'lv-ai-wrap'], ['lv-ai-summary-s', 'lv-ai-topics-s', 'lv-ai-s-wrap']].forEach(function(trio) {
+    var summaryEl = document.getElementById(trio[0]);
+    var topicsEl  = document.getElementById(trio[1]);
+    var wrapEl    = document.getElementById(trio[2]);
+    if (summaryEl) summaryEl.textContent = meta.summary || '';
+    if (topicsEl)  topicsEl.textContent  = meta.keyTopics ? ('Key topics: ' + meta.keyTopics) : '';
+    if (wrapEl)    wrapEl.style.display  = hasAi ? 'block' : 'none';
   });
   // Show CPD type badge and reset status
   var typeLabel = cpdType === '50/50' ? 'Mortgage + Protection' : (cpdType || 'Mortgage');
@@ -8723,7 +8752,8 @@ function loadHomeData() {
               var type  = escAttr(res.type.key);
               var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
               var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
-              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ')" '
+              _lvMeta[v.id] = { summary: v.summary || '', keyTopics: v.keyTopics || '' };
+              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\')" '
                 + 'style="display:flex;align-items:center;gap:10px;width:100%;background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s;" '
                 + 'onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
                 + '<div style="width:28px;height:28px;background:var(--brand-navy);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
