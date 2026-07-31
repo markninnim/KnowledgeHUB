@@ -444,11 +444,11 @@ select:focus { outline:none; }
     <div id="sv-sb-supervisors" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>
     </div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
+    <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
     <div id="sv-sb-noncas" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS</span></div>
     </div>
-    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
-    <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
   </div>
 </div>
 <!-- Hero triangles -->
@@ -13588,7 +13588,7 @@ function closeBrokerProfile() {
 // ── Compliance Log (Supervise) ──────────────────────────────────
 var _complogData = [];
 var _complogLoaded = false;
-var CR_TYPE_LIST = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
+var CR_TYPE_LIST = ['Breach', 'Complaint', 'Conflict of Interest', 'Gifts & Hospitality', 'SARs', 'Self Sale', 'Vulnerable Persons', 'Whistleblowing'];
 
 function showComplianceLog(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
