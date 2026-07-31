@@ -4591,6 +4591,28 @@ async function crFetch(endpoint, options = {}) {
   return body;
 }
 
+// PATCH /api/compliance-report/:id/status — supervisor/admin sets a
+// compliance report's status from the Compliance Log page (New / Under
+// Review / Resolved). Setting it to Resolved doesn't delete the record —
+// it stays in Airtable and in the log's history — but the Compliance Log
+// UI filters it out of the default view (status filter defaults away from
+// Resolved), so in effect it's archived out of the active list.
+const CR_STATUS_OPTIONS = ['New', 'Under Review', 'Resolved'];
+app.patch('/api/compliance-report/:id/status', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  const { status } = req.body;
+  if (!CR_STATUS_OPTIONS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  try {
+    await crFetch('', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [CR_STATUS]: status } }], typecast: true })
+    });
+    res.json({ ok: true, status });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/compliance-report — submit a compliance reporting form
 app.post('/api/compliance-report', requireAuth, async (req, res) => {
   const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken, vulnerability, outcome, reasonForSuspicion, reportedToMlro, mlroDate,

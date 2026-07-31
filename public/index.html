@@ -4283,10 +4283,11 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
           <select id="cl-filter-status" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:140px;">
-            <option value="">All statuses</option>
+            <option value="">Active (default)</option>
             <option>New</option>
             <option>Under Review</option>
             <option>Resolved</option>
+            <option value="all">All statuses</option>
           </select>
         </div>
         <div>
@@ -13777,10 +13778,14 @@ function complogRender() {
   var to = document.getElementById('cl-filter-to').value;
 
   var rows = _complogData.filter(function(r) {
+    var rStatus = r.status || 'New';
     if (type && r.type !== type) return false;
     if (adviser && r.adviserName !== adviser) return false;
     if (supervisor && r.supervisorName !== supervisor) return false;
-    if (status && (r.status || 'New') !== status) return false;
+    // Default view ('') archives Resolved entries out of sight; pick
+    // "Resolved" or "All statuses" explicitly to see them again.
+    if (status === '') { if (rStatus === 'Resolved') return false; }
+    else if (status !== 'all') { if (rStatus !== status) return false; }
     if (from && (!r.dateSubmitted || r.dateSubmitted < from)) return false;
     if (to && (!r.dateSubmitted || r.dateSubmitted > to)) return false;
     return true;
@@ -13821,12 +13826,35 @@ function complogRender() {
         '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.adviserName || r.email || '—') + '</div>' +
         '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.supervisorName || '—') + '</div>' +
         '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.clientName || '—') + '</div>' +
-        '<div><span style="font-size:11px;font-weight:700;color:' + statusColor + ';">' + escHtml(r.status || 'New') + '</span></div>' +
+        '<div onclick="event.stopPropagation()"><select onchange="complogUpdateStatus(\'' + r.id + '\', this.value)" style="font-size:11px;font-weight:700;color:' + statusColor + ';border:1px solid #d1d5db;border-radius:6px;padding:3px 6px;background:#fff;font-family:inherit;cursor:pointer;">' +
+          ['New', 'Under Review', 'Resolved'].map(function(s) { return '<option value="' + s + '"' + (s === (r.status || 'New') ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+        '</select></div>' +
         '<div id="' + rowId + '-arrow" style="color:#6b7c8f;">' + (hasExtras || r.details ? '▸' : '') + '</div>' +
       '</div>' +
       '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
     '</div>';
   }).join('');
+}
+
+function complogUpdateStatus(id, newStatus) {
+  var rec = _complogData.find(function(r) { return r.id === id; });
+  var prevStatus = rec ? (rec.status || 'New') : 'New';
+  if (rec) rec.status = newStatus; // optimistic
+  fetch('/api/compliance-report/' + encodeURIComponent(id) + '/status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not update status: ' + res.error); if (rec) rec.status = prevStatus; }
+      complogRender();
+    })
+    .catch(function() {
+      alert('Could not update status. Please try again.');
+      if (rec) rec.status = prevStatus;
+      complogRender();
+    });
 }
 
 function complogToggleRow(rowId) {
