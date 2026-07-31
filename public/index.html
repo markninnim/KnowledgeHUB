@@ -306,6 +306,7 @@ select:focus { outline:none; }
       <a href="#" onclick="return goToAdviceStandards('mortgage-advice-standards',this);">Mortgage Advice Standards</a>
       <a href="#" onclick="return goToAdviceStandards('protection-advice-standards',this);">Protection Advice Standards</a>
     </div>
+    <a href="#" id="cr-nav-mine" onclick="return showCrMine(this)" style="display:flex;align-items:center;justify-content:space-between;">My Submissions <span id="cr-mine-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#dc2626;"></span></a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">REPORTING</span></div>
     <a href="#" id="cr-nav-breach" onclick="return showCrForm('Breach', this)">Breach Report</a>
     <a href="#" id="cr-nav-complaint" onclick="return showCrForm('Complaint', this)">Complaint Notification</a>
@@ -1713,6 +1714,18 @@ select:focus { outline:none; }
           <button onclick="resetCrForm()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Submit another</button>
         </div>
       </div>
+    </div>
+
+    <!-- My Submissions — adviser-facing register of their own compliance reports -->
+    <div id="section-cr-mine" style="display:none;padding:32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
+        <h2 style="color:var(--brand-navy);font-size:20px;margin:0;">My Submissions</h2>
+        <button onclick="loadCrMine(true)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+      </div>
+      <div style="font-size:13px;color:#6b7c8f;margin-bottom:20px;">Every compliance report you've submitted, with its current status and any note left by the compliance team.</div>
+      <div id="cr-mine-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="cr-mine-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">You haven't submitted any compliance reports yet.</div>
+      <div id="cr-mine-rows"></div>
     </div>
 
     <!-- Consumer Duty — Questionnaire Feedback (personal: logged-in adviser's own responses only) -->
@@ -13818,6 +13831,14 @@ function complogRender() {
       }).join('') +
       (r.details ? '<div style="margin-top:8px;">' + escHtml(r.details) + '</div>' : '') +
       (r.actionTaken ? '<div style="margin-top:6px;"><span style="font-weight:600;">Action taken:</span> ' + escHtml(r.actionTaken) + '</div>' : '') +
+      '<div style="margin-top:12px;" onclick="event.stopPropagation()">' +
+        '<label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Compliance note <span style="font-weight:400;text-transform:none;">(shown to the adviser on their dashboard)</span></label>' +
+        '<textarea id="' + rowId + '-note" rows="2" placeholder="Add context for the adviser — useful before marking as Resolved…" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);box-sizing:border-box;resize:vertical;background:#fff;">' + escHtml(r.note || '') + '</textarea>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">' +
+          '<button onclick="complogSaveNote(\'' + r.id + '\',\'' + rowId + '\')" style="background:var(--brand-navy);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Save note</button>' +
+          '<span id="' + rowId + '-note-status" style="font-size:11.5px;color:#6b7c8f;"></span>' +
+        '</div>' +
+      '</div>' +
     '</div>';
     return '<div style="border-bottom:1px solid #f0f2f5;">' +
       '<div onclick="complogToggleRow(\'' + rowId + '\')" style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px 20px;gap:0;padding:12px 16px;align-items:center;cursor:pointer;font-size:12.5px;color:var(--brand-navy);" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">' +
@@ -13834,6 +13855,27 @@ function complogRender() {
       '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
     '</div>';
   }).join('');
+}
+
+function complogSaveNote(id, rowId) {
+  var textarea = document.getElementById(rowId + '-note');
+  var statusEl = document.getElementById(rowId + '-note-status');
+  var note = textarea.value;
+  statusEl.textContent = 'Saving…';
+  fetch('/api/compliance-report/' + encodeURIComponent(id) + '/status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note: note })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { statusEl.textContent = 'Could not save.'; return; }
+      var rec = _complogData.find(function(r) { return r.id === id; });
+      if (rec) rec.note = note;
+      statusEl.textContent = 'Saved — the adviser will see this on their dashboard.';
+      setTimeout(function() { if (statusEl) statusEl.textContent = ''; }, 4000);
+    })
+    .catch(function() { statusEl.textContent = 'Could not save. Please try again.'; });
 }
 
 function complogUpdateStatus(id, newStatus) {
@@ -14466,6 +14508,7 @@ function showCpdSection(e) {
   document.getElementById('tab-compliance').classList.add('active');
   document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
   document.getElementById('section-cr').style.display  = 'none';
+  document.getElementById('section-cr-mine').style.display = 'none';
   document.getElementById('section-cd-feedback').style.display = 'none';
   document.getElementById('section-cpd').style.display = '';
   if (!_cpdLoaded) loadCpd();
@@ -14576,6 +14619,7 @@ function showCrForm(type, el) {
   document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
   document.getElementById('section-cpd').style.display = 'none';
   document.getElementById('section-cd-feedback').style.display = 'none';
+  document.getElementById('section-cr-mine').style.display = 'none';
   document.getElementById('section-cr').style.display  = '';
   document.getElementById('cr-title').textContent    = type === 'Complaint' ? 'Complaint Notification' : type === 'Breach' ? 'Breach Report' : type;
   document.getElementById('cr-subtitle').textContent = cfg.subtitle;
@@ -14626,7 +14670,7 @@ function khEnhanceSelect(id) {
   var wrap = document.createElement('div');
   wrap.style.position = 'relative';
   sel.parentNode.insertBefore(wrap, sel);
-  sel.style.display = 'none';
+  sel.setAttribute('style', baseStyle + ';display:none !important;position:absolute;opacity:0;pointer-events:none;height:0;width:0;padding:0;border:0;margin:0;');
   wrap.appendChild(sel);
 
   var btn = document.createElement('button');
@@ -14705,10 +14749,98 @@ function showCdFeedback(e, el) {
   if (el) el.classList.add('active');
   document.getElementById('section-cpd').style.display = 'none';
   document.getElementById('section-cr').style.display  = 'none';
+  document.getElementById('section-cr-mine').style.display = 'none';
   document.getElementById('section-cd-feedback').style.display = '';
   loadCdFeedback();
   return false;
 }
+
+function showCrMine(el) {
+  document.getElementById('tab-sales-process').classList.remove('active');
+  document.getElementById('tab-compliance').classList.add('active');
+  document.querySelectorAll('#sidebar-sales-process a, #compliance-advice-standards-block a').forEach(function(a) { a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  document.getElementById('section-cpd').style.display = 'none';
+  document.getElementById('section-cr').style.display  = 'none';
+  document.getElementById('section-cd-feedback').style.display = 'none';
+  document.getElementById('section-cr-mine').style.display = '';
+  loadCrMine();
+  return false;
+}
+
+var _crMineData = [];
+function loadCrMine() {
+  document.getElementById('cr-mine-loading').style.display = '';
+  document.getElementById('cr-mine-empty').style.display = 'none';
+  document.getElementById('cr-mine-rows').innerHTML = '';
+  fetch('/api/compliance-report-mine')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('cr-mine-loading').style.display = 'none';
+      _crMineData = Array.isArray(data) ? data : [];
+      if (!_crMineData.length) { document.getElementById('cr-mine-empty').style.display = ''; return; }
+      crMineRender();
+    })
+    .catch(function() {
+      document.getElementById('cr-mine-loading').textContent = 'Could not load your submissions.';
+    });
+}
+
+function crMineRender() {
+  var statusColors = { 'New': '#2563eb', 'Under Review': '#b45309', 'Resolved': '#6b7c8f' };
+  document.getElementById('cr-mine-rows').innerHTML = _crMineData.map(function(r, idx) {
+    var rowId = 'cr-mine-row-' + idx;
+    var statusColor = statusColors[r.status || 'New'] || '#6b7c8f';
+    var dot = r.unread ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:8px;flex-shrink:0;"></span>' : '<span style="display:inline-block;width:8px;margin-right:8px;flex-shrink:0;"></span>';
+    var noteHtml = r.note ? '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:var(--brand-navy);line-height:1.6;"><span style="font-weight:700;">Compliance note:</span> ' + escHtml(r.note) + '</div>' : '';
+    return '<div style="border:1px solid #e3e8ef;border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff;">' +
+      '<div onclick="crMineToggleRow(\'' + r.id + '\',\'' + rowId + '\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;font-size:13px;color:var(--brand-navy);">' +
+        dot +
+        '<div style="width:100px;flex-shrink:0;color:#6b7c8f;">' + escHtml(r.dateSubmitted || '—') + '</div>' +
+        '<div style="width:180px;flex-shrink:0;font-weight:600;">' + escHtml(r.type || '') + '</div>' +
+        '<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7c8f;">' + escHtml(r.clientName || r.summary || '') + '</div>' +
+        '<span style="font-size:11px;font-weight:700;color:' + statusColor + ';">' + escHtml(r.status || 'New') + '</span>' +
+      '</div>' +
+      '<div id="' + rowId + '" style="display:none;">' + (noteHtml || '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;">No note from compliance yet.</div>') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function crMineToggleRow(id, rowId) {
+  var row = document.getElementById(rowId);
+  if (!row) return;
+  var open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'block';
+  if (!open) {
+    var rec = _crMineData.find(function(r) { return r.id === id; });
+    if (rec && rec.unread) {
+      rec.unread = false;
+      crMineRender();
+      row = document.getElementById(rowId);
+      if (row) row.style.display = 'block';
+      fetch('/api/compliance-report/' + encodeURIComponent(id) + '/seen', { method: 'PATCH' })
+        .then(function() { crMineCheckUnread(); })
+        .catch(function() {});
+    }
+  }
+}
+
+// Checks for any unread compliance updates across the adviser's own
+// submissions and toggles the red dot on the "My Submissions" sidebar
+// link. Runs on page load so the dot is visible without having to open
+// the page first.
+function crMineCheckUnread() {
+  fetch('/api/compliance-report-mine')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var hasUnread = Array.isArray(data) && data.some(function(r) { return r.unread; });
+      var dot = document.getElementById('cr-mine-dot');
+      if (dot) dot.style.display = hasUnread ? 'inline-block' : 'none';
+    })
+    .catch(function() {});
+}
+document.addEventListener('DOMContentLoaded', crMineCheckUnread);
+
 function loadCdFeedback() {
   var loading = document.getElementById('cd-feedback-loading');
   var empty   = document.getElementById('cd-feedback-empty');

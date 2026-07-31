@@ -4578,6 +4578,8 @@ const CR_FINE_AMOUNT       = 'fldHGvYsltWGzL4Wx'; // Fine Amount — Breach only
 const CR_FINE_PAIDBY       = 'fldZDlCms83x83fkU'; // Fine Paid By — Breach only
 const CR_SETTLEMENT_AMOUNT = 'fldY4I4uNgye1coiM'; // Settlement Amount — Complaints only
 const CR_SETTLEMENT_PAIDBY = 'fldwO61p5svSJtvlW'; // Settlement Paid By — Complaints only
+const CR_NOTE   = 'fldugfLzeWlUWGddu'; // Compliance Note — set by supervisor/admin from the Compliance Log
+const CR_UNREAD = 'fldWOrTic0UkNhxEo'; // Adviser Unread — true after a compliance update, cleared when the submitting adviser views it
 const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
 
 async function crFetch(endpoint, options = {}) {
@@ -4593,21 +4595,69 @@ async function crFetch(endpoint, options = {}) {
 
 // PATCH /api/compliance-report/:id/status — supervisor/admin sets a
 // compliance report's status from the Compliance Log page (New / Under
-// Review / Resolved). Setting it to Resolved doesn't delete the record —
-// it stays in Airtable and in the log's history — but the Compliance Log
-// UI filters it out of the default view (status filter defaults away from
-// Resolved), so in effect it's archived out of the active list.
+// Review / Resolved), and optionally attaches a Compliance Note (e.g. to
+// leave context for the adviser before marking it Resolved). Setting it to
+// Resolved doesn't delete the record — it stays in Airtable and in the
+// log's history — but the Compliance Log UI filters it out of the default
+// view (status filter defaults away from Resolved), so in effect it's
+// archived out of the active list. Any status change or note save here
+// flips Adviser Unread on, which drives the red-dot notification and
+// register entry on the submitting adviser's own dashboard.
 const CR_STATUS_OPTIONS = ['New', 'Under Review', 'Resolved'];
 app.patch('/api/compliance-report/:id/status', requireAuth, async (req, res) => {
   if (!requireSupervisorOrAdmin(req, res)) return;
-  const { status } = req.body;
-  if (!CR_STATUS_OPTIONS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  const { status, note } = req.body;
+  if (status !== undefined && !CR_STATUS_OPTIONS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
   try {
+    const fields = { [CR_UNREAD]: true };
+    if (status !== undefined) fields[CR_STATUS] = status;
+    if (note !== undefined) fields[CR_NOTE] = String(note).trim();
     await crFetch('', {
       method: 'PATCH',
-      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [CR_STATUS]: status } }], typecast: true })
+      body: JSON.stringify({ records: [{ id: req.params.id, fields }], typecast: true })
     });
-    res.json({ ok: true, status });
+    res.json({ ok: true, status, note });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/compliance-report-mine — the adviser-facing "My Submissions"
+// register (Compliance > Reporting). Scoped strictly to the caller's own
+// submitted reports (matched on CR_EMAIL), so an adviser can see the
+// status and any Compliance Note left on their own reports without
+// exposing anyone else's compliance activity.
+app.get('/api/compliance-report-mine', requireAuth, async (req, res) => {
+  try {
+    const callerEmail = (req.session.user.email || '').toLowerCase();
+    const records = await crFetchAllRecords();
+    const rows = records
+      .filter(rec => {
+        const f = rec.cellValuesByFieldId || rec.fields || {};
+        return (f[CR_EMAIL] || '').toLowerCase() === callerEmail;
+      })
+      .map(rec => crRecordToRow(rec))
+      .sort((a, b) => (b.dateSubmitted || '').localeCompare(a.dateSubmitted || ''));
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/compliance-report/:id/seen — clears Adviser Unread once the
+// submitting adviser has viewed the update on their own register. Verifies
+// ownership first so an adviser can only mark their own reports as seen.
+app.patch('/api/compliance-report/:id/seen', requireAuth, async (req, res) => {
+  try {
+    const callerEmail = (req.session.user.email || '').toLowerCase();
+    const rec = await crFetch('/' + req.params.id, { method: 'GET' });
+    const ownerEmail = (rec.fields[CR_EMAIL] || '').toLowerCase();
+    if (ownerEmail !== callerEmail) return res.status(403).json({ error: 'Not your report' });
+    await crFetch('', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [CR_UNREAD]: false } }], typecast: true })
+    });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -4683,7 +4733,9 @@ function crRecordToRow(r) {
     fineAmount:       r.fields[CR_FINE_AMOUNT],
     finePaidBy:       r.fields[CR_FINE_PAIDBY] || '',
     settlementAmount: r.fields[CR_SETTLEMENT_AMOUNT],
-    settlementPaidBy: r.fields[CR_SETTLEMENT_PAIDBY] || ''
+    settlementPaidBy: r.fields[CR_SETTLEMENT_PAIDBY] || '',
+    note:   r.fields[CR_NOTE] || '',
+    unread: !!r.fields[CR_UNREAD]
   };
 }
 
