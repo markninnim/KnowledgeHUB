@@ -7280,6 +7280,45 @@ app.get('/api/consumer-duty-feedback', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/consumer-duty-feedback-mine — the personal Questionnaire Feedback
+// view (Compliance > Consumer Duty) for the logged-in adviser only. Any
+// authenticated user can call this (no supervisor/admin gate); it always
+// scopes to the caller's own broker email, regardless of role. The
+// firm/team-wide view used to live on this same page but has moved to
+// Supervise > Compliance Log, which still calls /api/consumer-duty-feedback.
+app.get('/api/consumer-duty-feedback-mine', requireAuth, async (req, res) => {
+  try {
+    const caller = req.session.user;
+    const callerEmail = (caller.email || '').toLowerCase();
+
+    let allRecords = [], offset = '';
+    do {
+      const qs = `?sort[0][field]=${CD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const r = await fetch(`https://api.airtable.com/v0/${CD_BASE}/${CD_TABLE}${qs}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      if (!r.ok) {
+        const errBody = await r.json().catch(() => ({}));
+        throw new Error(errBody.error?.message || `Airtable ${r.status}`);
+      }
+      const body = await r.json();
+      allRecords = allRecords.concat(body.records || []);
+      offset = body.offset || '';
+    } while (offset);
+
+    const responses = allRecords
+      .filter(rec => {
+        const f = rec.cellValuesByFieldId || rec.fields || {};
+        return (f[CD_BROKER_EMAIL] || '').toLowerCase() === callerEmail;
+      })
+      .map(rec => cdBuildResponseCard(rec));
+
+    const summary = await cdBuildComplianceSummary(responses, false);
+    res.json({ responses, summary });
+  } catch (err) {
+    console.error('consumer-duty-feedback-mine GET error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Builds a permanent, AI-written compliance summary from the Questionnaire
 // Feedback data currently visible to the caller — aggregating per-adviser
 // stats (flag rate, NPS, outstanding items) against the group average, and

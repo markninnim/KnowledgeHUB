@@ -1714,7 +1714,7 @@ select:focus { outline:none; }
       </div>
     </div>
 
-    <!-- Consumer Duty — Questionnaire Feedback (supervisor/admin only) -->
+    <!-- Consumer Duty — Questionnaire Feedback (personal: logged-in adviser's own responses only) -->
     <div id="section-cd-feedback" style="display:none;padding:32px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
         <div>
@@ -1731,12 +1731,6 @@ select:focus { outline:none; }
         <div id="cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
-          <select id="cd-filter-adviser" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;">
-            <option value="">All advisers</option>
-          </select>
-        </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
           <select id="cd-filter-status" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:150px;">
@@ -4257,8 +4251,13 @@ Consolidating debts will increase the loan to value which can impact future deal
     <div id="sv-compliance-log-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Compliance Log</h2>
-        <button onclick="loadComplianceLog(true)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+        <button id="sv-cl-refresh-btn" onclick="loadComplianceLog(true)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #d1d5db;">
+        <a href="#" id="sv-cl-tab-reporting" onclick="return svClShowSubTab('reporting')" style="padding:10px 4px;font-size:13px;font-weight:700;color:var(--brand-navy);border-bottom:2px solid var(--brand-navy);text-decoration:none;">Reporting Log</a>
+        <a href="#" id="sv-cl-tab-cdfeedback" onclick="return svClShowSubTab('cdfeedback')" style="padding:10px 4px;margin-left:16px;font-size:13px;font-weight:700;color:#6b7c8f;border-bottom:2px solid transparent;text-decoration:none;">Questionnaire Feedback</a>
+      </div>
+      <div id="sv-cl-reporting-view">
       <!-- Filter bar -->
       <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">
         <div>
@@ -4307,6 +4306,49 @@ Consolidating debts will increase the loan to value which can impact future deal
         </div>
         <div id="cl-rows"></div>
       </div>
+      </div><!-- /sv-cl-reporting-view -->
+      <div id="sv-cl-cdfeedback-view" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d32;margin-right:5px;"></span>Full — no flags</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e67e22;margin-right:5px;"></span>Restored — flags resolved</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#c0392b;margin-right:5px;"></span>Partial — flags outstanding</span>
+          </div>
+        </div>
+        <div id="sv-cd-compliance-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+          <div id="sv-cd-compliance-summary-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Consumer Duty Summary</div>
+          <div id="sv-cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
+            <select id="sv-cd-filter-adviser" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;">
+              <option value="">All advisers</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
+            <select id="sv-cd-filter-status" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:150px;">
+              <option value="Partial">Partial (default)</option>
+              <option value="Full">Full</option>
+              <option value="Restored">Restored</option>
+              <option value="all">All statuses</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+            <input id="sv-cd-filter-from" type="date" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+            <input id="sv-cd-filter-to" type="date" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+          </div>
+          <button onclick="svCdClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+        </div>
+        <div id="sv-cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+        <div id="sv-cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
+        <div id="sv-cd-feedback-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;"></div>
+      </div><!-- /sv-cl-cdfeedback-view -->
     </div><!-- /sv-compliance-log-panel -->
   </div><!-- /tab-supervisor-zone -->
 
@@ -13748,6 +13790,136 @@ function complogToggleRow(rowId) {
   if (arrow && arrow.textContent) arrow.textContent = open ? '▸' : '▾';
 }
 
+// ── Compliance Log sub-tab: Questionnaire Feedback (firm-wide) ─────
+var _svCdFeedback = [];
+var _svCdLoaded = false;
+
+function svClShowSubTab(tab) {
+  var repoTab = document.getElementById('sv-cl-tab-reporting');
+  var cdTab = document.getElementById('sv-cl-tab-cdfeedback');
+  var repoView = document.getElementById('sv-cl-reporting-view');
+  var cdView = document.getElementById('sv-cl-cdfeedback-view');
+  var refreshBtn = document.getElementById('sv-cl-refresh-btn');
+  if (tab === 'cdfeedback') {
+    repoTab.style.color = '#6b7c8f'; repoTab.style.borderBottomColor = 'transparent';
+    cdTab.style.color = 'var(--brand-navy)'; cdTab.style.borderBottomColor = 'var(--brand-navy)';
+    repoView.style.display = 'none';
+    cdView.style.display = '';
+    if (refreshBtn) refreshBtn.setAttribute('onclick', 'loadSvCdFeedback(true)');
+    if (!_svCdLoaded) loadSvCdFeedback();
+  } else {
+    cdTab.style.color = '#6b7c8f'; cdTab.style.borderBottomColor = 'transparent';
+    repoTab.style.color = 'var(--brand-navy)'; repoTab.style.borderBottomColor = 'var(--brand-navy)';
+    cdView.style.display = 'none';
+    repoView.style.display = '';
+    if (refreshBtn) refreshBtn.setAttribute('onclick', 'loadComplianceLog(true)');
+    if (!_complogLoaded) loadComplianceLog();
+  }
+  return false;
+}
+
+function loadSvCdFeedback() {
+  var loading = document.getElementById('sv-cd-feedback-loading');
+  var empty   = document.getElementById('sv-cd-feedback-empty');
+  var list    = document.getElementById('sv-cd-feedback-list');
+  loading.style.display = '';
+  empty.style.display = 'none';
+  list.innerHTML = '';
+  document.getElementById('sv-cd-compliance-summary-text').textContent = 'Loading…';
+  fetch('/api/consumer-duty-feedback')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loading.style.display = 'none';
+      _svCdFeedback = data.responses || [];
+      _svCdLoaded = true;
+      document.getElementById('sv-cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
+      svCdPopulateAdviserFilter();
+      if (!_svCdFeedback.length) { empty.style.display = ''; return; }
+      svCdRenderFeedback();
+    })
+    .catch(function() {
+      loading.style.display = 'none';
+      document.getElementById('sv-cd-compliance-summary-text').textContent = 'Could not load summary.';
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback. Please try again.</div>';
+    });
+}
+
+function svCdPopulateAdviserFilter() {
+  var sel = document.getElementById('sv-cd-filter-adviser');
+  var current = sel.value;
+  var advisers = Array.from(new Set(_svCdFeedback.map(function(r) { return r.adviserName; }).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">All advisers</option>' + advisers.map(function(a) {
+    return '<option value="' + escHtml(a) + '">' + escHtml(a) + '</option>';
+  }).join('');
+  sel.value = advisers.indexOf(current) !== -1 ? current : '';
+}
+
+function svCdClearFilters() {
+  document.getElementById('sv-cd-filter-adviser').value = '';
+  document.getElementById('sv-cd-filter-status').value = 'Partial';
+  document.getElementById('sv-cd-filter-from').value = '';
+  document.getElementById('sv-cd-filter-to').value = '';
+  svCdRenderFeedback();
+}
+
+function svCdFilteredFeedback() {
+  var adviser = document.getElementById('sv-cd-filter-adviser').value;
+  var status = document.getElementById('sv-cd-filter-status').value;
+  var from = document.getElementById('sv-cd-filter-from').value;
+  var to = document.getElementById('sv-cd-filter-to').value;
+  return _svCdFeedback.filter(function(r) {
+    if (status && status !== 'all' && r.status !== status) return false;
+    if (adviser && r.adviserName !== adviser) return false;
+    if (r.submittedAt) {
+      var d = r.submittedAt.slice(0, 10);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
+}
+
+function svCdUpdateSummaryTitle() {
+  var titleEl = document.getElementById('sv-cd-compliance-summary-title');
+  if (!titleEl) return;
+  var adviser = document.getElementById('sv-cd-filter-adviser').value;
+  titleEl.textContent = adviser ? ('Consumer Duty Summary — for ' + adviser) : 'Consumer Duty Summary';
+}
+
+function svCdRenderFeedback() {
+  svCdUpdateSummaryTitle();
+  var list = document.getElementById('sv-cd-feedback-list');
+  var filtered = svCdFilteredFeedback();
+  if (!filtered.length) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6b7c8f;font-size:13px;">No responses match the selected filters.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(r) { return cdCardHtml(r, 'svCdToggleResolved'); }).join('');
+}
+
+function svCdToggleResolved(id, key, resolved) {
+  var rec = _svCdFeedback.find(function(x) { return x.id === id; });
+  if (!rec) return;
+  var newKeys = resolved
+    ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
+    : rec.restoredKeys.filter(function(k) { return k !== key; });
+  fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys: newKeys })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { alert('Could not update: ' + res.error); loadSvCdFeedback(); return; }
+      rec.restoredKeys = newKeys;
+      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+      svCdRenderFeedback();
+    })
+    .catch(function() { alert('Could not update. Please try again.'); loadSvCdFeedback(); });
+}
+
 function svSidebarSelect(email, el) {
   closeBrokerProfile();
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
@@ -14412,13 +14584,12 @@ function loadCdFeedback() {
   empty.style.display = 'none';
   list.innerHTML = '';
   document.getElementById('cd-compliance-summary-text').textContent = 'Loading…';
-  fetch('/api/consumer-duty-feedback')
+  fetch('/api/consumer-duty-feedback-mine')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       loading.style.display = 'none';
       _cdFeedback = data.responses || [];
       document.getElementById('cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
-      cdPopulateAdviserFilter();
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
       cdRenderFeedback();
     })
@@ -14428,30 +14599,18 @@ function loadCdFeedback() {
       list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback. Please try again.</div>';
     });
 }
-function cdPopulateAdviserFilter() {
-  var sel = document.getElementById('cd-filter-adviser');
-  var current = sel.value;
-  var advisers = Array.from(new Set(_cdFeedback.map(function(r) { return r.adviserName; }).filter(Boolean))).sort();
-  sel.innerHTML = '<option value="">All advisers</option>' + advisers.map(function(a) {
-    return '<option value="' + escHtml(a) + '">' + escHtml(a) + '</option>';
-  }).join('');
-  sel.value = advisers.indexOf(current) !== -1 ? current : '';
-}
 function cdClearFilters() {
-  document.getElementById('cd-filter-adviser').value = '';
   document.getElementById('cd-filter-status').value = 'Partial';
   document.getElementById('cd-filter-from').value = '';
   document.getElementById('cd-filter-to').value = '';
   cdRenderFeedback();
 }
 function cdFilteredFeedback() {
-  var adviser = document.getElementById('cd-filter-adviser').value;
   var status = document.getElementById('cd-filter-status').value;
   var from = document.getElementById('cd-filter-from').value;
   var to = document.getElementById('cd-filter-to').value;
   return _cdFeedback.filter(function(r) {
     if (status && status !== 'all' && r.status !== status) return false;
-    if (adviser && r.adviserName !== adviser) return false;
     if (r.submittedAt) {
       var d = r.submittedAt.slice(0, 10);
       if (from && d < from) return false;
@@ -14499,8 +14658,7 @@ function cdCardHtml(r, toggleFn) {
 function cdUpdateSummaryTitle() {
   var titleEl = document.getElementById('cd-compliance-summary-title');
   if (!titleEl) return;
-  var adviser = document.getElementById('cd-filter-adviser').value;
-  titleEl.textContent = adviser ? ('Consumer Duty Summary — for ' + adviser) : 'Consumer Duty Summary';
+  titleEl.textContent = 'Consumer Duty Summary';
 }
 function cdRenderFeedback() {
   cdUpdateSummaryTitle();
