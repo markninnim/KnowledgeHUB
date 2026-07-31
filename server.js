@@ -4570,6 +4570,14 @@ const CR_OUTCOME       = 'fld7RbYFpXWJlQCMM'; // Outcome — Vulnerable Persons 
 const CR_REASON        = 'fld9wgqyWQx0JE4BW'; // Reason for Suspicion — SARs only
 const CR_MLRO          = 'fldoUpUAOHFbNzciC'; // Reported to MLRO — SARs only
 const CR_MLRO_DATE     = 'fldSgHlde0BNTFbnB'; // MLRO Report Date — SARs only
+const CR_NCA               = 'fldmRaEN5Up0n4PJ1'; // NCA Referral (Yes/No) — SARs only
+const CR_NCA_DATE          = 'fldeJyVbGzBhvTuyB'; // NCA Referral Date — SARs only
+const CR_FRL_SIGNOFF       = 'fldAw22AGN8SzBBkg'; // FRL Signed Off Date — Complaints only
+const CR_FRL_SENT          = 'fldNoE6EEub6Uqich'; // FRL Sent to Client Date — Complaints only
+const CR_FINE_AMOUNT       = 'fldHGvYsltWGzL4Wx'; // Fine Amount — Breach only
+const CR_FINE_PAIDBY       = 'fldZDlCms83x83fkU'; // Fine Paid By — Breach only
+const CR_SETTLEMENT_AMOUNT = 'fldY4I4uNgye1coiM'; // Settlement Amount — Complaints only
+const CR_SETTLEMENT_PAIDBY = 'fldwO61p5svSJtvlW'; // Settlement Paid By — Complaints only
 const CR_TYPES      = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
 
 async function crFetch(endpoint, options = {}) {
@@ -4585,7 +4593,8 @@ async function crFetch(endpoint, options = {}) {
 
 // POST /api/compliance-report — submit a compliance reporting form
 app.post('/api/compliance-report', requireAuth, async (req, res) => {
-  const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken, vulnerability, outcome, reasonForSuspicion, reportedToMlro, mlroDate } = req.body;
+  const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken, vulnerability, outcome, reasonForSuspicion, reportedToMlro, mlroDate,
+          ncaReferral, ncaReferralDate, frlSignedOffDate, frlSentDate, fineAmount, finePaidBy, settlementAmount, settlementPaidBy } = req.body;
   if (!CR_TYPES.includes(type)) return res.status(400).json({ error: 'Invalid report type' });
   if (!summary || !details)     return res.status(400).json({ error: 'Summary and details are required' });
   try {
@@ -4608,6 +4617,14 @@ app.post('/api/compliance-report', requireAuth, async (req, res) => {
     if (reasonForSuspicion)  fields[CR_REASON]  = reasonForSuspicion;
     if (reportedToMlro)      fields[CR_MLRO]    = reportedToMlro;
     if (mlroDate)            fields[CR_MLRO_DATE] = mlroDate;
+    if (ncaReferral)         fields[CR_NCA]      = ncaReferral;
+    if (ncaReferralDate)     fields[CR_NCA_DATE] = ncaReferralDate;
+    if (frlSignedOffDate)    fields[CR_FRL_SIGNOFF] = frlSignedOffDate;
+    if (frlSentDate)         fields[CR_FRL_SENT]    = frlSentDate;
+    if (fineAmount !== undefined && fineAmount !== null && fineAmount !== '') fields[CR_FINE_AMOUNT] = parseFloat(fineAmount) || 0;
+    if (finePaidBy)          fields[CR_FINE_PAIDBY] = finePaidBy;
+    if (settlementAmount !== undefined && settlementAmount !== null && settlementAmount !== '') fields[CR_SETTLEMENT_AMOUNT] = parseFloat(settlementAmount) || 0;
+    if (settlementPaidBy)    fields[CR_SETTLEMENT_PAIDBY] = settlementPaidBy;
     await crFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields }], typecast: true }) });
     res.json({ ok: true });
   } catch (err) {
@@ -4615,37 +4632,98 @@ app.post('/api/compliance-report', requireAuth, async (req, res) => {
   }
 });
 
+// Shared mapper — Airtable Compliance Reports record → plain object, used by
+// both /api/compliance-reports (admin) and /api/compliance-log (supervisor/admin).
+function crRecordToRow(r) {
+  return {
+    id:            r.id,
+    summary:       r.fields[CR_SUMMARY]    || '',
+    type:          r.fields[CR_TYPE]       || '',
+    email:         r.fields[CR_EMAIL]      || '',
+    dateSubmitted: r.fields[CR_SUBMITTED]  || '',
+    incidentDate:  r.fields[CR_INCIDENT]   || '',
+    clientName:    r.fields[CR_CLIENT]     || '',
+    thirdParty:    r.fields[CR_THIRDPARTY] || '',
+    givenReceived: r.fields[CR_GIVENREC]   || '',
+    value:         r.fields[CR_VALUE],
+    details:       r.fields[CR_DETAILS]    || '',
+    actionTaken:   r.fields[CR_ACTION]     || '',
+    status:        r.fields[CR_STATUS]     || 'New',
+    vulnerability: r.fields[CR_VULNERABILITY] || [],
+    outcome:       r.fields[CR_OUTCOME]       || '',
+    reasonForSuspicion: r.fields[CR_REASON]   || '',
+    reportedToMlro: r.fields[CR_MLRO]         || '',
+    mlroDate:      r.fields[CR_MLRO_DATE]     || '',
+    ncaReferral:      r.fields[CR_NCA]      || '',
+    ncaReferralDate:  r.fields[CR_NCA_DATE] || '',
+    frlSignedOffDate: r.fields[CR_FRL_SIGNOFF] || '',
+    frlSentDate:      r.fields[CR_FRL_SENT]    || '',
+    fineAmount:       r.fields[CR_FINE_AMOUNT],
+    finePaidBy:       r.fields[CR_FINE_PAIDBY] || '',
+    settlementAmount: r.fields[CR_SETTLEMENT_AMOUNT],
+    settlementPaidBy: r.fields[CR_SETTLEMENT_PAIDBY] || ''
+  };
+}
+
+async function crFetchAllRecords() {
+  let records = [], offset;
+  do {
+    const params = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+    if (offset) params.set('offset', offset);
+    const data = await crFetch('?' + params.toString());
+    records = records.concat(data.records || []);
+    offset = data.offset;
+  } while (offset);
+  return records;
+}
+
 // GET /api/compliance-reports — admin: list all submissions
 app.get('/api/compliance-reports', requireAdmin, async (req, res) => {
   try {
-    let records = [], offset;
-    do {
-      const params = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
-      if (offset) params.set('offset', offset);
-      const data = await crFetch('?' + params.toString());
-      records = records.concat(data.records || []);
-      offset = data.offset;
-    } while (offset);
-    res.json(records.map(r => ({
-      id:            r.id,
-      summary:       r.fields[CR_SUMMARY]    || '',
-      type:          r.fields[CR_TYPE]       || '',
-      email:         r.fields[CR_EMAIL]      || '',
-      dateSubmitted: r.fields[CR_SUBMITTED]  || '',
-      incidentDate:  r.fields[CR_INCIDENT]   || '',
-      clientName:    r.fields[CR_CLIENT]     || '',
-      thirdParty:    r.fields[CR_THIRDPARTY] || '',
-      givenReceived: r.fields[CR_GIVENREC]   || '',
-      value:         r.fields[CR_VALUE],
-      details:       r.fields[CR_DETAILS]    || '',
-      actionTaken:   r.fields[CR_ACTION]     || '',
-      status:        r.fields[CR_STATUS]     || 'New',
-      vulnerability: r.fields[CR_VULNERABILITY] || [],
-      outcome:       r.fields[CR_OUTCOME]       || '',
-      reasonForSuspicion: r.fields[CR_REASON]   || '',
-      reportedToMlro: r.fields[CR_MLRO]         || '',
-      mlroDate:      r.fields[CR_MLRO_DATE]     || ''
-    })));
+    const records = await crFetchAllRecords();
+    res.json(records.map(crRecordToRow));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/compliance-log — supervisor/admin: firm-wide compliance log, with
+// each row's adviser and supervisor names resolved from the Users table.
+app.get('/api/compliance-log', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const [records, userRecords] = await Promise.all([
+      crFetchAllRecords(),
+      (async () => {
+        let users = [], offset;
+        do {
+          const params = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+          if (offset) params.set('offset', offset);
+          const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?${params.toString()}`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+          const body = await r.json();
+          users = users.concat(body.records || []);
+          offset = body.offset;
+        } while (offset);
+        return users;
+      })()
+    ]);
+    // email (lowercased) -> { fullName, supervisorEmail }
+    const userByEmail = {};
+    userRecords.forEach(u => {
+      const email = (u.fields[F_EMAIL] || '').toLowerCase();
+      if (!email) return;
+      const fullName = [u.fields[F_FIRST], u.fields[F_LAST]].filter(Boolean).join(' ') || email;
+      userByEmail[email] = { fullName, supervisorEmail: (u.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() };
+    });
+    const rows = records.map(rec => {
+      const row = crRecordToRow(rec);
+      const submitter = userByEmail[(row.email || '').toLowerCase()];
+      const adviserName = submitter ? submitter.fullName : row.email;
+      const supervisorEmail = submitter ? submitter.supervisorEmail : '';
+      const supervisorName = (supervisorEmail && userByEmail[supervisorEmail]) ? userByEmail[supervisorEmail].fullName : (supervisorEmail || '');
+      return Object.assign({}, row, { adviserName, supervisorEmail, supervisorName });
+    });
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

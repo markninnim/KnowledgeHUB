@@ -447,6 +447,8 @@ select:focus { outline:none; }
     <div id="sv-sb-noncas" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS</span></div>
     </div>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
+    <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
   </div>
 </div>
 <!-- Hero triangles -->
@@ -1634,6 +1636,58 @@ select:focus { outline:none; }
             <div style="flex:1;">
               <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Date reported to MLRO</label>
               <input id="cr-mlro-date" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+          </div>
+          <div id="cr-row-nca" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">NCA referral</label>
+              <select id="cr-nca" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+                <option value="">— Select —</option>
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">NCA referral date</label>
+              <input id="cr-nca-date" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+          </div>
+          <div id="cr-row-frl" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">FRL signed off date</label>
+              <input id="cr-frl-signoff" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">FRL sent to client date</label>
+              <input id="cr-frl-sent" type="date" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+          </div>
+          <div id="cr-row-fine" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Fine amount (&pound;)</label>
+              <input id="cr-fine-amount" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Fine paid by</label>
+              <select id="cr-fine-paidby" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+                <option value="">— Select —</option>
+                <option>Adviser</option>
+                <option>Firm</option>
+              </select>
+            </div>
+          </div>
+          <div id="cr-row-settlement" style="margin-bottom:14px;display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Settlement amount (&pound;)</label>
+              <input id="cr-settlement-amount" type="number" min="0" step="0.01" placeholder="0.00" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Settlement paid by</label>
+              <select id="cr-settlement-paidby" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;background:#fff;">
+                <option value="">— Select —</option>
+                <option>Adviser</option>
+                <option>Firm</option>
+              </select>
             </div>
           </div>
           <div id="cr-row-outcome" style="margin-bottom:14px;">
@@ -4198,6 +4252,62 @@ Consolidating debts will increase the loan to value which can impact future deal
       </div>
       <div id="sv-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading team…</div>
     </div><!-- /sv-cpd-register -->
+
+    <!-- Compliance Log -->
+    <div id="sv-compliance-log-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Compliance Log</h2>
+        <button onclick="loadComplianceLog(true)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
+      </div>
+      <!-- Filter bar -->
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:14px 16px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Type</label>
+          <select id="cl-filter-type" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:170px;">
+            <option value="">All types</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
+          <select id="cl-filter-adviser" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:170px;">
+            <option value="">All advisers</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Supervisor</label>
+          <select id="cl-filter-supervisor" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:170px;">
+            <option value="">All supervisors</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
+          <select id="cl-filter-status" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:140px;">
+            <option value="">All statuses</option>
+            <option>New</option>
+            <option>Under Review</option>
+            <option>Resolved</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+          <input id="cl-filter-from" type="date" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+          <input id="cl-filter-to" type="date" onchange="complogRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <button onclick="complogClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+        <div id="cl-count" style="margin-left:auto;font-size:12.5px;color:#6b7c8f;align-self:center;"></div>
+      </div>
+      <div id="cl-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="cl-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No compliance reports match these filters.</div>
+      <div id="cl-table-wrap" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">
+        <div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px 20px;gap:0;padding:10px 16px;background:#f5f7fa;border-bottom:1px solid #d1d5db;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">
+          <div>Date</div><div>Type</div><div>Adviser</div><div>Supervisor</div><div>Client</div><div>Status</div><div></div>
+        </div>
+        <div id="cl-rows"></div>
+      </div>
+    </div><!-- /sv-compliance-log-panel -->
   </div><!-- /tab-supervisor-zone -->
 
   <!-- Transfer adviser modal -->
@@ -13471,7 +13581,171 @@ function closeBrokerProfile() {
   document.getElementById('sv-broker-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'block';
+}
+
+// ── Compliance Log (Supervise) ──────────────────────────────────
+var _complogData = [];
+var _complogLoaded = false;
+var CR_TYPE_LIST = ['Complaint', 'Breach', 'Conflict of Interest', 'Gifts & Hospitality', 'Self Sale', 'Whistleblowing', 'Vulnerable Persons', 'SARs'];
+
+function showComplianceLog(el) {
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'block';
+  document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  if (!_complogLoaded) loadComplianceLog();
+  return false;
+}
+
+function loadComplianceLog(forceReload) {
+  document.getElementById('cl-loading').style.display = '';
+  document.getElementById('cl-empty').style.display = 'none';
+  document.getElementById('cl-table-wrap').style.display = 'none';
+  fetch('/api/compliance-log').then(function(r) {
+    if (r.status === 401) { return Promise.reject('unauthorized'); }
+    return r.json();
+  }).then(function(data) {
+    _complogData = Array.isArray(data) ? data : [];
+    _complogLoaded = true;
+    document.getElementById('cl-loading').style.display = 'none';
+    complogPopulateFilters();
+    complogRender();
+  }).catch(function() {
+    document.getElementById('cl-loading').textContent = 'Could not load compliance log.';
+  });
+}
+
+function complogPopulateFilters() {
+  var typeSel = document.getElementById('cl-filter-type');
+  var curType = typeSel.value;
+  typeSel.innerHTML = '<option value="">All types</option>' + CR_TYPE_LIST.map(function(t) {
+    return '<option value="' + escAttr(t) + '"' + (t === curType ? ' selected' : '') + '>' + escHtml(t) + '</option>';
+  }).join('');
+
+  var advisers = {};
+  var supervisors = {};
+  _complogData.forEach(function(r) {
+    if (r.adviserName) advisers[r.adviserName] = true;
+    if (r.supervisorName) supervisors[r.supervisorName] = true;
+  });
+  var advSel = document.getElementById('cl-filter-adviser');
+  var curAdv = advSel.value;
+  advSel.innerHTML = '<option value="">All advisers</option>' + Object.keys(advisers).sort().map(function(a) {
+    return '<option value="' + escAttr(a) + '"' + (a === curAdv ? ' selected' : '') + '>' + escHtml(a) + '</option>';
+  }).join('');
+  var supSel = document.getElementById('cl-filter-supervisor');
+  var curSup = supSel.value;
+  supSel.innerHTML = '<option value="">All supervisors</option>' + Object.keys(supervisors).sort().map(function(s) {
+    return '<option value="' + escAttr(s) + '"' + (s === curSup ? ' selected' : '') + '>' + escHtml(s) + '</option>';
+  }).join('');
+}
+
+function complogClearFilters() {
+  ['cl-filter-type','cl-filter-adviser','cl-filter-supervisor','cl-filter-status'].forEach(function(id){ document.getElementById(id).value = ''; });
+  ['cl-filter-from','cl-filter-to'].forEach(function(id){ document.getElementById(id).value = ''; });
+  complogRender();
+}
+
+// Type-specific extra fields shown when a row is expanded, keyed by CR type.
+var CL_EXTRA_FIELDS = {
+  'Complaint': [
+    { key: 'frlSignedOffDate', label: 'FRL signed off' },
+    { key: 'frlSentDate', label: 'FRL sent to client' },
+    { key: 'settlementAmount', label: 'Settlement amount', money: true },
+    { key: 'settlementPaidBy', label: 'Settlement paid by' }
+  ],
+  'Breach': [
+    { key: 'fineAmount', label: 'Fine amount', money: true },
+    { key: 'finePaidBy', label: 'Fine paid by' }
+  ],
+  'Vulnerable Persons': [
+    { key: 'vulnerability', label: 'Vulnerability', list: true },
+    { key: 'outcome', label: 'Outcome' }
+  ],
+  'SARs': [
+    { key: 'reasonForSuspicion', label: 'Reason for suspicion' },
+    { key: 'value', label: 'Value involved', money: true },
+    { key: 'ncaReferral', label: 'NCA referral' },
+    { key: 'ncaReferralDate', label: 'NCA referral date' },
+    { key: 'reportedToMlro', label: 'Reported to MLRO' },
+    { key: 'mlroDate', label: 'MLRO report date' },
+    { key: 'outcome', label: 'Outcome' }
+  ]
+};
+
+function complogRender() {
+  var type = document.getElementById('cl-filter-type').value;
+  var adviser = document.getElementById('cl-filter-adviser').value;
+  var supervisor = document.getElementById('cl-filter-supervisor').value;
+  var status = document.getElementById('cl-filter-status').value;
+  var from = document.getElementById('cl-filter-from').value;
+  var to = document.getElementById('cl-filter-to').value;
+
+  var rows = _complogData.filter(function(r) {
+    if (type && r.type !== type) return false;
+    if (adviser && r.adviserName !== adviser) return false;
+    if (supervisor && r.supervisorName !== supervisor) return false;
+    if (status && (r.status || 'New') !== status) return false;
+    if (from && (!r.dateSubmitted || r.dateSubmitted < from)) return false;
+    if (to && (!r.dateSubmitted || r.dateSubmitted > to)) return false;
+    return true;
+  }).sort(function(a, b) { return (b.dateSubmitted || '').localeCompare(a.dateSubmitted || ''); });
+
+  document.getElementById('cl-count').textContent = rows.length + ' report' + (rows.length !== 1 ? 's' : '');
+
+  if (!rows.length) {
+    document.getElementById('cl-empty').style.display = '';
+    document.getElementById('cl-table-wrap').style.display = 'none';
+    return;
+  }
+  document.getElementById('cl-empty').style.display = 'none';
+  document.getElementById('cl-table-wrap').style.display = '';
+
+  var statusColors = { 'New': '#2563eb', 'Under Review': '#b45309', 'Resolved': '#15803d' };
+  document.getElementById('cl-rows').innerHTML = rows.map(function(r, idx) {
+    var rowId = 'cl-row-' + idx;
+    var statusColor = statusColors[r.status || 'New'] || '#6b7c8f';
+    var extras = CL_EXTRA_FIELDS[r.type] || [];
+    var hasExtras = extras.some(function(f) { var v = r[f.key]; return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length); });
+    var detailHtml = '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
+      (r.summary ? '<div style="font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(r.summary) + '</div>' : '') +
+      (r.incidentDate ? '<div>Incident date: ' + escHtml(r.incidentDate) + '</div>' : '') +
+      extras.map(function(f) {
+        var v = r[f.key];
+        if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
+        var display = f.list ? v.join(', ') : (f.money ? ('£' + Number(v).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) : v);
+        return '<div>' + escHtml(f.label) + ': ' + escHtml(String(display)) + '</div>';
+      }).join('') +
+      (r.details ? '<div style="margin-top:8px;">' + escHtml(r.details) + '</div>' : '') +
+      (r.actionTaken ? '<div style="margin-top:6px;"><span style="font-weight:600;">Action taken:</span> ' + escHtml(r.actionTaken) + '</div>' : '') +
+    '</div>';
+    return '<div style="border-bottom:1px solid #f0f2f5;">' +
+      '<div onclick="complogToggleRow(\'' + rowId + '\')" style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px 20px;gap:0;padding:12px 16px;align-items:center;cursor:pointer;font-size:12.5px;color:var(--brand-navy);" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">' +
+        '<div>' + escHtml(r.dateSubmitted || '—') + '</div>' +
+        '<div>' + escHtml(r.type || '') + '</div>' +
+        '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.adviserName || r.email || '—') + '</div>' +
+        '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.supervisorName || '—') + '</div>' +
+        '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(r.clientName || '—') + '</div>' +
+        '<div><span style="font-size:11px;font-weight:700;color:' + statusColor + ';">' + escHtml(r.status || 'New') + '</span></div>' +
+        '<div id="' + rowId + '-arrow" style="color:#6b7c8f;">' + (hasExtras || r.details ? '▸' : '') + '</div>' +
+      '</div>' +
+      '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function complogToggleRow(rowId) {
+  var row = document.getElementById(rowId);
+  var arrow = document.getElementById(rowId + '-arrow');
+  if (!row) return;
+  var open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'block';
+  if (arrow && arrow.textContent) arrow.textContent = open ? '▸' : '▾';
 }
 
 function svSidebarSelect(email, el) {
@@ -14024,13 +14298,13 @@ var CR_CONFIG = {
     subtitle: 'Notify Compliance of any expression of dissatisfaction from a client, whether made verbally or in writing. Every complaint must be reported on the day it is received, even where you believe it can be resolved informally — the Compliance team will guide you through the next steps and ensure FCA timescales are met.',
     incidentLabel: 'Date complaint received',
     detailsLabel: 'Nature of the complaint',
-    show: { client: true, thirdparty: false, givenrec: false, action: true }
+    show: { client: true, thirdparty: false, givenrec: false, action: true, frl: true, settlement: true }
   },
   'Breach': {
     subtitle: 'Report any breach of FCA rules, firm procedures or conduct standards — including errors, omissions and near misses. Early, honest reporting protects you, your clients and the firm, and allows issues to be put right quickly. Reporting a breach you have made yourself will always be viewed more favourably than one discovered later.',
     incidentLabel: 'Date of breach',
     detailsLabel: 'What happened',
-    show: { client: true, thirdparty: false, givenrec: false, action: true }
+    show: { client: true, thirdparty: false, givenrec: false, action: true, fine: true }
   },
   'Conflict of Interest': {
     subtitle: 'Declare any actual or potential conflict between your personal interests and those of a client or the firm — for example family connections, outside business interests, or personal relationships with providers or introducers. If in doubt, declare it: the Compliance Officer will confirm whether any action is needed.',
@@ -14066,7 +14340,7 @@ var CR_CONFIG = {
     subtitle: 'Report any activity that gives rise to knowledge or suspicion of money laundering, terrorist financing, or other financial crime. All SARs are reviewed by the Money Laundering Reporting Officer (MLRO) — do not tip off the client that a report has been made.',
     incidentLabel: 'Date of suspicious activity',
     detailsLabel: 'Details of the suspicious activity',
-    show: { client: true, thirdparty: false, givenrec: false, action: false, vulnerability: false, outcome: true, reason: true, mlro: true, sarvalue: true }
+    show: { client: true, thirdparty: false, givenrec: false, action: false, vulnerability: false, outcome: true, reason: true, mlro: true, sarvalue: true, nca: true }
   }
 };
 
@@ -14092,12 +14366,17 @@ function showCrForm(type, el) {
   document.getElementById('cr-row-reason').style.display        = cfg.show.reason        ? '' : 'none';
   document.getElementById('cr-row-mlro').style.display          = cfg.show.mlro          ? 'flex' : 'none';
   document.getElementById('cr-row-sarvalue').style.display      = cfg.show.sarvalue      ? '' : 'none';
+  document.getElementById('cr-row-nca').style.display        = cfg.show.nca        ? 'flex' : 'none';
+  document.getElementById('cr-row-frl').style.display        = cfg.show.frl        ? 'flex' : 'none';
+  document.getElementById('cr-row-fine').style.display       = cfg.show.fine       ? 'flex' : 'none';
+  document.getElementById('cr-row-settlement').style.display = cfg.show.settlement ? 'flex' : 'none';
   resetCrForm();
   return false;
 }
 
 function resetCrForm() {
-  ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action','cr-reason','cr-sarvalue','cr-mlro','cr-mlro-date','cr-outcome'].forEach(function(id){
+  ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action','cr-reason','cr-sarvalue','cr-mlro','cr-mlro-date','cr-outcome',
+   'cr-nca','cr-nca-date','cr-frl-signoff','cr-frl-sent','cr-fine-amount','cr-fine-paidby','cr-settlement-amount','cr-settlement-paidby'].forEach(function(id){
     document.getElementById(id).value = '';
   });
   var vulnSel = document.getElementById('cr-vulnerability');
@@ -14425,7 +14704,15 @@ function submitCrForm() {
     outcome:             cfg.show.outcome       ? document.getElementById('cr-outcome').value : null,
     reasonForSuspicion:  cfg.show.reason        ? document.getElementById('cr-reason').value  : null,
     reportedToMlro:      cfg.show.mlro          ? document.getElementById('cr-mlro').value    : null,
-    mlroDate:            cfg.show.mlro          ? (document.getElementById('cr-mlro-date').value || null) : null
+    mlroDate:            cfg.show.mlro          ? (document.getElementById('cr-mlro-date').value || null) : null,
+    ncaReferral:         cfg.show.nca        ? document.getElementById('cr-nca').value : null,
+    ncaReferralDate:     cfg.show.nca        ? (document.getElementById('cr-nca-date').value || null) : null,
+    frlSignedOffDate:    cfg.show.frl        ? (document.getElementById('cr-frl-signoff').value || null) : null,
+    frlSentDate:         cfg.show.frl        ? (document.getElementById('cr-frl-sent').value || null) : null,
+    fineAmount:          cfg.show.fine       ? document.getElementById('cr-fine-amount').value : null,
+    finePaidBy:          cfg.show.fine       ? document.getElementById('cr-fine-paidby').value : null,
+    settlementAmount:    cfg.show.settlement ? document.getElementById('cr-settlement-amount').value : null,
+    settlementPaidBy:    cfg.show.settlement ? document.getElementById('cr-settlement-paidby').value : null
   };
   var btn = document.getElementById('cr-submit');
   btn.disabled = true; btn.textContent = 'Submitting…';
