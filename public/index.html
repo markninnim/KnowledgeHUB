@@ -519,13 +519,13 @@ select:focus { outline:none; }
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:stretch;">
 
         <!-- Cols 1-2: News Bulletins + Video/Newsletter stacked -->
-        <div style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;">
+        <div id="home-left-col" style="display:flex;flex-direction:column;gap:20px;grid-column:span 2;">
 
           <!-- News Bulletins (2/3 height) + Today's Recommended Post (1/3 height), stacked -->
           <div style="display:flex;flex-direction:column;gap:20px;">
 
             <!-- News Bulletins -->
-            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:2;min-width:0;">
+            <div id="home-news-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:2;min-width:0;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
                 <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
@@ -539,7 +539,7 @@ select:focus { outline:none; }
             </div>
 
             <!-- Today's Recommended Post -->
-            <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:1;min-width:0;display:flex;flex-direction:column;">
+            <div id="home-today-post-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;flex:1;min-width:0;display:flex;flex-direction:column;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
                 <div style="width:36px;height:36px;background:var(--brand-orange);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -591,7 +591,7 @@ select:focus { outline:none; }
         </div><!-- /cols 1-2 stack -->
 
         <!-- Col 3: Surveying + CPD stacked -->
-        <div style="display:flex;flex-direction:column;gap:20px;height:100%;">
+        <div id="home-right-col" style="display:flex;flex-direction:column;gap:20px;height:100%;">
 
           <div id="home-acre-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -14871,6 +14871,50 @@ function crMineCheckUnread() {
     .catch(function() {});
 }
 document.addEventListener('DOMContentLoaded', crMineCheckUnread);
+
+// ── Home dashboard column alignment ─────────────────────────────
+// The left column (News Bulletins + Today's Recommended Post) and right
+// column (Surveying + CPD Summary + ReEngage) are independent flex stacks
+// with content-driven heights, so they can drift out of alignment as soon
+// as either side's content changes length. Rather than hand-tune flex
+// ratios that break the moment copy changes, grow "Today's Recommended
+// Post" (the one card with genuinely flexible content) so its bottom edge
+// lines up with whichever right-column card sits opposite it.
+function homeAlignColumns() {
+  var postCard = document.getElementById('home-today-post-card');
+  if (!postCard || postCard.offsetParent === null) return;
+  postCard.style.minHeight = '';
+  requestAnimationFrame(function() {
+    var cpdCard = document.getElementById('home-cpd-card');
+    var reengageCard = document.getElementById('home-reengage-card');
+    var target = (cpdCard && cpdCard.offsetParent !== null) ? cpdCard
+      : (reengageCard && reengageCard.offsetParent !== null) ? reengageCard
+      : null;
+    if (!target) return;
+    var targetBottom = target.getBoundingClientRect().bottom;
+    var postRect = postCard.getBoundingClientRect();
+    var needed = targetBottom - postRect.top;
+    if (needed > postRect.height) postCard.style.minHeight = needed + 'px';
+  });
+}
+(function() {
+  var debounceTimer;
+  function scheduleAlign() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(homeAlignColumns, 150);
+  }
+  window.addEventListener('resize', scheduleAlign);
+  document.addEventListener('DOMContentLoaded', function() {
+    scheduleAlign();
+    var leftCol = document.getElementById('home-left-col');
+    var rightCol = document.getElementById('home-right-col');
+    if (window.MutationObserver && leftCol && rightCol) {
+      var observer = new MutationObserver(scheduleAlign);
+      observer.observe(leftCol, { childList: true, subtree: true, characterData: true });
+      observer.observe(rightCol, { childList: true, subtree: true, characterData: true });
+    }
+  });
+})();
 
 function loadCdFeedback() {
   var loading = document.getElementById('cd-feedback-loading');
