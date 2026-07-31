@@ -7707,7 +7707,7 @@ app.delete('/api/advisor-dashboard-notes/:id', requireAuth, async (req, res) => 
 });
 
 // ── Case Flags (compliance flag log, pulled from Power BI) ─────
-const CF_TABLE = 'Case Flags';
+const CF_TABLE = 'Acre Case Flags';
 
 // GET /api/advisor-flag-log?email=... — list flagged cases for an adviser,
 // newest first. Supervisor/admin only.
