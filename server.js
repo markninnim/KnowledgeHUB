@@ -6286,12 +6286,12 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
   }
 
   // 1. Lookup user record for full name + profile
-    const uf = encodeURIComponent(`LOWER({Email}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
-    const ur  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${uf}&pageSize=1`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const uf = encodeURIComponent(`LOWER({${F_EMAIL}}) = "${brokerEmail.replace(/"/g, '\\"')}"`);
+    const ur  = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${uf}&pageSize=1&returnFieldsByFieldId=true`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
     const ud  = await ur.json();
     const userFields = ((ud.records || [])[0] || {}).fields || {};
-    const firstName  = userFields['First Name'] || '';
-    const lastName   = userFields['Last Name']  || '';
+    const firstName  = userFields[F_FIRST] || '';
+    const lastName   = userFields[F_LAST]  || '';
     const fullName   = [firstName, lastName].filter(Boolean).join(' ');
     const safeName   = fullName.toLowerCase().trim().replace(/"/g, '\\"');
 
@@ -6626,7 +6626,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     Object.keys(crByType).forEach(t => { crCounts[t] = crByType[t].length; });
 
     return {
-      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields['Job Title'] || '', mobile: userFields['Mobile'] || '', sellsMortgages: !!userFields['Sells Mortgages'], sellsProtection: !!userFields['Sells Protection'], sellsInvestments: !!userFields['Sells Investments'], startDate: userFields['Start Date'] || null, cas: !!userFields['CAS'], equityRelease: !!userFields['Lifetime Mortgages Licence'], commercialMortgages: !!userFields['Commercial Mortgages Licence'], bridging: !!userFields['Bridging Finance Licence'], pmi: !!userFields['PMI Licence'], businessProtection: !!userFields['Business Protection Licence'] },
+      user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields[F_TITLE] || '', mobile: userFields[F_MOBILE] || '', sellsMortgages: !!userFields[F_MORTGAGES], sellsProtection: !!userFields[F_PROTECTION], sellsInvestments: !!userFields[F_INVESTMENTS], startDate: userFields[F_START_DATE] || null, cas: !!userFields[F_CAS], equityRelease: !!userFields[F_EQUITY_RELEASE], commercialMortgages: !!userFields[F_COMMERCIAL_MORTGAGES], bridging: !!userFields[F_BRIDGING], pmi: !!userFields[F_PMI], businessProtection: !!userFields[F_BUSINESS_PROTECTION] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
       feefo:        { count: feefoRecs.length, avg: feefoAvg, nps: feefoNps, reviews: feefoReviews, rank: feefoRank, totalAdvisers: feefoTotalAdvisers },
       consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 20), summary: cdSummary },
