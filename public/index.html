@@ -9125,7 +9125,7 @@ function loadHomeData() {
       pctEl.textContent = (pct != null ? pct + '%' : '—');
       pctEl.style.color = (pct === 100) ? '#22c55e' : 'var(--brand-navy)';
     }
-    _homeCdRecords = cd.records || [];
+    _homeCdRecords = cdNormalizeRecords(cd.records || []);
     homeCdUpdateTiles();
     homeCdRenderCards();
 
@@ -12115,7 +12115,7 @@ function openBrokerProfile(email, name, keepDateRange) {
         if (cdTitleEl) cdTitleEl.textContent = (_bpCurrentName || 'Adviser') + ' Consumer Duty questionnaire responses';
         var cdSummaryEl = document.getElementById('bp-cd-summary');
         if (cdSummaryEl) cdSummaryEl.textContent = cd.summary || 'No questionnaire responses yet.';
-        _bpCdRecords = cd.records || [];
+        _bpCdRecords = cdNormalizeRecords(cd.records || []);
         bpCdUpdateTiles();
         bpCdRenderCards();
       }
@@ -13934,7 +13934,7 @@ function loadSvCdFeedback() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       loading.style.display = 'none';
-      _svCdFeedback = data.responses || [];
+      _svCdFeedback = cdNormalizeRecords(data.responses || []);
       _svCdLoaded = true;
       document.getElementById('sv-cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
       svCdPopulateAdviserFilter();
@@ -14884,7 +14884,7 @@ function loadCdFeedback() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       loading.style.display = 'none';
-      _cdFeedback = data.responses || [];
+      _cdFeedback = cdNormalizeRecords(data.responses || []);
       document.getElementById('cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
       cdRenderFeedback();
@@ -14928,6 +14928,21 @@ function cdFlagRowHtml(r, f, toggleFn) {
     + '<input type="checkbox" ' + (resolved ? 'checked' : '') + ' onchange="' + toggleFn + '(\'' + r.id + '\',\'' + f.key + '\',this.checked)" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;">'
     + '<div><div style="font-size:12.5px;font-weight:700;color:' + (resolved ? '#6b7c8f' : 'var(--brand-navy)') + ';text-decoration:' + (resolved ? 'line-through' : 'none') + ';">' + escHtml(f.label) + '</div>'
     + '<div style="font-size:12.5px;color:#6b7c8f;margin-top:2px;">' + escHtml(f.answer) + '</div></div></div>';
+}
+// Recomputes each record's status from its actual flags/restoredKeys rather
+// than trusting whatever was last saved server-side. Some older records can
+// have every flag ticked in restoredKeys but a stale "Partial" status (e.g.
+// from before a fix to the checkbox race condition), which would otherwise
+// keep showing as Partial and stay stuck under that filter forever. Run
+// this immediately after loading any Consumer Duty record set.
+function cdNormalizeRecords(list) {
+  (list || []).forEach(function(r) {
+    var flaggedKeys = (r.flags || []).map(function(f) { return f.key; });
+    if (!flaggedKeys.length) { r.status = 'Full'; return; }
+    var allResolved = flaggedKeys.every(function(k) { return (r.restoredKeys || []).indexOf(k) !== -1; });
+    r.status = allResolved ? 'Restored' : 'Partial';
+  });
+  return list;
 }
 function cdCardHtml(r, toggleFn) {
   var dateStr = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
@@ -15049,7 +15064,7 @@ function homeCdRenderCards() {
     var tile = document.getElementById('home-cd-tile-' + s);
     if (!tile) return;
     var active = activeStatus === s;
-    var col = s === 'Partial' ? '#b91c1c' : s === 'Restored' ? '#f59e0b' : 'var(--brand-navy)';
+    var col = s === 'Partial' ? 'var(--brand-navy)' : s === 'Restored' ? '#6b7c8f' : 'var(--brand-navy)';
     tile.style.borderColor = active ? col : '#d1d5db';
     tile.style.boxShadow = active ? '0 0 0 3px rgba(0,0,0,.06)' : '';
   });
@@ -15098,7 +15113,7 @@ function bpCdRenderCards() {
     var tile = document.getElementById('bp-cd-tile-' + s);
     if (!tile) return;
     var active = activeStatus === s;
-    var col = s === 'Partial' ? '#b91c1c' : s === 'Restored' ? '#f59e0b' : 'var(--brand-navy)';
+    var col = s === 'Partial' ? 'var(--brand-navy)' : s === 'Restored' ? '#6b7c8f' : 'var(--brand-navy)';
     tile.style.borderColor = active ? col : '#d1d5db';
     tile.style.boxShadow = active ? '0 0 0 3px rgba(0,0,0,.06)' : '';
   });
