@@ -698,8 +698,8 @@ select:focus { outline:none; }
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
           </div>
           <div id="home-cd-tile-Partial" onclick="homeCdFilterByStatus('Partial')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
-            <div id="home-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
-            <div style="font-size:12px;font-weight:600;color:#b91c1c;">Partial Understanding</div>
+            <div id="home-cd-partial-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
+            <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Partial Understanding</div>
             <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
           </div>
         </div>
@@ -4108,13 +4108,13 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">All questions answered correctly</div>
             </div>
             <div id="bp-cd-tile-Restored" onclick="bpCdFilterByStatus('Restored')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
-              <div id="bp-cd-restored-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;margin-bottom:4px;"></div>
-              <div style="font-size:12px;font-weight:600;color:#b45309;">Understanding Restored</div>
+              <div id="bp-cd-restored-count" style="font-size:28px;font-weight:800;color:#6b7c8f;line-height:1;margin-bottom:4px;"></div>
+              <div style="font-size:12px;font-weight:600;color:#6b7c8f;">Understanding Restored</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial action completed</div>
             </div>
             <div id="bp-cd-tile-Partial" onclick="bpCdFilterByStatus('Partial')" style="background:#f8fafc;border:1px solid #d1d5db;border-radius:9px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;">
-              <div id="bp-cd-partial-count" style="font-size:28px;font-weight:800;color:#b91c1c;line-height:1;margin-bottom:4px;"></div>
-              <div style="font-size:12px;font-weight:600;color:#b91c1c;">Partial Understanding</div>
+              <div id="bp-cd-partial-count" style="font-size:28px;font-weight:800;color:var(--brand-navy);line-height:1;margin-bottom:4px;"></div>
+              <div style="font-size:12px;font-weight:600;color:var(--brand-navy);">Partial Understanding</div>
               <div style="font-size:11px;color:#6b7c8f;margin-top:2px;">Remedial follow-up required</div>
             </div>
           </div>
@@ -14007,6 +14007,11 @@ function svCdToggleResolved(id, key, resolved) {
   var newKeys = resolved
     ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
     : rec.restoredKeys.filter(function(k) { return k !== key; });
+  rec.restoredKeys = newKeys;
+  var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+  var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+  rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+  svCdRenderFeedback();
   fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -14014,12 +14019,7 @@ function svCdToggleResolved(id, key, resolved) {
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
-      if (res.error) { alert('Could not update: ' + res.error); loadSvCdFeedback(); return; }
-      rec.restoredKeys = newKeys;
-      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
-      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
-      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
-      svCdRenderFeedback();
+      if (res.error) { alert('Could not update: ' + res.error); loadSvCdFeedback(); }
     })
     .catch(function() { alert('Could not update. Please try again.'); loadSvCdFeedback(); });
 }
@@ -14969,9 +14969,19 @@ function cdRenderFeedback() {
 function cdToggleResolved(id, key, resolved) {
   var rec = _cdFeedback.find(function(x) { return x.id === id; });
   if (!rec) return;
+  // Update local state immediately (before the fetch resolves) so that
+  // rapidly ticking multiple checkboxes on the same card doesn't race —
+  // each click was previously computed from the last *server-confirmed*
+  // restoredKeys, so a quick second click could still see the pre-first-click
+  // array and overwrite it, silently dropping the first tick.
   var newKeys = resolved
     ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
     : rec.restoredKeys.filter(function(k) { return k !== key; });
+  rec.restoredKeys = newKeys;
+  var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+  var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+  rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+  cdRenderFeedback();
   fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -14980,11 +14990,6 @@ function cdToggleResolved(id, key, resolved) {
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.error) { alert('Could not update: ' + res.error); loadCdFeedback(); return; }
-      rec.restoredKeys = newKeys;
-      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
-      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
-      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
-      cdRenderFeedback();
     })
     .catch(function() { alert('Could not update. Please try again.'); loadCdFeedback(); });
 }
@@ -15062,6 +15067,12 @@ function homeCdToggleResolved(id, key, resolved) {
   var newKeys = resolved
     ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
     : rec.restoredKeys.filter(function(k) { return k !== key; });
+  rec.restoredKeys = newKeys;
+  var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+  var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+  rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+  homeCdUpdateTiles();
+  homeCdRenderCards();
   fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -15069,13 +15080,7 @@ function homeCdToggleResolved(id, key, resolved) {
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
-      if (res.error) { alert('Could not update: ' + res.error); return; }
-      rec.restoredKeys = newKeys;
-      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
-      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
-      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
-      homeCdUpdateTiles();
-      homeCdRenderCards();
+      if (res.error) { alert('Could not update: ' + res.error); }
     })
     .catch(function() { alert('Could not update. Please try again.'); });
 }
@@ -15111,6 +15116,12 @@ function bpCdToggleResolved(id, key, resolved) {
   var newKeys = resolved
     ? rec.restoredKeys.concat(rec.restoredKeys.indexOf(key) === -1 ? [key] : [])
     : rec.restoredKeys.filter(function(k) { return k !== key; });
+  rec.restoredKeys = newKeys;
+  var flaggedKeys = rec.flags.map(function(f) { return f.key; });
+  var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
+  rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
+  bpCdUpdateTiles();
+  bpCdRenderCards();
   fetch('/api/consumer-duty/' + encodeURIComponent(id) + '/restore', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -15118,13 +15129,7 @@ function bpCdToggleResolved(id, key, resolved) {
   })
     .then(function(r) { return r.json(); })
     .then(function(res) {
-      if (res.error) { alert('Could not update: ' + res.error); return; }
-      rec.restoredKeys = newKeys;
-      var flaggedKeys = rec.flags.map(function(f) { return f.key; });
-      var allResolved = flaggedKeys.every(function(k) { return rec.restoredKeys.indexOf(k) !== -1; });
-      rec.status = !flaggedKeys.length ? 'Full' : (allResolved ? 'Restored' : 'Partial');
-      bpCdUpdateTiles();
-      bpCdRenderCards();
+      if (res.error) { alert('Could not update: ' + res.error); }
     })
     .catch(function() { alert('Could not update. Please try again.'); });
 }
