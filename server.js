@@ -8395,10 +8395,10 @@ app.post('/api/share/standards', requireAuth, async (req, res) => {
     </div>`;
 
   try {
-    const transport = makeMailTransport();
+    const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@knowledgehub.website';
     await Promise.all(recipients.map(email =>
-      transport.sendMail({
-        from: `"${senderName} via FPG Hub" <${process.env.SMTP_USER}>`,
+      _mailer.sendMail({
+        from: `"${senderName} via FPG Hub" <${fromEmail}>`,
         to: email,
         subject: `${senderName} shared: ${sectionTitle} – ${docTitle}`,
         html,
