@@ -125,6 +125,57 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v2.5</span>
+      <span class="version-title">Mortgage Import Automation, Data Integrity Audit &amp; Annual Reporting Overhaul</span>
+      <span class="version-date">1 August 2026</span>
+    </div>
+    <p class="version-summary">Added an in-app monthly Mortgage Completions import, ran a full audit of every Airtable field reference in the app (catching and fixing a broken field that was silently failing every Add/Edit User save), and rebuilt Fitness &amp; Properness into a proper Annual Reporting suite with two new declarations and on-screen signatures.</p>
+    <ul class="changes">
+      <li>Added an in-app monthly Mortgage Completions Excel import under AutoCRM&#8482;, available to supervisors and admins, so the monthly upload no longer depends on a local file or a developer running it manually.</li>
+      <li>Audited every Airtable table and field ID referenced in server.js against the live schema across all bases &mdash; found and fixed a broken field reference (<code>F_SURVEYING</code>) that had been silently causing every Add User and Edit User save to fail with a 500 error, and removed a second dead reference.</li>
+      <li>Moved Fitness &amp; Properness submissions and Whereabouts manual edits off local server files and into Airtable, so both now survive Railway redeploys instead of resetting on every push.</li>
+      <li>Split the Fitness &amp; Properness questionnaire into three separate Annual Reporting declarations under Compliance &gt; Reporting: Fitness &amp; Properness, Introducers, and Other Business Interests &mdash; each with its own on-screen signature capture, recorded permanently in Airtable.</li>
+      <li>Added Supervisor review pages for all three Annual Reporting declarations under Supervise &gt; Compliance, with broker and date-range filters and an animated accordion layout showing full submission detail, including the captured signature.</li>
+      <li>Fixed the Adviser Unread indicator on My Submissions not clearing after being read &mdash; the "mark as seen" check was silently failing due to a field-lookup mismatch, so the red dot would reappear after reload even once viewed.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v2.4</span>
+      <span class="version-title">Compliance Reporting Expansion &amp; Reliability Fixes</span>
+      <span class="version-date">31 July 2026</span>
+    </div>
+    <p class="version-summary">Rounded out the Compliance Reporting suite with two new report types and a firm-wide Compliance Log, gave advisers visibility into their own submissions, and fixed a run of UI reliability issues across Consumer Duty and Home.</p>
+    <ul class="changes">
+      <li>Added Vulnerable Persons and SARs to the Compliance Reporting forms, and gave Compliance Log an editable status dropdown with Resolved entries archived out of the default view.</li>
+      <li>Added a firm-wide Compliance Log view under Supervise, with type and status filters and type-specific detail, plus compliance notes visible to the submitting adviser.</li>
+      <li>Added a "My Submissions" register so advisers can track the status and any compliance notes on their own reports, with a red-dot unread notification when compliance leaves an update.</li>
+      <li>Split Questionnaire Feedback into its own sidebar entry, scoped to the logged-in adviser's own responses, with a separate firm-wide copy retained under Compliance Log.</li>
+      <li>Replaced native dropdowns on the Compliance Reporting form with scrollable custom ones (native popups were clipping past the viewport on longer lists), and fixed a race condition that could silently lose a Consumer Duty checkbox tick.</li>
+      <li>Renamed Case Flags to Acre Case Flags, and switched several field lookups (compliance summary, user Products &amp; Specialisms) to Airtable field IDs instead of names so future renames in Airtable can't silently break them.</li>
+      <li>Removed Surveying from the regulated Licences panel (it isn't a regulated licence) and fixed a Home dashboard column-alignment bug affecting the News Bulletins and CPD Summary cards.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
+      <span class="version-tag">v2.3</span>
+      <span class="version-title">Sim Assistant Rebrand &amp; Accurate CPD Logging</span>
+      <span class="version-date">29&ndash;30 July 2026</span>
+    </div>
+    <p class="version-summary">Rebranded the help widget as Sim with new artwork and a livelier onboarding tour, and moved CPD logging away from flat time estimates towards actual time spent.</p>
+    <ul class="changes">
+      <li>Rebranded KnowledgeHELPER as Sim, your personal assistant, with new vector artwork across the helper widget, chat panel, welcome modal and CPD modal, plus subtle bob animations throughout.</li>
+      <li>Restored onboarding as a full section-by-section modal welcome tour, with refreshed copy for every tab (Marketing, Learn, Earn, Pay, Engage, AutoCRM&#8482;, Surveying, ReEngage&#8482;).</li>
+      <li>CPD for videos and newsletters now logs actual watch/read time instead of a flat estimate, rounding up on short sessions so brief views still register.</li>
+      <li>Industry Reading CPD now logs automatically when the article tab is closed, and advisers are prompted to annotate automatically-logged CPD entries with what they learned.</li>
+      <li>Added an Employed adviser flag to the user Access section.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.2</span>
       <span class="version-title">Meeting Notes Automation, AI Meeting Recording &amp; Mortgage Advice Standards V4</span>
       <span class="version-date">28 July 2026</span>
