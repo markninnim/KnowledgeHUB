@@ -125,6 +125,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v2.6</span>
+      <span class="version-title">Fitness &amp; Properness Reliability Fix, Readable Airtable Data &amp; Own Supervisor Page</span>
+      <span class="version-date">1 August 2026</span>
+    </div>
+    <p class="version-summary">Fixed the Fitness &amp; Properness form getting stuck on "Submitting&hellip;" or failing outright, removed an email notification the form no longer needs, made every submission readable straight from the Airtable table instead of a raw JSON blob, and gave Fitness &amp; Properness its own dedicated page under Supervise &gt; Compliance instead of sharing one with Questionnaire Feedback.</p>
+    <ul class="changes">
+      <li>Fixed the Fitness &amp; Properness Declaration getting stuck on "Submitting&hellip;" or failing with "Submission failed" &mdash; the compliance notification email had no timeout, so a slow or unreachable mail server blocked the whole request; added connection timeouts to the mail transporter and made the email fire-and-forget everywhere it's used.</li>
+      <li>Removed the Fitness &amp; Properness compliance notification email entirely &mdash; submissions are reviewed in-app via Supervise &gt; Compliance, so the extra email was unnecessary.</li>
+      <li>While auditing every place the site sends email, found and fixed a genuinely broken one: the "Share" button on Advice Standards sections called an email function that didn't exist anywhere in the code, so it silently failed every time a supervisor tried to use it.</li>
+      <li>Added 14 new columns to the Fitness &amp; Properness Submissions Airtable table (one Yes/No + one detail column per disclosure question, plus a Flagged checkbox) so compliance can read a submission directly in Airtable without decoding a JSON string.</li>
+      <li>Gave Fitness &amp; Properness its own page under Supervise &gt; Compliance, matching the Introducers and Other Business Interests pages with broker/date filters, summary stat chips, and an accordion list &mdash; previously it was tucked inside the bottom of Questionnaire Feedback.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.5</span>
       <span class="version-title">Mortgage Import Automation, Data Integrity Audit &amp; Annual Reporting Overhaul</span>
       <span class="version-date">1 August 2026</span>

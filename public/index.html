@@ -452,6 +452,7 @@ select:focus { outline:none; }
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
     <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
     <a href="#" id="sv-sb-cdfeedback" onclick="return showSvCdFeedback(this)">Questionnaire Feedback</a>
+    <a href="#" id="sv-sb-fp" onclick="return showSvFp(this)">Fitness &amp; Properness</a>
     <a href="#" id="sv-sb-introducers" onclick="return showSvIntroducers(this)">Introducers</a>
     <a href="#" id="sv-sb-obi" onclick="return showSvObi(this)">Other Business Interests</a>
     <div id="sv-sb-noncas" style="display:none;">
@@ -4453,21 +4454,40 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="sv-cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="sv-cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
       <div id="sv-cd-feedback-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;"></div>
-
-      <!-- Fitness & Properness Submissions -->
-      <div style="margin-top:40px;padding-top:28px;border-top:1px solid #e3e8ef;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
-          <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Fitness &amp; Properness Submissions</h2>
-          <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:5px;"></span>No disclosures</span>
-            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#dc2626;margin-right:5px;"></span>Flagged</span>
-          </div>
-        </div>
-        <div id="sv-fp-loading" style="text-align:center;padding:40px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
-        <div id="sv-fp-empty" style="display:none;text-align:center;padding:40px 0;color:#6b7c8f;font-size:13px;">No Fitness &amp; Properness submissions yet.</div>
-        <div id="sv-fp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-      </div>
     </div><!-- /sv-cd-feedback-panel -->
+
+    <!-- Fitness & Properness (Supervise > Compliance) -->
+    <div id="sv-fp-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 40px;">
+      <div style="background:linear-gradient(135deg,var(--brand-navy),#0f4a80);border-radius:14px;padding:26px 28px;margin-bottom:24px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;box-shadow:0 8px 24px rgba(0,30,60,.18);">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:21px;font-weight:800;">Fitness &amp; Properness</h2>
+          <div style="font-size:13px;opacity:.85;max-width:480px;line-height:1.5;">Annual Reporting declarations — adviser financial position, disclosures and fitness &amp; properness checks.</div>
+        </div>
+        <div id="sv-fp-stats" style="display:flex;gap:28px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
+          <select id="sv-fp-filter-broker" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+            <option value="">All brokers</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+          <input id="sv-fp-filter-from" type="date" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+          <input id="sv-fp-filter-to" type="date" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <button onclick="svFpClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+      </div>
+
+      <div id="sv-fp-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="sv-fp-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No Fitness &amp; Properness submissions yet.</div>
+      <div id="sv-fp-list"></div>
+    </div><!-- /sv-fp-panel -->
 
     <!-- Introducers (Supervise > Compliance) -->
     <div id="sv-introducers-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 40px;">
@@ -13844,6 +13864,7 @@ function closeBrokerProfile() {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
   document.getElementById('sv-introducers-panel').style.display = 'none';
   document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'block';
@@ -13860,6 +13881,7 @@ function showComplianceLog(el) {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
   document.getElementById('sv-introducers-panel').style.display = 'none';
   document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'block';
@@ -13875,12 +13897,28 @@ function showSvCdFeedback(el) {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
   document.getElementById('sv-introducers-panel').style.display = 'none';
   document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'block';
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   if (!_svCdLoaded) loadSvCdFeedback();
+  return false;
+}
+
+function showSvFp(el) {
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'block';
+  document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
+  if (el) el.classList.add('active');
   if (!_svFpLoaded) loadSvFpSubmissions();
   return false;
 }
@@ -13892,6 +13930,7 @@ function showSvIntroducers(el) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
   document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-introducers-panel').style.display = 'block';
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
@@ -13907,6 +13946,7 @@ function showSvObi(el) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
   document.getElementById('sv-introducers-panel').style.display = 'none';
   document.getElementById('sv-obi-panel').style.display = 'block';
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
@@ -14253,9 +14293,9 @@ function svCdToggleResolved(id, key, resolved) {
     .catch(function() { alert('Could not update. Please try again.'); loadSvCdFeedback(); });
 }
 
-// ── Fitness & Properness Submissions (Supervise > Compliance > Questionnaire Feedback) ──
-var _svFpData = [];
+// ── Fitness & Properness (Supervise > Compliance) ────────────────
 var _svFpLoaded = false;
+var _svFpData = [];
 var FP_FLAG_LABELS = {
   q3: 'Negative change in financial position',
   q4: 'Assets do NOT exceed liabilities',
@@ -14272,9 +14312,7 @@ var FP_DETAIL_LABELS = {
   q6d: 'Director disqualification details',
   q7d: 'Creditor arrangement details',
   q8d: 'Criminal offence details',
-  q9d: 'Driving ban details',
-  q10d: 'Other business interests',
-  q11d: 'Introducers'
+  q9d: 'Driving ban details'
 };
 
 function svFpFlagsFor(a) {
@@ -14294,18 +14332,21 @@ function loadSvFpSubmissions() {
   var loading = document.getElementById('sv-fp-loading');
   var empty   = document.getElementById('sv-fp-empty');
   var list    = document.getElementById('sv-fp-list');
-  loading.style.display = '';
-  empty.style.display = 'none';
-  list.innerHTML = '';
+  loading.style.display = ''; empty.style.display = 'none'; list.innerHTML = '';
   fetch('/api/fitness-properness')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       loading.style.display = 'none';
-      _svFpData = Array.isArray(data) ? data : [];
-      _svFpLoaded = true;
-      if (!_svFpData.length) { empty.style.display = ''; return; }
-      // Newest first
+      _svFpData = (Array.isArray(data) ? data : []).map(function(r) {
+        r.adviserName = r.name;
+        r.flags = svFpFlagsFor(r.answers);
+        return r;
+      });
       _svFpData.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+      _svFpLoaded = true;
+      svPopulateBrokerFilter('sv-fp-filter-broker', _svFpData);
+      svFpRenderStats();
+      if (!_svFpData.length) { empty.style.display = ''; empty.textContent = 'No Fitness & Properness submissions yet.'; return; }
       svFpRender();
     })
     .catch(function() {
@@ -14314,44 +14355,72 @@ function loadSvFpSubmissions() {
     });
 }
 
-function svFpRender() {
-  var list = document.getElementById('sv-fp-list');
-  list.innerHTML = _svFpData.map(function(r, idx) {
-    var flags = svFpFlagsFor(r.answers);
-    var dotColor = flags.length ? '#dc2626' : '#2563eb';
-    var rowId = 'sv-fp-row-' + idx;
-    var when = r.submittedAt ? new Date(r.submittedAt).toLocaleString('en-GB') : '—';
-    var detailRows = Object.keys(FP_DETAIL_LABELS)
-      .filter(function(k) { return r.answers && r.answers[k]; })
-      .map(function(k) { return '<div style="margin-top:8px;"><span style="font-weight:600;color:var(--brand-navy);">' + escHtml(FP_DETAIL_LABELS[k]) + ':</span> ' + escHtml(r.answers[k]) + '</div>'; })
-      .join('');
-    var otherBusiness = r.answers && r.answers.q10 === 'yes';
-    var introducers   = r.answers && r.answers.q11 === 'yes';
-    var detailHtml = '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
-      (flags.length
-        ? '<div style="color:#b91c1c;font-weight:700;margin-bottom:6px;">⚠ Requires attention:</div>' + flags.map(function(f) { return '<div>• ' + escHtml(f) + '</div>'; }).join('')
-        : '<div style="color:#166534;font-weight:600;">✓ No financial disclosures flagged</div>') +
-      (otherBusiness ? '<div style="margin-top:6px;">Has other business interests</div>' : '') +
-      (introducers ? '<div style="margin-top:2px;">Receives leads from an Introducer</div>' : '') +
-      detailRows +
-    '</div>';
-    return '<div style="border:1px solid #e3e8ef;border-radius:10px;overflow:hidden;background:#fff;">' +
-      '<div onclick="svFpToggleRow(\'' + rowId + '\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;font-size:13px;color:var(--brand-navy);">' +
-        '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></span>' +
-        '<div style="width:170px;flex-shrink:0;color:#6b7c8f;">' + escHtml(when) + '</div>' +
-        '<div style="width:200px;flex-shrink:0;font-weight:600;">' + escHtml(r.name || '') + '</div>' +
-        '<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7c8f;">' + escHtml(r.email || '') + '</div>' +
-        '<span style="font-size:11px;font-weight:700;color:' + dotColor + ';">' + (flags.length ? flags.length + ' flag' + (flags.length > 1 ? 's' : '') : 'Clear') + '</span>' +
-      '</div>' +
-      '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
-    '</div>';
-  }).join('');
+function svFpFiltered() {
+  var broker = document.getElementById('sv-fp-filter-broker').value;
+  var from   = document.getElementById('sv-fp-filter-from').value;
+  var to     = document.getElementById('sv-fp-filter-to').value;
+  return _svFpData.filter(function(s) {
+    if (broker && s.adviserName !== broker) return false;
+    if (s.submittedAt) {
+      var d = s.submittedAt.slice(0, 10);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
 }
 
-function svFpToggleRow(rowId) {
-  var row = document.getElementById(rowId);
-  if (!row) return;
-  row.style.display = row.style.display !== 'none' ? 'none' : 'block';
+function svFpRenderStats() {
+  var total = _svFpData.length;
+  var flagged = _svFpData.filter(function(s) { return s.flags.length; }).length;
+  document.getElementById('sv-fp-stats').innerHTML =
+    svStatChip(total, 'Submissions') + svStatChip(flagged, 'Flagged') + svStatChip(total - flagged, 'Clear');
+}
+
+function svFpClearFilters() {
+  document.getElementById('sv-fp-filter-broker').value = '';
+  document.getElementById('sv-fp-filter-from').value = '';
+  document.getElementById('sv-fp-filter-to').value = '';
+  svFpRender();
+}
+
+function svFpRender() {
+  svFpRenderStats();
+  var list = document.getElementById('sv-fp-list');
+  var empty = document.getElementById('sv-fp-empty');
+  var filtered = svFpFiltered();
+  if (!filtered.length) { list.innerHTML = ''; empty.style.display = ''; empty.textContent = 'No submissions match the selected filters.'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(function(sub, idx) { return svFpCardHtml(sub, idx); }).join('');
+}
+
+function svFpCardHtml(sub, idx) {
+  var bodyId = 'sv-fp-body-' + idx, chevId = 'sv-fp-chev-' + idx;
+  var flags = sub.flags;
+  var accent = flags.length ? '#dc2626' : '#2563eb';
+  var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  var chip = flags.length ? (flags.length + ' flag' + (flags.length !== 1 ? 's' : '')) : 'Clear';
+  var a = sub.answers || {};
+  var detailRows = Object.keys(FP_DETAIL_LABELS)
+    .filter(function(k) { return a[k]; })
+    .map(function(k) { return '<div style="margin-top:8px;"><span style="font-weight:600;color:var(--brand-navy);">' + escHtml(FP_DETAIL_LABELS[k]) + ':</span> ' + escHtml(a[k]) + '</div>'; })
+    .join('');
+  var bodyHtml = '<div style="padding:16px 18px;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
+    (flags.length
+      ? '<div style="color:#b91c1c;font-weight:700;margin-bottom:6px;">⚠ Requires attention:</div>' + flags.map(function(f) { return '<div>• ' + escHtml(f) + '</div>'; }).join('')
+      : '<div style="color:#166534;font-weight:600;">✓ No financial disclosures flagged</div>') +
+    detailRows +
+    '<div style="margin-top:10px;color:#9baabb;">' + escHtml(sub.email || '') + '</div>' +
+  '</div>';
+  return '<div style="background:#fff;border:1px solid #e3e8ef;border-left:4px solid ' + accent + ';border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
+    '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(sub.name || sub.email) + '</div>' +
+      '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + when + '</div></div>' +
+      '<span style="font-size:11px;font-weight:700;color:' + accent + ';background:' + accent + '18;padding:5px 12px;border-radius:20px;white-space:nowrap;">' + chip + '</span>' +
+      '<span id="' + chevId + '" style="display:inline-block;color:#6b7c8f;transition:transform .25s ease;">▾</span>' +
+    '</div>' +
+    '<div id="' + bodyId + '" style="max-height:0;overflow:hidden;transition:max-height .3s ease;background:#fafbfc;">' + bodyHtml + '</div>' +
+  '</div>';
 }
 
 // ── Shared helpers: Annual Reporting supervisor review pages ────────
