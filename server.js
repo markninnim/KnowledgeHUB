@@ -2107,6 +2107,103 @@ const MC_CUST_REF_EMAIL = 'fldEFd51ODvSJx9qF'; // Customer Ref Email — the bro
 const MC_DATE           = 'flde2uvM4ZMlRqijT'; // Date — mortgage completion date, text "M/D/YY"
 const MC_DOB            = 'fldJvFYek6dPQqtF2'; // DOB — text, format M/D/YY
 
+// Extra fields used only by the monthly Excel import below (not read
+// elsewhere in the app yet).
+const MC_CUST_REF        = 'fldkfGx7kjEweOkWn'; // Customer Ref — adviser name
+const MC_TAGS             = 'fldWgprj5fy1GelPa'; // Tags — e.g. "salesperson:X"
+const MC_CUST_REF_TEL     = 'flduq81HFryzNVtRB'; // Customer Ref Tel
+const MC_BUSINESS         = 'fldcd8Mzm1pWklAn6'; // Business
+const MC_SEX              = 'fldXvZbgC73jxMqt4'; // Sex — Male/Female select
+const MC_EXCHANGE_DATE    = 'fldhsi7SD8Oj5B70f'; // Exchange Date — text M/D/YY
+const MC_BENEFIT_END_DATE_TXT = 'fldF1IvaOYsCifzUX'; // Benefit End Date — raw text M/D/YY (distinct from MC_BENEFIT_END, the read-only formula field above)
+const MC_BENEFIT_END_TXT      = 'fldDwqwJupDOzltw9'; // Benefit End — text M/D/YY, always mirrors Benefit End Date
+const MC_STATUS           = 'fldY4F2K02bNVK9tz'; // Status
+const MC_ORDER_REF        = 'fld13p1BoG5lslLJh'; // Order Ref — unique source-system id
+const MC_MERCHANT         = 'fldXqenurjAqzRYbC'; // Merchant Identifier
+
+// Converts an Excel date cell (which the client sends as either a JS Date
+// serialized to ISO by JSON.stringify, or already a plain string) into the
+// "M/D/YY" text format this table's date-ish fields use everywhere else.
+function mcFmtDate(v) {
+  if (v === null || v === undefined || v === '') return null;
+  let d = null;
+  if (v instanceof Date) d = v;
+  else if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) d = new Date(v);
+  if (d && !isNaN(d.getTime())) {
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${String(d.getUTCFullYear()).slice(-2)}`;
+  }
+  return String(v).trim() || null;
+}
+
+// ── Admin: bulk import Mortgage Completions from a monthly Excel export ──
+// Expects the same column headers as the source spreadsheet: Customer Ref,
+// Tags, Customer Ref email, Customer Ref Tel, Business, Name, Surname,
+// Email, DOB, Sex, Description, Valuation, Loan Amount, Product search
+// code, Exchange Date, Date, Benefit End Date, Benefit End, Status, Order
+// Ref, Merchant Identifier. Surname is intentionally not stored — this
+// table has only ever held a first name, matching the existing ~24,800
+// rows. No dedupe: every row is appended as a new record (explicit
+// decision — this endpoint may be called more than once on the same file
+// without checking for existing Order Refs).
+app.post('/api/admin/mortgage-completions/bulk', requireAdmin, async (req, res) => {
+  const rows = req.body;
+  if (!Array.isArray(rows) || rows.length === 0)
+    return res.status(400).json({ error: 'Expected an array of rows' });
+
+  const results = { created: 0, skipped: 0, errors: [] };
+  const BATCH = 10;
+
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH);
+    const records = batch.map(r => {
+      const fields = {};
+      const set = (fieldId, val) => { if (val !== null && val !== undefined && val !== '') fields[fieldId] = val; };
+      set(MC_CUST_REF, r['Customer Ref']);
+      set(MC_TAGS, r['Tags']);
+      set(MC_CUST_REF_EMAIL, r['Customer Ref email']);
+      set(MC_CUST_REF_TEL, r['Customer Ref Tel']);
+      set(MC_BUSINESS, r['Business']);
+      set(MC_NAME, r['Name']);
+      set(MC_EMAIL, r['Email']);
+      set(MC_DOB, mcFmtDate(r['DOB']));
+      if (r['Sex'] === 'Male' || r['Sex'] === 'Female') set(MC_SEX, r['Sex']);
+      set(MC_DESC, r['Description']);
+      if (typeof r['Valuation'] === 'number') set(MC_VALUATION, r['Valuation']);
+      if (typeof r['Loan Amount'] === 'number') set(MC_LOAN, r['Loan Amount']);
+      set(MC_LENDER, r['Product search code']);
+      set(MC_EXCHANGE_DATE, mcFmtDate(r['Exchange Date']));
+      set(MC_DATE, mcFmtDate(r['Date']));
+      const bed = mcFmtDate(r['Benefit End Date']);
+      set(MC_BENEFIT_END_DATE_TXT, bed);
+      set(MC_BENEFIT_END_TXT, bed);
+      set(MC_STATUS, r['Status']);
+      if (r['Order Ref'] !== null && r['Order Ref'] !== undefined && r['Order Ref'] !== '') fields[MC_ORDER_REF] = String(r['Order Ref']);
+      set(MC_MERCHANT, r['Merchant Identifier']);
+      return { fields };
+    }).filter(rec => Object.keys(rec.fields).length > 0);
+
+    if (!records.length) { results.skipped += batch.length; continue; }
+
+    try {
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${MC_TABLE}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records, typecast: true })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+      results.created += (d.records || []).length;
+    } catch (e) {
+      results.errors.push({ batch: i, error: e.message });
+    }
+    // Respect Airtable's 5 req/s rate limit
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+
+  auditLog('admin_mortgage_completions_import', { created: results.created, errors: results.errors.length, admin: (req.session.user || {}).email }, req);
+  res.json(results);
+});
+
 // ── Customer birthdays (today), scoped to the logged-in broker's own clients ──
 app.get('/api/customer-birthdays', requireAuth, async (req, res) => {
   const user = req.session.user;

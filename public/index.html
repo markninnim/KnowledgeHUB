@@ -4522,8 +4522,32 @@ Consolidating debts will increase the loan to value which can impact future deal
 
   <div id="tab-autocrm" class="tab-pane">
     <div style="padding:32px 32px 0;">
-      <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">AutoCRM&#8482;</h2>
-      <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases coming up for renewal in the next 6 months. AutoCRM&#8482; will automatically email every client below on your behalf as their renewal date approaches.</p>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+        <div>
+          <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">AutoCRM&#8482;</h2>
+          <p style="color:#6b7c8f;font-size:13.5px;margin:0 0 24px;line-height:1.6;">Mortgage cases coming up for renewal in the next 6 months. AutoCRM&#8482; will automatically email every client below on your behalf as their renewal date approaches.</p>
+        </div>
+        <label id="mc-import-btn" style="display:none;background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;align-items:center;box-sizing:border-box;height:36px;line-height:36px;flex-shrink:0;"><span style="line-height:normal;">↑ Import Completions</span><input type="file" accept=".xlsx" onchange="mcImportExcel(this)" style="display:none;"></label>
+      </div>
+      <div id="mc-import-preview" style="display:none;background:#f9fafc;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div>
+            <span style="font-size:14px;font-weight:600;color:var(--brand-navy);">Import Mortgage Completions</span>
+            <span id="mc-import-count" style="font-size:13px;color:#6b7c8f;margin-left:8px;"></span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="mcConfirmImport()" style="background:var(--brand-navy);color:#fff;border:1px solid var(--brand-navy);padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Import All</button>
+            <button onclick="mcCancelImport()" style="background:#fff;color:#6b7c8f;border:1px solid #d1d5db;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+          </div>
+        </div>
+        <p style="color:#6b7c8f;font-size:12.5px;margin:8px 0 0;">Rows are appended as new records — this does not check for or remove duplicates.</p>
+        <div id="mc-import-progress" style="display:none;margin-top:12px;">
+          <div style="background:#d1d5db;border-radius:4px;height:6px;overflow:hidden;">
+            <div id="mc-import-progress-bar" style="background:var(--brand-navy);height:100%;width:60%;transition:width .3s;"></div>
+          </div>
+          <div id="mc-import-progress-text" style="color:#6b7c8f;font-size:12px;margin-top:6px;text-align:center;">Importing…</div>
+        </div>
+      </div>
       <div id="ac-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="ac-content" style="display:none;padding-bottom:32px;"></div>
     </div>
@@ -9367,6 +9391,8 @@ var _currentUser = null;
       if (auditBtn) auditBtn.style.display = '';
       var helpKbBtn = document.getElementById('admin-helpkb-btn');
       if (helpKbBtn) helpKbBtn.style.display = '';
+      var mcBtn = document.getElementById('mc-import-btn');
+      if (mcBtn) mcBtn.style.display = 'inline-flex';
     }
     if (user && (user.isAdmin || user.isSupervisor) && sessionStorage.getItem('_openAdminAfterReload')) {
       sessionStorage.removeItem('_openAdminAfterReload');
@@ -15839,6 +15865,52 @@ function importUsersExcel(input) {
     showImportPreview(rows);
   };
   reader.readAsArrayBuffer(file);
+}
+
+// ── Mortgage Completions monthly import (admin only, AutoCRM™ tab) ──────
+var _mcImportRows = null;
+function mcImportExcel(input) {
+  var file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var data = new Uint8Array(e.target.result);
+    var wb = XLSX.read(data, { type: 'array', cellDates: true });
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(ws, { defval: null });
+    if (rows.length === 0) { alert('No data rows found in that Excel file.'); return; }
+    _mcImportRows = rows;
+    document.getElementById('mc-import-count').textContent = rows.length + ' rows found — ready to import';
+    document.getElementById('mc-import-progress').style.display = 'none';
+    document.getElementById('mc-import-preview').style.display = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function mcCancelImport() {
+  _mcImportRows = null;
+  document.getElementById('mc-import-preview').style.display = 'none';
+}
+
+function mcConfirmImport() {
+  if (!_mcImportRows || !_mcImportRows.length) return;
+  var total = _mcImportRows.length;
+  document.getElementById('mc-import-progress').style.display = '';
+  document.getElementById('mc-import-progress-text').textContent = 'Importing ' + total + ' rows…';
+  fetch('/api/admin/mortgage-completions/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(_mcImportRows)
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    document.getElementById('mc-import-progress-bar').style.width = '100%';
+    var msg = 'Imported ' + (res.created || 0) + ' of ' + total + ' rows.';
+    if (res.errors && res.errors.length) msg += ' ' + res.errors.length + ' batch(es) failed — check with an admin.';
+    document.getElementById('mc-import-progress-text').textContent = msg;
+    _mcImportRows = null;
+  }).catch(function(err) {
+    document.getElementById('mc-import-progress-text').textContent = 'Import failed: ' + err.message;
+  });
 }
 
 function importCsv(input) {
