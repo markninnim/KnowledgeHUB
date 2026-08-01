@@ -4667,12 +4667,32 @@ const FP_TABLE       = 'tblDMTSdFSFcdy4PZ';
 const FP_NAME        = 'fldBoMhbdF5YJWj5Z'; // Name
 const FP_EMAIL       = 'fldZZQ3QhIjlON7Lq'; // Email
 const FP_SUBMITTED   = 'fldwACWDSOyCDANOD'; // Submitted At
-const FP_ANSWERS     = 'fldELiwR5lGVLDMAt'; // Answers (JSON string)
+const FP_ANSWERS     = 'fldELiwR5lGVLDMAt'; // Answers (JSON string) — raw backup, not for reading by eye
+// Discrete readable fields (Yes/No + free-text detail) so compliance can read a
+// submission straight off the Airtable table without decoding the JSON blob.
+const FP_Q3          = 'fldueiF68QP8A0Jx8'; // Negative Change in Finances?
+const FP_Q3D         = 'fld4yFqbkqDMQ52FB'; // Negative Change Details
+const FP_Q4          = 'fldZfrANqg4pwyrYe'; // Assets Exceed Liabilities?
+const FP_Q4D         = 'fldtlnfmUgJXeAxMe'; // Assets/Liabilities Details
+const FP_Q5          = 'fldpdSXCOfGfMv3fD'; // CCJs or Defaults?
+const FP_Q5D         = 'fldCVAzaYBh7WrrkE'; // CCJ/Default Details
+const FP_Q6          = 'fldaqeOTR8MaFxVFJ'; // Director Disqualification?
+const FP_Q6D         = 'fldDtiZ6hsrhuY586'; // Director Disqualification Details
+const FP_Q7          = 'fldSneGCAwGR2cNp7'; // Creditor Arrangements?
+const FP_Q7D         = 'fldYOYEGoHrLZ3wyA'; // Creditor Arrangement Details
+const FP_Q8          = 'fld4k2yDObe660wpM'; // Criminal Conviction/Caution?
+const FP_Q8D         = 'fldHs5BfW2fiPECQX'; // Criminal Conviction Details
+const FP_Q9          = 'fldvAp8Z0BBn2ZdoM'; // Driving Ban?
+const FP_Q9D         = 'fldHI05lI2kNjIcjG'; // Driving Ban Details
+const FP_FLAGGED     = 'fldV5mOsnp8wjLhKU'; // Flagged (checkbox)
+
+function fpYesNo(v) { return v === 'yes' ? 'Yes' : (v === 'no' ? 'No' : undefined); }
 
 app.post('/api/fitness-properness', requireAuth, async (req, res) => {
   const { answers } = req.body;
   if (!answers) return res.status(400).json({ error: 'Missing answers' });
   const u = req.session.user;
+  const a = answers;
   const submission = {
     id: crypto.randomUUID(),
     email: u.email,
@@ -4680,15 +4700,24 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
     submittedAt: new Date().toISOString(),
     answers
   };
+  const flagged = a.q3 === 'yes' || a.q4 === 'no' || a.q5 === 'yes' || a.q6 === 'yes' || a.q7 === 'yes' || a.q8 === 'yes' || a.q9 === 'yes';
   try {
     const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records: [{ fields: {
+      body: JSON.stringify({ typecast: true, records: [{ fields: {
         [FP_NAME]:      submission.name.trim(),
         [FP_EMAIL]:     submission.email,
         [FP_SUBMITTED]: submission.submittedAt,
-        [FP_ANSWERS]:   JSON.stringify(answers)
+        [FP_ANSWERS]:   JSON.stringify(answers),
+        [FP_Q3]: fpYesNo(a.q3), [FP_Q3D]: a.q3d || undefined,
+        [FP_Q4]: fpYesNo(a.q4), [FP_Q4D]: a.q4d || undefined,
+        [FP_Q5]: fpYesNo(a.q5), [FP_Q5D]: a.q5d || undefined,
+        [FP_Q6]: fpYesNo(a.q6), [FP_Q6D]: a.q6d || undefined,
+        [FP_Q7]: fpYesNo(a.q7), [FP_Q7D]: a.q7d || undefined,
+        [FP_Q8]: fpYesNo(a.q8), [FP_Q8D]: a.q8d || undefined,
+        [FP_Q9]: fpYesNo(a.q9), [FP_Q9D]: a.q9d || undefined,
+        [FP_FLAGGED]: flagged
       } }] })
     });
     const d = await r.json();
