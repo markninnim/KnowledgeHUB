@@ -4715,8 +4715,6 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
     a.q7d && ('Creditor arrangement details: ' + a.q7d),
     a.q8d && ('Criminal offence details: ' + a.q8d),
     a.q9d && ('Driving ban details: ' + a.q9d),
-    a.q10 === 'yes' && a.q10d && ('Other business interests: ' + a.q10d),
-    a.q11 === 'yes' && a.q11d && ('Introducers: ' + a.q11d),
   ].filter(Boolean).join('\n');
   const complianceEmail = process.env.COMPLIANCE_EMAIL || 'compliance@financeplanning.co.uk';
   try {
@@ -4757,6 +4755,194 @@ app.get('/api/fitness-properness', requireAuth, async (req, res) => {
     res.json(submissions);
   } catch (err) {
     console.error('fitness-properness list error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Shared helper: upload a base64 data-URL as an Airtable attachment ──
+// Airtable's record-create endpoint can't take raw base64 for an attachment
+// field, so we create the record first, then call the separate content API
+// to push the signature image onto it.
+async function airtableUploadSignature(recordId, fieldId, dataUrl, filename) {
+  if (!dataUrl) return;
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) return;
+  const [, contentType, base64] = match;
+  const r = await fetch(`https://content.airtable.com/v0/${AT_BASE}/${recordId}/${fieldId}/uploadAttachment`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contentType, file: base64, filename: filename || 'signature.png' })
+  });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error((d.error && d.error.message) || `Airtable upload ${r.status}`);
+  }
+}
+
+// ── Introducers Declaration (Annual Reporting) ──────────────────
+const INTRO_TABLE     = 'tblM0X4RNyMm8wYvr';
+const INTRO_ADV_NAME  = 'fld91Rzz6OynQ2cQx';
+const INTRO_ADV_EMAIL = 'fldHTDYtB0BuzNGoK';
+const INTRO_HAS       = 'fldDLaZdomrwsiOX8';
+const INTRO_NAME      = 'fldSrrRMGjGyqLYtm';
+const INTRO_TYPE      = 'fld70ld7zThX4vVAe';
+const INTRO_LEADS     = 'fldJkJOs2rBi4qOBB';
+const INTRO_SIG       = 'fldt5MECOPtXidLwj';
+const INTRO_SUBMITTED = 'fldQvruSanrqzVTHC';
+
+app.post('/api/introducers', requireAuth, async (req, res) => {
+  const { hasIntroducers, introducers, signature } = req.body || {};
+  const u = req.session.user;
+  const adviserName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+  const submittedAt = new Date().toISOString();
+  const list = hasIntroducers && Array.isArray(introducers) && introducers.length ? introducers : [null];
+  try {
+    const records = list.map(entry => {
+      const fields = {
+        [INTRO_ADV_NAME]:  adviserName,
+        [INTRO_ADV_EMAIL]: u.email,
+        [INTRO_HAS]:       !!hasIntroducers,
+        [INTRO_SUBMITTED]: submittedAt
+      };
+      if (entry) {
+        fields[INTRO_NAME] = entry.name || '';
+        if (entry.type) fields[INTRO_TYPE] = entry.type;
+        if (entry.leadsPerYear !== undefined && entry.leadsPerYear !== '') fields[INTRO_LEADS] = Number(entry.leadsPerYear) || 0;
+      }
+      return { fields };
+    });
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${INTRO_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records, typecast: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+    if (signature) {
+      await Promise.all((d.records || []).map(rec =>
+        airtableUploadSignature(rec.id, INTRO_SIG, signature, 'signature.png').catch(e => console.error('Introducer signature upload failed:', e))
+      ));
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Failed to save Introducers declaration:', e);
+    res.status(500).json({ error: 'Failed to save submission' });
+  }
+});
+
+app.get('/api/introducers', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${INTRO_TABLE}?returnFieldsByFieldId=true&sort[0][field]=${INTRO_SUBMITTED}&sort[0][direction]=desc`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    const rows = (body.records || []).map(rec => {
+      const f = rec.fields || {};
+      return {
+        id: rec.id,
+        adviserName: f[INTRO_ADV_NAME] || '',
+        adviserEmail: f[INTRO_ADV_EMAIL] || '',
+        hasIntroducers: !!f[INTRO_HAS],
+        introducerName: f[INTRO_NAME] || '',
+        type: f[INTRO_TYPE] || '',
+        leadsPerYear: f[INTRO_LEADS] || null,
+        submittedAt: f[INTRO_SUBMITTED] || rec.createdTime
+      };
+    });
+    res.json(rows);
+  } catch (err) {
+    console.error('introducers list error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Other Business Interests Declaration (Annual Reporting) ─────
+const OBI_TABLE      = 'tblzo6DtCEGhZAzig';
+const OBI_ADV_NAME   = 'fld65UI5gTA5RD4Ys';
+const OBI_ADV_EMAIL  = 'fldObyWuwSj5bvVoc';
+const OBI_HAS        = 'flde5de0KUOFHqKmu';
+const OBI_BIZ_NAME   = 'fldUt5zATvAMZwX2i';
+const OBI_ADDR1      = 'fldQjnBl33QgPHRdB';
+const OBI_TOWN       = 'fldtnGWaU8Yw2gi0W';
+const OBI_COUNTY     = 'fldGl7JZihm3XD12W';
+const OBI_POSTCODE   = 'fldiemi3E0a3iuCXP';
+const OBI_SERVICES_F = 'fldV0U0Dzi01yI6qM';
+const OBI_NO_DETAILS = 'fld1ECnhegwuSjDva';
+const OBI_SIG        = 'fldzmQ3JKi1iJET2H';
+const OBI_SUBMITTED  = 'fldHZCjuhyAt3thpx';
+
+app.post('/api/other-business-interests', requireAuth, async (req, res) => {
+  const { hasOtherBusiness, businesses, signature } = req.body || {};
+  const u = req.session.user;
+  const adviserName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+  const submittedAt = new Date().toISOString();
+  const list = hasOtherBusiness && Array.isArray(businesses) && businesses.length ? businesses : [null];
+  try {
+    const records = list.map(entry => {
+      const fields = {
+        [OBI_ADV_NAME]:  adviserName,
+        [OBI_ADV_EMAIL]: u.email,
+        [OBI_HAS]:       !!hasOtherBusiness,
+        [OBI_SUBMITTED]: submittedAt
+      };
+      if (entry) {
+        fields[OBI_BIZ_NAME] = entry.name || '';
+        if (entry.addressLine1) fields[OBI_ADDR1] = entry.addressLine1;
+        if (entry.town) fields[OBI_TOWN] = entry.town;
+        if (entry.county) fields[OBI_COUNTY] = entry.county;
+        if (entry.postcode) fields[OBI_POSTCODE] = entry.postcode;
+        if (Array.isArray(entry.services) && entry.services.length) fields[OBI_SERVICES_F] = entry.services;
+        if (entry.noDetails) fields[OBI_NO_DETAILS] = entry.noDetails;
+      }
+      return { fields };
+    });
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${OBI_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records, typecast: true })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+    if (signature) {
+      await Promise.all((d.records || []).map(rec =>
+        airtableUploadSignature(rec.id, OBI_SIG, signature, 'signature.png').catch(e => console.error('OBI signature upload failed:', e))
+      ));
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Failed to save Other Business Interests declaration:', e);
+    res.status(500).json({ error: 'Failed to save submission' });
+  }
+});
+
+app.get('/api/other-business-interests', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${OBI_TABLE}?returnFieldsByFieldId=true&sort[0][field]=${OBI_SUBMITTED}&sort[0][direction]=desc`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    const rows = (body.records || []).map(rec => {
+      const f = rec.fields || {};
+      return {
+        id: rec.id,
+        adviserName: f[OBI_ADV_NAME] || '',
+        adviserEmail: f[OBI_ADV_EMAIL] || '',
+        hasOtherBusiness: !!f[OBI_HAS],
+        businessName: f[OBI_BIZ_NAME] || '',
+        addressLine1: f[OBI_ADDR1] || '',
+        town: f[OBI_TOWN] || '',
+        county: f[OBI_COUNTY] || '',
+        postcode: f[OBI_POSTCODE] || '',
+        services: f[OBI_SERVICES_F] || [],
+        noDetails: f[OBI_NO_DETAILS] || '',
+        submittedAt: f[OBI_SUBMITTED] || rec.createdTime
+      };
+    });
+    res.json(rows);
+  } catch (err) {
+    console.error('other-business-interests list error:', err);
     res.status(500).json({ error: err.message });
   }
 });
