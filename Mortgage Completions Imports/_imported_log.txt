@@ -1,0 +1,8 @@
+# Mortgage Completions import log
+# One filename per line. Files listed here have already been imported into
+# the Mortgage Completions Airtable table (tblnIBjSXovgaQy7M) and should be
+# skipped by the daily automated check.
+#
+# Drop the monthly .xlsx export into this folder (Mortgage Completions Imports).
+# A scheduled task checks daily and imports any new file automatically.
+Base June 26 MG converted.xlsx

@@ -127,7 +127,10 @@ const F_BUSINESS_PROTECTION  = 'fldhe5XTYR7Amu4FS'; // Business Protection Licen
 const F_ABOUT_ME             = 'fldf6Nbs76yPYGwVO'; // About Me — profile paragraph shown on Licenced Adviser modal
 const F_WHATSAPP             = 'fldhYhFc63htpAnHR'; // WhatsApp Number — shown on Licenced Adviser modal
 const F_COMMISSION_SPLIT     = 'fldugIzgLk3INhuDF'; // Commission Split — shown on Licenced Adviser modal
-const F_SURVEYING            = 'fldwLzeKJxEpzHvrn'; // Does Surveying — not a regulated licence, anyone can do it
+// NOTE: F_SURVEYING was removed 2026-08-01 — it pointed to fldwLzeKJxEpzHvrn,
+// a Users field that no longer exists in Airtable, and was silently breaking
+// every admin/supervisor Add User + Edit User save with a 422 error. The UI
+// has no control that sets req.body.surveying, so this was dead weight.
 const F_TRUSTS               = 'flda7udm9DghkQfuj'; // Trusts Licence
 const F_AVG_PAYAWAY          = 'fldZI2pRZU0tP2kkf'; // Average Payaway — shown in My Account
 const F_BUSINESS           = 'fldQUTv2QGBbjfeXy'; // Business (nav logo matching)
@@ -515,7 +518,6 @@ function recordToUser(record) {
     aboutMe:             f[F_ABOUT_ME]             || '',
     whatsapp:            f[F_WHATSAPP]             || '',
     commissionSplit:     f[F_COMMISSION_SPLIT]     || '',
-    surveying:           f[F_SURVEYING]            || false,
     trusts:              f[F_TRUSTS]               || false,
     avgPayaway:          f[F_AVG_PAYAWAY]          || '',
     buddyEmail:          f[F_BUDDY_EMAIL]          || '',
@@ -3505,7 +3507,6 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
       [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
-      [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
@@ -3627,7 +3628,6 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_PMI]:                  req.body.pmi                  === true || req.body.pmi                  === 'true',
       [F_BRIDGING]:             req.body.bridging             === true || req.body.bridging             === 'true',
       [F_BUSINESS_PROTECTION]:  req.body.businessProtection   === true || req.body.businessProtection   === 'true',
-      [F_SURVEYING]:            req.body.surveying            === true || req.body.surveying            === 'true',
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
@@ -7992,7 +7992,8 @@ const NEWS_TBL        = 'tbltfeViC5SfCniWt';
 const NEWS_TITLE      = 'fldvFmS9h4SIX3KjL'; // Name
 const NEWS_BODY       = 'fldflwv29d6J4evSg'; // Notes
 const NEWS_STATUS     = 'fldxaOk1OBldIt3sY'; // Status (singleSelect)
-const NEWS_ATTACH     = 'fld8CRM6Fv3syLSX2'; // Attachments
+// NOTE: NEWS_ATTACH was removed 2026-08-01 — declared but never read/written
+// anywhere, and pointed to a field ID that no longer exists on the News table.
 
 app.get('/api/news-bulletins', requireAuth, async (req, res) => {
   try {
