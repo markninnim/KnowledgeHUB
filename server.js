@@ -26,7 +26,10 @@ const _mailer = nodemailer.createTransport({
   auth: {
     user: process.env.CM_API_KEY || '',
     pass: process.env.CM_API_KEY || ''
-  }
+  },
+  connectionTimeout: 8000, // ms — fail fast instead of hanging the request that awaits sendMail
+  greetingTimeout: 8000,
+  socketTimeout: 8000
 });
 
 const app  = express();
@@ -4694,42 +4697,8 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
     console.error('Failed to save Fitness & Properness submission to Airtable:', e);
     return res.status(500).json({ error: 'Failed to save submission' });
   }
-  // Flag any disclosures that need attention
-  const a = answers;
-  const flagged = [];
-  if (a.q3 === 'yes') flagged.push('Negative change in financial position');
-  if (a.q4 === 'no')  flagged.push('Assets do NOT exceed liabilities');
-  if (a.q5 === 'yes') flagged.push('CCJs or Defaults listed');
-  if (a.q6 === 'yes') flagged.push('Disqualified from director role');
-  if (a.q7 === 'yes') flagged.push('Arrangements with creditors (incl. HMRC)');
-  if (a.q8 === 'yes') flagged.push('Criminal conviction or caution');
-  if (a.q9 === 'yes') flagged.push('Driving ban');
-  const alertBlock = flagged.length
-    ? '\n⚠️  REQUIRES ATTENTION:\n' + flagged.map(f => '  • ' + f).join('\n') + '\n'
-    : '\n✅  No financial disclosures flagged\n';
-  const detailLines = [
-    a.q3d && ('Financial change details: ' + a.q3d),
-    a.q4d && ('Assets/liabilities details: ' + a.q4d),
-    a.q5d && ('CCJ/Default details: ' + a.q5d),
-    a.q6d && ('Director disqualification details: ' + a.q6d),
-    a.q7d && ('Creditor arrangement details: ' + a.q7d),
-    a.q8d && ('Criminal offence details: ' + a.q8d),
-    a.q9d && ('Driving ban details: ' + a.q9d),
-  ].filter(Boolean).join('\n');
-  const complianceEmail = process.env.COMPLIANCE_EMAIL || 'compliance@financeplanning.co.uk';
-  try {
-    await _mailer.sendMail({
-      from: process.env.CM_FROM_EMAIL || 'noreply@knowledgehub.website',
-      to: complianceEmail,
-      subject: `Fitness & Properness Declaration — ${submission.name.trim()}`,
-      text: [
-        submission.name.trim() + ' (' + u.email + ') submitted their 2026 Fitness & Properness Questionnaire.',
-        'Submitted: ' + new Date(submission.submittedAt).toLocaleString('en-GB'),
-        alertBlock,
-        detailLines || 'No additional details provided.'
-      ].join('\n')
-    });
-  } catch(e) { /* email failure non-fatal */ }
+  // Submission is safely in Airtable — no email notification, supervisors/admins
+  // review submissions via Supervise > Compliance > Questionnaire Feedback.
   res.json({ ok: true });
 });
 
