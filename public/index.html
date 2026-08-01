@@ -452,6 +452,8 @@ select:focus { outline:none; }
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
     <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
     <a href="#" id="sv-sb-cdfeedback" onclick="return showSvCdFeedback(this)">Questionnaire Feedback</a>
+    <a href="#" id="sv-sb-introducers" onclick="return showSvIntroducers(this)">Introducers</a>
+    <a href="#" id="sv-sb-obi" onclick="return showSvObi(this)">Other Business Interests</a>
     <div id="sv-sb-noncas" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS</span></div>
     </div>
@@ -4466,6 +4468,72 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div id="sv-fp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
     </div><!-- /sv-cd-feedback-panel -->
+
+    <!-- Introducers (Supervise > Compliance) -->
+    <div id="sv-introducers-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 40px;">
+      <div style="background:linear-gradient(135deg,var(--brand-navy),#0f4a80);border-radius:14px;padding:26px 28px;margin-bottom:24px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;box-shadow:0 8px 24px rgba(0,30,60,.18);">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:21px;font-weight:800;">Introducers</h2>
+          <div style="font-size:13px;opacity:.85;max-width:480px;line-height:1.5;">Annual Reporting declarations — who's passing your advisers leads, and how many a year.</div>
+        </div>
+        <div id="sv-intro-stats" style="display:flex;gap:28px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
+          <select id="sv-intro-filter-broker" onchange="svIntroRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+            <option value="">All brokers</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+          <input id="sv-intro-filter-from" type="date" onchange="svIntroRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+          <input id="sv-intro-filter-to" type="date" onchange="svIntroRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <button onclick="svIntroClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+      </div>
+
+      <div id="sv-intro-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="sv-intro-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No Introducers submissions yet.</div>
+      <div id="sv-intro-list"></div>
+    </div><!-- /sv-introducers-panel -->
+
+    <!-- Other Business Interests (Supervise > Compliance) -->
+    <div id="sv-obi-panel" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 40px;">
+      <div style="background:linear-gradient(135deg,var(--brand-navy),#0f4a80);border-radius:14px;padding:26px 28px;margin-bottom:24px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;box-shadow:0 8px 24px rgba(0,30,60,.18);">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:21px;font-weight:800;">Other Business Interests</h2>
+          <div style="font-size:13px;opacity:.85;max-width:480px;line-height:1.5;">Annual Reporting declarations — outside business interests and second jobs held by your advisers.</div>
+        </div>
+        <div id="sv-obi-stats" style="display:flex;gap:28px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
+          <select id="sv-obi-filter-broker" onchange="svObiRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+            <option value="">All brokers</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
+          <input id="sv-obi-filter-from" type="date" onchange="svObiRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">To</label>
+          <input id="sv-obi-filter-to" type="date" onchange="svObiRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+        </div>
+        <button onclick="svObiClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+      </div>
+
+      <div id="sv-obi-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+      <div id="sv-obi-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No Other Business Interests submissions yet.</div>
+      <div id="sv-obi-list"></div>
+    </div><!-- /sv-obi-panel -->
   </div><!-- /tab-supervisor-zone -->
 
   <!-- Transfer adviser modal -->
@@ -13776,6 +13844,8 @@ function closeBrokerProfile() {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'block';
 }
 
@@ -13790,6 +13860,8 @@ function showComplianceLog(el) {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'block';
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -13803,11 +13875,43 @@ function showSvCdFeedback(el) {
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'block';
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   if (!_svCdLoaded) loadSvCdFeedback();
   if (!_svFpLoaded) loadSvFpSubmissions();
+  return false;
+}
+
+function showSvIntroducers(el) {
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'block';
+  document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  if (!_svIntroLoaded) loadSvIntroducers();
+  return false;
+}
+
+function showSvObi(el) {
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'block';
+  document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  if (!_svObiLoaded) loadSvObi();
   return false;
 }
 
@@ -14248,6 +14352,257 @@ function svFpToggleRow(rowId) {
   var row = document.getElementById(rowId);
   if (!row) return;
   row.style.display = row.style.display !== 'none' ? 'none' : 'block';
+}
+
+// ── Shared helpers: Annual Reporting supervisor review pages ────────
+function svAccToggle(bodyId, chevId) {
+  var body = document.getElementById(bodyId);
+  var chev = document.getElementById(chevId);
+  if (!body) return;
+  var open = body.style.maxHeight && body.style.maxHeight !== '0px';
+  if (open) {
+    body.style.maxHeight = '0px';
+    if (chev) chev.style.transform = 'rotate(0deg)';
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    if (chev) chev.style.transform = 'rotate(180deg)';
+  }
+}
+
+function svStatChip(value, label) {
+  return '<div style="text-align:center;"><div style="font-size:24px;font-weight:800;">' + value + '</div><div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.05em;">' + escHtml(label) + '</div></div>';
+}
+
+// Groups flat Airtable rows (one row per introducer/business, or one lone
+// row per adviser when they declared none) back into one card per
+// submission, keyed by adviser + submitted timestamp.
+function svGroupSubmissions(rows, mapItemFn, hasFlagKey) {
+  var map = {}, order = [];
+  (rows || []).forEach(function(r) {
+    var key = r.adviserEmail + '|' + r.submittedAt;
+    if (!map[key]) {
+      map[key] = { adviserName: r.adviserName, adviserEmail: r.adviserEmail, submittedAt: r.submittedAt, has: !!r[hasFlagKey], signatureUrl: r.signatureUrl || null, items: [] };
+      order.push(key);
+    }
+    if (r.signatureUrl && !map[key].signatureUrl) map[key].signatureUrl = r.signatureUrl;
+    var item = mapItemFn(r);
+    if (item) map[key].items.push(item);
+  });
+  var arr = order.map(function(k) { return map[k]; });
+  arr.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+  return arr;
+}
+
+function svPopulateBrokerFilter(selectId, subs) {
+  var sel = document.getElementById(selectId);
+  var current = sel.value;
+  var names = Array.from(new Set(subs.map(function(s) { return s.adviserName; }).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">All brokers</option>' + names.map(function(n) {
+    return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>';
+  }).join('');
+  sel.value = names.indexOf(current) !== -1 ? current : '';
+}
+
+// ── Introducers (Supervise > Compliance) ─────────────────────────
+var _svIntroLoaded = false;
+var _svIntroRaw = [];
+var _svIntroSubs = [];
+
+function loadSvIntroducers() {
+  var loading = document.getElementById('sv-intro-loading');
+  var empty   = document.getElementById('sv-intro-empty');
+  var list    = document.getElementById('sv-intro-list');
+  loading.style.display = ''; empty.style.display = 'none'; list.innerHTML = '';
+  fetch('/api/introducers')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loading.style.display = 'none';
+      _svIntroRaw = Array.isArray(data) ? data : [];
+      _svIntroLoaded = true;
+      _svIntroSubs = svGroupSubmissions(_svIntroRaw, function(r) {
+        return (r.introducerName || r.type || r.leadsPerYear) ? { name: r.introducerName, type: r.type, leadsPerYear: r.leadsPerYear } : null;
+      }, 'hasIntroducers');
+      svPopulateBrokerFilter('sv-intro-filter-broker', _svIntroSubs);
+      svIntroRenderStats();
+      if (!_svIntroSubs.length) { empty.style.display = ''; empty.textContent = 'No Introducers submissions yet.'; return; }
+      svIntroRender();
+    })
+    .catch(function() {
+      loading.style.display = 'none';
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Introducers submissions.</div>';
+    });
+}
+
+function svIntroFiltered() {
+  var broker = document.getElementById('sv-intro-filter-broker').value;
+  var from   = document.getElementById('sv-intro-filter-from').value;
+  var to     = document.getElementById('sv-intro-filter-to').value;
+  return _svIntroSubs.filter(function(s) {
+    if (broker && s.adviserName !== broker) return false;
+    if (s.submittedAt) {
+      var d = s.submittedAt.slice(0, 10);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
+}
+
+function svIntroRenderStats() {
+  var total = _svIntroSubs.length;
+  var withAny = _svIntroSubs.filter(function(s) { return s.has; }).length;
+  var totalIntroducers = _svIntroSubs.reduce(function(sum, s) { return sum + s.items.length; }, 0);
+  document.getElementById('sv-intro-stats').innerHTML =
+    svStatChip(total, 'Submissions') + svStatChip(withAny, 'With Introducers') + svStatChip(totalIntroducers, 'Total Introducers');
+}
+
+function svIntroClearFilters() {
+  document.getElementById('sv-intro-filter-broker').value = '';
+  document.getElementById('sv-intro-filter-from').value = '';
+  document.getElementById('sv-intro-filter-to').value = '';
+  svIntroRender();
+}
+
+function svIntroRender() {
+  svIntroRenderStats();
+  var list = document.getElementById('sv-intro-list');
+  var empty = document.getElementById('sv-intro-empty');
+  var filtered = svIntroFiltered();
+  if (!filtered.length) { list.innerHTML = ''; empty.style.display = ''; empty.textContent = 'No submissions match the selected filters.'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(function(sub, idx) { return svIntroCardHtml(sub, idx); }).join('');
+}
+
+function svIntroCardHtml(sub, idx) {
+  var bodyId = 'sv-intro-body-' + idx, chevId = 'sv-intro-chev-' + idx;
+  var accent = sub.has ? '#2563eb' : '#94a3b8';
+  var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  var chip = sub.has ? (sub.items.length + ' introducer' + (sub.items.length !== 1 ? 's' : '')) : 'None declared';
+  var rowsHtml = sub.items.length
+    ? '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+      '<thead><tr style="background:#f7f9fc;">' + ['Name', 'Type', 'Leads / Year'].map(function(h) {
+        return '<th style="text-align:left;padding:8px 16px;font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">' + h + '</th>';
+      }).join('') + '</tr></thead><tbody>' +
+      sub.items.map(function(it) {
+        return '<tr style="border-top:1px solid #f0f4f8;"><td style="padding:9px 16px;color:var(--brand-navy);font-weight:600;">' + escHtml(it.name || '—') +
+          '</td><td style="padding:9px 16px;color:#6b7c8f;">' + escHtml(it.type || '—') +
+          '</td><td style="padding:9px 16px;color:#6b7c8f;">' + escHtml(String(it.leadsPerYear || '—')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>'
+    : '<div style="padding:16px;color:#6b7c8f;font-size:13px;">No introducers declared for this submission.</div>';
+  var sigHtml = sub.signatureUrl
+    ? '<div style="padding:14px 16px;border-top:1px solid #f0f4f8;"><div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Signed</div><img src="' + sub.signatureUrl + '" style="max-height:60px;background:#fafbfc;border:1px solid #eef1f4;border-radius:6px;padding:4px 10px;"></div>'
+    : '';
+  return '<div style="background:#fff;border:1px solid #e3e8ef;border-left:4px solid ' + accent + ';border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
+    '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(sub.adviserName || sub.adviserEmail) + '</div>' +
+      '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + when + '</div></div>' +
+      '<span style="font-size:11px;font-weight:700;color:' + accent + ';background:' + accent + '18;padding:5px 12px;border-radius:20px;white-space:nowrap;">' + chip + '</span>' +
+      '<span id="' + chevId + '" style="display:inline-block;color:#6b7c8f;transition:transform .25s ease;">▾</span>' +
+    '</div>' +
+    '<div id="' + bodyId + '" style="max-height:0;overflow:hidden;transition:max-height .3s ease;background:#fafbfc;">' + rowsHtml + sigHtml + '</div>' +
+  '</div>';
+}
+
+// ── Other Business Interests (Supervise > Compliance) ────────────
+var _svObiLoaded = false;
+var _svObiRaw = [];
+var _svObiSubs = [];
+
+function loadSvObi() {
+  var loading = document.getElementById('sv-obi-loading');
+  var empty   = document.getElementById('sv-obi-empty');
+  var list    = document.getElementById('sv-obi-list');
+  loading.style.display = ''; empty.style.display = 'none'; list.innerHTML = '';
+  fetch('/api/other-business-interests')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loading.style.display = 'none';
+      _svObiRaw = Array.isArray(data) ? data : [];
+      _svObiLoaded = true;
+      _svObiSubs = svGroupSubmissions(_svObiRaw, function(r) {
+        return r.businessName ? { name: r.businessName, addressLine1: r.addressLine1, town: r.town, county: r.county, postcode: r.postcode, services: r.services || [], noDetails: r.noDetails } : null;
+      }, 'hasOtherBusiness');
+      svPopulateBrokerFilter('sv-obi-filter-broker', _svObiSubs);
+      svObiRenderStats();
+      if (!_svObiSubs.length) { empty.style.display = ''; empty.textContent = 'No Other Business Interests submissions yet.'; return; }
+      svObiRender();
+    })
+    .catch(function() {
+      loading.style.display = 'none';
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Other Business Interests submissions.</div>';
+    });
+}
+
+function svObiFiltered() {
+  var broker = document.getElementById('sv-obi-filter-broker').value;
+  var from   = document.getElementById('sv-obi-filter-from').value;
+  var to     = document.getElementById('sv-obi-filter-to').value;
+  return _svObiSubs.filter(function(s) {
+    if (broker && s.adviserName !== broker) return false;
+    if (s.submittedAt) {
+      var d = s.submittedAt.slice(0, 10);
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
+}
+
+function svObiRenderStats() {
+  var total = _svObiSubs.length;
+  var withAny = _svObiSubs.filter(function(s) { return s.has; }).length;
+  var totalBiz = _svObiSubs.reduce(function(sum, s) { return sum + s.items.length; }, 0);
+  document.getElementById('sv-obi-stats').innerHTML =
+    svStatChip(total, 'Submissions') + svStatChip(withAny, 'With Interests') + svStatChip(totalBiz, 'Total Businesses');
+}
+
+function svObiClearFilters() {
+  document.getElementById('sv-obi-filter-broker').value = '';
+  document.getElementById('sv-obi-filter-from').value = '';
+  document.getElementById('sv-obi-filter-to').value = '';
+  svObiRender();
+}
+
+function svObiRender() {
+  svObiRenderStats();
+  var list = document.getElementById('sv-obi-list');
+  var empty = document.getElementById('sv-obi-empty');
+  var filtered = svObiFiltered();
+  if (!filtered.length) { list.innerHTML = ''; empty.style.display = ''; empty.textContent = 'No submissions match the selected filters.'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(function(sub, idx) { return svObiCardHtml(sub, idx); }).join('');
+}
+
+function svObiCardHtml(sub, idx) {
+  var bodyId = 'sv-obi-body-' + idx, chevId = 'sv-obi-chev-' + idx;
+  var accent = sub.has ? '#2563eb' : '#94a3b8';
+  var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  var chip = sub.has ? (sub.items.length + ' business' + (sub.items.length !== 1 ? 'es' : '')) : 'None declared';
+  var bizHtml = sub.items.length
+    ? sub.items.map(function(b) {
+        var addr = [b.addressLine1, b.town, b.county, b.postcode].filter(Boolean).join(', ');
+        var svcHtml = (b.services || []).length
+          ? (b.services || []).map(function(s) { return '<span style="display:inline-block;background:#eef2f7;color:var(--brand-navy);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin:0 6px 6px 0;">' + escHtml(s) + '</span>'; }).join('')
+          : '<span style="font-size:12px;color:#6b7c8f;">No services selected' + (b.noDetails ? ' — ' + escHtml(b.noDetails) : '') + '</span>';
+        return '<div style="padding:14px 16px;border-top:1px solid #f0f4f8;">' +
+          '<div style="font-size:13.5px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">' + escHtml(b.name || '—') + '</div>' +
+          (addr ? '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + escHtml(addr) + '</div>' : '') +
+          '<div>' + svcHtml + '</div>' +
+        '</div>';
+      }).join('')
+    : '<div style="padding:16px;color:#6b7c8f;font-size:13px;">No other business interests declared for this submission.</div>';
+  var sigHtml = sub.signatureUrl
+    ? '<div style="padding:14px 16px;border-top:1px solid #f0f4f8;"><div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Signed</div><img src="' + sub.signatureUrl + '" style="max-height:60px;background:#fafbfc;border:1px solid #eef1f4;border-radius:6px;padding:4px 10px;"></div>'
+    : '';
+  return '<div style="background:#fff;border:1px solid #e3e8ef;border-left:4px solid ' + accent + ';border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
+    '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(sub.adviserName || sub.adviserEmail) + '</div>' +
+      '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + when + '</div></div>' +
+      '<span style="font-size:11px;font-weight:700;color:' + accent + ';background:' + accent + '18;padding:5px 12px;border-radius:20px;white-space:nowrap;">' + chip + '</span>' +
+      '<span id="' + chevId + '" style="display:inline-block;color:#6b7c8f;transition:transform .25s ease;">▾</span>' +
+    '</div>' +
+    '<div id="' + bodyId + '" style="max-height:0;overflow:hidden;transition:max-height .3s ease;background:#fafbfc;">' + bizHtml + sigHtml + '</div>' +
+  '</div>';
 }
 
 function svSidebarSelect(email, el) {

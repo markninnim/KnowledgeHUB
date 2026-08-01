@@ -4847,6 +4847,7 @@ app.get('/api/introducers', requireAuth, async (req, res) => {
         introducerName: f[INTRO_NAME] || '',
         type: f[INTRO_TYPE] || '',
         leadsPerYear: f[INTRO_LEADS] || null,
+        signatureUrl: (f[INTRO_SIG] && f[INTRO_SIG][0] && f[INTRO_SIG][0].url) || null,
         submittedAt: f[INTRO_SUBMITTED] || rec.createdTime
       };
     });
@@ -4937,6 +4938,7 @@ app.get('/api/other-business-interests', requireAuth, async (req, res) => {
         postcode: f[OBI_POSTCODE] || '',
         services: f[OBI_SERVICES_F] || [],
         noDetails: f[OBI_NO_DETAILS] || '',
+        signatureUrl: (f[OBI_SIG] && f[OBI_SIG][0] && f[OBI_SIG][0].url) || null,
         submittedAt: f[OBI_SUBMITTED] || rec.createdTime
       };
     });
