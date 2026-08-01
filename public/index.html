@@ -4161,15 +4161,22 @@ Consolidating debts will increase the loan to value which can impact future deal
         <!-- Annual Reporting & Compliance — everything a supervisor needs for a 1:1 with this broker -->
         <div id="bp-arc-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
           <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;">Annual Reporting &amp; Compliance</div>
-          <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:20px;">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Compliance Log</div>
-              <div id="bp-complog-list" style="display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;"></div>
+
+          <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Compliance Log</div>
+          <div id="bp-complog-wrap" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px;gap:0;padding:10px 16px;background:#f5f7fa;border-bottom:1px solid #d1d5db;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">
+              <div>Date</div><div>Type</div><div>Adviser</div><div>Supervisor</div><div>Client</div><div>Status</div>
             </div>
+            <div id="bp-complog-list"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
             <div>
               <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Fitness &amp; Properness</div>
               <div id="bp-fp-summary"><div style="font-size:12px;color:#6b7c8f;">Loading…</div></div>
-              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px;">Introducers</div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Introducers</div>
               <div id="bp-intro-summary"><div style="font-size:12px;color:#6b7c8f;">Loading…</div></div>
             </div>
             <div>
@@ -12563,6 +12570,57 @@ function openBrokerProfile(email, name, keepDateRange) {
         if (modal) modal.style.display = 'flex';
       };
 
+      // Compliance Log table on the Broker Profile — same Date/Type/Adviser/
+      // Supervisor/Client/Status columns as the firm-wide Compliance Log page,
+      // scoped to just this broker so it can drive a 1:1 conversation.
+      window.bpRenderComplog = function() {
+        var listEl = document.getElementById('bp-complog-list');
+        var wrapEl = document.getElementById('bp-complog-wrap');
+        if (!listEl) return;
+        var rows = window._bpComplogRows || [];
+        if (wrapEl) wrapEl.style.display = '';
+        if (!rows.length) {
+          listEl.innerHTML = '<div style="padding:16px;font-size:12.5px;color:#6b7c8f;border-top:1px solid #f0f2f5;">No compliance log entries.</div>';
+          return;
+        }
+        var crStatusColors = { 'New': 'var(--brand-navy)', 'Under Review': '#854d0e', 'Resolved': '#166534' };
+        listEl.innerHTML = rows.map(function(row, idx) {
+          var col = crStatusColors[row.status || 'New'] || '#6b7c8f';
+          var when = row.dateSubmitted || '—';
+          return '<div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px;gap:0;padding:12px 16px;align-items:center;border-top:1px solid #f0f2f5;font-size:12.5px;color:var(--brand-navy);">' +
+            '<div>' + escHtml(when) + '</div>' +
+            '<div>' + escHtml(row.type || '') + '</div>' +
+            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(window._bpComplogAdviserName || '—') + '</div>' +
+            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.supervisorName || '—') + '</div>' +
+            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.clientName || '—') + '</div>' +
+            '<div><select onchange="bpComplogUpdateStatus(\'' + row.id + '\', this.value)" style="font-size:11px;font-weight:700;color:' + col + ';border:1px solid #d1d5db;border-radius:6px;padding:3px 6px;background:#fff;font-family:inherit;cursor:pointer;">' +
+              ['New', 'Under Review', 'Resolved'].map(function(s) { return '<option value="' + s + '"' + (s === (row.status || 'New') ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+            '</select></div>' +
+          '</div>';
+        }).join('');
+      };
+
+      window.bpComplogUpdateStatus = function(id, newStatus) {
+        var rec = (window._bpComplogRows || []).find(function(r) { return r.id === id; });
+        var prevStatus = rec ? (rec.status || 'New') : 'New';
+        if (rec) rec.status = newStatus; // optimistic
+        fetch('/api/compliance-report/' + encodeURIComponent(id) + '/status', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(res) {
+            if (res.error) { alert('Could not update status: ' + res.error); if (rec) rec.status = prevStatus; }
+            bpRenderComplog();
+          })
+          .catch(function() {
+            alert('Could not update status. Please try again.');
+            if (rec) rec.status = prevStatus;
+            bpRenderComplog();
+          });
+      };
+
       // Replacement Ratio — lost business (Benefit End >1 month overdue) as a %
       // of new business (completions) within the selected date range. Shown at
       // the end of AutoCRM™ Renewals.
@@ -12649,30 +12707,15 @@ function openBrokerProfile(email, name, keepDateRange) {
       }
 
       // ── Compliance Log (flattened across all report types, newest first) ──
-      var complogListEl = document.getElementById('bp-complog-list');
-      if (complogListEl) {
-        var allCrRows = [];
-        Object.keys(window._bpReportingRows || {}).forEach(function(type) {
-          (window._bpReportingRows[type] || []).forEach(function(row) {
-            allCrRows.push(Object.assign({ type: type }, row));
-          });
+      window._bpComplogRows = [];
+      Object.keys(window._bpReportingRows || {}).forEach(function(type) {
+        (window._bpReportingRows[type] || []).forEach(function(row) {
+          window._bpComplogRows.push(Object.assign({ type: type }, row));
         });
-        allCrRows.sort(function(a, b) { return new Date(b.dateSubmitted) - new Date(a.dateSubmitted); });
-        if (!allCrRows.length) {
-          complogListEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No compliance log entries.</div>';
-        } else {
-          var crStatusColors = { 'New': 'var(--brand-navy)', 'Under Review': '#854d0e', 'Resolved': '#166534' };
-          complogListEl.innerHTML = allCrRows.map(function(row) {
-            var col = crStatusColors[row.status] || '#6b7c8f';
-            var when = row.dateSubmitted ? new Date(row.dateSubmitted).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-            return '<div onclick="bpOpenReportingDetail(\'' + row.type.replace(/'/g, "\\'") + '\')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #eef1f4;border-radius:8px;cursor:pointer;">' +
-              '<div style="min-width:0;"><div style="font-size:12.5px;font-weight:600;color:var(--brand-navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.type) + '</div>' +
-              '<div style="font-size:11px;color:#6b7c8f;margin-top:1px;">' + when + '</div></div>' +
-              '<span style="font-size:10px;font-weight:700;color:' + col + ';white-space:nowrap;">' + escHtml(row.status || 'New') + '</span>' +
-            '</div>';
-          }).join('');
-        }
-      }
+      });
+      window._bpComplogRows.sort(function(a, b) { return new Date(b.dateSubmitted) - new Date(a.dateSubmitted); });
+      window._bpComplogAdviserName = u.fullName || _bpCurrentBrokerName || '';
+      bpRenderComplog();
 
       // ── Fitness & Properness / Introducers / Other Business Interests ──
       // Each is its own lightweight fetch (already scoped to supervisors/admins
@@ -15191,7 +15234,11 @@ function renderSvDashboard(data) {
   var ncWrap = document.getElementById('sv-sb-noncas');
   if (ncWrap) {
     if (totalNonCas > 0) {
-      var ncHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS</span></div>';
+      var ncHtml = '<div onclick="svAccToggle(\'sv-sb-noncas-body\',\'sv-sb-noncas-chev\')" style="margin:16px 0 4px;padding:6px 18px 6px 23px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">' +
+        '<span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#b91c1c;">NON CAS (' + totalNonCas + ')</span>' +
+        '<span id="sv-sb-noncas-chev" style="color:#b91c1c;font-size:9px;transition:transform .25s ease;">▾</span>' +
+      '</div>' +
+      '<div id="sv-sb-noncas-body" style="max-height:0;overflow:hidden;transition:max-height .3s ease;">';
       nonCasAdvisers.forEach(function(o) {
         var n = [o.m.firstName, o.m.lastName].filter(Boolean).join(' ') || o.m.email;
         var cardId = 'sv-card-' + o.m.email.replace(/[^a-z0-9]/gi, '_');
@@ -15201,6 +15248,7 @@ function renderSvDashboard(data) {
           '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#b91c1c;flex-shrink:0;"></span>' +
           escHtml(n) + '</a>';
       });
+      ncHtml += '</div>';
       ncWrap.innerHTML = ncHtml;
       ncWrap.style.display = 'block';
     } else {

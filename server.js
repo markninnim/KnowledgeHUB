@@ -7296,6 +7296,24 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     const crCounts = {};
     Object.keys(crByType).forEach(t => { crCounts[t] = crByType[t].length; });
 
+    // Resolve this broker's supervisor name (for the Compliance Log table on
+    // their profile — the log shares the same Adviser/Supervisor columns as
+    // the firm-wide Compliance Log page).
+    let supervisorName = '';
+    const supervisorEmail = (userFields[F_SUPERVISOR_EMAIL] || '').trim();
+    if (supervisorEmail) {
+      try {
+        const sf = encodeURIComponent(`LOWER({${F_EMAIL}}) = "${supervisorEmail.toLowerCase().replace(/"/g, '\\"')}"`);
+        const sr = await fetch(`https://api.airtable.com/v0/${AT_BASE}/tbltcinwWF3FXDGre?filterByFormula=${sf}&pageSize=1&fields[]=${F_FIRST}&fields[]=${F_LAST}&returnFieldsByFieldId=true`, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+        const sd = await sr.json();
+        const sfields = ((sd.records || [])[0] || {}).fields || {};
+        supervisorName = [sfields[F_FIRST], sfields[F_LAST]].filter(Boolean).join(' ');
+      } catch (_) { /* non-fatal — table just shows the raw email if lookup fails */ }
+    }
+    crByType && Object.keys(crByType).forEach(type => {
+      crByType[type].forEach(row => { row.supervisorName = supervisorName || supervisorEmail; });
+    });
+
     return {
       user: { email: brokerEmail, firstName, lastName, fullName, jobTitle: userFields[F_TITLE] || '', mobile: userFields[F_MOBILE] || '', sellsMortgages: !!userFields[F_MORTGAGES], sellsProtection: !!userFields[F_PROTECTION], sellsInvestments: !!userFields[F_INVESTMENTS], startDate: userFields[F_START_DATE] || null, cas: !!userFields[F_CAS], equityRelease: !!userFields[F_EQUITY_RELEASE], commercialMortgages: !!userFields[F_COMMERCIAL_MORTGAGES], bridging: !!userFields[F_BRIDGING], pmi: !!userFields[F_PMI], businessProtection: !!userFields[F_BUSINESS_PROTECTION] },
       cpd:          { byType: cpdByType, totalMins: Object.values(cpdByType).reduce((s,v)=>s+v,0), entryCount: cpdRecs.length, log: cpdLog },
