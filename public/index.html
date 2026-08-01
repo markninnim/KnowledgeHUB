@@ -1751,7 +1751,7 @@ select:focus { outline:none; }
           <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Questionnaire Feedback</h2>
         </div>
         <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:5px;"></span>Full — no flags</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;margin-right:5px;"></span>Full — no flags</span>
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#6b7c8f;margin-right:5px;"></span>Restored — flags resolved</span>
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--brand-navy);margin-right:5px;"></span>Partial — flags outstanding</span>
         </div>
@@ -4416,7 +4416,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Questionnaire Feedback</h2>
         <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:5px;"></span>Full — no flags</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;margin-right:5px;"></span>Full — no flags</span>
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#6b7c8f;margin-right:5px;"></span>Restored — flags resolved</span>
           <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--brand-navy);margin-right:5px;"></span>Partial — flags outstanding</span>
         </div>
@@ -14462,7 +14462,7 @@ function svFpSetStatus(id, status, ev) {
 function svFpCardHtml(sub, idx) {
   var bodyId = 'sv-fp-body-' + idx, chevId = 'sv-fp-chev-' + idx;
   var flags = sub.flags;
-  var accent = sub.status === 'Archived' ? '#94a3b8' : (flags.length ? '#dc2626' : '#2563eb');
+  var accent = sub.status === 'Archived' ? '#94a3b8' : (flags.length ? '#b91c1c' : '#22c55e');
   var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
   var chip = sub.status === 'Archived' ? 'Archived' : (flags.length ? (flags.length + ' flag' + (flags.length !== 1 ? 's' : '')) : 'Clear');
   var a = sub.answers || {};
@@ -14613,7 +14613,7 @@ function svIntroRender() {
 
 function svIntroCardHtml(sub, idx) {
   var bodyId = 'sv-intro-body-' + idx, chevId = 'sv-intro-chev-' + idx;
-  var accent = sub.has ? '#2563eb' : '#94a3b8';
+  var accent = sub.has ? 'var(--brand-navy)' : '#94a3b8';
   var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
   var chip = sub.has ? (sub.items.length + ' introducer' + (sub.items.length !== 1 ? 's' : '')) : 'None declared';
   var rowsHtml = sub.items.length
@@ -14713,7 +14713,7 @@ function svObiRender() {
 
 function svObiCardHtml(sub, idx) {
   var bodyId = 'sv-obi-body-' + idx, chevId = 'sv-obi-chev-' + idx;
-  var accent = sub.has ? '#2563eb' : '#94a3b8';
+  var accent = sub.has ? 'var(--brand-navy)' : '#94a3b8';
   var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
   var chip = sub.has ? (sub.items.length + ' business' + (sub.items.length !== 1 ? 'es' : '')) : 'None declared';
   var bizHtml = sub.items.length
