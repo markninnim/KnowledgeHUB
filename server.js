@@ -1978,11 +1978,77 @@ app.get('/api/newsletters', requireAuth, (req, res) => {
 // replaced wholesale every week) — keyed by exact filename, so edits only
 // ever apply to the same week's file and naturally fall away once a new
 // week's document arrives under a new filename.
-const WB_EDITS_PATH = path.join(__dirname, 'whereabouts-edits.json');
+// Stored in Airtable (Whereabouts Edits table) so edits survive Railway
+// redeploys — previously a local JSON file, which does not. Kept mirrored
+// in an in-memory cache (_wbEdits[file][key] = text) for fast reads, same
+// shape the client has always received; _wbEditRecordIds tracks the
+// Airtable record id behind each (file, key) pair for update/delete.
+const WB_TABLE      = 'tblmdYhYm4PrAU2Dr';
+const WB_FILE_F     = 'fldeMfm1kOdxvRZXV'; // File
+const WB_KEY_F      = 'fldeKOJvelVQi0UnJ'; // Cell Key
+const WB_TEXT_F     = 'fldihp8fpzdHhHG5r'; // Text
+const WB_UPDATED_F  = 'fldmD6y71zvlqAeqY'; // Updated At
 let _wbEdits = {};
-try { _wbEdits = JSON.parse(fs.readFileSync(WB_EDITS_PATH, 'utf8')); } catch(_) {}
-function saveWbEdits() {
-  try { fs.writeFileSync(WB_EDITS_PATH, JSON.stringify(_wbEdits, null, 2)); } catch (e) { console.error('Failed to save whereabouts edits:', e); }
+let _wbEditRecordIds = {}; // key: `${file}|${key}` -> Airtable record id
+
+async function loadWbEdits() {
+  try {
+    let offset;
+    do {
+      const url = `https://api.airtable.com/v0/${AT_BASE}/${WB_TABLE}?returnFieldsByFieldId=true&pageSize=100${offset ? `&offset=${offset}` : ''}`;
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+      const body = await r.json();
+      if (!r.ok) throw new Error(JSON.stringify(body));
+      (body.records || []).forEach(rec => {
+        const f = rec.fields || {};
+        const file = f[WB_FILE_F], key = f[WB_KEY_F];
+        if (!file || !key) return;
+        if (!_wbEdits[file]) _wbEdits[file] = {};
+        _wbEdits[file][key] = f[WB_TEXT_F] || '';
+        _wbEditRecordIds[`${file}|${key}`] = rec.id;
+      });
+      offset = body.offset;
+    } while (offset);
+  } catch (e) {
+    console.error('Failed to load whereabouts edits from Airtable:', e);
+  }
+}
+loadWbEdits();
+
+async function saveWbEdit(file, key, text) {
+  const cacheKey = `${file}|${key}`;
+  const existingId = _wbEditRecordIds[cacheKey];
+  try {
+    if (text === '' || text == null) {
+      if (existingId) {
+        await fetch(`https://api.airtable.com/v0/${AT_BASE}/${WB_TABLE}/${existingId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${AT_KEY}` }
+        });
+        delete _wbEditRecordIds[cacheKey];
+      }
+      return;
+    }
+    const fields = { [WB_FILE_F]: file, [WB_KEY_F]: key, [WB_TEXT_F]: text, [WB_UPDATED_F]: new Date().toISOString() };
+    if (existingId) {
+      await fetch(`https://api.airtable.com/v0/${AT_BASE}/${WB_TABLE}/${existingId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      });
+    } else {
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${WB_TABLE}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: [{ fields }] })
+      });
+      const d = await r.json();
+      if (d.records && d.records[0]) _wbEditRecordIds[cacheKey] = d.records[0].id;
+    }
+  } catch (e) {
+    console.error('Failed to save whereabouts edit to Airtable:', e);
+    throw e;
+  }
 }
 
 const WB_MONTHS = { january:0, february:1, march:2, april:3, may:4, june:5, july:6, august:7, september:8, october:9, november:10, december:11 };
@@ -2076,7 +2142,7 @@ app.get('/api/whereabouts', requireAuth, async (req, res) => {
 });
 
 // Save a single cell edit, keyed by exact filename + cell position.
-app.post('/api/whereabouts/edit', requireAuth, (req, res) => {
+app.post('/api/whereabouts/edit', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   const { file, key, text } = req.body || {};
@@ -2088,7 +2154,7 @@ app.post('/api/whereabouts/edit', requireAuth, (req, res) => {
     if (!_wbEdits[safeFile]) _wbEdits[safeFile] = {};
     if (text === '' || text == null) delete _wbEdits[safeFile][key];
     else _wbEdits[safeFile][key] = String(text);
-    saveWbEdits();
+    await saveWbEdit(safeFile, key, text === '' || text == null ? null : String(text));
     res.json({ success: true });
   } catch (err) {
     console.error('Whereabouts edit save error:', err);
@@ -4592,9 +4658,13 @@ app.post('/api/test/result', requireAuth, async (req, res) => {
 });
 
 // ── Fitness & Properness submissions ─────────────────────────
-const FP_PATH = path.join(__dirname, 'fitness-properness.json');
-let _fpSubmissions = [];
-try { _fpSubmissions = JSON.parse(fs.readFileSync(FP_PATH, 'utf8')); } catch(_) {}
+// Stored in Airtable (Fitness & Properness Submissions table) so entries
+// survive Railway redeploys — previously a local JSON file, which does not.
+const FP_TABLE       = 'tblDMTSdFSFcdy4PZ';
+const FP_NAME        = 'fldBoMhbdF5YJWj5Z'; // Name
+const FP_EMAIL       = 'fldZZQ3QhIjlON7Lq'; // Email
+const FP_SUBMITTED   = 'fldwACWDSOyCDANOD'; // Submitted At
+const FP_ANSWERS     = 'fldELiwR5lGVLDMAt'; // Answers (JSON string)
 
 app.post('/api/fitness-properness', requireAuth, async (req, res) => {
   const { answers } = req.body;
@@ -4607,8 +4677,23 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
     submittedAt: new Date().toISOString(),
     answers
   };
-  _fpSubmissions.push(submission);
-  try { fs.writeFileSync(FP_PATH, JSON.stringify(_fpSubmissions, null, 2)); } catch(e) {}
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields: {
+        [FP_NAME]:      submission.name.trim(),
+        [FP_EMAIL]:     submission.email,
+        [FP_SUBMITTED]: submission.submittedAt,
+        [FP_ANSWERS]:   JSON.stringify(answers)
+      } }] })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+  } catch (e) {
+    console.error('Failed to save Fitness & Properness submission to Airtable:', e);
+    return res.status(500).json({ error: 'Failed to save submission' });
+  }
   // Flag any disclosures that need attention
   const a = answers;
   const flagged = [];
@@ -4650,8 +4735,29 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/fitness-properness', requireAdmin, (req, res) => {
-  res.json(_fpSubmissions);
+app.get('/api/fitness-properness', requireAdmin, async (req, res) => {
+  try {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}?returnFieldsByFieldId=true&sort[0][field]=${FP_SUBMITTED}&sort[0][direction]=desc`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const body = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(body));
+    const submissions = (body.records || []).map(rec => {
+      const f = rec.fields || {};
+      let answers = {};
+      try { answers = JSON.parse(f[FP_ANSWERS] || '{}'); } catch(_) {}
+      return {
+        id: rec.id,
+        name: f[FP_NAME] || '',
+        email: f[FP_EMAIL] || '',
+        submittedAt: f[FP_SUBMITTED] || rec.createdTime,
+        answers
+      };
+    });
+    res.json(submissions);
+  } catch (err) {
+    console.error('fitness-properness list error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Compliance Reports (Complaint / Breach / Conflict / Gifts) ──
