@@ -168,6 +168,8 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
 select { -webkit-appearance:none; -moz-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b7c8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E") !important; background-repeat:no-repeat !important; background-position:right 10px center !important; background-size:12px !important; padding-right:30px !important; }
 select::-ms-expand { display:none; }
 select:focus { outline:none; }
+.brand-filter-input { outline:none; }
+.brand-filter-input:focus { outline:none; border-color:var(--brand-navy); box-shadow:0 0 0 3px rgba(0,55,104,.12); }
 .cd-wrap { line-height:0; }
 .cd-btn { font-family:inherit; cursor:pointer; }
 .cd-btn:disabled { cursor:default; }
@@ -4480,9 +4482,8 @@ Consolidating debts will increase the loan to value which can impact future deal
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
-          <select id="sv-fp-filter-broker" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
-            <option value="">All brokers</option>
-          </select>
+          <input id="sv-fp-filter-broker" list="sv-fp-broker-list" oninput="svFpRender()" placeholder="All brokers" autocomplete="off" class="brand-filter-input" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+          <datalist id="sv-fp-broker-list"></datalist>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
@@ -4513,9 +4514,8 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
-          <select id="sv-intro-filter-broker" onchange="svIntroRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
-            <option value="">All brokers</option>
-          </select>
+          <input id="sv-intro-filter-broker" list="sv-intro-broker-list" oninput="svIntroRender()" placeholder="All brokers" autocomplete="off" class="brand-filter-input" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+          <datalist id="sv-intro-broker-list"></datalist>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
@@ -4546,9 +4546,8 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
-          <select id="sv-obi-filter-broker" onchange="svObiRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
-            <option value="">All brokers</option>
-          </select>
+          <input id="sv-obi-filter-broker" list="sv-obi-broker-list" oninput="svObiRender()" placeholder="All brokers" autocomplete="off" class="brand-filter-input" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
+          <datalist id="sv-obi-broker-list"></datalist>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">From</label>
@@ -14531,14 +14530,17 @@ function svGroupSubmissions(rows, mapItemFn, hasFlagKey) {
   return arr;
 }
 
-function svPopulateBrokerFilter(selectId, subs) {
-  var sel = document.getElementById(selectId);
-  var current = sel.value;
+// Broker filter is a text input with a <datalist> (id = "<inputId minus 'filter-'>-list")
+// so a supervisor can just type the first couple of letters of a broker's name
+// and pick from the matching list, rather than scrolling a long dropdown.
+function svPopulateBrokerFilter(inputId, subs) {
+  var input = document.getElementById(inputId);
+  var listId = inputId.replace('filter-broker', 'broker-list');
+  var list = document.getElementById(listId);
+  var current = input.value;
   var names = Array.from(new Set(subs.map(function(s) { return s.adviserName; }).filter(Boolean))).sort();
-  sel.innerHTML = '<option value="">All brokers</option>' + names.map(function(n) {
-    return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>';
-  }).join('');
-  sel.value = names.indexOf(current) !== -1 ? current : '';
+  if (list) list.innerHTML = names.map(function(n) { return '<option value="' + escHtml(n) + '">'; }).join('');
+  input.value = names.indexOf(current) !== -1 ? current : '';
 }
 
 // ── Introducers (Supervise > Compliance) ─────────────────────────
