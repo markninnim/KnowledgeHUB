@@ -2145,7 +2145,7 @@ function mcFmtDate(v) {
 // rows. No dedupe: every row is appended as a new record (explicit
 // decision — this endpoint may be called more than once on the same file
 // without checking for existing Order Refs).
-app.post('/api/admin/mortgage-completions/bulk', requireAdmin, async (req, res) => {
+app.post('/api/admin/mortgage-completions/bulk', requireAdminOrSupervisor, async (req, res) => {
   const rows = req.body;
   if (!Array.isArray(rows) || rows.length === 0)
     return res.status(400).json({ error: 'Expected an array of rows' });

@@ -9391,6 +9391,8 @@ var _currentUser = null;
       if (auditBtn) auditBtn.style.display = '';
       var helpKbBtn = document.getElementById('admin-helpkb-btn');
       if (helpKbBtn) helpKbBtn.style.display = '';
+    }
+    if (user && (user.isAdmin || user.isSupervisor)) {
       var mcBtn = document.getElementById('mc-import-btn');
       if (mcBtn) mcBtn.style.display = 'inline-flex';
     }
