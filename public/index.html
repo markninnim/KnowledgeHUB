@@ -15479,8 +15479,17 @@ function crMineToggleRow(id, rowId) {
       row = document.getElementById(rowId);
       if (row) row.style.display = 'block';
       fetch('/api/compliance-report/' + encodeURIComponent(id) + '/seen', { method: 'PATCH' })
-        .then(function() { crMineCheckUnread(); })
-        .catch(function() {});
+        .then(function(r) {
+          if (!r.ok) throw new Error('seen request failed');
+          crMineCheckUnread();
+        })
+        .catch(function() {
+          // Server didn't actually clear it — revert so the UI doesn't
+          // drift from the truth (dot would otherwise silently reappear
+          // on next reload with no explanation).
+          rec.unread = true;
+          crMineRender();
+        });
     }
   }
 }

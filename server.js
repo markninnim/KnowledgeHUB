@@ -5048,7 +5048,7 @@ app.get('/api/compliance-report-mine', requireAuth, async (req, res) => {
 app.patch('/api/compliance-report/:id/seen', requireAuth, async (req, res) => {
   try {
     const callerEmail = (req.session.user.email || '').toLowerCase();
-    const rec = await crFetch('/' + req.params.id, { method: 'GET' });
+    const rec = await crFetch('/' + req.params.id + '?returnFieldsByFieldId=true', { method: 'GET' });
     const ownerEmail = (rec.fields[CR_EMAIL] || '').toLowerCase();
     if (ownerEmail !== callerEmail) return res.status(403).json({ error: 'Not your report' });
     await crFetch('', {
