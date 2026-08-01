@@ -4376,6 +4376,20 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="sv-cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="sv-cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
       <div id="sv-cd-feedback-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;"></div>
+
+      <!-- Fitness & Properness Submissions -->
+      <div style="margin-top:40px;padding-top:28px;border-top:1px solid #e3e8ef;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <h2 style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Fitness &amp; Properness Submissions</h2>
+          <div style="display:flex;gap:16px;font-size:12.5px;color:#6b7c8f;flex-shrink:0;">
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:5px;"></span>No disclosures</span>
+            <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#dc2626;margin-right:5px;"></span>Flagged</span>
+          </div>
+        </div>
+        <div id="sv-fp-loading" style="text-align:center;padding:40px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
+        <div id="sv-fp-empty" style="display:none;text-align:center;padding:40px 0;color:#6b7c8f;font-size:13px;">No Fitness &amp; Properness submissions yet.</div>
+        <div id="sv-fp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
     </div><!-- /sv-cd-feedback-panel -->
   </div><!-- /tab-supervisor-zone -->
 
@@ -13718,6 +13732,7 @@ function showSvCdFeedback(el) {
   document.querySelectorAll('#sidebar-supervisor-zone a').forEach(function(a){ a.classList.remove('active'); });
   if (el) el.classList.add('active');
   if (!_svCdLoaded) loadSvCdFeedback();
+  if (!_svFpLoaded) loadSvFpSubmissions();
   return false;
 }
 
@@ -14057,6 +14072,107 @@ function svCdToggleResolved(id, key, resolved) {
       if (res.error) { alert('Could not update: ' + res.error); loadSvCdFeedback(); }
     })
     .catch(function() { alert('Could not update. Please try again.'); loadSvCdFeedback(); });
+}
+
+// ── Fitness & Properness Submissions (Supervise > Compliance > Questionnaire Feedback) ──
+var _svFpData = [];
+var _svFpLoaded = false;
+var FP_FLAG_LABELS = {
+  q3: 'Negative change in financial position',
+  q4: 'Assets do NOT exceed liabilities',
+  q5: 'CCJs or Defaults listed',
+  q6: 'Disqualified from director role',
+  q7: 'Arrangements with creditors (incl. HMRC)',
+  q8: 'Criminal conviction or caution',
+  q9: 'Driving ban'
+};
+var FP_DETAIL_LABELS = {
+  q3d: 'Financial change details',
+  q4d: 'Assets/liabilities details',
+  q5d: 'CCJ/Default details',
+  q6d: 'Director disqualification details',
+  q7d: 'Creditor arrangement details',
+  q8d: 'Criminal offence details',
+  q9d: 'Driving ban details',
+  q10d: 'Other business interests',
+  q11d: 'Introducers'
+};
+
+function svFpFlagsFor(a) {
+  a = a || {};
+  var flags = [];
+  if (a.q3 === 'yes') flags.push(FP_FLAG_LABELS.q3);
+  if (a.q4 === 'no')  flags.push(FP_FLAG_LABELS.q4);
+  if (a.q5 === 'yes') flags.push(FP_FLAG_LABELS.q5);
+  if (a.q6 === 'yes') flags.push(FP_FLAG_LABELS.q6);
+  if (a.q7 === 'yes') flags.push(FP_FLAG_LABELS.q7);
+  if (a.q8 === 'yes') flags.push(FP_FLAG_LABELS.q8);
+  if (a.q9 === 'yes') flags.push(FP_FLAG_LABELS.q9);
+  return flags;
+}
+
+function loadSvFpSubmissions() {
+  var loading = document.getElementById('sv-fp-loading');
+  var empty   = document.getElementById('sv-fp-empty');
+  var list    = document.getElementById('sv-fp-list');
+  loading.style.display = '';
+  empty.style.display = 'none';
+  list.innerHTML = '';
+  fetch('/api/fitness-properness')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      loading.style.display = 'none';
+      _svFpData = Array.isArray(data) ? data : [];
+      _svFpLoaded = true;
+      if (!_svFpData.length) { empty.style.display = ''; return; }
+      // Newest first
+      _svFpData.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+      svFpRender();
+    })
+    .catch(function() {
+      loading.style.display = 'none';
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Fitness &amp; Properness submissions.</div>';
+    });
+}
+
+function svFpRender() {
+  var list = document.getElementById('sv-fp-list');
+  list.innerHTML = _svFpData.map(function(r, idx) {
+    var flags = svFpFlagsFor(r.answers);
+    var dotColor = flags.length ? '#dc2626' : '#2563eb';
+    var rowId = 'sv-fp-row-' + idx;
+    var when = r.submittedAt ? new Date(r.submittedAt).toLocaleString('en-GB') : '—';
+    var detailRows = Object.keys(FP_DETAIL_LABELS)
+      .filter(function(k) { return r.answers && r.answers[k]; })
+      .map(function(k) { return '<div style="margin-top:8px;"><span style="font-weight:600;color:var(--brand-navy);">' + escHtml(FP_DETAIL_LABELS[k]) + ':</span> ' + escHtml(r.answers[k]) + '</div>'; })
+      .join('');
+    var otherBusiness = r.answers && r.answers.q10 === 'yes';
+    var introducers   = r.answers && r.answers.q11 === 'yes';
+    var detailHtml = '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
+      (flags.length
+        ? '<div style="color:#b91c1c;font-weight:700;margin-bottom:6px;">⚠ Requires attention:</div>' + flags.map(function(f) { return '<div>• ' + escHtml(f) + '</div>'; }).join('')
+        : '<div style="color:#166534;font-weight:600;">✓ No financial disclosures flagged</div>') +
+      (otherBusiness ? '<div style="margin-top:6px;">Has other business interests</div>' : '') +
+      (introducers ? '<div style="margin-top:2px;">Receives leads from an Introducer</div>' : '') +
+      detailRows +
+    '</div>';
+    return '<div style="border:1px solid #e3e8ef;border-radius:10px;overflow:hidden;background:#fff;">' +
+      '<div onclick="svFpToggleRow(\'' + rowId + '\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;font-size:13px;color:var(--brand-navy);">' +
+        '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></span>' +
+        '<div style="width:170px;flex-shrink:0;color:#6b7c8f;">' + escHtml(when) + '</div>' +
+        '<div style="width:200px;flex-shrink:0;font-weight:600;">' + escHtml(r.name || '') + '</div>' +
+        '<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7c8f;">' + escHtml(r.email || '') + '</div>' +
+        '<span style="font-size:11px;font-weight:700;color:' + dotColor + ';">' + (flags.length ? flags.length + ' flag' + (flags.length > 1 ? 's' : '') : 'Clear') + '</span>' +
+      '</div>' +
+      '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function svFpToggleRow(rowId) {
+  var row = document.getElementById(rowId);
+  if (!row) return;
+  row.style.display = row.style.display !== 'none' ? 'none' : 'block';
 }
 
 function svSidebarSelect(email, el) {

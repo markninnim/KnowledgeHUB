@@ -4735,7 +4735,8 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/fitness-properness', requireAdmin, async (req, res) => {
+app.get('/api/fitness-properness', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
   try {
     const url = `https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}?returnFieldsByFieldId=true&sort[0][field]=${FP_SUBMITTED}&sort[0][direction]=desc`;
     const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
