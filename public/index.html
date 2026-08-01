@@ -4158,6 +4158,27 @@ Consolidating debts will increase the loan to value which can impact future deal
           </div>
         </div>
 
+        <!-- Annual Reporting & Compliance — everything a supervisor needs for a 1:1 with this broker -->
+        <div id="bp-arc-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;">Annual Reporting &amp; Compliance</div>
+          <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:20px;">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Compliance Log</div>
+              <div id="bp-complog-list" style="display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;"></div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Fitness &amp; Properness</div>
+              <div id="bp-fp-summary"><div style="font-size:12px;color:#6b7c8f;">Loading…</div></div>
+              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px;">Introducers</div>
+              <div id="bp-intro-summary"><div style="font-size:12px;color:#6b7c8f;">Loading…</div></div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Other Business Interests</div>
+              <div id="bp-obi-summary"><div style="font-size:12px;color:#6b7c8f;">Loading…</div></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Reporting detail modal -->
         <div id="bp-reporting-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;padding:20px;">
           <div style="background:#fff;border-radius:10px;padding:24px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto;">
@@ -12625,6 +12646,86 @@ function openBrokerProfile(email, name, keepDateRange) {
             '<div style="font-size:10px;color:#6b7c8f;margin-top:4px;line-height:1.3;overflow-wrap:break-word;">' + escHtml(type) + '</div>' +
           '</div>';
         }).join('');
+      }
+
+      // ── Compliance Log (flattened across all report types, newest first) ──
+      var complogListEl = document.getElementById('bp-complog-list');
+      if (complogListEl) {
+        var allCrRows = [];
+        Object.keys(window._bpReportingRows || {}).forEach(function(type) {
+          (window._bpReportingRows[type] || []).forEach(function(row) {
+            allCrRows.push(Object.assign({ type: type }, row));
+          });
+        });
+        allCrRows.sort(function(a, b) { return new Date(b.dateSubmitted) - new Date(a.dateSubmitted); });
+        if (!allCrRows.length) {
+          complogListEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">No compliance log entries.</div>';
+        } else {
+          var crStatusColors = { 'New': 'var(--brand-navy)', 'Under Review': '#854d0e', 'Resolved': '#166534' };
+          complogListEl.innerHTML = allCrRows.map(function(row) {
+            var col = crStatusColors[row.status] || '#6b7c8f';
+            var when = row.dateSubmitted ? new Date(row.dateSubmitted).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+            return '<div onclick="bpOpenReportingDetail(\'' + row.type.replace(/'/g, "\\'") + '\')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #eef1f4;border-radius:8px;cursor:pointer;">' +
+              '<div style="min-width:0;"><div style="font-size:12.5px;font-weight:600;color:var(--brand-navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.type) + '</div>' +
+              '<div style="font-size:11px;color:#6b7c8f;margin-top:1px;">' + when + '</div></div>' +
+              '<span style="font-size:10px;font-weight:700;color:' + col + ';white-space:nowrap;">' + escHtml(row.status || 'New') + '</span>' +
+            '</div>';
+          }).join('');
+        }
+      }
+
+      // ── Fitness & Properness / Introducers / Other Business Interests ──
+      // Each is its own lightweight fetch (already scoped to supervisors/admins
+      // by those endpoints) filtered client-side to this broker's email.
+      var bpEmailLower = email.toLowerCase();
+
+      var bpFpEl = document.getElementById('bp-fp-summary');
+      if (bpFpEl) {
+        fetch('/api/fitness-properness').then(function(r) { return r.json(); }).then(function(list) {
+          var mine = (Array.isArray(list) ? list : []).filter(function(r) { return (r.email || '').toLowerCase() === bpEmailLower; });
+          mine.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+          if (!mine.length) { bpFpEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Not yet submitted.</div>'; return; }
+          var latest = mine[0];
+          var flags = svFpFlagsFor(latest.answers);
+          var reviewed = latest.status === 'Archived' || latest.status === 'Clear';
+          var statusLabel = reviewed ? 'Reviewed' : 'Pending Review';
+          var col = reviewed ? '#166534' : '#854d0e';
+          var when = latest.submittedAt ? new Date(latest.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+          bpFpEl.innerHTML = '<div style="font-size:12.5px;color:var(--brand-navy);font-weight:600;">' + when + '</div>' +
+            '<div style="font-size:11px;font-weight:700;color:' + col + ';margin-top:3px;">' + statusLabel + (flags.length ? ' · ' + flags.length + ' flag' + (flags.length !== 1 ? 's' : '') : '') + '</div>';
+        }).catch(function() { bpFpEl.innerHTML = '<div style="font-size:12px;color:#b91c1c;">Could not load.</div>'; });
+      }
+
+      var bpIntroEl = document.getElementById('bp-intro-summary');
+      if (bpIntroEl) {
+        fetch('/api/introducers').then(function(r) { return r.json(); }).then(function(list) {
+          var mine = (Array.isArray(list) ? list : []).filter(function(r) { return (r.adviserEmail || '').toLowerCase() === bpEmailLower; });
+          var subs = svGroupSubmissions(mine, function(r) {
+            return (r.introducerName || r.type || r.leadsPerYear) ? { name: r.introducerName, type: r.type, leadsPerYear: r.leadsPerYear } : null;
+          }, 'hasIntroducers');
+          if (!subs.length) { bpIntroEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Not yet submitted.</div>'; return; }
+          var latest = subs[0];
+          if (!latest.has || !latest.items.length) { bpIntroEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">None declared.</div>'; return; }
+          bpIntroEl.innerHTML = latest.items.map(function(it) {
+            return '<div style="font-size:12px;color:var(--brand-navy);padding:4px 0;border-bottom:1px solid #f0f4f8;"><strong>' + escHtml(it.name || '—') + '</strong> <span style="color:#6b7c8f;">' + escHtml(it.type || '') + (it.leadsPerYear ? ' · ' + escHtml(String(it.leadsPerYear)) + '/yr' : '') + '</span></div>';
+          }).join('');
+        }).catch(function() { bpIntroEl.innerHTML = '<div style="font-size:12px;color:#b91c1c;">Could not load.</div>'; });
+      }
+
+      var bpObiEl = document.getElementById('bp-obi-summary');
+      if (bpObiEl) {
+        fetch('/api/other-business-interests').then(function(r) { return r.json(); }).then(function(list) {
+          var mine = (Array.isArray(list) ? list : []).filter(function(r) { return (r.adviserEmail || '').toLowerCase() === bpEmailLower; });
+          var subs = svGroupSubmissions(mine, function(r) {
+            return r.businessName ? { name: r.businessName, town: r.town, services: r.services || [] } : null;
+          }, 'hasOtherBusiness');
+          if (!subs.length) { bpObiEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">Not yet submitted.</div>'; return; }
+          var latest = subs[0];
+          if (!latest.has || !latest.items.length) { bpObiEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">None declared.</div>'; return; }
+          bpObiEl.innerHTML = latest.items.map(function(it) {
+            return '<div style="font-size:12px;color:var(--brand-navy);padding:4px 0;border-bottom:1px solid #f0f4f8;"><strong>' + escHtml(it.name || '—') + '</strong>' + (it.town ? ' <span style="color:#6b7c8f;">· ' + escHtml(it.town) + '</span>' : '') + '</div>';
+          }).join('');
+        }).catch(function() { bpObiEl.innerHTML = '<div style="font-size:12px;color:#b91c1c;">Could not load.</div>'; });
       }
 
       // ── ReEngage™ (past-completion elapsed-time buckets) ──
