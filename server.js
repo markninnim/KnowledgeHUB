@@ -4685,6 +4685,7 @@ const FP_Q8D         = 'fldHs5BfW2fiPECQX'; // Criminal Conviction Details
 const FP_Q9          = 'fldvAp8Z0BBn2ZdoM'; // Driving Ban?
 const FP_Q9D         = 'fldHI05lI2kNjIcjG'; // Driving Ban Details
 const FP_FLAGGED     = 'fldV5mOsnp8wjLhKU'; // Flagged (checkbox)
+const FP_STATUS      = 'fldmJi1sa6O4qKZ1P'; // Status (Clear / Flagged / Archived) — supervisor-managed review state
 
 function fpYesNo(v) { return v === 'yes' ? 'Yes' : (v === 'no' ? 'No' : undefined); }
 
@@ -4717,7 +4718,11 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
         [FP_Q7]: fpYesNo(a.q7), [FP_Q7D]: a.q7d || undefined,
         [FP_Q8]: fpYesNo(a.q8), [FP_Q8D]: a.q8d || undefined,
         [FP_Q9]: fpYesNo(a.q9), [FP_Q9D]: a.q9d || undefined,
-        [FP_FLAGGED]: flagged
+        [FP_FLAGGED]: flagged,
+        // Clean submissions (no disclosures) are auto-archived immediately since
+        // there's nothing for a supervisor to review; flagged ones stay active
+        // until a supervisor reviews them and archives manually.
+        [FP_STATUS]: flagged ? 'Flagged' : 'Archived'
       } }] })
     });
     const d = await r.json();
@@ -4747,12 +4752,36 @@ app.get('/api/fitness-properness', requireAuth, async (req, res) => {
         name: f[FP_NAME] || '',
         email: f[FP_EMAIL] || '',
         submittedAt: f[FP_SUBMITTED] || rec.createdTime,
+        status: f[FP_STATUS] || null,
         answers
       };
     });
     res.json(submissions);
   } catch (err) {
     console.error('fitness-properness list error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/fitness-properness/:id/status — supervisor/admin sets the review
+// status (Clear / Flagged / Archived), e.g. archiving a flagged submission once reviewed.
+app.patch('/api/fitness-properness/:id/status', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  const status = req.body && req.body.status;
+  if (['Clear', 'Flagged', 'Archived'].indexOf(status) === -1) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [FP_STATUS]: status } }] })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('fitness-properness status update error:', err);
     res.status(500).json({ error: err.message });
   }
 });

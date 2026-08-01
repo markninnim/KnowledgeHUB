@@ -4468,6 +4468,17 @@ Consolidating debts will increase the loan to value which can impact future deal
 
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
         <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
+          <select id="sv-fp-filter-status" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:170px;">
+            <option value="active">Active (default)</option>
+            <option value="Clear">Clear</option>
+            <option value="Flagged">Flagged</option>
+            <option value="nosub">No Submission</option>
+            <option value="Archived">Archived</option>
+            <option value="all">All statuses</option>
+          </select>
+        </div>
+        <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Broker</label>
           <select id="sv-fp-filter-broker" onchange="svFpRender()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:190px;">
             <option value="">All brokers</option>
@@ -14296,6 +14307,7 @@ function svCdToggleResolved(id, key, resolved) {
 // ── Fitness & Properness (Supervise > Compliance) ────────────────
 var _svFpLoaded = false;
 var _svFpData = [];
+var _svFpNonSubmitters = [];
 var FP_FLAG_LABELS = {
   q3: 'Negative change in financial position',
   q4: 'Assets do NOT exceed liabilities',
@@ -14333,34 +14345,47 @@ function loadSvFpSubmissions() {
   var empty   = document.getElementById('sv-fp-empty');
   var list    = document.getElementById('sv-fp-list');
   loading.style.display = ''; empty.style.display = 'none'; list.innerHTML = '';
-  fetch('/api/fitness-properness')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      loading.style.display = 'none';
-      _svFpData = (Array.isArray(data) ? data : []).map(function(r) {
-        r.adviserName = r.name;
-        r.flags = svFpFlagsFor(r.answers);
-        return r;
-      });
-      _svFpData.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
-      _svFpLoaded = true;
-      svPopulateBrokerFilter('sv-fp-filter-broker', _svFpData);
-      svFpRenderStats();
-      if (!_svFpData.length) { empty.style.display = ''; empty.textContent = 'No Fitness & Properness submissions yet.'; return; }
-      svFpRender();
-    })
-    .catch(function() {
-      loading.style.display = 'none';
-      list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Fitness &amp; Properness submissions.</div>';
+  Promise.all([
+    fetch('/api/fitness-properness').then(function(r) { return r.json(); }),
+    fetch('/api/users/names').then(function(r) { return r.json(); }).catch(function() { return { users: [] }; })
+  ]).then(function(results) {
+    var data = results[0], namesData = results[1];
+    loading.style.display = 'none';
+    _svFpData = (Array.isArray(data) ? data : []).map(function(r) {
+      r.adviserName = r.name;
+      r.flags = svFpFlagsFor(r.answers);
+      // Legacy rows saved before the Status field existed: derive a sensible
+      // default so they still sort into the right bucket.
+      if (!r.status) r.status = r.flags.length ? 'Flagged' : 'Clear';
+      return r;
     });
+    _svFpData.sort(function(a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+    _svFpLoaded = true;
+
+    var submittedEmails = {};
+    _svFpData.forEach(function(s) { if (s.email) submittedEmails[s.email.toLowerCase()] = true; });
+    var allNames = (namesData && namesData.users) || [];
+    _svFpNonSubmitters = allNames.filter(function(u) { return u.email && !submittedEmails[u.email.toLowerCase()]; });
+
+    svPopulateBrokerFilter('sv-fp-filter-broker', _svFpData.concat(_svFpNonSubmitters.map(function(u) { return { adviserName: u.name }; })));
+    svFpRenderStats();
+    if (!_svFpData.length && !_svFpNonSubmitters.length) { empty.style.display = ''; empty.textContent = 'No Fitness & Properness submissions yet.'; return; }
+    svFpRender();
+  }).catch(function() {
+    loading.style.display = 'none';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Fitness &amp; Properness submissions.</div>';
+  });
 }
 
 function svFpFiltered() {
+  var status = document.getElementById('sv-fp-filter-status').value;
   var broker = document.getElementById('sv-fp-filter-broker').value;
   var from   = document.getElementById('sv-fp-filter-from').value;
   var to     = document.getElementById('sv-fp-filter-to').value;
   return _svFpData.filter(function(s) {
     if (broker && s.adviserName !== broker) return false;
+    if (status === 'active') { if (s.status === 'Archived') return false; }
+    else if (status !== 'all' && status !== 'nosub') { if (s.status !== status) return false; }
     if (s.submittedAt) {
       var d = s.submittedAt.slice(0, 10);
       if (from && d < from) return false;
@@ -14370,14 +14395,21 @@ function svFpFiltered() {
   });
 }
 
+function svFpNonSubmittersFiltered() {
+  var broker = document.getElementById('sv-fp-filter-broker').value;
+  return _svFpNonSubmitters.filter(function(u) { return !broker || u.name === broker; });
+}
+
 function svFpRenderStats() {
   var total = _svFpData.length;
-  var flagged = _svFpData.filter(function(s) { return s.flags.length; }).length;
+  var flagged = _svFpData.filter(function(s) { return s.status === 'Flagged'; }).length;
+  var archived = _svFpData.filter(function(s) { return s.status === 'Archived'; }).length;
   document.getElementById('sv-fp-stats').innerHTML =
-    svStatChip(total, 'Submissions') + svStatChip(flagged, 'Flagged') + svStatChip(total - flagged, 'Clear');
+    svStatChip(total, 'Submissions') + svStatChip(flagged, 'Flagged') + svStatChip(_svFpNonSubmitters.length, 'No Submission') + svStatChip(archived, 'Archived');
 }
 
 function svFpClearFilters() {
+  document.getElementById('sv-fp-filter-status').value = 'active';
   document.getElementById('sv-fp-filter-broker').value = '';
   document.getElementById('sv-fp-filter-from').value = '';
   document.getElementById('sv-fp-filter-to').value = '';
@@ -14388,29 +14420,66 @@ function svFpRender() {
   svFpRenderStats();
   var list = document.getElementById('sv-fp-list');
   var empty = document.getElementById('sv-fp-empty');
+  var status = document.getElementById('sv-fp-filter-status').value;
+
+  if (status === 'nosub') {
+    var nonSubs = svFpNonSubmittersFiltered();
+    if (!nonSubs.length) { list.innerHTML = ''; empty.style.display = ''; empty.textContent = 'Everyone has submitted.'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = nonSubs.map(function(u) {
+      return '<div style="background:#fff;border:1px solid #e3e8ef;border-left:4px solid #d97706;border-radius:12px;margin-bottom:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
+        '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(u.name) + '</div>' +
+        '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(u.email) + '</div></div>' +
+        '<span style="font-size:11px;font-weight:700;color:#d97706;background:#d9770618;padding:5px 12px;border-radius:20px;white-space:nowrap;">Not submitted</span>' +
+      '</div>';
+    }).join('');
+    return;
+  }
+
   var filtered = svFpFiltered();
   if (!filtered.length) { list.innerHTML = ''; empty.style.display = ''; empty.textContent = 'No submissions match the selected filters.'; return; }
   empty.style.display = 'none';
   list.innerHTML = filtered.map(function(sub, idx) { return svFpCardHtml(sub, idx); }).join('');
 }
 
+function svFpSetStatus(id, status, ev) {
+  if (ev) ev.stopPropagation();
+  fetch('/api/fitness-properness/' + encodeURIComponent(id) + '/status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok) { alert('Could not update status: ' + (d.error || 'please try again.')); return; }
+      var sub = _svFpData.find(function(s) { return s.id === id; });
+      if (sub) sub.status = status;
+      svFpRender();
+    })
+    .catch(function() { alert('Could not update status. Please try again.'); });
+}
+
 function svFpCardHtml(sub, idx) {
   var bodyId = 'sv-fp-body-' + idx, chevId = 'sv-fp-chev-' + idx;
   var flags = sub.flags;
-  var accent = flags.length ? '#dc2626' : '#2563eb';
+  var accent = sub.status === 'Archived' ? '#94a3b8' : (flags.length ? '#dc2626' : '#2563eb');
   var when = sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
-  var chip = flags.length ? (flags.length + ' flag' + (flags.length !== 1 ? 's' : '')) : 'Clear';
+  var chip = sub.status === 'Archived' ? 'Archived' : (flags.length ? (flags.length + ' flag' + (flags.length !== 1 ? 's' : '')) : 'Clear');
   var a = sub.answers || {};
   var detailRows = Object.keys(FP_DETAIL_LABELS)
     .filter(function(k) { return a[k]; })
     .map(function(k) { return '<div style="margin-top:8px;"><span style="font-weight:600;color:var(--brand-navy);">' + escHtml(FP_DETAIL_LABELS[k]) + ':</span> ' + escHtml(a[k]) + '</div>'; })
     .join('');
+  var actionHtml = sub.status === 'Archived'
+    ? '<button onclick="svFpSetStatus(\'' + sub.id + '\',' + (flags.length ? "'Flagged'" : "'Clear'") + ',event)" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Restore</button>'
+    : '<button onclick="svFpSetStatus(\'' + sub.id + '\',\'Archived\',event)" style="background:var(--brand-navy);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Archive</button>';
   var bodyHtml = '<div style="padding:16px 18px;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
     (flags.length
       ? '<div style="color:#b91c1c;font-weight:700;margin-bottom:6px;">⚠ Requires attention:</div>' + flags.map(function(f) { return '<div>• ' + escHtml(f) + '</div>'; }).join('')
       : '<div style="color:#166534;font-weight:600;">✓ No financial disclosures flagged</div>') +
     detailRows +
     '<div style="margin-top:10px;color:#9baabb;">' + escHtml(sub.email || '') + '</div>' +
+    '<div style="margin-top:14px;">' + actionHtml + '</div>' +
   '</div>';
   return '<div style="background:#fff;border:1px solid #e3e8ef;border-left:4px solid ' + accent + ';border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
     '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
