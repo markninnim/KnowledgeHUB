@@ -4044,7 +4044,7 @@ app.get('/api/supervisor/adviser-cpd', requireAuth, async (req, res) => {
   try {
     const thisYear = new Date().getFullYear();
     const startOfYear = `${thisYear}-01-01`;
-    const formula = encodeURIComponent(`AND({User Email}="${email}",IS_AFTER({Date},"${startOfYear}"))`);
+    const formula = encodeURIComponent(`AND({User Email}="${email}",NOT(IS_BEFORE({Date},"${startOfYear}")))`);
     const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=50`);
     const entries = (data.records || []).map(cpdRecordToEntry);
     res.json({ entries });
@@ -4130,7 +4130,7 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
     let allEntries = [];
     if (members.length <= 20) {
       const emailFilter = members.map(m => `{User Email}="${m.email}"`).join(',');
-      const formula = encodeURIComponent(`AND(OR(${emailFilter}),IS_AFTER({Date},"${startOfYear}"))`);
+      const formula = encodeURIComponent(`AND(OR(${emailFilter}),NOT(IS_BEFORE({Date},"${startOfYear}")))`);
       let cpdOffset = '';
       do {
         const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`;
@@ -4140,7 +4140,7 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
       } while (cpdOffset);
     } else {
       // Large team: fetch all CPD for the year, filter in memory
-      const formula = encodeURIComponent(`IS_AFTER({Date},"${startOfYear}")`);
+      const formula = encodeURIComponent(`NOT(IS_BEFORE({Date},"${startOfYear}"))`);
       let cpdOffset = '';
       do {
         const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`;
@@ -4183,7 +4183,7 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
     // ── Single broker export ──────────────────────────────────
     if (singleEmail) {
       const formula = encodeURIComponent(
-        `AND({User Email}="${singleEmail}",IS_AFTER({Date},"${from}"),NOT(IS_AFTER({Date},"${to}")))`
+        `AND({User Email}="${singleEmail}",NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
       );
       const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=50`);
       const entries = (cpdData.records || []).map(cpdRecordToEntry);
@@ -4222,7 +4222,7 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
     }
     const emails  = members.map(m => `{User Email}="${m.email}"`).join(',');
     const formula = encodeURIComponent(
-      `AND(OR(${emails}),IS_AFTER({Date},"${from}"),NOT(IS_AFTER({Date},"${to}")))`
+      `AND(OR(${emails}),NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
     );
     const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=50`);
     const entries = (cpdData.records || []).map(cpdRecordToEntry);
@@ -6945,7 +6945,7 @@ const BL_TEST_FIELDS = [
 async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
   function dateRangeClause(fieldRef) {
     const parts = [];
-    if (rangeFrom) parts.push(`IS_AFTER({${fieldRef}}, "${rangeFrom}")`);
+    if (rangeFrom) parts.push(`NOT(IS_BEFORE({${fieldRef}}, "${rangeFrom}"))`); // inclusive of the from-date itself — IS_AFTER wrongly excluded same-day records
     if (rangeTo)   parts.push(`IS_BEFORE({${fieldRef}}, DATEADD("${rangeTo}", 1, 'days'))`);
     return parts;
   }
