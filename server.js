@@ -4044,7 +4044,7 @@ app.get('/api/supervisor/adviser-cpd', requireAuth, async (req, res) => {
   try {
     const thisYear = new Date().getFullYear();
     const startOfYear = `${thisYear}-01-01`;
-    const formula = encodeURIComponent(`AND({User Email}="${email}",NOT(IS_BEFORE({Date},"${startOfYear}")))`);
+    const formula = encodeURIComponent(`AND(LOWER({User Email})="${email.toLowerCase()}",NOT(IS_BEFORE({Date},"${startOfYear}")))`);
     const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=50`);
     const entries = (data.records || []).map(cpdRecordToEntry);
     res.json({ entries });
@@ -4129,7 +4129,7 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
     // fetch all CPD records this year and filter in memory instead.
     let allEntries = [];
     if (members.length <= 20) {
-      const emailFilter = members.map(m => `{User Email}="${m.email}"`).join(',');
+      const emailFilter = members.map(m => `LOWER({User Email})="${m.email.toLowerCase()}"`).join(',');
       const formula = encodeURIComponent(`AND(OR(${emailFilter}),NOT(IS_BEFORE({Date},"${startOfYear}")))`);
       let cpdOffset = '';
       do {
@@ -4183,7 +4183,7 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
     // ── Single broker export ──────────────────────────────────
     if (singleEmail) {
       const formula = encodeURIComponent(
-        `AND({User Email}="${singleEmail}",NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
+        `AND(LOWER({User Email})="${singleEmail.toLowerCase()}",NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
       );
       const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=50`);
       const entries = (cpdData.records || []).map(cpdRecordToEntry);
@@ -4220,7 +4220,7 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
       res.setHeader('Content-Type', 'text/csv');
       return res.send('No members found');
     }
-    const emails  = members.map(m => `{User Email}="${m.email}"`).join(',');
+    const emails  = members.map(m => `LOWER({User Email})="${m.email.toLowerCase()}"`).join(',');
     const formula = encodeURIComponent(
       `AND(OR(${emails}),NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
     );
@@ -4591,9 +4591,14 @@ app.patch('/api/cas-path/:id/complete', requireAuth, async (req, res) => {
 app.get('/api/cpd', requireAuth, async (req, res) => {
   const email = req.session.user.email;
   try {
-    const formula = encodeURIComponent(`{User Email}="${email}"`);
-    const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=50`);
-    const entries = (data.records || []).map(cpdRecordToEntry);
+    const formula = encodeURIComponent(`LOWER({User Email})="${email.toLowerCase()}"`);
+    let records = [], cpdOffset = '';
+    do {
+      const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`);
+      records.push(...(data.records || []));
+      cpdOffset = data.offset || '';
+    } while (cpdOffset);
+    const entries = records.map(cpdRecordToEntry);
     const totalMins = entries.reduce((sum, e) => sum + (e.minutes || 0), 0);
     // Year-to-date totals — overall and per CPD type
     const thisYear = new Date().getFullYear();
@@ -5373,9 +5378,14 @@ app.get('/api/cpd/pdf', requireAuth, async (req, res) => {
   const period = req.query.period || 'year'; // month | quarter | year
   try {
     // Fetch all entries for user
-    const formula = encodeURIComponent(`{User Email}="${email}"`);
-    const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=50`);
-    const allEntries = (data.records || []).map(cpdRecordToEntry);
+    const formula = encodeURIComponent(`LOWER({User Email})="${email.toLowerCase()}"`);
+    let pdfRecords = [], pdfOffset = '';
+    do {
+      const data = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=desc&returnFieldsByFieldId=true&pageSize=100${pdfOffset ? '&offset=' + pdfOffset : ''}`);
+      pdfRecords.push(...(data.records || []));
+      pdfOffset = data.offset || '';
+    } while (pdfOffset);
+    const allEntries = pdfRecords.map(cpdRecordToEntry);
 
     // Filter by period
     const now = new Date();
