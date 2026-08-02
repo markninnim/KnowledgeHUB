@@ -4369,6 +4369,14 @@ Consolidating debts will increase the loan to value which can impact future deal
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:none;"></div>
+      <!-- Whole-company AI CPD summary (All view only) -->
+      <div id="sv-ai-summary-wrap" style="display:none;margin-bottom:24px;background:linear-gradient(135deg,#f0f4f8,#f5f7fa);border:1px solid #d1d5db;border-radius:12px;padding:18px 22px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:15px;">✨</span>
+          <div style="font-size:12px;font-weight:800;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.05em;">AI CPD Summary — Whole Team</div>
+        </div>
+        <div id="sv-ai-summary-text" style="font-size:13.5px;line-height:1.7;color:#334155;">Loading summary…</div>
+      </div>
       <!-- Advisers section -->
       <div id="sv-advisers-wrap" style="display:none;margin-bottom:28px;">
         <div id="sv-advisers-list" style="display:grid;gap:12px;"></div>
@@ -15351,6 +15359,26 @@ function renderSvDashboard(data) {
   }
 
   svStartRotator(svComputeRotatorStats(members, cpdByMember));
+  svUpdateAiSummary();
+}
+
+// AI CPD summary — only meaningful/shown on the whole-company "All" view.
+var _svAiSummaryLoaded = false;
+function svUpdateAiSummary() {
+  var wrap = document.getElementById('sv-ai-summary-wrap');
+  if (!wrap) return;
+  if (_svViewAsEmail !== 'all') { wrap.style.display = 'none'; _svAiSummaryLoaded = false; return; }
+  wrap.style.display = 'block';
+  if (_svAiSummaryLoaded) return; // don't re-fetch on every re-render within the same "All" session
+  _svAiSummaryLoaded = true;
+  var textEl = document.getElementById('sv-ai-summary-text');
+  textEl.textContent = 'Loading summary…';
+  fetch('/api/supervisor/cpd-ai-summary').then(function(r){ return r.json(); }).then(function(d) {
+    if (d && d.error) { textEl.textContent = 'Could not load AI summary: ' + d.error; return; }
+    textEl.textContent = d.summary || 'No summary available.';
+  }).catch(function() {
+    textEl.textContent = 'Could not load AI summary.';
+  });
 }
 
 // ── Whole-team headline stats rotator (top-right of the CPD Register header) ──

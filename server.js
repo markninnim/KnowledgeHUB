@@ -4181,6 +4181,128 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
   }
 });
 
+// ── Admin: whole-company AI CPD summary for the "All" Supervise view ──
+// Aggregates YTD CPD across every licensed adviser in the firm, flags anyone
+// materially behind a straight-line pace toward their annual target, and asks
+// Claude to write a short briefing: overall position, shortfalls, and what to
+// focus on for the rest of the year. Falls back to a plain stats sentence if
+// ANTHROPIC_API_KEY is unset or the call fails.
+app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
+  if (!req.session.user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+  try {
+    // 1. All users
+    const allRecords = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const page = await atFetch(qs);
+      allRecords.push(...(page.records || []));
+      offset = page.offset || '';
+    } while (offset);
+
+    const brokers = allRecords
+      .map(r => recordToUser(r))
+      .filter(u => !u.isSupervisor && (u.sellsMortgages || u.sellsProtection));
+
+    // 2. This year's CPD, all entries
+    const thisYear = new Date().getFullYear();
+    const startOfYear = `${thisYear}-01-01`;
+    const formula = encodeURIComponent(`NOT(IS_BEFORE({Date},"${startOfYear}"))`);
+    let allEntries = [];
+    let cpdOffset = '';
+    do {
+      const qs = `?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100${cpdOffset ? '&offset=' + cpdOffset : ''}`;
+      const page = await cpdFetch(qs);
+      allEntries.push(...(page.records || []).map(cpdRecordToEntry));
+      cpdOffset = page.offset || '';
+    } while (cpdOffset);
+
+    const byEmail = {};
+    brokers.forEach(b => { byEmail[b.email.toLowerCase()] = { Mortgage: 0, Protection: 0, Investment: 0, total: 0 }; });
+    allEntries.forEach(e => {
+      const bucket = byEmail[(e.email || '').toLowerCase()];
+      if (!bucket) return;
+      bucket.total += e.minutes || 0;
+      if (e.cpdType && bucket[e.cpdType] !== undefined) bucket[e.cpdType] += e.minutes || 0;
+    });
+
+    const yearStart = new Date(thisYear, 0, 1);
+    const yearEnd = new Date(thisYear + 1, 0, 1);
+    const yearFraction = (Date.now() - yearStart) / (yearEnd - yearStart);
+
+    const nameOf = b => [b.firstName, b.lastName].filter(Boolean).join(' ') || b.email;
+
+    let totalMins = 0;
+    const shortfalls = [];
+    const onTrackCount = { yes: 0, no: 0 };
+    brokers.forEach(b => {
+      const cpd = byEmail[b.email.toLowerCase()];
+      totalMins += cpd.total;
+      const relevantTypes = [];
+      if (b.sellsMortgages) relevantTypes.push('Mortgage');
+      if (b.sellsProtection) relevantTypes.push('Protection');
+      let behind = false;
+      relevantTypes.forEach(t => {
+        const target = CPD_TARGETS[t] || 900;
+        const expected = target * yearFraction;
+        if (cpd[t] < expected) {
+          const shortfallMins = Math.round(expected - cpd[t]);
+          if (shortfallMins > 60) { // ignore trivial gaps
+            shortfalls.push({ name: nameOf(b), supervisorEmail: b.supervisorEmail, type: t, done: cpd[t], target, shortfallMins });
+            behind = true;
+          }
+        }
+      });
+      if (behind) onTrackCount.no++; else onTrackCount.yes++;
+    });
+    shortfalls.sort((a, b) => b.shortfallMins - a.shortfallMins);
+
+    const supervisorNameByEmail = {};
+    allRecords.forEach(r => {
+      const u = recordToUser(r);
+      if (u.email) supervisorNameByEmail[u.email.toLowerCase()] = nameOf(u);
+    });
+
+    const topShortfalls = shortfalls.slice(0, 15).map(s =>
+      `${s.name} (supervisor: ${supervisorNameByEmail[(s.supervisorEmail || '').toLowerCase()] || s.supervisorEmail || 'none'}) — ${s.type}: ${fmtMinsServer(s.done)} of ${fmtMinsServer(s.target)} logged, ${fmtMinsServer(s.shortfallMins)} behind pace`
+    ).join('\n');
+
+    const pctThroughYear = Math.round(yearFraction * 100);
+    const fallback = `${pctThroughYear}% of the year has passed. ${brokers.length} licensed advisers, ${onTrackCount.yes} on pace and ${onTrackCount.no} behind. Total logged CPD this year: ${fmtMinsServer(totalMins)}.`;
+
+    if (!ANTHROPIC_API_KEY) return res.json({ summary: fallback, generatedAt: new Date().toISOString() });
+
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5-20250929',
+          max_tokens: 500,
+          system: 'You are writing a short briefing for the leadership team of a UK mortgage & protection advice firm on their advisers\' CPD (Continuing Professional Development) position, shown on an internal "whole company" CPD dashboard. '
+            + 'You are given: how far through the calendar year we are, the total number of licensed advisers, how many are on pace vs behind a straight-line pace toward their annual CPD target, the total CPD hours logged company-wide so far this year, and a list of the advisers furthest behind pace (with their supervisor, CPD type, hours logged vs target, and how far behind). '
+            + 'Write 4-6 sentences of flowing prose (no bullet points, no headers, no markdown). Open with the overall company position (are we broadly on track given how far through the year we are). '
+            + 'Then name specific shortfalls — call out the advisers (and their supervisors, so supervisors know whose team to chase) who are furthest behind, being specific about hours. If a cluster of shortfalls sits under one supervisor, mention that pattern. '
+            + 'Close with 1-2 concrete, practical priorities for the remainder of the year (e.g. which advisers/supervisors to follow up with first, or whether the firm overall needs a push). '
+            + 'Keep the tone measured, factual and constructive — like an ops analyst briefing management, not alarmist. Do not invent data not given to you, and do not mention advisers who are not in the shortfall list as being behind.',
+          messages: [{ role: 'user', content:
+            `${pctThroughYear}% of ${thisYear} has elapsed.\nLicensed advisers: ${brokers.length} (${onTrackCount.yes} on pace, ${onTrackCount.no} behind pace on at least one CPD type).\nTotal CPD logged company-wide YTD: ${fmtMinsServer(totalMins)}.\n\nAdvisers furthest behind pace:\n${topShortfalls || 'None — everyone is on pace.'}`
+          }]
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+      const summary = (data.content && data.content[0] && data.content[0].text) || fallback;
+      res.json({ summary, generatedAt: new Date().toISOString() });
+    } catch (aiErr) {
+      console.error('cpd-ai-summary AI error:', aiErr);
+      res.json({ summary: fallback, generatedAt: new Date().toISOString() });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Supervisor: export team CPD as CSV ───────────────────────
 app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
   const from        = req.query.from  || `${new Date().getFullYear()}-01-01`;
@@ -4428,6 +4550,16 @@ const CPD_SPECIALIST = 'fldmujpXpcGR9lq0I'; // single-select: non-mortgage/prote
 // Per-product CPD targets in minutes: Investment 35hrs, Mortgage 16hrs, Protection 16hrs
 // (Mortgage/Protection raised from 15h to 16h/yr per Pete Burgess change request — 4h/quarter, per licence)
 const CPD_TARGETS  = { Investment: 2100, Mortgage: 960, Protection: 960 };
+
+// Server-side minutes → "Xh Ym" formatter, mirrors the client's fmtMins/fmtCpdTime,
+// used when building text (e.g. AI prompts) on the server rather than the browser.
+function fmtMinsServer(mins) {
+  mins = Math.max(0, Math.round(mins || 0));
+  const h = Math.floor(mins / 60), m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+}
 
 async function cpdFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${CPD_TABLE}${endpoint}`;
