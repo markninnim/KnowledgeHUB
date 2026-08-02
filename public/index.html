@@ -454,7 +454,7 @@ select:focus { outline:none; }
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">COMPLIANCE</span></div>
     <a href="#" id="sv-sb-complog" onclick="return showComplianceLog(this)">Compliance Log</a>
     <a href="#" id="sv-sb-cdfeedback" onclick="return showSvCdFeedback(this)">Questionnaire Feedback</a>
-    <a href="#" id="sv-sb-fp" onclick="return showSvFp(this)">Fitness &amp; Properness</a>
+    <a href="#" id="sv-sb-fp" onclick="return showSvFp(this)" style="display:flex;align-items:center;justify-content:space-between;">Fitness &amp; Properness <span id="sv-fp-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#dc2626;"></span></a>
     <a href="#" id="sv-sb-introducers" onclick="return showSvIntroducers(this)">Introducers</a>
     <a href="#" id="sv-sb-obi" onclick="return showSvObi(this)">Other Business Interests</a>
     <div id="sv-sb-noncas" style="display:none;">
@@ -4206,7 +4206,10 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div id="bp-cd-expanded" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:24px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:24px;">
             <div style="flex:1;min-width:0;">
-              <div id="bp-cd-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Consumer Duty questionnaire responses</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <img src="/static/sim-idle.png" alt="Sim" class="sim-bob" style="width:18px;height:18px;object-fit:contain;flex-shrink:0;">
+                <div id="bp-cd-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Consumer Duty questionnaire responses</div>
+              </div>
               <div id="bp-cd-summary" style="font-size:12px;color:#6b7c8f;line-height:1.5;">Loading summary…</div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
@@ -14666,6 +14669,7 @@ function loadSvFpSubmissions() {
 
     svPopulateBrokerFilter('sv-fp-filter-broker', _svFpData.concat(_svFpNonSubmitters.map(function(u) { return { adviserName: u.name }; })));
     svFpRenderStats();
+    svFpUpdateSidebarDot();
     if (!_svFpData.length && !_svFpNonSubmitters.length) { empty.style.display = ''; empty.textContent = 'No Fitness & Properness submissions yet.'; return; }
     svFpRender();
   }).catch(function() {
@@ -14673,6 +14677,21 @@ function loadSvFpSubmissions() {
     list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load Fitness &amp; Properness submissions.</div>';
   });
 }
+
+// Checks for unread Fitness & Properness submissions on page load so the red
+// dot shows on the sidebar link without a supervisor having to open the page
+// first. Silently no-ops for non-supervisor/admin users (403 from the API).
+function svFpCheckUnreadOnLoad() {
+  fetch('/api/fitness-properness')
+    .then(function(r) { return r.ok ? r.json() : []; })
+    .then(function(data) {
+      var hasUnread = Array.isArray(data) && data.some(function(s) { return s.unread; });
+      var dot = document.getElementById('sv-fp-dot');
+      if (dot) dot.style.display = hasUnread ? 'inline-block' : 'none';
+    })
+    .catch(function() {});
+}
+document.addEventListener('DOMContentLoaded', svFpCheckUnreadOnLoad);
 
 function svFpFiltered() {
   var status = document.getElementById('sv-fp-filter-status').value;
@@ -14739,6 +14758,28 @@ function svFpRender() {
   list.innerHTML = filtered.map(function(sub, idx) { return svFpCardHtml(sub, idx); }).join('');
 }
 
+// Clears Supervisor Unread once a card is opened — fire-and-forget, and only
+// hides the red dot in place (doesn't re-render the list, which would collapse
+// the accordion the supervisor just opened).
+function svFpMarkSeen(id) {
+  var sub = _svFpData.find(function(s) { return s.id === id; });
+  if (!sub || !sub.unread) return;
+  sub.unread = false;
+  var rowDot = document.getElementById('sv-fp-row-dot-' + id);
+  if (rowDot) rowDot.style.display = 'none';
+  svFpUpdateSidebarDot();
+  fetch('/api/fitness-properness/' + encodeURIComponent(id) + '/seen', { method: 'PATCH' }).catch(function() {});
+}
+
+// Toggles the red dot on the Fitness & Properness sidebar link based on
+// whether any loaded submission is still unread.
+function svFpUpdateSidebarDot() {
+  var dot = document.getElementById('sv-fp-dot');
+  if (!dot) return;
+  var hasUnread = _svFpData.some(function(s) { return s.unread; });
+  dot.style.display = hasUnread ? 'inline-block' : 'none';
+}
+
 function svFpSetStatus(id, status, ev) {
   if (ev) ev.stopPropagation();
   fetch('/api/fitness-properness/' + encodeURIComponent(id) + '/status', {
@@ -14778,10 +14819,11 @@ function svFpCardHtml(sub, idx) {
     '<div style="margin-top:10px;color:#9baabb;">' + escHtml(sub.email || '') + '</div>' +
     '<div style="margin-top:14px;">' + actionHtml + '</div>' +
   '</div>';
+  var unreadDot = '<span id="sv-fp-row-dot-' + sub.id + '" style="display:' + (sub.unread ? 'inline-block' : 'none') + ';width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:8px;flex-shrink:0;"></span>';
   return '<div style="background:#fff;border:1px solid #e3e8ef;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">' +
-    '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
-      '<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(sub.name || sub.email) + '</div>' +
-      '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + when + '</div></div>' +
+    '<div onclick="svAccToggle(\'' + bodyId + '\',\'' + chevId + '\');svFpMarkSeen(\'' + sub.id + '\')" style="display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;">' +
+      '<div style="flex:1;display:flex;align-items:center;">' + unreadDot + '<div><div style="font-size:14px;font-weight:800;color:var(--brand-navy);">' + escHtml(sub.name || sub.email) + '</div>' +
+      '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + when + '</div></div></div>' +
       '<span style="font-size:11px;font-weight:700;color:' + accent + ';background:' + accent + '18;padding:5px 12px;border-radius:20px;white-space:nowrap;">' + chip + '</span>' +
       '<span id="' + chevId + '" style="display:inline-block;color:#6b7c8f;transition:transform .25s ease;">▾</span>' +
     '</div>' +

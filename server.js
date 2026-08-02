@@ -4308,7 +4308,8 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
             + 'Compare the Mortgage and Protection on-pace percentages directly — if one licence type clearly has a lower proportion of advisers on pace than the other, say so explicitly and suggest one or two concrete ways to bring it back on track (e.g. a themed protection-focused CPD push, dedicating part of the weekly hangout to protection insurer training, or a reminder campaign to protection-licensed advisers). '
             + 'Also comment on specialist CPD coverage — if a meaningful number of specialist-licensed advisers have logged no specialist CPD, flag it as a compliance/competence gap worth addressing and suggest a practical fix (e.g. requiring at least one specialist CPD entry per licence per quarter). '
             + 'Close with 1-2 concrete priorities for the remainder of the year. '
-            + 'Keep the tone measured, factual and constructive — like an ops analyst briefing management, not alarmist. Do not invent data not given to you.',
+            + 'Keep the tone measured, factual and constructive — like an ops analyst briefing management, not alarmist. Do not invent data not given to you. '
+            + 'Formatting: never use an em dash (—) or en dash (–) anywhere in your reply; if you need that kind of break, use a plain hyphen with spaces instead, e.g. "the total was low - well under target".',
           messages: [{ role: 'user', content:
             `${pctThroughYear}% of ${thisYear} has elapsed.\n`
             + `Licensed advisers: ${brokers.length} total. ${onTrackCount.yes} (${overallOnPacePct}%) have personally reached the correct YTD CPD pace; ${onTrackCount.no} have not.\n\n`
@@ -4940,6 +4941,7 @@ const FP_Q9          = 'fldvAp8Z0BBn2ZdoM'; // Driving Ban?
 const FP_Q9D         = 'fldHI05lI2kNjIcjG'; // Driving Ban Details
 const FP_FLAGGED     = 'fldV5mOsnp8wjLhKU'; // Flagged (checkbox)
 const FP_STATUS      = 'fldmJi1sa6O4qKZ1P'; // Status (Clear / Flagged / Archived) — supervisor-managed review state
+const FP_UNREAD       = 'fldV3GdryMSqTWmcn'; // Supervisor Unread — true from creation (flagged OR auto-archived Clear) until a supervisor opens it; drives the red-dot notification
 
 function fpYesNo(v) { return v === 'yes' ? 'Yes' : (v === 'no' ? 'No' : undefined); }
 
@@ -4975,8 +4977,12 @@ app.post('/api/fitness-properness', requireAuth, async (req, res) => {
         [FP_FLAGGED]: flagged,
         // Clean submissions (no disclosures) are auto-archived immediately since
         // there's nothing for a supervisor to review; flagged ones stay active
-        // until a supervisor reviews them and archives manually.
-        [FP_STATUS]: flagged ? 'Flagged' : 'Archived'
+        // until a supervisor reviews them and archives manually. Either way,
+        // Supervisor Unread starts true so a red dot shows on the Fitness &
+        // Properness sidebar link until a supervisor actually opens it —
+        // auto-archiving a clear submission shouldn't let it go unnoticed.
+        [FP_STATUS]: flagged ? 'Flagged' : 'Archived',
+        [FP_UNREAD]: true
       } }] })
     });
     const d = await r.json();
@@ -5007,12 +5013,32 @@ app.get('/api/fitness-properness', requireAuth, async (req, res) => {
         email: f[FP_EMAIL] || '',
         submittedAt: f[FP_SUBMITTED] || rec.createdTime,
         status: f[FP_STATUS] || null,
+        unread: !!f[FP_UNREAD],
         answers
       };
     });
     res.json(submissions);
   } catch (err) {
     console.error('fitness-properness list error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/fitness-properness/:id/seen — clears Supervisor Unread once a
+// supervisor has opened the submission, turning off the red dot for that item.
+app.patch('/api/fitness-properness/:id/seen', requireAuth, async (req, res) => {
+  if (!requireSupervisorOrAdmin(req, res)) return;
+  try {
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [FP_UNREAD]: false } }] })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error((d.error && d.error.message) || `Airtable ${r.status}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('fitness-properness seen update error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -5508,7 +5534,7 @@ async function crBuildComplianceLogSummary(rows) {
   const complaintDetail = outstandingComplaints.map(r => {
     const parts = [r.adviserName || r.email || 'Unknown adviser', r.clientName || 'no client name', r.status || 'New'];
     if (r.settlementAmount) parts.push(`settlement £${r.settlementAmount}`);
-    return parts.join(' — ');
+    return parts.join(' - ');
   }).join('\n');
 
   const fallback = `${rows.length} reports on file, ${outstanding.length} outstanding. ${outstandingComplaints.length} outstanding complaint(s) out of ${complaints.length} total.`;
@@ -5526,7 +5552,8 @@ async function crBuildComplianceLogSummary(rows) {
           + 'You are given a breakdown of reported compliance activity by type (Complaint, Breach, Conflict of Interest, Gifts & Hospitality, SARs, Self Sale, Vulnerable Persons, Whistleblowing), each with a total and how many are outstanding (not yet Resolved), plus specific detail on any outstanding complaints. '
           + 'Write 2-4 sentences of flowing prose (no bullet points, no headers). Complaints are the priority — mention them first and be specific (how many outstanding, and by whom/client if given) even if the numbers are small. '
           + 'Then briefly cover other outstanding activity worth attention (e.g. any Breach, SAR, or Whistleblowing items still open), and note if everything else is quiet/resolved. '
-          + 'Keep the tone measured and factual, like a compliance analyst briefing the team, not alarmist. Do not invent data not given to you.',
+          + 'Keep the tone measured and factual, like a compliance analyst briefing the team, not alarmist. Do not invent data not given to you. '
+          + 'Formatting: never use an em dash (—) or en dash (–) anywhere in your reply; if you need that kind of break, use a plain hyphen with spaces instead, e.g. "the total was low - well under target".',
         messages: [{ role: 'user', content: `Totals by type:\n${typeLines}\n\nOutstanding complaints detail:\n${complaintDetail || 'None outstanding.'}` }]
       })
     });
@@ -8030,7 +8057,8 @@ app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res
           + 'Respond with ONLY valid JSON, no markdown fences, in this exact shape: {"notes": "...", "actionPoints": ["...", "..."]}. '
           + '"notes" should be a well-written summary paragraph (or short set of paragraphs) covering what was discussed, in a professional supervisory tone — do not use bullet points inside "notes". '
           + '"actionPoints" should be a list of clear, specific action points explicitly agreed during the meeting, each written as a short actionable sentence. If no action points were agreed, return an empty array. '
-          + 'Do not invent detail that is not in the transcript. It is normal and approved practice at this firm for an adviser to review and close their own compliance flags — do not raise this as a concern unless the transcript itself raises it as one.',
+          + 'Do not invent detail that is not in the transcript. It is normal and approved practice at this firm for an adviser to review and close their own compliance flags — do not raise this as a concern unless the transcript itself raises it as one. '
+          + 'Formatting: never use an em dash (—) or en dash (–) anywhere in "notes" or "actionPoints"; if you need that kind of break, use a plain hyphen with spaces instead, e.g. "the total was low - well under target".',
         messages: [{ role: 'user', content: `Adviser: ${adviserName}\n\nMeeting transcript:\n${transcript.slice(0, 12000)}` }]
       })
     });
@@ -8205,7 +8233,8 @@ async function cdBuildComplianceSummary(responses, isCompanyWide) {
           + 'You are given per-adviser stats (flagged response rate, average NPS, outstanding "partial" items, most common flag types) plus company/team-wide averages and the most common flag types overall. '
           + 'Write 2-4 sentences of flowing prose (no bullet points, no headers). Compare individuals to the group average by name only where a real, meaningful difference exists (e.g. notably higher flag rate or lower NPS) — do not call out every adviser individually or fabricate concerns where numbers are close to average. '
           + 'Note any flag type that recurs across multiple advisers as a possible systemic/training issue worth the team\'s attention. '
-          + 'Keep the tone measured and factual, not alarmist — normal variance is normal. Do not invent data not given to you.',
+          + 'Keep the tone measured and factual, not alarmist — normal variance is normal. Do not invent data not given to you. '
+          + 'Formatting: never use an em dash (—) or en dash (–) anywhere in your reply; if you need that kind of break, use a plain hyphen with spaces instead, e.g. "the total was low - well under target".',
         messages: [{ role: 'user', content: `Scope: ${scopeLabel}.\nCompany/team flag rate: ${companyFlagRate}% (${totalFlagged}/${totalResponses}).\nMost common flags overall: ${topCompanyFlags}.\n\nPer-adviser breakdown:\n${lines}` }]
       })
     });
@@ -8245,7 +8274,8 @@ async function cdBuildBrokerSummary(brokerName, records) {
         max_tokens: 300,
         system: 'You are a compliance analyst at a UK mortgage/protection firm writing a short, permanent summary of ONE adviser\'s Consumer Duty client questionnaire history, for their supervisor. '
           + 'Write 2-3 sentences of flowing prose (no bullet points, no headers). Highlight any recurring flag types, outstanding partial items needing follow-up, or notable NPS trends. '
-          + 'Keep the tone measured and factual, not alarmist. Do not invent data not given to you.',
+          + 'Keep the tone measured and factual, not alarmist. Do not invent data not given to you. '
+          + 'Formatting: never use an em dash (—) or en dash (–) anywhere in your reply; if you need that kind of break, use a plain hyphen with spaces instead, e.g. "the total was low - well under target".',
         messages: [{ role: 'user', content: `Adviser: ${brokerName}\nTotal responses: ${total}\nFlagged rate: ${flagRate}%\nAverage NPS: ${avgNps}\nOutstanding partial items: ${partial}\nMost common flags: ${topFlags}` }]
       })
     });
