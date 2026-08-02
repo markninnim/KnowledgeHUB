@@ -4424,6 +4424,8 @@ async function cpdFetch(endpoint, options = {}) {
   return body;
 }
 
+function cpdSelectName(v) { return v && typeof v === 'object' ? v.name : (v || ''); }
+
 function cpdRecordToEntry(record) {
   const f = record.fields;
   return {
@@ -4432,12 +4434,12 @@ function cpdRecordToEntry(record) {
     activity:   f[CPD_ACTIVITY]  || '',
     date:       f[CPD_DATE]      || '',
     minutes:    f[CPD_MINUTES]   || 0,
-    category:   f[CPD_CATEGORY]  || '',
-    source:     f[CPD_SOURCE]    || '',
+    category:   cpdSelectName(f[CPD_CATEGORY])  || '',
+    source:     cpdSelectName(f[CPD_SOURCE])    || '',
     videoTitle: f[CPD_VTITLE]    || '',
-    cpdType:    f[CPD_TYPE]      || '',
+    cpdType:    cpdSelectName(f[CPD_TYPE])      || '',
     learned:    f[CPD_LEARNED]   || '',
-    specialist: f[CPD_SPECIALIST] || ''
+    specialist: cpdSelectName(f[CPD_SPECIALIST]) || ''
   };
 }
 
