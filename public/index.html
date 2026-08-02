@@ -4354,14 +4354,57 @@ Consolidating debts will increase the loan to value which can impact future deal
           <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
           <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
         </div>
-        <div style="display:flex;align-items:center;gap:5px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;">
-          <span style="font-size:11px;color:#6b7c8f;font-weight:600;">From</span>
-          <input id="sv-date-from" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
-          <span style="font-size:11px;color:#6b7c8f;font-weight:600;">To</span>
-          <input id="sv-date-to" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
+        <button onclick="svOpenDownloadModal()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Download</button>
+      </div>
+      <!-- Hidden date inputs kept only so svInitDates()/existing per-row export helpers keep working -->
+      <input id="sv-date-from" type="date" style="display:none;">
+      <input id="sv-date-to" type="date" style="display:none;">
+
+      <!-- Download modal -->
+      <div id="sv-download-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:2000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:14px;padding:24px;width:380px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--brand-navy);">Download CPD Data</h3>
+            <span onclick="svCloseDownloadModal()" style="cursor:pointer;color:#9aa5b1;font-size:18px;line-height:1;">&times;</span>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Format</div>
+            <select id="sv-dl-format" style="width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+              <option value="csv">CSV</option>
+              <option value="xls">Excel (XLS)</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Scope</div>
+            <div style="display:flex;gap:16px;font-size:13px;color:var(--brand-navy);">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="sv-dl-scope" id="sv-dl-scope-all" checked onchange="svToggleDlScope()"> All</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="sv-dl-scope" id="sv-dl-scope-name" onchange="svToggleDlScope()"> Name</label>
+            </div>
+            <div id="sv-dl-name-wrap" style="display:none;margin-top:8px;position:relative;">
+              <input id="sv-dl-name-input" type="text" placeholder="Start typing a name…" oninput="svRenderDlNameOptions(this.value)" onfocus="svRenderDlNameOptions(this.value)"
+                style="width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);box-sizing:border-box;">
+              <input id="sv-dl-name-email" type="hidden">
+              <div id="sv-dl-name-options" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:180px;overflow-y:auto;z-index:10;margin-top:4px;box-shadow:0 6px 20px rgba(0,0,0,.1);"></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Date range</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input id="sv-dl-from" type="date" style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;font-family:inherit;color:var(--brand-navy);">
+              <span style="color:#9aa5b1;font-size:12px;">to</span>
+              <input id="sv-dl-to" type="date" style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;font-family:inherit;color:var(--brand-navy);">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button onclick="svCloseDownloadModal()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+            <button onclick="svConfirmDownload()" style="background:var(--brand-navy);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↓ Download</button>
+          </div>
         </div>
-        <button onclick="svExportCsv()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Export CSV</button>
-        <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:none;"></div>
@@ -11263,6 +11306,85 @@ function svExportCsv() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+// ── Download modal: pick format (CSV/XLS/PDF), scope (name via smart filter,
+// or all), and date range — replaces the old always-visible date pickers +
+// plain "Export CSV" button in the Supervise toolbar.
+function svOpenDownloadModal() {
+  var modal = document.getElementById('sv-download-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('sv-dl-format').value = 'csv';
+  document.getElementById('sv-dl-scope-all').checked = true;
+  document.getElementById('sv-dl-name-wrap').style.display = 'none';
+  document.getElementById('sv-dl-name-input').value = '';
+  document.getElementById('sv-dl-name-email').value = '';
+  var today = new Date().toISOString().slice(0,10);
+  document.getElementById('sv-dl-from').value = new Date().getFullYear() + '-01-01';
+  document.getElementById('sv-dl-to').value = today;
+  svRenderDlNameOptions('');
+}
+
+function svCloseDownloadModal() {
+  var modal = document.getElementById('sv-download-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function svToggleDlScope() {
+  var isName = document.getElementById('sv-dl-scope-name').checked;
+  document.getElementById('sv-dl-name-wrap').style.display = isName ? 'block' : 'none';
+}
+
+// Smart filter: live-filters the member list (loaded members from the
+// currently rendered Supervise view) by name/email as the user types.
+function svRenderDlNameOptions(query) {
+  var box = document.getElementById('sv-dl-name-options');
+  if (!box) return;
+  var members = (_svData && _svData.members) || [];
+  var q = (query || '').trim().toLowerCase();
+  var matches = members.filter(function(m) {
+    var name = ((m.salutation||'') + ' ' + (m.firstName||'') + ' ' + (m.lastName||'')).trim();
+    return !q || name.toLowerCase().indexOf(q) !== -1 || (m.email||'').toLowerCase().indexOf(q) !== -1;
+  }).slice(0, 30);
+  box.innerHTML = matches.map(function(m) {
+    var name = ((m.salutation||'') + ' ' + (m.firstName||'') + ' ' + (m.lastName||'')).trim() || m.email;
+    return '<div onclick="svPickDlName(\'' + m.email.replace(/'/g,"\\'") + '\',\'' + name.replace(/'/g,"\\'") + '\')" '
+      + 'style="padding:8px 10px;cursor:pointer;font-size:13px;color:var(--brand-navy);border-bottom:1px solid #f0f2f5;">' + name + '</div>';
+  }).join('') || '<div style="padding:8px 10px;font-size:12px;color:#9aa5b1;">No matches</div>';
+  box.style.display = matches.length ? 'block' : 'none';
+}
+
+function svPickDlName(email, name) {
+  document.getElementById('sv-dl-name-input').value = name;
+  document.getElementById('sv-dl-name-email').value = email;
+  document.getElementById('sv-dl-name-options').style.display = 'none';
+}
+
+function svConfirmDownload() {
+  var format = document.getElementById('sv-dl-format').value;
+  var scopeName = document.getElementById('sv-dl-scope-name').checked;
+  var email = document.getElementById('sv-dl-name-email').value;
+  var from = document.getElementById('sv-dl-from').value || (new Date().getFullYear() + '-01-01');
+  var to   = document.getElementById('sv-dl-to').value   || new Date().toISOString().slice(0,10);
+  if (scopeName && !email) { alert('Pick a name from the list first.'); return; }
+  var url = '/api/supervisor/export-csv?from=' + from + '&to=' + to + '&format=' + format;
+  var filenameBase;
+  if (scopeName) {
+    url += '&email=' + encodeURIComponent(email);
+    filenameBase = document.getElementById('sv-dl-name-input').value.replace(/[^a-z0-9]/gi,'-').toLowerCase() + '-cpd-' + from + '-to-' + to;
+  } else {
+    url += '&all=true';
+    filenameBase = 'company-cpd-' + from + '-to-' + to;
+  }
+  var ext = format === 'xls' ? 'xls' : (format === 'pdf' ? 'pdf' : 'csv');
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filenameBase + '.' + ext;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  svCloseDownloadModal();
 }
 
 function svInitDates() {
