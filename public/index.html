@@ -4411,8 +4411,10 @@ Consolidating debts will increase the loan to value which can impact future deal
       <!-- Whole-company AI CPD summary (All view only) -->
       <div id="sv-ai-summary-wrap" style="display:none;margin-bottom:24px;background:linear-gradient(135deg,#f0f4f8,#f5f7fa);border:1px solid #d1d5db;border-radius:12px;padding:18px 22px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="font-size:12px;font-weight:800;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.05em;">AI CPD Summary — Whole Team</div>
+          <img src="/static/sim-idle.png" alt="Sim" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;animation:svSimBob 2.2s ease-in-out infinite;">
+          <div style="font-size:12px;font-weight:800;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.05em;">SIM — Your AI Supervisor Colleague</div>
         </div>
+        <style>@keyframes svSimBob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }</style>
         <div id="sv-ai-summary-text" style="font-size:13.5px;line-height:1.7;color:#334155;">Loading summary…</div>
       </div>
       <!-- Advisers section -->
