@@ -4019,7 +4019,7 @@ app.get('/api/supervisor/list', requireAuth, async (req, res) => {
         if (r.fields[F_IS_SUPERVISOR]) {
           if (!seen.has(u.email)) {
             seen.add(u.email);
-            supervisors.push({ id: u.id, email: u.email, name: ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.email) });
+            supervisors.push({ id: u.id, email: u.email, name: ([u.firstName, u.lastName].filter(Boolean).join(' ') || u.email), jobTitle: u.jobTitle || '' });
           }
         } else {
           // count this user under their supervisor

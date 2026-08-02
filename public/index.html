@@ -14937,14 +14937,25 @@ function loadSupervisorZone() {
       // ── Populate sidebar supervisor links
       var sbWrap = document.getElementById('sv-sb-supervisors');
       if (sbWrap && supervisors.length > 0) {
-        var sbHtml = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">SUPERVISORS</span></div>';
-        if (_currentUser && _currentUser.isAdmin) {
-          // "All Company" removed — use "Whole company" top-level link instead
+        // Compliance-team people carry the "isSupervisor" flag (for permissions)
+        // but aren't people-managers with a team of advisers — split them into
+        // their own sidebar group based on job title rather than mixing them
+        // into the adviser-supervisor list.
+        var isComplianceRole = function(s) { return /compliance/i.test(s.jobTitle || ''); };
+        var trueSupervisors = supervisors.filter(function(s) { return !isComplianceRole(s); });
+        var complianceTeam  = supervisors.filter(isComplianceRole);
+
+        function renderSbGroup(label, list) {
+          if (!list.length) return '';
+          var html = '<div style="margin:16px 0 4px;padding:0 18px 0 23px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">' + label + '</span></div>';
+          list.forEach(function(s) {
+            var countBadge = s.count ? '<span style="margin-left:auto;background:rgba(255,255,255,0.22);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0;">' + s.count + '</span>' : '';
+            html += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="display:flex;align-items:center;gap:4px;">' + escHtml(s.name) + countBadge + '</a>';
+          });
+          return html;
         }
-        supervisors.forEach(function(s) {
-          var countBadge = s.count ? '<span style="margin-left:auto;background:rgba(255,255,255,0.22);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;flex-shrink:0;">' + s.count + '</span>' : '';
-          sbHtml += '<a href="#" onclick="return svSidebarSelect(\'' + s.email + '\',this)" style="display:flex;align-items:center;gap:4px;">' + escHtml(s.name) + countBadge + '</a>';
-        });
+
+        var sbHtml = renderSbGroup('SUPERVISORS', trueSupervisors) + renderSbGroup('COMPLIANCE SUPPORT', complianceTeam);
         sbWrap.innerHTML = sbHtml;
         sbWrap.style.display = 'block';
       }
