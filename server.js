@@ -4151,16 +4151,27 @@ app.get('/api/supervisor/team', requireAuth, async (req, res) => {
     }
 
     // 3. Aggregate per member per CPD type
+    // Keyed case-insensitively — Airtable's CPD Log "User Email" values don't
+    // reliably match the casing stored on the Users table (e.g.
+    // "Chris.bartrip@..." vs "chris.bartrip@..."), and a plain object-key
+    // lookup is case-sensitive, so entries would silently fail to aggregate
+    // even though the fetch itself (which uses LOWER() in its formula) found them.
     const cpdByMember = {};
-    members.forEach(m => { cpdByMember[m.email] = { Investment: 0, Mortgage: 0, Protection: 0, total: 0, specialist: {} }; });
+    const cpdByMemberLower = {};
+    members.forEach(m => {
+      const bucket = { Investment: 0, Mortgage: 0, Protection: 0, total: 0, specialist: {} };
+      cpdByMember[m.email] = bucket;
+      cpdByMemberLower[m.email.toLowerCase()] = bucket;
+    });
     allEntries.forEach(e => {
-      if (!cpdByMember[e.email]) return;
-      cpdByMember[e.email].total += e.minutes || 0;
-      if (e.cpdType && cpdByMember[e.email][e.cpdType] !== undefined) {
-        cpdByMember[e.email][e.cpdType] += e.minutes || 0;
+      const bucket = cpdByMemberLower[(e.email || '').toLowerCase()];
+      if (!bucket) return;
+      bucket.total += e.minutes || 0;
+      if (e.cpdType && bucket[e.cpdType] !== undefined) {
+        bucket[e.cpdType] += e.minutes || 0;
       }
       if (e.specialist) {
-        cpdByMember[e.email].specialist[e.specialist] = (cpdByMember[e.email].specialist[e.specialist] || 0) + (e.minutes || 0);
+        bucket.specialist[e.specialist] = (bucket.specialist[e.specialist] || 0) + (e.minutes || 0);
       }
     });
 
@@ -4224,13 +4235,18 @@ app.get('/api/supervisor/export-csv', requireAuth, async (req, res) => {
     const formula = encodeURIComponent(
       `AND(OR(${emails}),NOT(IS_BEFORE({Date},"${from}")),NOT(IS_AFTER({Date},"${to}")))`
     );
-    const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=50`);
-    const entries = (cpdData.records || []).map(cpdRecordToEntry);
+    let exportEntries = [], expCpdOffset = '';
+    do {
+      const cpdData = await cpdFetch(`?filterByFormula=${formula}&sort[0][field]=${CPD_DATE}&sort[0][direction]=asc&returnFieldsByFieldId=true&pageSize=100${expCpdOffset ? '&offset=' + expCpdOffset : ''}`);
+      exportEntries.push(...(cpdData.records || []).map(cpdRecordToEntry));
+      expCpdOffset = cpdData.offset || '';
+    } while (expCpdOffset);
+    const entries = exportEntries;
     const memberMap = {};
-    members.forEach(m => { memberMap[m.email] = m; });
+    members.forEach(m => { memberMap[m.email.toLowerCase()] = m; });
     const rows = [['Name', 'Email', 'Date', 'CPD Type', 'Activity', 'Minutes', 'Hours', 'What I Learned'].map(esc).join(',')];
     entries.forEach(e => {
-      const m = memberMap[e.email] || {};
+      const m = memberMap[(e.email || '').toLowerCase()] || {};
       const name = [m.salutation, m.firstName, m.lastName].filter(Boolean).join(' ') || e.email;
       rows.push([name, e.email, e.date || '', e.cpdType || '', e.title || '', e.minutes || 0, ((e.minutes || 0) / 60).toFixed(2), e.learned || ''].map(esc).join(','));
     });
