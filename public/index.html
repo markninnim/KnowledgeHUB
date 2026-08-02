@@ -12277,6 +12277,7 @@ function openBrokerProfile(email, name, keepDateRange) {
         var expectedByNow = target * yearFraction;
         var paceDiff = done - expectedByNow;
         var paceAhead = paceDiff >= 0;
+        var onTrack = complete || paceAhead;
         var paceLabel = complete ? '' :
           '<span style="font-size:11px;font-weight:700;color:' + (paceAhead ? '#22c55e' : '#c0392b') + ';margin-left:8px;">' +
             (paceAhead ? '▲ Ahead ' : '▼ Behind ') + fmtCpdTime(Math.abs(paceDiff)) +
@@ -12286,13 +12287,13 @@ function openBrokerProfile(email, name, keepDateRange) {
           '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
             '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.key + '</span>' +
             '<span>' +
-              '<span style="font-size:12px;color:' + (complete ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (complete?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
+              '<span style="font-size:12px;color:' + (onTrack ? '#22c55e' : '#6b7c8f') + ';font-weight:' + (onTrack?'700':'400') + ';">' + fmtCpdTime(done) + ' / ' + fmtCpdTime(target) + (complete ? ' ✓' : '') + '</span>' +
               paceLabel +
             '</span>' +
           '</div>' +
           '<div style="position:relative;height:7px;background:#f0f4f8;border-radius:4px;overflow:visible;">' +
             '<div style="position:absolute;inset:0;border-radius:4px;overflow:hidden;">' +
-              '<div style="width:' + pct + '%;height:100%;background:' + (complete ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
+              '<div style="width:' + pct + '%;height:100%;background:' + (onTrack ? '#22c55e' : t.color) + ';border-radius:4px;"></div>' +
             '</div>' +
             (!complete ? '<div class="lic-icon-wrap" style="position:absolute;top:-2px;left:' + pacePct + '%;width:2px;height:11px;background:#94a3b8;transform:translateX(-1px);">' +
               '<span class="lic-tip" style="white-space:nowrap;">YTD pace target: ' + fmtCpdTime(Math.round(expectedByNow)) + '</span>' +
@@ -15036,10 +15037,22 @@ function svLicenceIconsHtml(m, cpd) {
   '</div>';
 }
 
+// Fraction of the current year elapsed so far (e.g. 0.5 at end of June) —
+// used everywhere CPD progress is shown, so bars/status turn green as soon
+// as logged CPD is ahead of a straight-line pace toward the annual target,
+// not only once the full target is hit.
+function cpdYearFraction() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 1);
+  var end   = new Date(now.getFullYear() + 1, 0, 1);
+  return (now - start) / (end - start);
+}
+
 function renderSvDashboard(data) {
   var members     = data.members     || [];
   var cpdByMember = data.cpdByMember || {};
   var targets     = data.targets     || { Mortgage: 960, Protection: 960 };
+  var yearFraction = cpdYearFraction();
 
   if (!members.length) {
     document.getElementById('sv-loading').style.display = 'block';
@@ -15054,8 +15067,12 @@ function renderSvDashboard(data) {
     { key: 'Protection', label: 'Protection', color: 'var(--brand-orange)' }
   ];
 
-  function getStatus(pct) {
+  // paceOk = true once logged CPD is at/ahead of a straight-line pace toward
+  // the annual target for how far through the year we are (e.g. ≥50% of
+  // target by the halfway point) — not just once the whole target is hit.
+  function getStatus(pct, paceOk) {
     if (pct >= 100) return { label: 'Complete', bg: '#dcfce7', tc: '#166534' };
+    if (paceOk)     return { label: 'On track',  bg: '#dcfce7', tc: '#166534' };
     if (pct >= 60)  return { label: 'On track',  bg: '#fef9c3', tc: '#854d0e' };
     return              { label: 'Behind',    bg: '#fee2e2', tc: '#991b1b' };
   }
@@ -15069,7 +15086,7 @@ function renderSvDashboard(data) {
     if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     // Admin & Paraplanners (Job Title-based, not the site "Is Admin" permission flag) —
     // shown in their own section under the supervisor's advisers, not mixed in with them.
-    if (!isAuthorised && !m.isSupervisor && /^(admin|director|paraplanner)/i.test(m.jobTitle || '')) {
+    if (!isAuthorised && !m.isSupervisor && /^(admin|director|paraplanner|ceo)/i.test(m.jobTitle || '')) {
       adminStaff.push({ m: m, cpd: cpd, visible: [], worstPct: 0 });
       return;
     }
@@ -15079,12 +15096,14 @@ function renderSvDashboard(data) {
         return (t.key === 'Mortgage' && m.sellsMortgages) ||
                (t.key === 'Protection' && m.sellsProtection);
       }) : [];
-      var worstPct = 100;
+      var worstPct = 100, worstPaceOk = true;
       visible.forEach(function(t) {
         var pct = targets[t.key] > 0 ? Math.round(((cpd[t.key]||0) / targets[t.key]) * 100) : 0;
         if (pct < worstPct) worstPct = pct;
+        var paceOk = targets[t.key] > 0 && (cpd[t.key]||0) >= targets[t.key] * yearFraction;
+        if (!paceOk) worstPaceOk = false;
       });
-      supervisorCards.push({ m: m, cpd: cpd, visible: visible, worstPct: worstPct });
+      supervisorCards.push({ m: m, cpd: cpd, visible: visible, worstPct: worstPct, worstPaceOk: worstPaceOk });
       return;
     }
     var noFlags = !isAuthorised;
@@ -15092,12 +15111,14 @@ function renderSvDashboard(data) {
       return (t.key === 'Mortgage' && (m.sellsMortgages || noFlags)) ||
              (t.key === 'Protection' && (m.sellsProtection || noFlags));
     });
-    var worstPct = visible.length ? 100 : 0;
+    var worstPct = visible.length ? 100 : 0, worstPaceOk = true;
     visible.forEach(function(t) {
       var pct = targets[t.key] > 0 ? Math.round(((cpd[t.key]||0) / targets[t.key]) * 100) : 0;
       if (pct < worstPct) worstPct = pct;
+      var paceOk = targets[t.key] > 0 && (cpd[t.key]||0) >= targets[t.key] * yearFraction;
+      if (!paceOk) worstPaceOk = false;
     });
-    var obj = { m: m, cpd: cpd, visible: visible, worstPct: worstPct };
+    var obj = { m: m, cpd: cpd, visible: visible, worstPct: worstPct, worstPaceOk: worstPaceOk };
     allAdvisers.push(obj);
   });
 
@@ -15170,20 +15191,21 @@ function renderSvDashboard(data) {
     var cYtd    = visible.reduce(function(s,t){ return s+(cpd[t.key]||0); }, 0);
     var cTarget = visible.reduce(function(s,t){ return s+(targets[t.key]||900); }, 0);
     var cPct    = cTarget > 0 ? Math.min(100, Math.round((cYtd/cTarget)*100)) : 0;
-    var cStatus = getStatus(cPct);
+    var cPaceOk = cTarget > 0 && cYtd >= cTarget * yearFraction;
+    var cStatus = getStatus(cPct, cPaceOk);
 
     var barsHtml = visible.map(function(t) {
       var ytd    = cpd[t.key] || 0;
       var target = targets[t.key] || 900;
       var pct    = Math.min(100, Math.round((ytd / target) * 100));
-      var status = getStatus(pct);
+      var paceOk = ytd >= target * yearFraction;
       return '<div style="margin-bottom:10px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
           '<span style="font-size:12px;font-weight:600;color:#6b7c8f;">' + t.label + ' CPD</span>' +
           '<span style="font-size:12px;color:#6b7c8f;">' + fmtMins(ytd) + ' / ' + fmtMins(target) + '</span>' +
         '</div>' +
         '<div style="background:#f0f4f8;border-radius:4px;height:7px;overflow:hidden;">' +
-          '<div style="background:' + (pct >= 100 ? '#22c55e' : t.color) + ';height:100%;width:' + pct + '%;border-radius:4px;"></div>' +
+          '<div style="background:' + ((pct >= 100 || paceOk) ? '#22c55e' : t.color) + ';height:100%;width:' + pct + '%;border-radius:4px;"></div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -15225,11 +15247,12 @@ function renderSvDashboard(data) {
     var name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email;
     var safeEmail = m.email.replace(/'/g, "\\'");
     var safeName  = name.replace(/'/g, "\\'");
-    var overall = getStatus(worstPct);
+    var overall = getStatus(worstPct, obj.worstPaceOk);
     // Total across all visible CPD types
     var totalYtd    = visible.reduce(function(s,t){ return s+(cpd[t.key]||0); }, 0);
     var totalTarget = visible.reduce(function(s,t){ return s+(targets[t.key]||900); }, 0);
     var totalPct    = totalTarget > 0 ? Math.min(100, Math.round((totalYtd/totalTarget)*100)) : 0;
+    var totalPaceOk = totalTarget > 0 && totalYtd >= totalTarget * yearFraction;
     var drillId = 'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_');
     return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:14px;">' +
       '<div style="flex:1;min-width:0;">' +
@@ -15242,7 +15265,7 @@ function renderSvDashboard(data) {
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;min-width:180px;">' +
         '<div style="background:#f0f4f8;border-radius:4px;height:6px;flex:1;overflow:hidden;">' +
-          '<div style="background:' + (totalPct>=100?'#22c55e':'var(--brand-navy)') + ';height:100%;width:' + totalPct + '%;border-radius:4px;"></div>' +
+          '<div style="background:' + ((totalPct>=100||totalPaceOk)?'#22c55e':'var(--brand-navy)') + ';height:100%;width:' + totalPct + '%;border-radius:4px;"></div>' +
         '</div>' +
         '<span style="font-size:12px;color:#6b7c8f;white-space:nowrap;">' + fmtMins(totalYtd) + ' / ' + fmtMins(totalTarget) + '</span>' +
       '</div>' +
@@ -16349,7 +16372,11 @@ function renderCpdProgress() {
     var pct       = Math.min(100, Math.round((mins / target) * 100));
     var remaining = Math.max(0, target - mins);
     var done      = pct >= 100;
-    var barColor  = done ? '#22c55e' : t.color;
+    // For the annual view, treat being ahead of a straight-line YTD pace toward
+    // the target as "on track" (green) too, not just having hit 100% already.
+    var paceOk    = _cpdPeriod === 'year' && mins >= target * cpdYearFraction();
+    var onTrack   = done || paceOk;
+    var barColor  = onTrack ? '#22c55e' : t.color;
     return '<div style="margin-bottom:14px;">' +
       '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
         '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + t.label + ' CPD</div>' +
@@ -16358,15 +16385,17 @@ function renderCpdProgress() {
       '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
         '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
       '</div>' +
-      '<div style="font-size:11px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
-        (done ? '✓ Target met' : pct + '% — ' + fmtMins(remaining) + ' remaining') +
+      '<div style="font-size:11px;color:' + (onTrack ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
+        (done ? '✓ Target met' : paceOk ? '✓ On track — ' + pct + '%' : pct + '% — ' + fmtMins(remaining) + ' remaining') +
       '</div>' +
     '</div>';
   }).join('');
 
   if (visible.length > 1) {
-    var combinedDone  = combinedPct >= 100;
-    var combinedColor = combinedDone ? '#22c55e' : 'var(--brand-navy)';
+    var combinedDone   = combinedPct >= 100;
+    var combinedPaceOk = _cpdPeriod === 'year' && combinedTarget > 0 && combinedMins >= combinedTarget * cpdYearFraction();
+    var combinedOnTrack = combinedDone || combinedPaceOk;
+    var combinedColor = combinedOnTrack ? '#22c55e' : 'var(--brand-navy)';
     barsHtml += '<div style="margin-top:4px;padding-top:14px;border-top:1px solid #d1d5db;">' +
       '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
         '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);">Combined Total</div>' +
@@ -16375,7 +16404,7 @@ function renderCpdProgress() {
       '<div style="background:#f0f4f8;border-radius:6px;height:11px;overflow:hidden;">' +
         '<div style="background:' + combinedColor + ';height:100%;width:' + combinedPct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
       '</div>' +
-      '<div style="font-size:11px;color:' + (combinedDone ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
+      '<div style="font-size:11px;color:' + (combinedOnTrack ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' +
         (combinedDone ? '✓ All targets met — ' + periodLabel : combinedPct + '% of combined target (' + fmtMins(combinedTarget) + ') — ' + periodLabel) +
       '</div>' +
     '</div>';
