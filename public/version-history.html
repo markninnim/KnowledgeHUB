@@ -365,7 +365,7 @@
     <div class="version-head">
       <span class="version-title">Full Commit Log</span>
     </div>
-    <p class="version-summary">The complete, unedited git history behind every release above (1,105 commits, 19 June&ndash;17 July 2026). Also available as a <a href="/api/git-log" target="_blank">plain text download</a>.</p>
+    <p id="full-log-summary" class="version-summary">The complete, unedited git history behind every release above. Also available as a <a href="/api/git-log" target="_blank">plain text download</a>.</p>
     <pre id="full-log" class="log-box">Loading commit log&hellip;</pre>
   </div>
 
@@ -399,12 +399,18 @@ fetch('/api/git-log')
     // manual editing of this page required.
     var lines = text.split('\n').filter(function(l){ return /^\d{4}-\d{2}-\d{2} \| /.test(l); });
     var intro = document.getElementById('intro-paragraph');
+    var logSummary = document.getElementById('full-log-summary');
     if (lines.length) {
       var firstDate = lines[lines.length - 1].split(' | ')[0];
+      var lastDate  = lines[0].split(' | ')[0];
       var count = lines.length;
       intro.innerHTML = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. This rebuild began on ' +
         formatDateLong(firstDate) + ', and has since gone through <strong>' + count.toLocaleString() +
         '</strong> code deployments while building out its core functionality and refining the user experience. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
+      if (logSummary) {
+        logSummary.innerHTML = 'The complete, unedited git history behind every release above (' + count.toLocaleString() + ' commits, ' +
+          formatDateLong(firstDate) + '&ndash;' + formatDateLong(lastDate) + '). Also available as a <a href="/api/git-log" target="_blank">plain text download</a>.';
+      }
     } else {
       intro.textContent = 'KnowledgeHUB™ is the successor to the original KnowledgeHUB, in operation since 2019. Finance Planning Group has invested significantly in this AI-hybrid platform to support its brokers, and remains committed to its continued development.';
     }

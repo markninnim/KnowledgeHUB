@@ -1,9 +1,211 @@
 KnowledgeHUB — Full Git Commit Log Export
-Generated: 2026-07-17
-Total commits: 1105
-Range: 2026-06-19 to 2026-07-17
+Generated: 2026-08-02
+Total commits: 1307
+Range: 2026-06-19 to 2026-08-02
 ============================================================
 
+2026-08-02 | 4466c6b | Add Sim icon to AI summaries, FP unread red-dot, and version history entry
+2026-08-02 | 5696ac4 | Add Sim icon to all AI summaries incl. Consumer Duty broker profile; add unread red-dot for FP submissions
+2026-08-02 | ea0f224 | Add Sim icon and SIM title to Compliance Log and Consumer Duty AI summary panels
+2026-08-02 | a23d272 | Reuse shared .sim-bob animation class instead of duplicating keyframes
+2026-08-02 | 00a9653 | Add bobbing animation to Sim mascot icon
+2026-08-02 | 424e807 | Add Download modal (format/name-or-all/date range) to Supervise toolbar; remove inline date pickers and Refresh
+2026-08-02 | acd07fd | AI CPD summary: replace total-hours figures with on-pace adviser counts/percentages
+2026-08-02 | 00cdeb0 | Tidy Supervise header layout into two aligned rows
+2026-08-02 | 0759089 | Shrink Advisers/Non-CAS/SPOC header stats to match ticker text size
+2026-08-02 | f5c3803 | Remove Avg Combined stat from CPD ticker
+2026-08-02 | 72e74e1 | AI CPD summary: aggregate-only (no names), compare Mortgage vs Protection pace, add specialist CPD coverage
+2026-08-02 | acbcdb6 | Reorder CPD rotator stats, add protection/combined top stats, remove box border
+2026-08-02 | 5bb64cf | Add AI-generated whole-team CPD summary to the Supervise All view
+2026-08-02 | 0615a80 | Add rotating team CPD headline stats to Supervise header
+2026-08-02 | 889392a | CPD bars turn green when ahead of YTD pace, not just at 100% of target
+2026-08-02 | d15b7af | Add David Riley's Admin & Paraplanners team, set Carl Thorne password
+2026-08-02 | a2a3365 | Split Supervise sidebar into SUPERVISORS and COMPLIANCE SUPPORT groups based on job title; update Torie Maleganeas' title to Compliance Manager
+2026-08-02 | 1f440e2 | Fix case-sensitive object-key lookup in My Team CPD aggregation and CSV export — the Airtable query fix alone wasn't enough, since cpdByMember/memberMap lookups by raw email still failed silently for any adviser whose CPD Log email casing differs from their Users record
+2026-08-02 | fef6cff | Fix case-sensitive email matching in CPD queries (My Team, adviser drill-down, /api/cpd, /api/cpd/pdf) — advisers whose CPD Log email casing differs from their Users record were silently showing 0 CPD everywhere except Broker Profile. Also add missing pagination to /api/cpd and /api/cpd/pdf, previously capped at 50 records.
+2026-08-02 | 2e65940 | Fix off-by-one date-boundary bug: CPD queries used strict IS_AFTER, silently excluding records dated exactly on the range start date (e.g. 1 Jan year-to-date totals). Now inclusive across My Team dashboard, adviser CPD drill-down, Broker Profile, and CSV exports.
+2026-08-02 | d7b3825 | Default Broker Profile CPD date range to year-to-date (1 Jan) instead of last-month-onward, so CPD totals match the My Team card and adviser's own CPD Progress panel
+2026-08-02 | c0b5a99 | Fix CPD Type/Category/Source/Specialist select-field unwrapping in cpdRecordToEntry to resolve mismatched totals between My Team card and CPD Progress panel
+2026-08-01 | 32768f5 | Split Compliance Log into its own card on Broker Profile, separate from Annual Reporting
+2026-08-01 | fb84a71 | Broker Profile: match Compliance Log table view (Date/Type/Adviser/Supervisor/Client/Status), split FP/Introducers/OBI into three equal columns
+2026-08-01 | 34ad2bd | Remove left-accent-bar style from Annual Reporting cards
+2026-08-01 | 20d084d | Add Compliance Log, Fitness & Properness, Introducers and Other Business Interests summary to Broker Profile
+2026-08-01 | ea51547 | Turn Broker filter into a type-ahead field on FP/Introducers/OBI pages; brand-navy focus ring instead of default blue
+2026-08-01 | 0798202 | Replace off-brand bright blue accents with brand colours across Annual Reporting pages
+2026-08-01 | 7a300f6 | Add status workflow to Fitness & Properness: auto-archive clean submissions, Clear/Flagged/Archived filter, No Submission roster view
+2026-08-01 | ef73b2c | Add dedicated Fitness & Properness supervisor page; update version history
+2026-08-01 | 75c7ea3 | Break out Fitness & Properness answers into readable Airtable columns; remove email notification; fix broken Advice Standards share email (undefined makeMailTransport)
+2026-08-01 | fa6d2fb | Break out Fitness & Properness answers into readable Airtable columns instead of raw JSON blob
+2026-08-01 | a9dc57a | Fitness & Properness: remove email notification, Airtable-only; fix stuck-submitting bug
+2026-08-01 | 0c4d7d1 | Backfill version history: 29 Jul - 1 Aug entries
+2026-08-01 | 9011ea5 | Fix Adviser Unread not clearing on My Submissions (ownership check used wrong field key format)
+2026-08-01 | 8ab169e | Add Introducers and Other Business Interests supervisor review pages with filters and accordion UI
+2026-08-01 | dd54c04 | Split Fitness & Properness into Annual Reporting group; add Introducers and Other Business Interests declarations with signature capture
+2026-08-01 | 218380a | Add Fitness & Properness submissions to Supervise Questionnaire Feedback page; widen FP read access to supervisors
+2026-08-01 | 7116d4e | Move Fitness & Properness and Whereabouts edits to Airtable so they survive redeploys; fix broken F_SURVEYING field ref; remove dead NEWS_ATTACH ref
+2026-08-01 | 8d40101 | Fix broken Add/Edit User save (F_SURVEYING pointed to deleted field), remove dead NEWS_ATTACH ref
+2026-08-01 | e843d0d | Allow supervisors (not just admins) to import Mortgage Completions
+2026-08-01 | cb2b0ee | Add in-app monthly Mortgage Completions Excel import (AutoCRM tab, admin only)
+2026-07-31 | 0686ae0 | Rename Case Flags table to Acre Case Flags
+2026-07-31 | 7d1fcb5 | Feature Flags: make Key match Label; bridge Access-toggle keys separately
+2026-07-31 | 104b2ed | Fix Home column alignment to compare whole-column bottoms, not just adjacent cards
+2026-07-31 | cc84ec4 | Auto-align Home dashboard columns by growing Today's Recommended Post to match
+2026-07-31 | e2b1f3b | Remove remaining red tile border, self-heal stale Consumer Duty statuses on load
+2026-07-31 | 3851253 | Fix race condition losing checkbox ticks on Consumer Duty cards; remove remaining red from Broker Profile/Home tiles
+2026-07-31 | a826fc3 | Add subtle divider above My Submissions link
+2026-07-31 | 0f34825 | Add column headers and richer detail to My Submissions register
+2026-07-31 | c88a3fb | Move My Submissions link to bottom of Reporting sidebar
+2026-07-31 | 3be3ccb | Add compliance notes, adviser My Submissions register with unread notifications, fix duplicate dropdown rendering
+2026-07-31 | 2d4dff2 | Add editable status dropdown to Compliance Log, archive Resolved entries from default view
+2026-07-31 | 06bd19c | Replace clippable native dropdowns on Compliance Reporting form with scrollable custom dropdowns
+2026-07-31 | 727749f | Switch Consumer Duty feedback status colors from red/green/orange to blue/grey
+2026-07-31 | 83a2a93 | Split Questionnaire Feedback into its own sidebar entry under Compliance
+2026-07-31 | 74355f6 | Split Questionnaire Feedback into its own sidebar entry under Compliance
+2026-07-31 | fb438e0 | Scope Questionnaire Feedback to own adviser; add firm-wide copy under Compliance Log
+2026-07-31 | 8a74699 | Alphabetize Reporting sidebar order
+2026-07-31 | a1083c0 | Reorder Compliance Log above Non CAS, alphabetize Type filter
+2026-07-31 | 7ff2ea4 | Add Compliance Log view under Supervise with filters and type-specific detail
+2026-07-31 | e85dbed | Add Vulnerable Persons and SARs compliance reporting forms
+2026-07-31 | 07025c9 | Make video player modal scrollable so AI summary isn't cut off
+2026-07-31 | 772ee65 | Show AI-generated presentation summary/key topics in the video player
+2026-07-31 | f82c0d7 | Remove Advice Standards from Feature Rollout; make Learn naming fully consistent
+2026-07-31 | fb7fd6a | Make Engage a standalone per-adviser toggle, separate from LeadGEN member eligibility
+2026-07-31 | 6c5fa54 | Add Marketing and Lab to per-adviser Top Nav Tabs access controls
+2026-07-31 | 2f72953 | Remove Advice Standards from per-user tab toggles (no longer a separate tab)
+2026-07-31 | 0620fa8 | Remove Surveying from user Licences panel — it isn't a regulated licence
+2026-07-31 | 1fcc412 | Relabel user edit Licences section as Products & Specialisms — Surveying isn't a regulated licence
+2026-07-31 | 5e4a128 | Use field IDs instead of names in compliance-summary lookup, so Airtable field renames are safe
+2026-07-30 | dd4a278 | Add Employed adviser flag to user Access section
+2026-07-30 | 93c9c7d | Update Sim greeting Acre joke, add bob animation to chat panel header icon
+2026-07-30 | f856994 | Simplify helper bubble to single static Sim pose (looking-right version)
+2026-07-30 | 28cead3 | Remove dead Sim Tabs Seen code
+2026-07-30 | a81e0db | Update ReEngage slide copy
+2026-07-30 | 2aff1d1 | Update AutoCRM slide copy with new reviews-in-advance feature
+2026-07-30 | a512d76 | Update Surveying slide copy with prize draw detail
+2026-07-30 | 27be5f0 | Update Marketing slide copy with new SimFlex wording and money-making paragraph
+2026-07-30 | b0907e6 | Update Learn slide CPD wording
+2026-07-30 | bff4017 | Add specialist licence profile reminder to Earn slide, fix paragraph breaks in Sim modal
+2026-07-30 | ba7c9ed | Bob Sim in welcome modal, update Pay and Engage slide copy
+2026-07-30 | bef6f10 | Add bob animation to Sim's chat message avatar
+2026-07-30 | 698c059 | Polish Sim welcome modal: alternating poses, copy updates, new profile slide
+2026-07-30 | be46a92 | Increase Sim's size in chat, add light backdrop and lighten header so he doesn't blend in
+2026-07-30 | 8f7498e | Fix Sim crop artifact from neighbor bleed, add mirrored 4th pose
+2026-07-30 | d5aef66 | Fix Sim bubble showing all 3 poses on load, add gentle bob for a livelier feel
+2026-07-30 | 9fab47f | Animate Sim helper bubble to cycle between idle, listening and waving
+2026-07-30 | 8492ddc | Remove circular backdrop from Sim helper bubble, show him bigger on his own
+2026-07-30 | 8189c1a | Roll out new Sim vector artwork across helper widget, chat, welcome modal, and CPD modal
+2026-07-30 | 1007227 | Rewrite ReEngage explanatory note
+2026-07-30 | 7566ac5 | Soften missing-CPD-note alert styling, add explanatory note to ReEngage tiles
+2026-07-30 | e6d3893 | Auto-log Industry Reading CPD when the article tab is closed
+2026-07-30 | 509eb89 | Add missing-CPD-note alert to Home CPD Summary card, rebalance card sizes
+2026-07-30 | b23c8f6 | Prompt advisers to annotate automated CPD entries with a learned note, mark them with a red dot
+2026-07-30 | dcad6f9 | Fix video/newsletter CPD not logging on short watches: round up instead of nearest minute
+2026-07-30 | 760f9b8 | Log actual newsletter read time for CPD instead of flat 20 minutes
+2026-07-29 | af1af7a | Remove em dashes from Sim copy, add robot icon to Sim modal header
+2026-07-29 | 7c38edc | Rebrand KnowledgeHELPER chat widget as Sim, your personal assistant
+2026-07-29 | fc802fc | Restore Sim onboarding as a modal welcome tour with full section-by-section copy
+2026-07-29 | 546d12a | Fix Sim widget crash: guard against SIM_MESSAGES not yet defined
+2026-07-29 | a483256 | Move Sim widget above KnowledgeHELPER bubble to avoid overlap
+2026-07-29 | 10263b1 | Replace onboarding modal with persistent Sim mascot tips per tab
+2026-07-29 | b65db8a | Add casual first-login welcome tour for advisers
+2026-07-28 | bcfdc37 | Replace archive toggles with status-tile/filter defaults (Partial shown by default everywhere)
+2026-07-28 | 8d6b15e | Make Broker Profile Consumer Duty tiles clickable to filter cards by status
+2026-07-28 | dca01a0 | Add status filter (Full/Restored/Partial) to Questionnaire Feedback page
+2026-07-28 | 8565e78 | Match Consumer Duty card titles to uppercase label style, add spacing under title
+2026-07-28 | 3c4c3f7 | Make Consumer Duty cards stretch to equal height within each grid row
+2026-07-28 | 035b05d | Cap Consumer Duty cards to 2 visible flags with expandable accordion for the rest
+2026-07-28 | d96e6a4 | Revert masonry column layout back to standard 2-column grid
+2026-07-28 | eb63acf | Let Consumer Duty summary text fill available header width
+2026-07-28 | f7af30a | Use masonry column layout for Consumer Duty response cards
+2026-07-28 | a56f5cc | Fix Consumer Duty flag logic: add Q2/Q3-mismatch/NPS checks, disable Q4/Q5, correct field labels
+2026-07-28 | 48743cb | Restore Q1 to status calc; hide Q1 only from broker-facing Home page cards
+2026-07-28 | bd836b3 | Swap Home page Consumer Duty card to the Broker Profile rich-card layout
+2026-07-28 | 2186edf | Add per-broker AI Consumer Duty summary to header, remove icon, retitle with broker name
+2026-07-28 | 7de50d7 | Remove Q1 Adviser Knowledge from Consumer Duty flagged checks entirely
+2026-07-28 | 4430cc4 | Only flag Q1 Adviser Knowledge for Adequate/Needs improvement answers
+2026-07-28 | 7ebc80e | Fix stale Consumer Duty tile counts after resolving flagged items
+2026-07-28 | 33e1adc | Archive restored cards from Questionnaire Feedback view by default
+2026-07-28 | 56c4a14 | Rename Consumer Duty summary, add broker filter label, 50/50 broker profile grid, archive toggle for restored cards
+2026-07-28 | fc5fb80 | Show detailed Consumer Duty response cards on Broker Profile page
+2026-07-28 | 4f90a9c | Add permanent AI compliance summary to Questionnaire Feedback page
+2026-07-28 | b42b9e2 | Add adviser/date filters and 50/50 grid to Questionnaire Feedback page
+2026-07-28 | c3478e6 | Add Consumer Duty Questionnaire Feedback page for supervisors/admins
+2026-07-28 | 6c5a7ea | Add new adviser review from Feefo
+2026-07-28 | bd1ce2c | Update Mortgage Advice Standards to V4, refresh quiz, log v2.2 changelog
+2026-07-26 | 73af82a | Add meeting recording with AI transcription and action-point extraction
+2026-07-25 | 50840bb | Note Taker Name always reflects the logged-in user saving the note
+2026-07-25 | 651a607 | Record note-taker name on Meeting Notes
+2026-07-25 | 1c64bcc | Add auto-populated Supervisor Name field for email automation
+2026-07-25 | 458d3cb | Simplify Action Points formatted bullets
+2026-07-25 | 6e57fc0 | Auto-generate formatted Action Points field for email automations
+2026-07-25 | 0ecf867 | Add Summary field backfill, edit/delete for Meeting Notes
+2026-07-24 | 7291aa7 | Add v2.1 entry to version history
+2026-07-24 | 8fdfcca | Add compliance Flag Log section + flag observation in AI summary
+2026-07-24 | 5dba2e2 | Add compliance-style supervisor summary paragraph above KPI cards
+2026-07-24 | 3b5930c | Add quarterly Meeting Notes with action points to Adviser Dashboard + PDF
+2026-07-24 | 0c8e3ed | Advisor dashboard: all sections 50/50, top KPI cards 33%; fix field lookup
+2026-07-24 | 5e63d9c | Advisor dashboard: top KPI cards 33%, other card grids 50%; fix field lookup
+2026-07-24 | fc2cf02 | Advisor dashboard: 50/50 card grid; fix advisor-dashboard field lookup
+2026-07-24 | eb514fc | Fix advisor dashboard: read Airtable fields by name, not hardcoded field ID
+2026-07-24 | 8448b0a | Add per-adviser Power BI dashboard page
+2026-07-24 | c425e7c | Style Power BI button solid yellow, no border
+2026-07-24 | f844e5d | Remove Clear button, add Power BI placeholder button to broker profile
+2026-07-24 | 19f5eb1 | Remove Back button from broker profile page
+2026-07-22 | f9e7769 | Remove legacy shared social-trust folders, keep only named adviser folders
+2026-07-22 | 0d39d8b | Add one more review post for advisers
+2026-07-22 | 6f3b6f3 | Add second batch of additional reviews for advisers
+2026-07-22 | 4483d8a | Add additional review posts for advisers
+2026-07-22 | bc24319 | Fix size/label display for Social Trust Content graphics with plain filenames
+2026-07-22 | dde6c90 | Add one additional review per adviser to Social Trust Content
+2026-07-22 | ed7e5e4 | Reorganize Social Trust Content into per-adviser folders with numbered Review subfolders
+2026-07-22 | 192e14f | Generate Social Trust Content batch: 1 highest-rated review per adviser (68 advisers)
+2026-07-22 | 58b747c | Restrict Social Trust Content to owning adviser(s) + admins; backfill legacy folder ownership from Airtable
+2026-07-22 | c06ad1b | Restrict Post Builder-generated content to creator + admins
+2026-07-22 | 842cb0c | Hide Template Setup panel from Post Builder UI
+2026-07-22 | 01acbd7 | Raise minimum font size to 40px
+2026-07-22 | b86ad2c | Raise minimum font size to 20px, truncate rest with ellipsis
+2026-07-22 | 6caea2e | Raise minimum font size to 15px
+2026-07-22 | 6f12c97 | Truncate review text with ellipsis if it still doesn't fit at smallest font size
+2026-07-22 | 8d925ed | Byline is now always 50% of body font size, no em dash; nudge LinkedIn/Facebook logo gap +8px
+2026-07-22 | a5dbf5a | Square: same logo-aligned symmetric full-height treatment; Instagram: shrink customer name 40%
+2026-07-22 | 679ea26 | TikTok/Story: reduce gap below logo, 10% smaller font, 50% smaller customer name
+2026-07-22 | 33d1d10 | Apply logo-aligned symmetric full-height box to TikTok/Story
+2026-07-22 | 1e2a867 | Instagram: align box to logo, symmetric margins, fill available space; raise max font size 50%
+2026-07-22 | c3bf002 | Give LinkedIn/Facebook text box full height — overlapping the star is fine
+2026-07-22 | 4958b3b | Make LinkedIn/Facebook text box margins symmetric
+2026-07-22 | 4195973 | Align LinkedIn/Facebook text box to logo edge, widen box, add breathing room
+2026-07-22 | a615f43 | Remove temp debug overlay from Post Builder
+2026-07-21 | fb047e3 | Temp debug: outline text box + print config values on canvas
+2026-07-21 | 18a0323 | Fix LinkedIn/Facebook text box shape — taller and narrower for more legible text
+2026-07-21 | 044b649 | Widen Post Builder text boxes to match real template proportions
+2026-07-21 | 2161aaf | Post Builder: derive adviser name from logged-in profile instead of manual entry
+2026-07-21 | b3866bc | Improve Post Builder text placement + add customer name byline
+2026-07-21 | 6533122 | Fix Social Trust Content caption wording — folder name is the broker, not the reviewer
+2026-07-21 | 489e4be | Rename Post Builder client-name field to adviser name
+2026-07-21 | 039b148 | Add Social Trust Post Builder templates
+2026-07-21 | 5a5a39b | Add Social Trust Post Builder (template setup + auto-fit text generator)
+2026-07-21 | 330c495 | Clean up Social Trust Content folders to only the 5 standard platform sizes
+2026-07-21 | c8440d4 | Fix approved dates to use real file dates, tag post 1 as Community & Culture
+2026-07-21 | 587aba1 | Add backlog of new social content from Posts folder
+2026-07-21 | d750444 | Add Social Trust Content page with search, backed by client review folders
+2026-07-21 | 3fac5dc | Move style guides into style/ folder, allow PDF uploads in presentation slots, add social content updates
+2026-07-20 | 4c13b11 | Allow PDF uploads in existing presentation slots
+2026-07-20 | 090c95d | Add PDF presentation upload for Learning Videos
+2026-07-18 | c1cc4d3 | Add copy and content pillar tags for new social posts
+2026-07-18 | 4763386 | Add TM to back link on version history page
+2026-07-18 | 0d0cc57 | Style intro paragraph as plain text, bold deployment count
+2026-07-18 | d230aa6 | Add dynamic project summary paragraph to version history page
+2026-07-17 | 1cb3b30 | Autocomplete supervisor/admin names in Change Request Name field
+2026-07-17 | bdf3649 | Fix milestone card double border, open version history in same tab
+2026-07-17 | 67c211c | Add Change Requests feature (Airtable-backed, supervisor/admin managed)
+2026-07-17 | 13200d3 | Expand v2.0 MVP milestone summary
+2026-07-17 | c6e0968 | Use square FPG profile image as version history favicon
+2026-07-17 | 8368da6 | Add favicon to version history page
+2026-07-17 | 9b99469 | Link SimFlex logo to simflex.ai
+2026-07-17 | 700570a | Set version history logo to full opacity
+2026-07-17 | cf8d7ba | Serve live git log via /api/git-log instead of static export
+2026-07-17 | 5b6bcea | Embed full commit log inline on version history page
+2026-07-17 | 4782729 | Fix version history: true full range is 19 June - 17 July (1,105 commits)
 2026-07-17 | 8d3947c | Extend version history back to 7 July with full commit log
 2026-07-17 | 4bd50dc | Add full commit log download to version history page
 2026-07-17 | fe673ec | Add SimFlex logo asset
