@@ -4346,6 +4346,10 @@ Consolidating debts will increase the loan to value which can impact future deal
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <div id="sv-rotator" style="display:none;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;min-width:230px;text-align:right;cursor:default;">
+            <div id="sv-rotator-label" style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;transition:opacity .3s ease;">—</div>
+            <div id="sv-rotator-value" style="font-size:15px;font-weight:800;color:var(--brand-navy);transition:opacity .3s ease;">—</div>
+          </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
             <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
               <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
@@ -15345,6 +15349,100 @@ function renderSvDashboard(data) {
     document.getElementById('sv-supervisors-wrap').style.display = 'block';
     document.getElementById('sv-supervisors-list').innerHTML = supervisorCards.map(renderer).join('');
   }
+
+  svStartRotator(svComputeRotatorStats(members, cpdByMember));
+}
+
+// ── Whole-team headline stats rotator (top-right of the CPD Register header) ──
+var _svRotatorItems = [], _svRotatorIdx = 0, _svRotatorTimer = null;
+
+function svComputeRotatorStats(members, cpdByMember) {
+  // "Brokers" = licensed advisers only — excludes supervisors-as-a-role and
+  // admin/paraplanner/director staff who don't carry a CPD target.
+  var brokers = members.filter(function(m) {
+    return !m.isSupervisor && (m.sellsMortgages || m.sellsProtection);
+  });
+  if (!brokers.length) return [];
+
+  var nameOf = function(m) { return [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email; };
+
+  var totalMins = brokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).total || 0); }, 0);
+
+  var mortgageBrokers = brokers.filter(function(m) { return m.sellsMortgages; });
+  var avgMortgageMins = mortgageBrokers.length
+    ? mortgageBrokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).Mortgage || 0); }, 0) / mortgageBrokers.length
+    : 0;
+
+  var protectionBrokers = brokers.filter(function(m) { return m.sellsProtection; });
+  var avgProtectionMins = protectionBrokers.length
+    ? protectionBrokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).Protection || 0); }, 0) / protectionBrokers.length
+    : 0;
+
+  var topMortgage = null;
+  mortgageBrokers.forEach(function(m) {
+    var mins = (cpdByMember[m.email] || {}).Mortgage || 0;
+    if (!topMortgage || mins > topMortgage.mins) topMortgage = { m: m, mins: mins };
+  });
+
+  // Top supervisor by their direct reports' average total CPD
+  var bySupervisor = {};
+  brokers.forEach(function(m) {
+    if (!m.supervisorEmail) return;
+    var key = m.supervisorEmail.toLowerCase();
+    if (!bySupervisor[key]) bySupervisor[key] = [];
+    bySupervisor[key].push((cpdByMember[m.email] || {}).total || 0);
+  });
+  var topSupervisor = null;
+  Object.keys(bySupervisor).forEach(function(email) {
+    var list = bySupervisor[email];
+    var avg = list.reduce(function(s, v) { return s + v; }, 0) / list.length;
+    if (!topSupervisor || avg > topSupervisor.avg) {
+      var supMember = members.find(function(m) { return m.email.toLowerCase() === email; });
+      topSupervisor = { name: supMember ? nameOf(supMember) : email, avg: avg };
+    }
+  });
+
+  var items = [
+    { label: 'Total CPD Hours', value: fmtCpdTime(totalMins) },
+    { label: 'Avg Mortgage CPD / Broker', value: fmtCpdTime(Math.round(avgMortgageMins)) },
+    { label: 'Avg Protection CPD / Broker', value: fmtCpdTime(Math.round(avgProtectionMins)) }
+  ];
+  if (topMortgage) items.push({ label: 'Top Mortgage CPD', value: nameOf(topMortgage.m) + ' — ' + fmtCpdTime(topMortgage.mins) });
+  if (topSupervisor) items.push({ label: 'Top Supervisor (Team Avg)', value: topSupervisor.name + ' — ' + fmtCpdTime(Math.round(topSupervisor.avg)) });
+  return items;
+}
+
+function svStartRotator(items) {
+  if (_svRotatorTimer) { clearInterval(_svRotatorTimer); _svRotatorTimer = null; }
+  var wrap = document.getElementById('sv-rotator');
+  if (!wrap) return;
+  _svRotatorItems = items;
+  _svRotatorIdx = 0;
+  if (!items.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  svRenderRotatorItem();
+  if (items.length > 1) {
+    _svRotatorTimer = setInterval(function() {
+      _svRotatorIdx = (_svRotatorIdx + 1) % _svRotatorItems.length;
+      svRenderRotatorItem();
+    }, 4500);
+  }
+}
+
+function svRenderRotatorItem() {
+  var labelEl = document.getElementById('sv-rotator-label');
+  var valueEl = document.getElementById('sv-rotator-value');
+  if (!labelEl || !valueEl) return;
+  var item = _svRotatorItems[_svRotatorIdx];
+  if (!item) return;
+  labelEl.style.opacity = '0';
+  valueEl.style.opacity = '0';
+  setTimeout(function() {
+    labelEl.textContent = item.label;
+    valueEl.textContent = item.value;
+    labelEl.style.opacity = '1';
+    valueEl.style.opacity = '1';
+  }, 300);
 }
 
 function svDrillDown(email, drillId) {
