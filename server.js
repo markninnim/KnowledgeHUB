@@ -7383,8 +7383,14 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
     // the Revalidation "Broker List" table (Test 1–4 score fields), matched by
     // email. Not date-range filtered — these are one-off tests.
     const knowledgeTests = {};
+    // The Broker List table has no date column for these scores — the closest
+    // thing to "when this test result was recorded" is the Airtable record's
+    // own createdTime, which is what gets surfaced to the client as the date
+    // these revalidation modules must have been watched by.
+    let knowledgeTestsRecordedDate = null;
     if (blRec) {
       const blf = blRec.fields || {};
+      knowledgeTestsRecordedDate = blRec.createdTime ? blRec.createdTime.slice(0, 10) : null;
       BL_TEST_FIELDS.forEach((t, i) => {
         const raw = blf[t.field];
         if (raw === undefined || raw === null || raw === '') return;
@@ -7607,6 +7613,7 @@ async function getBrokerProfileData(brokerEmail, rangeFrom, rangeTo) {
       consumerDuty: { total: cdRecs.length, full: cdFull, restored: cdRestored, partial: cdPartial, records: cdRecords.slice(0, 20), summary: cdSummary },
       quiz:          quizResults,
       knowledgeTests: knowledgeTests,
+      knowledgeTestsRecordedDate: knowledgeTestsRecordedDate,
       engage:        { total: leadTotal, hot: hotCount, warm: warmCount, cold: coldCount },
       reEngage:      reEngageBuckets,
       reEngageRows:  reEngageRows,

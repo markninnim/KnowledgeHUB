@@ -12573,13 +12573,13 @@ function openBrokerProfile(email, name, keepDateRange) {
           '<span style="font-size:11px;color:#6b7c8f;flex-shrink:0;margin-left:8px;">' + (v.date || '') + '</span>' +
         '</div>';
       }
-      function bpRenderVideoList(elId, all, cap, emptyMsg, countSuffix, expanded) {
+      function bpRenderVideoList(elId, all, cap, emptyMsg, countSuffix, expanded, hideSummary) {
         var el = document.getElementById(elId);
         if (!el) return;
         if (!all.length) { el.innerHTML = '<div style="font-size:12px;color:#6b7c8f;">' + emptyMsg + '</div>'; return; }
         var shown = expanded ? all : all.slice(0, cap);
         var remaining = all.length - shown.length;
-        el.innerHTML = '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + all.length + ' ' + countSuffix + '</div>' +
+        el.innerHTML = (hideSummary ? '' : '<div style="font-size:12px;color:#6b7c8f;margin-bottom:8px;">' + all.length + ' ' + countSuffix + '</div>') +
           '<div style="display:flex;flex-direction:column;gap:4px;">' + shown.map(bpVideoRow).join('') + '</div>' +
           (remaining > 0
             ? '<button onclick="bpToggleVideoList(\'' + elId + '\',true)" style="background:none;border:none;padding:0;margin-top:6px;font-size:11px;color:var(--brand-navy);font-weight:600;cursor:pointer;text-decoration:none;">+' + remaining + ' more</button>'
@@ -12591,7 +12591,7 @@ function openBrokerProfile(email, name, keepDateRange) {
       window.bpToggleVideoList = function(elId, expand) {
         var cfg = window._bpVideoLists[elId];
         if (!cfg) return;
-        bpRenderVideoList(elId, cfg.all, cfg.cap, cfg.emptyMsg, cfg.countSuffix, expand);
+        bpRenderVideoList(elId, cfg.all, cfg.cap, cfg.emptyMsg, cfg.countSuffix, expand, cfg.hideSummary);
       };
 
       // ── Videos Watched (from CPD log) — capped to 5 most recent ──
@@ -12612,18 +12612,22 @@ function openBrokerProfile(email, name, keepDateRange) {
       // watch date from the Revalidation results base (the exam date is the
       // latest date by which every module must have been watched) and show
       // the full module list rather than a misleading "not watched" message.
+      var rvHideSummary = false;
       if (!rvVideos.length) {
         var passedKt   = ktRows.some(function(n) { return kt[n] && kt[n].passed; });
         var passedQuiz = (d.quiz || []).find(function(q) { return (q.result || '').toLowerCase().indexOf('pass') !== -1; });
         if (passedKt || passedQuiz) {
-          var inferredDate = passedQuiz ? passedQuiz.date : ((d.quiz || [])[0] ? d.quiz[0].date : null);
+          // Prefer the date the Broker List test score was actually recorded in
+          // Airtable (createdTime on that row) over the separate combined-exam
+          // date, since that's the specific test being passed here.
+          var inferredDate = d.knowledgeTestsRecordedDate || (passedQuiz ? passedQuiz.date : ((d.quiz || [])[0] ? d.quiz[0].date : null));
           rvVideos = _rvVideos.map(function(v) { return { videoTitle: v.title, date: inferredDate || '' }; });
           rvEmptyMsg = 'No revalidation videos watched yet';
-          rvCountSuffix = 'modules — inferred from passed revalidation test' + (inferredDate ? ', by ' + inferredDate : '');
+          rvHideSummary = true;
         }
       }
-      window._bpVideoLists['bp-rv-videos'] = { all: rvVideos, cap: 4, emptyMsg: rvEmptyMsg, countSuffix: rvCountSuffix };
-      bpRenderVideoList('bp-rv-videos', rvVideos, 4, rvEmptyMsg, rvCountSuffix, false);
+      window._bpVideoLists['bp-rv-videos'] = { all: rvVideos, cap: 4, emptyMsg: rvEmptyMsg, countSuffix: rvCountSuffix, hideSummary: rvHideSummary };
+      bpRenderVideoList('bp-rv-videos', rvVideos, 4, rvEmptyMsg, rvCountSuffix, false, rvHideSummary);
 
       // ── Newsletter Access (CPD log entries for FPG CPD Round-up newsletters) ──
       var nlEl = document.getElementById('bp-newsletter');
