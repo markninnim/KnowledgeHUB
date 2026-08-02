@@ -4232,15 +4232,20 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
     const yearFraction = (Date.now() - yearStart) / (yearEnd - yearStart);
     const pctThroughYear = Math.round(yearFraction * 100);
 
-    let totalMins = 0;
+    // What matters here is not the company's aggregate hours (a firm-wide total
+    // doesn't tell you whether the scheme is working — it's only effective if
+    // each individual adviser personally does their own CPD), but how many
+    // individual advisers have actually reached the correct YTD pace toward
+    // their own target. onPace counts/percentages below are always ≤ the
+    // relevant headcount (never "over") since they're a straight count of
+    // people meeting-or-beating their personal pace, not a ratio of hours.
     const onTrackCount = { yes: 0, no: 0 };
     const perType = {
-      Mortgage:   { holders: 0, totalMins: 0, behindCount: 0 },
-      Protection: { holders: 0, totalMins: 0, behindCount: 0 }
+      Mortgage:   { holders: 0, onPace: 0, behindCount: 0 },
+      Protection: { holders: 0, onPace: 0, behindCount: 0 }
     };
     brokers.forEach(b => {
       const cpd = byEmail[b.email.toLowerCase()];
-      totalMins += cpd.total;
       const relevantTypes = [];
       if (b.sellsMortgages) relevantTypes.push('Mortgage');
       if (b.sellsProtection) relevantTypes.push('Protection');
@@ -4249,8 +4254,9 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
         const target = CPD_TARGETS[t] || 900;
         const expected = target * yearFraction;
         perType[t].holders++;
-        perType[t].totalMins += cpd[t];
-        if (cpd[t] < expected) {
+        if (cpd[t] >= expected) {
+          perType[t].onPace++;
+        } else {
           behind = true;
           if ((expected - cpd[t]) > 60) perType[t].behindCount++; // ignore trivial gaps
         }
@@ -4258,37 +4264,33 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
       if (behind) onTrackCount.no++; else onTrackCount.yes++;
     });
 
-    // Per-type aggregate pace: what % of the expected-by-now company total has
-    // actually been logged for Mortgage vs Protection — this is what surfaces
-    // whether one licence type is getting materially less attention than the
-    // other, without naming any individual.
+    // Per-type: how many licence holders have personally reached the correct
+    // YTD pace for their own target, as a count and percentage of holders —
+    // never company-wide hours, and the percentage can only be ≤100% of holders.
     const typeStats = {};
     ['Mortgage', 'Protection'].forEach(t => {
-      const target = CPD_TARGETS[t] || 900;
-      const expectedTotal = perType[t].holders * target * yearFraction;
       typeStats[t] = {
         holders: perType[t].holders,
-        totalHours: fmtMinsServer(perType[t].totalMins),
-        expectedHoursByNow: fmtMinsServer(Math.round(expectedTotal)),
-        pctOfPace: expectedTotal > 0 ? Math.round((perType[t].totalMins / expectedTotal) * 100) : 0,
+        onPace: perType[t].onPace,
+        onPacePct: perType[t].holders > 0 ? Math.round((perType[t].onPace / perType[t].holders) * 100) : 0,
         behindCount: perType[t].behindCount
       };
     });
+
+    const overallOnPacePct = brokers.length > 0 ? Math.round((onTrackCount.yes / brokers.length) * 100) : 0;
 
     // Specialist CPD coverage — advisers holding at least one specialist licence
     // (equity release, commercial, bridging, PMI, business protection, wealth)
     // are expected to log some specialist-tagged CPD; report only how many have
     // logged none, in aggregate, not who.
-    const SPECIALIST_TARGET_MINS = 180; // 3 hours per specialist area, matches client
     const specialistHolders = brokers.filter(b =>
       b.equityRelease || b.commercialMortgages || b.bridging || b.pmi || b.businessProtection || b.sellsInvestments
     );
     const specialistWithNone = specialistHolders.filter(b => (byEmail[b.email.toLowerCase()].specialist || 0) === 0).length;
-    const specialistTotalMins = specialistHolders.reduce((s, b) => s + (byEmail[b.email.toLowerCase()].specialist || 0), 0);
 
-    const fallback = `${pctThroughYear}% of the year has passed. ${brokers.length} licensed advisers, ${onTrackCount.yes} on pace and ${onTrackCount.no} behind. `
-      + `Mortgage CPD is at ${typeStats.Mortgage.pctOfPace}% of expected pace, Protection CPD is at ${typeStats.Protection.pctOfPace}% of expected pace. `
-      + `${specialistHolders.length} advisers hold a specialist licence; ${specialistWithNone} of them have logged no specialist CPD this year. Total logged CPD this year: ${fmtMinsServer(totalMins)}.`;
+    const fallback = `${pctThroughYear}% of the year has passed. ${onTrackCount.yes} of ${brokers.length} licensed advisers (${overallOnPacePct}%) have personally reached the correct year-to-date CPD level. `
+      + `${typeStats.Mortgage.onPace} of ${typeStats.Mortgage.holders} Mortgage-licensed advisers (${typeStats.Mortgage.onPacePct}%) are on pace, and ${typeStats.Protection.onPace} of ${typeStats.Protection.holders} Protection-licensed advisers (${typeStats.Protection.onPacePct}%) are on pace. `
+      + `${specialistHolders.length} advisers hold a specialist licence; ${specialistWithNone} of them have logged no specialist CPD this year.`;
 
     if (!ANTHROPIC_API_KEY) return res.json({ summary: fallback, generatedAt: new Date().toISOString() });
 
@@ -4300,20 +4302,19 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
           model: 'claude-sonnet-4-5-20250929',
           max_tokens: 500,
           system: 'You are writing a short briefing for the leadership team of a UK mortgage & protection advice firm on their advisers\' CPD (Continuing Professional Development) position, shown on an internal "whole company" CPD dashboard. '
-            + 'You are given aggregate, company-wide numbers only: how far through the calendar year we are, the total number of licensed advisers and how many are on pace vs behind a straight-line pace toward their annual CPD target, separate Mortgage and Protection CPD pace percentages (logged hours as a % of what should have been logged by now), how many advisers are behind pace on each of those two licence types, specialist-licence CPD coverage (how many advisers hold a specialist licence such as equity release, commercial, bridging, PMI, business protection or wealth, and how many of those have logged zero specialist CPD this year), and the total CPD hours logged company-wide so far. '
-            + 'Do NOT name or refer to any individual adviser or supervisor — speak only in aggregate numbers, percentages and counts. '
+            + 'You are given aggregate, individual-completion-based numbers only: how far through the calendar year we are, the total number of licensed advisers and how many of them have personally reached the correct year-to-date pace toward their own annual CPD target (as a count and percentage — this can never exceed 100% or the headcount, since it is a count of people, not a ratio of hours), the same on-pace count/percentage broken out separately for Mortgage-licensed and Protection-licensed advisers, how many are behind pace on each of those two licence types, and specialist-licence CPD coverage (how many advisers hold a specialist licence such as equity release, commercial, bridging, PMI, business protection or wealth, and how many of those have logged zero specialist CPD this year). '
+            + 'Do NOT reference total or aggregate CPD hours anywhere, company-wide or per licence type — company-wide hours are not a meaningful measure of this scheme, since it only works if each individual adviser personally completes their own CPD. Speak only in counts and percentages of advisers, and do NOT name or refer to any individual adviser or supervisor. '
             + 'Write 5-7 sentences of flowing prose (no bullet points, no headers, no markdown). Open with the overall company position given how far through the year we are. '
-            + 'Compare Mortgage and Protection pace directly — if one licence type is clearly getting less attention than the other, say so explicitly and suggest one or two concrete ways to bring it back on track (e.g. a themed protection-focused CPD push, dedicating part of the weekly hangout to protection insurer training, or a reminder campaign to protection-licensed advisers). '
+            + 'Compare the Mortgage and Protection on-pace percentages directly — if one licence type clearly has a lower proportion of advisers on pace than the other, say so explicitly and suggest one or two concrete ways to bring it back on track (e.g. a themed protection-focused CPD push, dedicating part of the weekly hangout to protection insurer training, or a reminder campaign to protection-licensed advisers). '
             + 'Also comment on specialist CPD coverage — if a meaningful number of specialist-licensed advisers have logged no specialist CPD, flag it as a compliance/competence gap worth addressing and suggest a practical fix (e.g. requiring at least one specialist CPD entry per licence per quarter). '
             + 'Close with 1-2 concrete priorities for the remainder of the year. '
             + 'Keep the tone measured, factual and constructive — like an ops analyst briefing management, not alarmist. Do not invent data not given to you.',
           messages: [{ role: 'user', content:
             `${pctThroughYear}% of ${thisYear} has elapsed.\n`
-            + `Licensed advisers: ${brokers.length} (${onTrackCount.yes} on pace, ${onTrackCount.no} behind pace on at least one CPD type).\n`
-            + `Total CPD logged company-wide YTD: ${fmtMinsServer(totalMins)}.\n\n`
-            + `Mortgage CPD — ${typeStats.Mortgage.holders} licence holders, ${typeStats.Mortgage.totalHours} logged vs ${typeStats.Mortgage.expectedHoursByNow} expected by now (${typeStats.Mortgage.pctOfPace}% of pace), ${typeStats.Mortgage.behindCount} advisers meaningfully behind pace.\n`
-            + `Protection CPD — ${typeStats.Protection.holders} licence holders, ${typeStats.Protection.totalHours} logged vs ${typeStats.Protection.expectedHoursByNow} expected by now (${typeStats.Protection.pctOfPace}% of pace), ${typeStats.Protection.behindCount} advisers meaningfully behind pace.\n\n`
-            + `Specialist CPD — ${specialistHolders.length} advisers hold at least one specialist licence (equity release, commercial, bridging, PMI, business protection or wealth), ${specialistWithNone} of them have logged zero specialist CPD this year, ${fmtMinsServer(specialistTotalMins)} total specialist CPD logged so far (target is 3h per specialist area held).`
+            + `Licensed advisers: ${brokers.length} total. ${onTrackCount.yes} (${overallOnPacePct}%) have personally reached the correct YTD CPD pace; ${onTrackCount.no} have not.\n\n`
+            + `Mortgage CPD — ${typeStats.Mortgage.holders} licence holders, ${typeStats.Mortgage.onPace} (${typeStats.Mortgage.onPacePct}%) on pace, ${typeStats.Mortgage.behindCount} meaningfully behind pace.\n`
+            + `Protection CPD — ${typeStats.Protection.holders} licence holders, ${typeStats.Protection.onPace} (${typeStats.Protection.onPacePct}%) on pace, ${typeStats.Protection.behindCount} meaningfully behind pace.\n\n`
+            + `Specialist CPD — ${specialistHolders.length} advisers hold at least one specialist licence (equity release, commercial, bridging, PMI, business protection or wealth), ${specialistWithNone} of them have logged zero specialist CPD this year (target is 3h per specialist area held).`
           }]
         })
       });
