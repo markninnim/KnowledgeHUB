@@ -12603,8 +12603,27 @@ function openBrokerProfile(email, name, keepDateRange) {
       // ── Revalidation Videos (CPD log entries matching known revalidation video titles) ──
       var rvTitles = _rvVideos.map(function(v) { return v.title.toLowerCase(); });
       var rvVideos = allLog.filter(function(e) { return e.videoTitle && rvTitles.indexOf(e.videoTitle.toLowerCase()) !== -1; });
-      window._bpVideoLists['bp-rv-videos'] = { all: rvVideos, cap: 4, emptyMsg: 'No revalidation videos watched yet', countSuffix: 'video' + (rvVideos.length!==1?'s':'') + ' watched' };
-      bpRenderVideoList('bp-rv-videos', rvVideos, 4, 'No revalidation videos watched yet', 'video' + (rvVideos.length!==1?'s':'') + ' watched', false);
+      var rvEmptyMsg = 'No revalidation videos watched yet';
+      var rvCountSuffix = 'video' + (rvVideos.length!==1?'s':'') + ' watched';
+
+      // No logged views, but the adviser has actually passed revalidation —
+      // they couldn't have passed without watching the modules, the CPD Log
+      // entries just predate CPD being auto-logged for video views. Infer the
+      // watch date from the Revalidation results base (the exam date is the
+      // latest date by which every module must have been watched) and show
+      // the full module list rather than a misleading "not watched" message.
+      if (!rvVideos.length) {
+        var passedKt   = ktRows.some(function(n) { return kt[n] && kt[n].passed; });
+        var passedQuiz = (d.quiz || []).find(function(q) { return (q.result || '').toLowerCase().indexOf('pass') !== -1; });
+        if (passedKt || passedQuiz) {
+          var inferredDate = passedQuiz ? passedQuiz.date : ((d.quiz || [])[0] ? d.quiz[0].date : null);
+          rvVideos = _rvVideos.map(function(v) { return { videoTitle: v.title, date: inferredDate || '' }; });
+          rvEmptyMsg = 'No revalidation videos watched yet';
+          rvCountSuffix = 'modules — inferred from passed revalidation test' + (inferredDate ? ', by ' + inferredDate : '');
+        }
+      }
+      window._bpVideoLists['bp-rv-videos'] = { all: rvVideos, cap: 4, emptyMsg: rvEmptyMsg, countSuffix: rvCountSuffix };
+      bpRenderVideoList('bp-rv-videos', rvVideos, 4, rvEmptyMsg, rvCountSuffix, false);
 
       // ── Newsletter Access (CPD log entries for FPG CPD Round-up newsletters) ──
       var nlEl = document.getElementById('bp-newsletter');
