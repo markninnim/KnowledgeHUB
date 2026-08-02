@@ -4346,7 +4346,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-          <div id="sv-rotator" style="display:none;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;min-width:230px;text-align:right;cursor:default;">
+          <div id="sv-rotator" style="display:none;background:transparent;border:none;border-radius:8px;padding:7px 14px;min-width:230px;text-align:right;cursor:default;">
             <div id="sv-rotator-label" style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;transition:opacity .3s ease;">—</div>
             <div id="sv-rotator-value" style="font-size:15px;font-weight:800;color:var(--brand-navy);transition:opacity .3s ease;">—</div>
           </div>
@@ -15394,8 +15394,6 @@ function svComputeRotatorStats(members, cpdByMember) {
 
   var nameOf = function(m) { return [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email; };
 
-  var totalMins = brokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).total || 0); }, 0);
-
   var mortgageBrokers = brokers.filter(function(m) { return m.sellsMortgages; });
   var avgMortgageMins = mortgageBrokers.length
     ? mortgageBrokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).Mortgage || 0); }, 0) / mortgageBrokers.length
@@ -15406,10 +15404,26 @@ function svComputeRotatorStats(members, cpdByMember) {
     ? protectionBrokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).Protection || 0); }, 0) / protectionBrokers.length
     : 0;
 
+  var avgCombinedMins = brokers.length
+    ? brokers.reduce(function(s, m) { return s + ((cpdByMember[m.email] || {}).total || 0); }, 0) / brokers.length
+    : 0;
+
   var topMortgage = null;
   mortgageBrokers.forEach(function(m) {
     var mins = (cpdByMember[m.email] || {}).Mortgage || 0;
     if (!topMortgage || mins > topMortgage.mins) topMortgage = { m: m, mins: mins };
+  });
+
+  var topProtection = null;
+  protectionBrokers.forEach(function(m) {
+    var mins = (cpdByMember[m.email] || {}).Protection || 0;
+    if (!topProtection || mins > topProtection.mins) topProtection = { m: m, mins: mins };
+  });
+
+  var topCombined = null;
+  brokers.forEach(function(m) {
+    var mins = (cpdByMember[m.email] || {}).total || 0;
+    if (!topCombined || mins > topCombined.mins) topCombined = { m: m, mins: mins };
   });
 
   // Top supervisor by their direct reports' average total CPD
@@ -15431,11 +15445,13 @@ function svComputeRotatorStats(members, cpdByMember) {
   });
 
   var items = [
-    { label: 'Total CPD Hours', value: fmtCpdTime(totalMins) },
-    { label: 'Avg Mortgage CPD / Broker', value: fmtCpdTime(Math.round(avgMortgageMins)) },
-    { label: 'Avg Protection CPD / Broker', value: fmtCpdTime(Math.round(avgProtectionMins)) }
+    { label: 'Avg Mortgage CPD / Broker', value: fmtCpdTime(Math.round(avgMortgageMins)) }
   ];
   if (topMortgage) items.push({ label: 'Top Mortgage CPD', value: nameOf(topMortgage.m) + ' — ' + fmtCpdTime(topMortgage.mins) });
+  items.push({ label: 'Avg Protection CPD / Broker', value: fmtCpdTime(Math.round(avgProtectionMins)) });
+  if (topProtection) items.push({ label: 'Top Protection CPD', value: nameOf(topProtection.m) + ' — ' + fmtCpdTime(topProtection.mins) });
+  items.push({ label: 'Avg Combined CPD / Broker', value: fmtCpdTime(Math.round(avgCombinedMins)) });
+  if (topCombined) items.push({ label: 'Top Combined CPD', value: nameOf(topCombined.m) + ' — ' + fmtCpdTime(topCombined.mins) });
   if (topSupervisor) items.push({ label: 'Top Supervisor (Team Avg)', value: topSupervisor.name + ' — ' + fmtCpdTime(Math.round(topSupervisor.avg)) });
   return items;
 }
