@@ -15217,8 +15217,10 @@ function svLicenceIconsHtml(m, cpd) {
     items.map(function(x) {
       var mins = specialistMins[x.icon.specialistKey] || 0;
       var done = mins >= SPECIALIST_CPD_TARGET_MINS;
-      var svg = done ? x.icon.svgGreen : x.icon.svg;
-      var tip = escHtml(x.icon.label) + ' — ' + fmtMins(mins) + ' of ' + fmtMins(SPECIALIST_CPD_TARGET_MINS) + ' YTD' + (done ? ' ✓' : '');
+      var paceOk = mins >= SPECIALIST_CPD_TARGET_MINS * cpdYearFraction();
+      var onTrack = done || paceOk;
+      var svg = onTrack ? x.icon.svgGreen : x.icon.svg;
+      var tip = escHtml(x.icon.label) + ' — ' + fmtMins(mins) + ' of ' + fmtMins(SPECIALIST_CPD_TARGET_MINS) + ' YTD' + (done ? ' ✓' : (paceOk ? ' (ahead of pace)' : ''));
       return '<span class="lic-icon-wrap">' + svg + '<span class="lic-tip">' + tip + '</span></span>';
     }).join('') +
   '</div>';
@@ -16777,15 +16779,20 @@ function renderSpecialistCpd() {
     var target = SPECIALIST_CPD_TARGET_MINS; // 3 hours
     var pct    = Math.min(100, Math.round((specMins / target) * 100));
     var done   = specMins >= target;
+    // On pace = at/ahead of a straight-line pace toward the 3h annual target for
+    // how far through the year we are — same green-when-on-track rule used
+    // everywhere else CPD progress is shown, not just once fully complete.
+    var paceOk  = _cpdPeriod === 'year' && specMins >= target * cpdYearFraction();
+    var onTrack = done || paceOk;
     return '<div style="margin-bottom:14px;">' +
       '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">' +
         '<div style="font-size:13px;font-weight:700;color:#6b7c8f;">' + c.key + '</div>' +
-        '<div style="font-size:13px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';font-weight:600;">' + fmtMins(specMins) + ' of ' + fmtMins(target) + (done ? ' ✓' : '') + '</div>' +
+        '<div style="font-size:13px;color:' + (onTrack ? '#22c55e' : '#6b7c8f') + ';font-weight:600;">' + fmtMins(specMins) + ' of ' + fmtMins(target) + (done ? ' ✓' : '') + '</div>' +
       '</div>' +
       '<div style="background:#f0f4f8;border-radius:6px;height:9px;overflow:hidden;">' +
-        '<div style="background:' + (done ? '#22c55e' : 'var(--brand-orange)') + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
+        '<div style="background:' + (onTrack ? '#22c55e' : 'var(--brand-orange)') + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width .6s ease;"></div>' +
       '</div>' +
-      '<div style="font-size:11px;color:' + (done ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' + (done ? '✓ Target met' : pct + '% of ' + fmtMins(target) + ' target') + '</div>' +
+      '<div style="font-size:11px;color:' + (onTrack ? '#22c55e' : '#6b7c8f') + ';margin-top:4px;">' + (done ? '✓ Target met' : (onTrack ? '✓ Ahead of YTD pace' : pct + '% of ' + fmtMins(target) + ' target')) + '</div>' +
     '</div>';
   }).join('');
 }
