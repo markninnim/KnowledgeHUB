@@ -15450,7 +15450,6 @@ function svComputeRotatorStats(members, cpdByMember) {
   if (topMortgage) items.push({ label: 'Top Mortgage CPD', value: nameOf(topMortgage.m) + ' — ' + fmtCpdTime(topMortgage.mins) });
   items.push({ label: 'Avg Protection CPD / Broker', value: fmtCpdTime(Math.round(avgProtectionMins)) });
   if (topProtection) items.push({ label: 'Top Protection CPD', value: nameOf(topProtection.m) + ' — ' + fmtCpdTime(topProtection.mins) });
-  items.push({ label: 'Avg Combined CPD / Broker', value: fmtCpdTime(Math.round(avgCombinedMins)) });
   if (topCombined) items.push({ label: 'Top Combined CPD', value: nameOf(topCombined.m) + ' — ' + fmtCpdTime(topCombined.mins) });
   if (topSupervisor) items.push({ label: 'Top Supervisor (Team Avg)', value: topSupervisor.name + ' — ' + fmtCpdTime(Math.round(topSupervisor.avg)) });
   return items;
