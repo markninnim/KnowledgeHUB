@@ -11615,8 +11615,12 @@ var _bpCurrentBrokerName = '';
 var _bpCurrentEmail = '';
 var _bpCurrentName = '';
 function bpFirstOfPreviousMonth() {
+  // Kept name for compatibility with existing call sites, but now returns
+  // 1 Jan of the current year — this default must match the year-to-date
+  // window used by the My Team card and the adviser's own CPD Progress
+  // panel, otherwise the same broker's CPD totals disagree across pages.
   var d = new Date();
-  d.setMonth(d.getMonth() - 1, 1);
+  d.setMonth(0, 1);
   return d.toISOString().slice(0, 10);
 }
 function bpReloadWithDateRange() {
