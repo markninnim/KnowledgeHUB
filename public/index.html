@@ -4337,35 +4337,31 @@ Consolidating debts will increase the loan to value which can impact future deal
 
     <!-- CPD Register (main view) -->
     <div id="sv-cpd-register" style="max-width:1200px;margin:0 auto;padding:32px 8px 0;">
-      <!-- Header row -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
-        <div>
-          <div style="display:flex;align-items:center;gap:20px;">
-            <h2 id="sv-heading" style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Adviser Groups</h2>
-            <div id="sv-inline-stats" style="display:flex;align-items:center;gap:14px;"></div>
-          </div>
+      <!-- Header row 1: title + stats (left), rotator (right) — all vertically centered -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <h2 id="sv-heading" style="margin:0;font-size:20px;font-weight:800;color:var(--brand-navy);">Adviser Groups</h2>
+          <div id="sv-inline-stats" style="display:flex;align-items:center;gap:14px;"></div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-          <div id="sv-rotator" style="display:none;background:transparent;border:none;border-radius:8px;padding:7px 14px;min-width:230px;text-align:right;cursor:default;">
-            <div id="sv-rotator-label" style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;transition:opacity .3s ease;">—</div>
-            <div id="sv-rotator-value" style="font-size:15px;font-weight:800;color:var(--brand-navy);transition:opacity .3s ease;">—</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-            <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
-              <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
-              <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;">
-              <span style="font-size:11px;color:#6b7c8f;font-weight:600;">From</span>
-              <input id="sv-date-from" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
-              <span style="font-size:11px;color:#6b7c8f;font-weight:600;">To</span>
-              <input id="sv-date-to" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
-            </div>
-            <button onclick="svExportCsv()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Export CSV</button>
-            <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
-          </div>
-          
+        <div id="sv-rotator" style="display:none;background:transparent;border:none;border-radius:8px;padding:0;min-width:230px;text-align:right;cursor:default;">
+          <div id="sv-rotator-label" style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;transition:opacity .3s ease;">—</div>
+          <div id="sv-rotator-value" style="font-size:15px;font-weight:800;color:var(--brand-navy);transition:opacity .3s ease;">—</div>
         </div>
+      </div>
+      <!-- Header row 2: toolbar, full width, right-aligned -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-bottom:20px;padding-top:14px;border-top:1px solid #e5e9ee;">
+        <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
+          <button id="sv-view-card" onclick="setSvView('card')" style="padding:7px 13px;border:none;background:var(--brand-navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⊞ Cards</button>
+          <button id="sv-view-list" onclick="setSvView('list')" style="padding:7px 13px;border:none;background:#f5f7fa;color:var(--brand-navy);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">☰ List</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;">
+          <span style="font-size:11px;color:#6b7c8f;font-weight:600;">From</span>
+          <input id="sv-date-from" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
+          <span style="font-size:11px;color:#6b7c8f;font-weight:600;">To</span>
+          <input id="sv-date-to" type="date" style="border:none;background:transparent;font-size:12px;font-family:inherit;color:#6b7c8f;outline:none;cursor:pointer;width:120px;">
+        </div>
+        <button onclick="svExportCsv()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↓ Export CSV</button>
+        <button onclick="loadSupervisorZone()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">↻ Refresh</button>
       </div>
       <!-- Summary stats -->
       <div id="sv-stats" style="display:none;"></div>
