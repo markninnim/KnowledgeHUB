@@ -125,6 +125,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v2.7</span>
+      <span class="version-title">CPD AI Summary Rewrite, Download Modal &amp; Sim Branding on AI Summaries</span>
+      <span class="version-date">2 August 2026</span>
+    </div>
+    <p class="version-summary">Rewrote the whole-team AI CPD summary to focus on individual adviser completion rather than company-wide hours, replaced the Supervise toolbar's date pickers and Export CSV with a single Download button offering CSV/Excel/PDF and a name-or-all filter, added the bobbing Sim mascot with a consistent title to every AI-generated summary on the site, and gave Fitness &amp; Properness submissions a red-dot notification so an auto-archived "Clear" submission can't quietly go unseen.</p>
+    <ul class="changes">
+      <li>AI CPD Summary now reports how many advisers (and what percentage) have personally reached the correct year-to-date CPD pace, split out for Mortgage and Protection, instead of citing total hours logged company-wide &mdash; company-wide totals don't reflect whether the scheme is actually working for each individual.</li>
+      <li>Replaced the always-visible From/To date pickers and "Export CSV" button in Supervise with a single "Download" button that opens a modal: choose CSV, Excel (XLS), or PDF, choose a specific adviser (via a type-ahead name filter) or the whole team, and pick a date range &mdash; PDF and XLS exports are generated server-side with no new dependencies.</li>
+      <li>Added the bobbing Sim mascot icon and a consistent title to every AI-generated summary panel on the site: the whole-team CPD summary, the Compliance Log overview, both Consumer Duty summaries (adviser-facing and firm-wide), and the per-adviser Consumer Duty summary on Broker Profile.</li>
+      <li>Instructed every AI summary prompt to write plain hyphens instead of em/en dashes, for consistent, plainer formatting across the site.</li>
+      <li>Added a "Supervisor Unread" flag to Fitness &amp; Properness submissions: new submissions (flagged or auto-archived as Clear) now show a red dot on the sidebar link and next to the submission itself until a supervisor actually opens it, so a clean submission being auto-filed away doesn't mean it goes unseen.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.6</span>
       <span class="version-title">Fitness &amp; Properness Reliability Fix, Readable Airtable Data &amp; Own Supervisor Page</span>
       <span class="version-date">1 August 2026</span>
