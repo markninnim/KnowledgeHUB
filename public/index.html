@@ -4370,6 +4370,14 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div id="sv-advisers-list" style="display:grid;gap:12px;"></div>
         <div id="sv-noncas-legend" style="display:none;margin-top:18px;text-align:center;"></div>
       </div>
+      <!-- Admin & Paraplanners section -->
+      <div id="sv-admin-wrap" style="display:none;margin-top:28px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#6b7c8f;flex-shrink:0;"></div>
+          <div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;">Admin &amp; Paraplanners</div>
+        </div>
+        <div id="sv-admin-list" style="display:grid;gap:12px;"></div>
+      </div>
       <!-- Supervisors section -->
       <div id="sv-supervisors-wrap" style="display:none;margin-top:28px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -14906,6 +14914,7 @@ function svSidebarSelect(email, el) {
   document.getElementById('sv-loading').style.display = 'block';
   document.getElementById('sv-stats').innerHTML = '';
   document.getElementById('sv-advisers-wrap').style.display = 'none';
+  document.getElementById('sv-admin-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
   var _ncReset = document.getElementById('sv-sb-noncas'); if (_ncReset) _ncReset.style.display = 'none';
   var url = '/api/supervisor/team?as=' + encodeURIComponent(_svViewAsEmail);
@@ -14927,6 +14936,7 @@ function loadSupervisorZone() {
   document.getElementById('sv-loading').style.display = 'block';
   document.getElementById('sv-stats').innerHTML = '';
   document.getElementById('sv-advisers-wrap').style.display = 'none';
+  document.getElementById('sv-admin-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
 
   // Populate supervisor sidebar on first load
@@ -15051,12 +15061,18 @@ function renderSvDashboard(data) {
   }
 
   // Classify members
-  var allAdvisers = [], supervisorCards = [];
+  var allAdvisers = [], supervisorCards = [], adminStaff = [];
   members.forEach(function(m) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
     if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
+    // Admin & Paraplanners (Job Title-based, not the site "Is Admin" permission flag) —
+    // shown in their own section under the supervisor's advisers, not mixed in with them.
+    if (!isAuthorised && !m.isSupervisor && /^(admin|director|paraplanner)/i.test(m.jobTitle || '')) {
+      adminStaff.push({ m: m, cpd: cpd, visible: [], worstPct: 0 });
+      return;
+    }
     if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
       // Supervisors get their own section; bars only if authorised
       var visible = isAuthorised ? typeConf.filter(function(t) {
@@ -15089,6 +15105,7 @@ function renderSvDashboard(data) {
   function byFirst(a, b) { return (a.m.firstName || '').localeCompare(b.m.firstName || ''); }
   allAdvisers.sort(byFirst);
   supervisorCards.sort(byFirst);
+  adminStaff.sort(byFirst);
 
   // Supervisor sub-totals (needed for sidebar + stats bar)
   var totalOnTrack  = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
@@ -15242,7 +15259,7 @@ function renderSvDashboard(data) {
   var renderer = isCard ? buildCard : buildListRow;
 
   // Set grid layout
-  ['sv-advisers-list','sv-supervisors-list'].forEach(function(id) {
+  ['sv-advisers-list','sv-admin-list','sv-supervisors-list'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.gridTemplateColumns = isCard ? 'repeat(3,1fr)' : '1fr';
   });
@@ -15294,6 +15311,11 @@ function renderSvDashboard(data) {
         legendEl.style.display = 'none';
       }
     }
+  }
+  // Populate Admin & Paraplanners
+  if (adminStaff.length) {
+    document.getElementById('sv-admin-wrap').style.display = 'block';
+    document.getElementById('sv-admin-list').innerHTML = adminStaff.map(renderer).join('');
   }
   // Populate Supervisors
   if (supervisorCards.length) {
