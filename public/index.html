@@ -4529,11 +4529,13 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div id="sv-cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
-        <div>
+        <div style="position:relative;">
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
-          <select id="sv-cd-filter-adviser" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;">
-            <option value="">All advisers</option>
-          </select>
+          <input type="hidden" id="sv-cd-filter-adviser" value="">
+          <button type="button" id="sv-cd-filter-adviser-btn" onclick="svCdToggleAdviserDropdown()" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;cursor:pointer;text-align:left;">
+            <span id="sv-cd-filter-adviser-label">All advisers</span><span style="color:#6b7c8f;font-size:11px;">▾</span>
+          </button>
+          <div id="sv-cd-filter-adviser-list" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:240px;overflow-y:auto;z-index:50;min-width:200px;box-shadow:0 6px 16px rgba(0,0,0,.12);"></div>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
@@ -14558,20 +14560,48 @@ function loadSvCdFeedback() {
 }
 
 function svCdPopulateAdviserFilter() {
-  var sel = document.getElementById('sv-cd-filter-adviser');
-  var current = sel.value;
+  var hidden = document.getElementById('sv-cd-filter-adviser');
+  var current = hidden.value;
   var advisers = Array.from(new Set(_svCdFeedback.map(function(r) { return r.adviserName; }).filter(Boolean))).sort();
-  sel.innerHTML = '<option value="">All advisers</option>' + advisers.map(function(a) {
-    return '<option value="' + escHtml(a) + '">' + escHtml(a) + '</option>';
+  if (advisers.indexOf(current) === -1) { current = ''; hidden.value = ''; }
+  document.getElementById('sv-cd-filter-adviser-label').textContent = current || 'All advisers';
+  var listEl = document.getElementById('sv-cd-filter-adviser-list');
+  var options = [''].concat(advisers);
+  listEl.innerHTML = options.map(function(a) {
+    var label = a || 'All advisers';
+    var active = a === current;
+    return '<div onclick="svCdSelectAdviser(\'' + escAttr(a) + '\',\'' + escAttr(label) + '\')" style="padding:9px 14px;font-size:13px;font-weight:' + (active ? '700' : '400') + ';color:var(--brand-navy);background:' + (active ? '#eef0ff' : '#fff') + ';cursor:pointer;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'' + (active ? '#eef0ff' : '#fff') + '\'">' + escHtml(label) + '</div>';
   }).join('');
-  sel.value = advisers.indexOf(current) !== -1 ? current : '';
 }
+
+function svCdToggleAdviserDropdown() {
+  var list = document.getElementById('sv-cd-filter-adviser-list');
+  var open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+}
+
+function svCdSelectAdviser(value, label) {
+  document.getElementById('sv-cd-filter-adviser').value = value;
+  document.getElementById('sv-cd-filter-adviser-label').textContent = label;
+  document.getElementById('sv-cd-filter-adviser-list').style.display = 'none';
+  svCdPopulateAdviserFilter();
+  svCdRenderFeedback();
+}
+
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('sv-cd-filter-adviser-btn');
+  var list = document.getElementById('sv-cd-filter-adviser-list');
+  if (!btn || !list || list.style.display === 'none') return;
+  if (!btn.contains(e.target) && !list.contains(e.target)) list.style.display = 'none';
+});
 
 function svCdClearFilters() {
   document.getElementById('sv-cd-filter-adviser').value = '';
+  document.getElementById('sv-cd-filter-adviser-label').textContent = 'All advisers';
   document.getElementById('sv-cd-filter-status').value = 'Partial';
   document.getElementById('sv-cd-filter-from').value = '';
   document.getElementById('sv-cd-filter-to').value = '';
+  svCdPopulateAdviserFilter();
   svCdRenderFeedback();
 }
 
