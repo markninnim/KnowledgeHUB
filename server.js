@@ -7048,7 +7048,7 @@ function cdIsPerfect(f) {
   if (a(CD_Q7).toLowerCase() === 'no')                                              issues.push('Q7 Protection Importance');
   if (a(CD_Q9).toLowerCase() === 'unclear')                                         issues.push('Q9 Literature Clarity');
   if (a(CD_Q10).toLowerCase().includes('did not receive adequate'))                 issues.push('Q10 Support Required');
-  if (a(CD_Q3).toLowerCase().includes("i'd like") || a(CD_Q3).toLowerCase().includes('call me')) issues.push('Q3 Walkthrough Requested');
+  if (a(CD_Q3).toLowerCase().includes("i'd like") || a(CD_Q3).toLowerCase().includes('call me')) issues.push('Q3 Would you like broker to explain the contents of the report to you?');
   if (a(CD_Q8).toLowerCase().includes('would like to discuss'))                     issues.push('Q8 Protection Discussion');
   return issues;
 }
@@ -7060,7 +7060,7 @@ function cdIsPerfect(f) {
 const CD_QUESTION_LABELS = {
   q1: 'Q1 Adviser Knowledge',
   q2: 'Q2 Report Accuracy',
-  q3: 'Q2.2 Walkthrough Requested',
+  q3: 'Q2.2 Would you like broker to explain the contents of the report to you?',
   q4: 'Q3 Rate Type (Unsure)',
   q3selfmismatch: 'Q3 Rate Type (Client Reported Mismatch)',
   q4mismatch: 'Q3 Rate Mismatch (Computed)',
