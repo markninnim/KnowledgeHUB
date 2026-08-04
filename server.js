@@ -5613,7 +5613,7 @@ app.delete('/api/cpd/:id', requireAuth, async (req, res) => {
   try {
     // Verify ownership first
     const record = await cpdFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
-    if (record.fields[CPD_EMAIL] !== email) return res.status(403).json({ error: 'Forbidden' });
+    if ((record.fields[CPD_EMAIL] || '').trim().toLowerCase() !== (email || '').trim().toLowerCase()) return res.status(403).json({ error: 'Forbidden' });
     await cpdFetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ ok: true });
   } catch (err) {
@@ -5626,7 +5626,7 @@ app.patch('/api/cpd/:id', requireAuth, async (req, res) => {
   const email = req.session.user.email;
   try {
     const record = await cpdFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
-    if (record.fields[CPD_EMAIL] !== email) return res.status(403).json({ error: 'Forbidden' });
+    if ((record.fields[CPD_EMAIL] || '').trim().toLowerCase() !== (email || '').trim().toLowerCase()) return res.status(403).json({ error: 'Forbidden' });
     const { activity, date, minutes, category, cpdType, learned, specialist } = req.body;
     const fields = {};
     if (activity   !== undefined) fields[CPD_ACTIVITY]   = activity;
