@@ -1008,7 +1008,7 @@ select:focus { outline:none; }
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <div style="margin:10px 0 6px;">
           <input id="pb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;color:#6b7c8f;font-family:inherit;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='var(--brand-navy)'" onblur="this.style.borderColor='#d1d5db'">
-          <button id="pb-download-btn" onclick="downloadPersonalisedBrochure()" class="btn" style="width:100%;box-sizing:border-box;cursor:pointer;text-align:center;">Download</button>
+          <button id="pb-download-btn" onclick="downloadPersonalisedBrochure('protection','pb-customer','pb-download-btn')" class="btn" style="width:100%;box-sizing:border-box;cursor:pointer;text-align:center;">Download</button>
         </div>
       </div>
       <div class="card">
@@ -1017,6 +1017,16 @@ select:focus { outline:none; }
         <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Download the latest version of the 12-page Finance Planning protection brochure -ready to share with clients.</p>
         <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
         <a href="/download-asset/brochures/protection/fpg-protection-brochure-2026.pdf" class="btn">Download</a><a href="/view-asset/brochures/protection/fpg-protection-brochure-2026.pdf" class="btn-view" onclick="openPreview(event,this)">View</a>
+      </div>
+      <div class="card">
+        <div class="thumb" data-pdf="/view-asset/brochures/protection/fpg-protection-brochure-2026-v2.pdf"></div>
+        <h3>Redundancy Protection Brochure -Personalised</h3>
+        <p style="font-size:12px;color:#6b7c8f;margin:6px 0 10px;">Personalise this brochure with your client's name strategically printed throughout — your name and photo are added automatically. Simply enter their name and hit download.</p>
+        <span class="badge ready">Approved</span> <span class="file-date" data-file="fpg-protection-brochure-2026-v2.pdf" style="font-size:11px;color:#6b7c8f;"></span><br>
+        <div style="margin:10px 0 6px;">
+          <input id="rpb-customer" type="text" placeholder="Client name" style="display:block;width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;color:#6b7c8f;font-family:inherit;margin-bottom:10px;outline:none;" onfocus="this.style.borderColor='var(--brand-navy)'" onblur="this.style.borderColor='#d1d5db'">
+          <button id="rpb-download-btn" onclick="downloadPersonalisedBrochure('redundancy','rpb-customer','rpb-download-btn')" class="btn" style="width:100%;box-sizing:border-box;cursor:pointer;text-align:center;">Download</button>
+        </div>
       </div>
       <div class="card">
         <div class="thumb" data-pdf="/view-asset/brochures/protection/fpg-protection-brochure-2026-v2.pdf"></div>
@@ -6041,17 +6051,24 @@ function clearBrokerImage() {
   document.getElementById('pb-broker-img').value = '';
   document.getElementById('pb-img-clear').style.display = 'none';
 }
-function downloadPersonalisedBrochure() {
-  var customer = document.getElementById('pb-customer').value.trim();
+var PERSONALISE_BROCHURE_FILENAMES = {
+  protection: 'FPG-Protection-Brochure',
+  redundancy: 'FPG-Redundancy-Protection-Brochure'
+};
+function downloadPersonalisedBrochure(template, customerInputId, btnId) {
+  template = template || 'protection';
+  customerInputId = customerInputId || 'pb-customer';
+  btnId = btnId || 'pb-download-btn';
+  var customer = document.getElementById(customerInputId).value.trim();
   var broker   = _currentUser ? [_currentUser.firstName, _currentUser.lastName].filter(Boolean).join(' ') : '';
   var brokerImage = (_currentUser && _currentUser.avatarUrl) ? _currentUser.avatarUrl : null;
-  var btn = document.getElementById('pb-download-btn');
+  var btn = document.getElementById(btnId);
   btn.textContent = 'Generating…';
   btn.disabled = true;
   fetch('/personalise-brochure', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ customer: customer, broker: broker, brokerImage: brokerImage })
+    body: JSON.stringify({ customer: customer, broker: broker, brokerImage: brokerImage, template: template })
   })
   .then(function(r) {
     if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
@@ -6061,7 +6078,7 @@ function downloadPersonalisedBrochure() {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'FPG-Protection-Brochure' + (customer ? '-' + customer.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
+    a.download = (PERSONALISE_BROCHURE_FILENAMES[template] || 'FPG-Brochure') + (customer ? '-' + customer.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
     a.click();
     URL.revokeObjectURL(url);
     btn.textContent = 'Download';

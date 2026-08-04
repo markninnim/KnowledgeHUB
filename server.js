@@ -6389,13 +6389,30 @@ app.get('/api/assets', requireAuth, (req, res) => {
 });
 
 // ── Personalised brochure ─────────────────────────────────────
+const PERSONALISE_BROCHURE_TEMPLATES = {
+  protection: {
+    file: 'fpg-protection-brochure-2026.pdf',
+    whatIfPages: [4, 6, 8, 10],
+    factBgColour: [245, 247, 251],
+    filenamePrefix: 'FPG-Protection-Brochure'
+  },
+  redundancy: {
+    file: 'fpg-protection-brochure-2026-v2.pdf',
+    whatIfPages: [4, 6, 8, 10, 12],
+    factBgColour: [255, 255, 255],
+    filenamePrefix: 'FPG-Redundancy-Protection-Brochure'
+  }
+};
+
 app.post('/personalise-brochure', requireAuth, async (req, res) => {
   try {
     const customerName   = (req.body.customer    || '').trim().slice(0, 80);
     const brokerName     = (req.body.broker      || '').trim().slice(0, 80);
     const brokerImageB64 = req.body.brokerImage  || null;
+    const templateKey    = PERSONALISE_BROCHURE_TEMPLATES[req.body.template] ? req.body.template : 'protection';
+    const tpl             = PERSONALISE_BROCHURE_TEMPLATES[templateKey];
 
-    const pdfPath  = path.join(__dirname, 'public/assets/brochures/protection/fpg-protection-brochure-2026.pdf');
+    const pdfPath  = path.join(__dirname, 'public/assets/brochures/protection/' + tpl.file);
     const pdfBytes = fs.readFileSync(pdfPath);
 
     const fontBytes = fs.readFileSync(path.join(__dirname, 'node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif-Bold.ttf'));
@@ -6429,8 +6446,8 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
       const orange = rgb(252/255, 176/255, 52/255); // FPG orange #fcb034
       const pages = pdfDoc.getPages();
 
-      // "What if..." pages — 5, 7, 9, 11 (0-indexed: 4, 6, 8, 10)
-      const whatIfPages = [4, 6, 8, 10];
+      // "What if..." pages differ per template (redundancy brochure has one extra scenario)
+      const whatIfPages = tpl.whatIfPages;
       for (let i = 0; i < pages.length; i++) {
         if (!whatIfPages.includes(i)) continue;
         const p = pages[i];
@@ -6441,7 +6458,7 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
         p.drawText(firstName + ', what if...', { x: wx, y: wy, size: whatIfSize, font, color: darkBlue });
       }
 
-      // "It's a fact..." — page 2 (0-indexed: 1)
+      // "It's a fact..." — page 2 (0-indexed: 1). Background colour varies per template.
       const factp = pages[1];
       if (factp) {
         const { height: fph } = factp.getSize();
@@ -6449,7 +6466,9 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
         const mmToPt = 2.835;
         const fx = Math.round(22.5 * mmToPt);                                          // 22.5mm from left = 64pt
         const fy = fph - Math.round(143.737 * mmToPt) - Math.round(factSize * 0.72);  // 143.737mm from top to cap height
-        factp.drawRectangle({ x: fx - 2, y: fy - 6, width: 420, height: factSize + 14, color: bgColour });
+        const [fr, fg, fb] = tpl.factBgColour;
+        const factBg = rgb(fr/255, fg/255, fb/255);
+        factp.drawRectangle({ x: fx - 2, y: fy - 6, width: 420, height: factSize + 14, color: factBg });
         factp.drawText(`${firstName}, it’s a fact...`, { x: fx, y: fy, size: factSize, font, color: orange });
       }
     }
@@ -6487,7 +6506,7 @@ app.post('/personalise-brochure', requireAuth, async (req, res) => {
     }
 
     const modifiedBytes = await pdfDoc.save();
-    const filename = 'FPG-Protection-Brochure' + (customerName ? '-' + customerName.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
+    const filename = tpl.filenamePrefix + (customerName ? '-' + customerName.replace(/[^a-z0-9]/gi, '-') : '') + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
     res.send(Buffer.from(modifiedBytes));
