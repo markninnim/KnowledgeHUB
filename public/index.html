@@ -9821,7 +9821,7 @@ var _simPostCount = null;
 function simMarketingBody() {
   var n = _simPostCount;
   var lib = n ? ('a whole library of social media posts for you to share (' + n + ' so far)') : 'a whole library of social media posts for you to share';
-  return "Marketing has everything you could ever want to promote yourself and build your brand. Mark and the team at SimFlex (no relation, honestly), have been busy curating " + lib + ", personalised to you, your name, your contact details. This is also where you'll find personalised brochures, logos, and business cards, you're in the driving seat here.\n\nWe have built this so that you can get on with the things that make you money, as opposed to doing things that don't. Have a good look around, Mark's personal favourite is the personalised protection brochure, make one today.";
+  return "Marketing has everything you could ever want to promote yourself and build your brand. Mark and the team have been busy curating " + lib + ", personalised to you, your name, your contact details. This is also where you'll find personalised brochures, logos, and business cards, you're in the driving seat here.\n\nWe have built this so that you can get on with the things that make you money, as opposed to doing things that don't. Have a good look around, Mark's personal favourite is the personalised protection brochure, make one today.";
 }
 function simFetchPostCount() {
   fetch('/api/social-content').then(function(r){ return r.json(); }).then(function(list) {
