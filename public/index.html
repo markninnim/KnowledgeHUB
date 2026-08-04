@@ -1778,7 +1778,7 @@ select:focus { outline:none; }
       <div id="cd-compliance-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <img src="/static/sim-idle.png" alt="Alex™" class="sim-bob" style="width:20px;height:20px;object-fit:contain;flex-shrink:0;">
-          <div id="cd-compliance-summary-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">SIM — Your Intelligent Supervision Assistant</div>
+          <div id="cd-compliance-summary-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Alex™ Consumer Duty Summary</div>
         </div>
         <div id="cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
@@ -4435,7 +4435,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="sv-ai-summary-wrap" style="display:none;margin-bottom:24px;background:linear-gradient(135deg,#f0f4f8,#f5f7fa);border:1px solid #d1d5db;border-radius:12px;padding:18px 22px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <img src="/static/sim-idle.png" alt="Alex™" class="sim-bob" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;">
-          <div style="font-size:12px;font-weight:800;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.05em;">SIM — Your Intelligent Supervision Assistant</div>
+          <div style="font-size:12px;font-weight:800;color:var(--brand-navy);text-transform:uppercase;letter-spacing:.05em;">Alex™ Consumer Duty Summary</div>
         </div>
         <div id="sv-ai-summary-text" style="font-size:13.5px;line-height:1.7;color:#334155;">Loading summary…</div>
       </div>
@@ -4472,7 +4472,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="cl-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <img src="/static/sim-idle.png" alt="Alex™" class="sim-bob" style="width:20px;height:20px;object-fit:contain;flex-shrink:0;">
-          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">SIM — Your Intelligent Supervision Assistant</div>
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Alex™ Consumer Duty Summary</div>
         </div>
         <div id="cl-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
@@ -4541,7 +4541,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="sv-cd-compliance-summary-box" style="background:#f5f7fa;border:1px solid #d1d5db;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <img src="/static/sim-idle.png" alt="Alex™" class="sim-bob" style="width:20px;height:20px;object-fit:contain;flex-shrink:0;">
-          <div id="sv-cd-compliance-summary-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">SIM — Your Intelligent Supervision Assistant</div>
+          <div id="sv-cd-compliance-summary-title" style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Alex™ Consumer Duty Summary</div>
         </div>
         <div id="sv-cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
@@ -14650,7 +14650,7 @@ function svCdUpdateSummaryTitle() {
   var titleEl = document.getElementById('sv-cd-compliance-summary-title');
   if (!titleEl) return;
   var adviser = document.getElementById('sv-cd-filter-adviser').value;
-  titleEl.textContent = adviser ? ('Consumer Duty Summary — for ' + adviser) : 'Consumer Duty Summary';
+  titleEl.textContent = adviser ? ('Alex™ Consumer Duty Summary — for ' + adviser) : 'Alex™ Consumer Duty Summary';
 }
 
 function svCdRenderFeedback() {
@@ -16401,7 +16401,7 @@ function cdCardHtml(r, toggleFn) {
 function cdUpdateSummaryTitle() {
   var titleEl = document.getElementById('cd-compliance-summary-title');
   if (!titleEl) return;
-  titleEl.textContent = 'Consumer Duty Summary';
+  titleEl.textContent = 'Alex™ Consumer Duty Summary';
 }
 function cdRenderFeedback() {
   cdUpdateSummaryTitle();
