@@ -1801,6 +1801,7 @@ select:focus { outline:none; }
           <input id="cd-filter-to" type="date" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
         </div>
         <button onclick="cdClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+        <span id="cd-filter-count" style="font-size:12.5px;color:#6b7c8f;padding-bottom:9px;"></span>
       </div>
       <div id="cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
@@ -4572,6 +4573,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           <input id="sv-cd-filter-to" type="date" onchange="svCdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
         </div>
         <button onclick="svCdClearFilters()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">Clear filters</button>
+        <span id="sv-cd-filter-count" style="font-size:12.5px;color:#6b7c8f;padding-bottom:9px;"></span>
       </div>
       <div id="sv-cd-feedback-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading…</div>
       <div id="sv-cd-feedback-empty" style="display:none;text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">No questionnaire responses yet.</div>
@@ -14666,6 +14668,8 @@ function svCdRenderFeedback() {
   if (empty) empty.style.display = _svCdFeedback.length ? 'none' : '';
   var list = document.getElementById('sv-cd-feedback-list');
   var filtered = svCdFilteredFeedback();
+  var countEl = document.getElementById('sv-cd-filter-count');
+  if (countEl) countEl.textContent = filtered.length + (filtered.length === 1 ? ' response' : ' responses');
   if (!filtered.length) {
     list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6b7c8f;font-size:13px;">No responses match the selected filters.</div>';
     return;
@@ -16424,6 +16428,8 @@ function cdRenderFeedback() {
   if (empty) empty.style.display = _cdFeedback.length ? 'none' : '';
   var list = document.getElementById('cd-feedback-list');
   var filtered = cdFilteredFeedback();
+  var countEl = document.getElementById('cd-filter-count');
+  if (countEl) countEl.textContent = filtered.length + (filtered.length === 1 ? ' response' : ' responses');
   if (!filtered.length) {
     list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#6b7c8f;font-size:13px;">No responses match the selected filters.</div>';
     return;
