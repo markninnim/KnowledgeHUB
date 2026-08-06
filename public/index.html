@@ -14566,9 +14566,16 @@ function loadSvCdFeedback() {
   list.innerHTML = '';
   document.getElementById('sv-cd-compliance-summary-text').textContent = 'Loading…';
   fetch('/api/consumer-duty-feedback')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(res) {
       loading.style.display = 'none';
+      if (!res.ok) {
+        _svCdLoaded = true;
+        document.getElementById('sv-cd-compliance-summary-text').textContent = 'Could not load summary.';
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback' + (res.data && res.data.error ? ': ' + escHtml(res.data.error) : '.') + '</div>';
+        return;
+      }
+      var data = res.data;
       _svCdFeedback = cdNormalizeRecords(data.responses || []);
       _svCdLoaded = true;
       document.getElementById('sv-cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
@@ -14655,6 +14662,8 @@ function svCdUpdateSummaryTitle() {
 
 function svCdRenderFeedback() {
   svCdUpdateSummaryTitle();
+  var empty = document.getElementById('sv-cd-feedback-empty');
+  if (empty) empty.style.display = _svCdFeedback.length ? 'none' : '';
   var list = document.getElementById('sv-cd-feedback-list');
   var filtered = svCdFilteredFeedback();
   if (!filtered.length) {
@@ -16313,9 +16322,15 @@ function loadCdFeedback() {
   list.innerHTML = '';
   document.getElementById('cd-compliance-summary-text').textContent = 'Loading…';
   fetch('/api/consumer-duty-feedback-mine')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(res) {
       loading.style.display = 'none';
+      if (!res.ok) {
+        document.getElementById('cd-compliance-summary-text').textContent = 'Could not load summary.';
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback' + (res.data && res.data.error ? ': ' + escHtml(res.data.error) : '.') + '</div>';
+        return;
+      }
+      var data = res.data;
       _cdFeedback = cdNormalizeRecords(data.responses || []);
       document.getElementById('cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
@@ -16405,6 +16420,8 @@ function cdUpdateSummaryTitle() {
 }
 function cdRenderFeedback() {
   cdUpdateSummaryTitle();
+  var empty = document.getElementById('cd-feedback-empty');
+  if (empty) empty.style.display = _cdFeedback.length ? 'none' : '';
   var list = document.getElementById('cd-feedback-list');
   var filtered = cdFilteredFeedback();
   if (!filtered.length) {
