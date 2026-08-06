@@ -14477,14 +14477,14 @@ function complogRender() {
     var hasExtras = extras.some(function(f) { var v = r[f.key]; return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length); });
     var detailHtml = '<div style="padding:14px 16px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
       (r.summary ? '<div style="font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(r.summary) + '</div>' : '') +
-      (r.incidentDate ? '<div>Incident date: ' + escHtml(r.incidentDate) + '</div>' : '') +
+      (r.incidentDate ? '<div>' + escHtml((CR_CONFIG[r.type] && CR_CONFIG[r.type].incidentLabel) || 'Incident date') + ': ' + escHtml(r.incidentDate) + '</div>' : '') +
       extras.map(function(f) {
         var v = r[f.key];
         if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
         var display = f.list ? v.join(', ') : (f.money ? ('£' + Number(v).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) : v);
         return '<div>' + escHtml(f.label) + ': ' + escHtml(String(display)) + '</div>';
       }).join('') +
-      (r.details ? '<div style="margin-top:8px;">' + escHtml(r.details) + '</div>' : '') +
+      (r.details ? '<div style="margin-top:8px;"><span style="font-weight:600;">' + escHtml((CR_CONFIG[r.type] && CR_CONFIG[r.type].detailsLabel) || 'Details') + ':</span> ' + escHtml(r.details) + '</div>' : '') +
       (r.actionTaken ? '<div style="margin-top:6px;"><span style="font-weight:600;">Action taken:</span> ' + escHtml(r.actionTaken) + '</div>' : '') +
       '<div style="margin-top:12px;" onclick="event.stopPropagation()">' +
         '<label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Compliance note <span style="font-weight:400;text-transform:none;">(shown to the adviser on their dashboard)</span></label>' +
