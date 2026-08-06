@@ -1783,6 +1783,14 @@ select:focus { outline:none; }
         <div id="cd-compliance-summary-text" style="font-size:13px;line-height:1.6;color:var(--brand-navy);">Loading…</div>
       </div>
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div id="cd-adviser-filter-wrap" style="display:none;position:relative;">
+          <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Adviser</label>
+          <input type="hidden" id="cd-filter-adviser" value="">
+          <button type="button" id="cd-filter-adviser-btn" onclick="cdToggleAdviserDropdown()" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:180px;cursor:pointer;text-align:left;">
+            <span id="cd-filter-adviser-label">All advisers</span><span style="color:#6b7c8f;font-size:11px;">▾</span>
+          </button>
+          <div id="cd-filter-adviser-list" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:240px;overflow-y:auto;z-index:50;min-width:200px;box-shadow:0 6px 16px rgba(0,0,0,.12);"></div>
+        </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Status</label>
           <select id="cd-filter-status" onchange="cdRenderFeedback()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:var(--brand-navy);background:#fff;min-width:150px;">
@@ -16317,15 +16325,21 @@ function homeAlignColumns() {
   });
 })();
 
+function cdIsTeamView() {
+  return !!(_currentUser && (_currentUser.isAdmin || _currentUser.isSupervisor));
+}
 function loadCdFeedback() {
   var loading = document.getElementById('cd-feedback-loading');
   var empty   = document.getElementById('cd-feedback-empty');
   var list    = document.getElementById('cd-feedback-list');
+  var adviserWrap = document.getElementById('cd-adviser-filter-wrap');
+  var teamView = cdIsTeamView();
+  if (adviserWrap) adviserWrap.style.display = teamView ? '' : 'none';
   loading.style.display = '';
   empty.style.display = 'none';
   list.innerHTML = '';
   document.getElementById('cd-compliance-summary-text').textContent = 'Loading…';
-  fetch('/api/consumer-duty-feedback-mine')
+  fetch(teamView ? '/api/consumer-duty-feedback' : '/api/consumer-duty-feedback-mine')
     .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
     .then(function(res) {
       loading.style.display = 'none';
@@ -16337,6 +16351,7 @@ function loadCdFeedback() {
       var data = res.data;
       _cdFeedback = cdNormalizeRecords(data.responses || []);
       document.getElementById('cd-compliance-summary-text').textContent = data.summary || 'No summary available yet.';
+      if (teamView) cdPopulateAdviserFilter();
       if (!_cdFeedback.length) { empty.style.display = ''; return; }
       cdRenderFeedback();
     })
@@ -16346,18 +16361,56 @@ function loadCdFeedback() {
       list.innerHTML = '<div style="text-align:center;padding:40px;color:#b91c1c;font-size:13px;">Could not load questionnaire feedback. Please try again.</div>';
     });
 }
+function cdPopulateAdviserFilter() {
+  var hidden = document.getElementById('cd-filter-adviser');
+  if (!hidden) return;
+  var current = hidden.value;
+  var advisers = Array.from(new Set(_cdFeedback.map(function(r) { return r.adviserName; }).filter(Boolean))).sort();
+  if (advisers.indexOf(current) === -1) { current = ''; hidden.value = ''; }
+  document.getElementById('cd-filter-adviser-label').textContent = current || 'All advisers';
+  var listEl = document.getElementById('cd-filter-adviser-list');
+  var options = [''].concat(advisers);
+  listEl.innerHTML = options.map(function(a) {
+    var label = a || 'All advisers';
+    var active = a === current;
+    return '<div onclick="cdSelectAdviser(\'' + escAttr(a) + '\',\'' + escAttr(label) + '\')" style="padding:9px 14px;font-size:13px;font-weight:' + (active ? '700' : '400') + ';color:var(--brand-navy);background:' + (active ? '#eef0ff' : '#fff') + ';cursor:pointer;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'' + (active ? '#eef0ff' : '#fff') + '\'">' + escHtml(label) + '</div>';
+  }).join('');
+}
+function cdToggleAdviserDropdown() {
+  var list = document.getElementById('cd-filter-adviser-list');
+  var open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+}
+function cdSelectAdviser(value, label) {
+  document.getElementById('cd-filter-adviser').value = value;
+  document.getElementById('cd-filter-adviser-label').textContent = label;
+  document.getElementById('cd-filter-adviser-list').style.display = 'none';
+  cdPopulateAdviserFilter();
+  cdRenderFeedback();
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('cd-filter-adviser-btn');
+  var list = document.getElementById('cd-filter-adviser-list');
+  if (!btn || !list || list.style.display === 'none') return;
+  if (!btn.contains(e.target) && !list.contains(e.target)) list.style.display = 'none';
+});
 function cdClearFilters() {
+  var adviserHidden = document.getElementById('cd-filter-adviser');
+  if (adviserHidden) { adviserHidden.value = ''; document.getElementById('cd-filter-adviser-label').textContent = 'All advisers'; cdPopulateAdviserFilter(); }
   document.getElementById('cd-filter-status').value = 'Partial';
   document.getElementById('cd-filter-from').value = '';
   document.getElementById('cd-filter-to').value = '';
   cdRenderFeedback();
 }
 function cdFilteredFeedback() {
+  var adviserEl = document.getElementById('cd-filter-adviser');
+  var adviser = adviserEl ? adviserEl.value : '';
   var status = document.getElementById('cd-filter-status').value;
   var from = document.getElementById('cd-filter-from').value;
   var to = document.getElementById('cd-filter-to').value;
   return _cdFeedback.filter(function(r) {
     if (status && status !== 'all' && r.status !== status) return false;
+    if (adviser && r.adviserName !== adviser) return false;
     if (r.submittedAt) {
       var d = r.submittedAt.slice(0, 10);
       if (from && d < from) return false;
@@ -16420,7 +16473,9 @@ function cdCardHtml(r, toggleFn) {
 function cdUpdateSummaryTitle() {
   var titleEl = document.getElementById('cd-compliance-summary-title');
   if (!titleEl) return;
-  titleEl.textContent = 'Alex™ Consumer Duty Summary';
+  var adviserEl = document.getElementById('cd-filter-adviser');
+  var adviser = adviserEl ? adviserEl.value : '';
+  titleEl.textContent = adviser ? ('Alex™ Consumer Duty Summary — for ' + adviser) : 'Alex™ Consumer Duty Summary';
 }
 function cdRenderFeedback() {
   cdUpdateSummaryTitle();
