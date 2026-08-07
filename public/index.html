@@ -1559,6 +1559,12 @@ select:focus { outline:none; }
 
       <div style="background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.07);max-width:640px;">
         <div id="cr-form">
+          <div id="cr-row-broker" style="display:none;margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Broker Name <span style="font-weight:400;color:#6b7c8f;">(leave blank to submit under your own name)</span></label>
+            <input id="cr-broker" list="cr-broker-list" type="text" placeholder="Start typing a broker's name if completing this on their behalf…" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;" oninput="crBrokerInputChanged()">
+            <datalist id="cr-broker-list"></datalist>
+            <div id="cr-broker-error" style="display:none;color:#b91c1c;font-size:12px;margin-top:5px;">No broker found matching that name — please pick one from the list.</div>
+          </div>
           <div style="margin-bottom:14px;">
             <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:5px;">Summary <span style="color:#b91c1c;">*</span></label>
             <input id="cr-summary" type="text" placeholder="One-line summary" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;">
@@ -16156,6 +16162,35 @@ var CR_CONFIG = {
   }
 };
 
+// ── "Broker Name" field on the Compliance Reporting form — lets a
+// supervisor/admin quickly file a report on a broker's behalf; it's then
+// attributed to that broker (as if they'd submitted it themselves), never
+// shown to regular brokers filing their own reports.
+var _crBrokerEmailByName = {};
+var _crBrokerOptionsLoaded = false;
+function loadCrBrokerOptions() {
+  if (_crBrokerOptionsLoaded) return;
+  if (!_currentUser || !(_currentUser.isSupervisor || _currentUser.isAdmin)) return;
+  var url = '/api/supervisor/team' + (_currentUser.isAdmin ? '?as=all' : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(d) {
+    _crBrokerOptionsLoaded = true;
+    var members = (d && d.members) || [];
+    _crBrokerEmailByName = {};
+    members.forEach(function(m) {
+      var name = [m.firstName, m.lastName].filter(Boolean).join(' ');
+      if (name && m.email) _crBrokerEmailByName[name] = m.email;
+    });
+    var list = document.getElementById('cr-broker-list');
+    if (list) list.innerHTML = Object.keys(_crBrokerEmailByName).sort().map(function(n) { return '<option value="' + escHtml(n) + '">'; }).join('');
+  }).catch(function() {});
+}
+function crBrokerInputChanged() {
+  var input = document.getElementById('cr-broker');
+  var errEl = document.getElementById('cr-broker-error');
+  var val = input.value.trim();
+  errEl.style.display = (val && !_crBrokerEmailByName[val]) ? '' : 'none';
+}
+
 function showCrForm(type, el) {
   _crType = type;
   var cfg = CR_CONFIG[type];
@@ -16187,15 +16222,19 @@ function showCrForm(type, el) {
   document.getElementById('cr-row-frl').style.display        = cfg.show.frl        ? 'flex' : 'none';
   document.getElementById('cr-row-fine').style.display       = cfg.show.fine       ? 'flex' : 'none';
   document.getElementById('cr-row-settlement').style.display = cfg.show.settlement ? 'flex' : 'none';
+  var showBroker = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
+  document.getElementById('cr-row-broker').style.display = showBroker ? '' : 'none';
+  if (showBroker) loadCrBrokerOptions();
   resetCrForm();
   return false;
 }
 
 function resetCrForm() {
   ['cr-summary','cr-incident','cr-client','cr-thirdparty','cr-value','cr-details','cr-action','cr-reason','cr-sarvalue','cr-mlro','cr-mlro-date','cr-outcome',
-   'cr-nca','cr-nca-date','cr-frl-signoff','cr-frl-sent','cr-fine-amount','cr-fine-paidby','cr-settlement-amount','cr-settlement-paidby'].forEach(function(id){
+   'cr-nca','cr-nca-date','cr-frl-signoff','cr-frl-sent','cr-fine-amount','cr-fine-paidby','cr-settlement-amount','cr-settlement-paidby','cr-broker'].forEach(function(id){
     document.getElementById(id).value = '';
   });
+  document.getElementById('cr-broker-error').style.display = 'none';
   var vulnSel = document.getElementById('cr-vulnerability');
   if (vulnSel) Array.prototype.forEach.call(vulnSel.options, function(o){ o.selected = false; });
   ['cr-reason','cr-outcome'].forEach(khRefreshEnhancedSelect);
@@ -16855,6 +16894,20 @@ function submitCrForm() {
     errEl.style.display = '';
     return;
   }
+  var onBehalfOfEmail = null;
+  var brokerRow = document.getElementById('cr-row-broker');
+  if (brokerRow && brokerRow.style.display !== 'none') {
+    var brokerName = document.getElementById('cr-broker').value.trim();
+    if (brokerName) {
+      onBehalfOfEmail = _crBrokerEmailByName[brokerName];
+      if (!onBehalfOfEmail) {
+        document.getElementById('cr-broker-error').style.display = '';
+        errEl.textContent = 'Please pick a valid broker from the list, or clear the field to submit under your own name.';
+        errEl.style.display = '';
+        return;
+      }
+    }
+  }
   var cfg = CR_CONFIG[_crType];
   var vulnValues = [];
   if (cfg.show.vulnerability) {
@@ -16865,6 +16918,7 @@ function submitCrForm() {
     type: _crType,
     summary: summary,
     details: details,
+    onBehalfOfEmail: onBehalfOfEmail,
     incidentDate: document.getElementById('cr-incident').value || null,
     clientName:   cfg.show.client     ? document.getElementById('cr-client').value.trim()     : null,
     thirdParty:   cfg.show.thirdparty ? document.getElementById('cr-thirdparty').value.trim() : null,

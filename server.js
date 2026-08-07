@@ -5507,14 +5507,35 @@ app.patch('/api/compliance-report/:id/seen', requireAuth, async (req, res) => {
 // POST /api/compliance-report — submit a compliance reporting form
 app.post('/api/compliance-report', requireAuth, async (req, res) => {
   const { type, summary, incidentDate, clientName, thirdParty, givenReceived, value, details, actionTaken, vulnerability, outcome, reasonForSuspicion, reportedToMlro, mlroDate,
-          ncaReferral, ncaReferralDate, frlSignedOffDate, frlSentDate, fineAmount, finePaidBy, settlementAmount, settlementPaidBy } = req.body;
+          ncaReferral, ncaReferralDate, frlSignedOffDate, frlSentDate, fineAmount, finePaidBy, settlementAmount, settlementPaidBy, onBehalfOfEmail } = req.body;
   if (!CR_TYPES.includes(type)) return res.status(400).json({ error: 'Invalid report type' });
   if (!summary || !details)     return res.status(400).json({ error: 'Summary and details are required' });
   try {
+    // Supervisors/admins can file a report on a broker's behalf — it's
+    // attributed to the broker (as if they submitted it themselves), not
+    // the supervisor, but we keep an audit trail of who actually typed it in.
+    let reportEmail = req.session.user.email;
+    const caller = req.session.user;
+    if (onBehalfOfEmail && (caller.isSupervisor || caller.isAdmin)) {
+      const target = String(onBehalfOfEmail).trim().toLowerCase();
+      if (caller.isAdmin) {
+        reportEmail = target;
+      } else {
+        // Non-admin supervisors can only file on behalf of their own team
+        const formula = encodeURIComponent(`LOWER({Email})="${target}"`);
+        const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+        const rec = data.records && data.records[0];
+        const belongsToTeam = rec && (rec.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === caller.email.toLowerCase();
+        if (belongsToTeam) reportEmail = target;
+      }
+      if (reportEmail !== caller.email.toLowerCase()) {
+        auditLog('compliance_report_filed_on_behalf', { email: caller.email, onBehalfOf: reportEmail, type }, req);
+      }
+    }
     const fields = {
       [CR_SUMMARY]:   summary,
       [CR_TYPE]:      type,
-      [CR_EMAIL]:     req.session.user.email,
+      [CR_EMAIL]:     reportEmail,
       [CR_SUBMITTED]: new Date().toISOString().split('T')[0],
       [CR_DETAILS]:   details,
       [CR_STATUS]:    'New'
