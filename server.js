@@ -3733,12 +3733,15 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
 });
 
 // ── Admin: bulk import users ──────────────────────────────────
-// Upserts by email — existing users get their password (and other fields)
-// UPDATED in place, new emails get CREATED. Previously this always created
-// a new record, so re-running an import against existing users silently
-// did nothing to them (no update, no error) while any row missing an
-// email or password was silently dropped with only an aggregate count —
-// both are called out by name in the response now so nothing goes unnoticed.
+// Upserts by email. Existing users ONLY get their password field updated
+// (nothing else on their record is touched, even if the CSV row has other
+// columns filled in or blank) — this route is used purely to fix logins,
+// not to sync profile data. New emails get a full new record created.
+// Previously this always created a new record, so re-running an import
+// against existing users silently did nothing to them (no update, no
+// error) while any row missing an email or password was silently dropped
+// with only an aggregate count — both are called out by name in the
+// response now so nothing goes unnoticed.
 app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
   const users = req.body;
   if (!Array.isArray(users) || users.length === 0)
@@ -3782,26 +3785,31 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
     try {
       await Promise.all(validRows.map(async u => {
         const hash = await bcrypt.hash(String(u.password), 10);
-        const fields = {
-          [F_EMAIL]:            String(u.email).trim().toLowerCase(),
-          [F_PASSWORD]:         hash,
-          [F_SAL]:              u.salutation  || null,
-          [F_FIRST]:            u.firstName   || '',
-          [F_LAST]:             u.lastName    || '',
-          [F_TITLE]:            u.jobTitle    || null,
-          [F_MOBILE]:           u.mobile      || '',
-          [F_LANDLINE]:         u.landline    || '',
-          [F_WEBSITE]:          u.website     || null,
-          [F_ADMIN]:            toBool(u.isAdmin),
-          [F_MORTGAGES]:        toBool(u.sellsMortgages),
-          [F_PROTECTION]:       toBool(u.sellsProtection),
-          [F_INVESTMENTS]:      toBool(u.sellsInvestments),
-          [F_IS_SUPERVISOR]:    toBool(u.isSupervisor),
-          [F_SUPERVISOR_EMAIL]: u.supervisorEmail || null
-        };
         const existingId = existingByEmail[String(u.email).trim().toLowerCase()];
-        if (existingId) toUpdate.push({ id: existingId, fields });
-        else toCreate.push({ fields });
+        if (existingId) {
+          // Existing user: password ONLY, every other field on their
+          // record is left exactly as it was.
+          toUpdate.push({ id: existingId, fields: { [F_PASSWORD]: hash } });
+        } else {
+          // Brand-new user: create with the full profile from the row.
+          toCreate.push({ fields: {
+            [F_EMAIL]:            String(u.email).trim().toLowerCase(),
+            [F_PASSWORD]:         hash,
+            [F_SAL]:              u.salutation  || null,
+            [F_FIRST]:            u.firstName   || '',
+            [F_LAST]:             u.lastName    || '',
+            [F_TITLE]:            u.jobTitle    || null,
+            [F_MOBILE]:           u.mobile      || '',
+            [F_LANDLINE]:         u.landline    || '',
+            [F_WEBSITE]:          u.website     || null,
+            [F_ADMIN]:            toBool(u.isAdmin),
+            [F_MORTGAGES]:        toBool(u.sellsMortgages),
+            [F_PROTECTION]:       toBool(u.sellsProtection),
+            [F_INVESTMENTS]:      toBool(u.sellsInvestments),
+            [F_IS_SUPERVISOR]:    toBool(u.isSupervisor),
+            [F_SUPERVISOR_EMAIL]: u.supervisorEmail || null
+          }});
+        }
       }));
     } catch (e) {
       results.errors.push({ batch: i, error: 'hash error: ' + e.message });
