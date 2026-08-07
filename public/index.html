@@ -17689,10 +17689,12 @@ async function confirmImport() {
     });
     var result = await res.json();
     barEl.style.width = '100%';
+    var skippedList = Array.isArray(result.skipped) ? result.skipped : [];
     var firstErr = result.errors && result.errors.length ? ' — ' + JSON.stringify(result.errors[0]) : '';
-    textEl.textContent = result.created + ' imported' +
-      (result.skipped  ? ', ' + result.skipped  + ' skipped' : '') +
-      (result.errors && result.errors.length ? ', ' + result.errors.length + ' errors' + firstErr : '') + '.';
+    var msg = (result.created || 0) + ' created, ' + (result.updated || 0) + ' updated';
+    if (skippedList.length) msg += ', ' + skippedList.length + ' skipped (' + skippedList.slice(0,3).map(function(s){ return s.email + ': ' + s.reason; }).join('; ') + (skippedList.length > 3 ? '…' : '') + ')';
+    if (result.errors && result.errors.length) msg += ', ' + result.errors.length + ' errors' + firstErr;
+    textEl.textContent = msg + '.';
   } catch(e) {
     textEl.textContent = 'Import failed: ' + e.message;
   }
@@ -17700,7 +17702,7 @@ async function confirmImport() {
   setTimeout(function() {
     document.getElementById('admin-import-preview').style.display = 'none';
     loadAdminUsers();
-  }, 2000);
+  }, 4000);
 }
 
 // ── Knowledge Tests ───────────────────────────────────────────
