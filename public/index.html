@@ -5495,6 +5495,22 @@ Consolidating debts will increase the loan to value which can impact future deal
   </div>
 </div>
 
+<!-- ── API Usage / Cost Tracking (admin only) ──────────────────────────── -->
+<div id="api-usage-modal" onclick="if(event.target===this)closeApiUsageAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2100;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #d1d5db;">
+      <div>
+        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">API Usage &amp; Cost</h2>
+        <p style="color:#6b7c8f;font-size:13px;margin:0;">Estimated Anthropic/OpenAI spend by feature, tracked inside KnowledgeHUB&#8482;.</p>
+      </div>
+      <button onclick="closeApiUsageAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
+    </div>
+    <div id="api-usage-body" style="padding:20px 28px;">
+      <p style="color:#6b7c8f;font-size:13px;">Loading…</p>
+    </div>
+  </div>
+</div>
+
 <div id="admin-modal" onclick="if(event.target===this)closeAdminPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:12px;width:100%;max-width:1080px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
     <!-- Header -->
@@ -5508,6 +5524,7 @@ Consolidating debts will increase the loan to value which can impact future deal
         <label id="admin-modal-import-excel" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import Excel</span><input type="file" accept=".xlsx" onchange="importUsersExcel(this)" style="display:none;"></label>
         <button id="admin-audit-btn" onclick="toggleAuditLog()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">Audit Log</button>
         <button id="admin-helpkb-btn" onclick="openHelpKbAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">About Alex™</button>
+        <button id="admin-apiusage-btn" onclick="openApiUsageAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">API Usage</button>
         <button id="admin-modal-add-user" onclick="openUserForm()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
       </div>
@@ -9721,6 +9738,8 @@ var _currentUser = null;
       if (auditBtn) auditBtn.style.display = '';
       var helpKbBtn = document.getElementById('admin-helpkb-btn');
       if (helpKbBtn) helpKbBtn.style.display = '';
+      var apiUsageBtn = document.getElementById('admin-apiusage-btn');
+      if (apiUsageBtn) apiUsageBtn.style.display = '';
     }
     if (user && (user.isAdmin || user.isSupervisor)) {
       var mcBtn = document.getElementById('mc-import-btn');
@@ -10296,6 +10315,9 @@ function openAdminPanel() {
   // AI Help Content — admin only
   var helpKbBtn = document.getElementById('admin-helpkb-btn');
   if (helpKbBtn) helpKbBtn.style.display = isAdminUser ? '' : 'none';
+  // API Usage — admin only
+  var apiUsageBtn2 = document.getElementById('admin-apiusage-btn');
+  if (apiUsageBtn2) apiUsageBtn2.style.display = isAdminUser ? '' : 'none';
   // Feature panel — admin only
   var fp = document.getElementById('admin-features-panel');
   if (fp) {
@@ -10325,6 +10347,39 @@ function openHelpKbAdmin() {
 }
 function closeHelpKbAdmin() {
   document.getElementById('help-kb-modal').style.display = 'none';
+}
+function openApiUsageAdmin() {
+  document.getElementById('api-usage-modal').style.display = 'flex';
+  var body = document.getElementById('api-usage-body');
+  body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Loading…</p>';
+  fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
+    if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || 'Could not load usage data.') + '</p>'; return; }
+    var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
+    var featureRows = (d.byFeature || []).map(function(f) {
+      return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + f.feature + '</td>'
+        + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(f.cost) + '</td></tr>';
+    }).join('') || '<tr><td colspan="2" style="padding:8px 0;color:#6b7c8f;font-size:13px;">No usage logged yet.</td></tr>';
+    var dayRows = (d.byDay || []).slice(-14).reverse().map(function(dd) {
+      return '<tr><td style="padding:6px 0;color:var(--brand-navy);font-size:12px;">' + dd.day + '</td>'
+        + '<td style="padding:6px 0;color:#6b7c8f;font-size:12px;text-align:right;">' + fmt(dd.cost) + '</td></tr>';
+    }).join('') || '<tr><td colspan="2" style="padding:6px 0;color:#6b7c8f;font-size:12px;">No usage in the last 30 days.</td></tr>';
+    body.innerHTML =
+      '<div style="display:flex;gap:16px;margin-bottom:20px;">'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">All-time total</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.totalCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Last 30 days</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.last30DaysCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Total calls</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + (d.totalCalls || 0) + '</div></div>'
+      + '</div>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">By feature (all-time)</h3>'
+      + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + featureRows + '</table>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Last 14 days</h3>'
+      + '<table style="width:100%;border-collapse:collapse;">' + dayRows + '</table>'
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Costs are estimated from published per-token/per-minute model pricing, not exact billing figures — check the Anthropic/OpenAI dashboards for actual invoiced amounts.</p>';
+  }).catch(function() {
+    body.innerHTML = '<p style="color:#c00;font-size:13px;">Could not load usage data.</p>';
+  });
+}
+function closeApiUsageAdmin() {
+  document.getElementById('api-usage-modal').style.display = 'none';
 }
 function helpKbLoad() {
   var list = document.getElementById('help-kb-list');

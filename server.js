@@ -44,6 +44,63 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 // summarises them — set on Railway once available, same pattern as above.
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// ── API Usage Log — every Anthropic/OpenAI call KnowledgeHUB makes is
+// logged here (fire-and-forget, never blocks or breaks the calling
+// feature) so cost can be tracked per feature/user/day instead of only
+// seeing an aggregate total in the Anthropic/OpenAI billing dashboards.
+const API_USAGE_TABLE = 'tblsJsFkw6ld1S5QM';
+const F_USAGE_TS       = 'fldeF429xcaNmquci';
+const F_USAGE_FEATURE  = 'fldg2No6AUCkoi3oz';
+const F_USAGE_PROVIDER = 'flddJLvWCTKrDHLZO';
+const F_USAGE_MODEL    = 'fldNSYpxlHkmoAh6k';
+const F_USAGE_IN_TOK   = 'fld0mqCLEURkSU2i9';
+const F_USAGE_OUT_TOK  = 'fldGShHrXzYK6hYdR';
+const F_USAGE_AUDIO_S  = 'fldh5ewKo1QtSKGl9';
+const F_USAGE_COST     = 'fldgqqLv2wqIOjmKl';
+const F_USAGE_EMAIL    = 'fld9f9aYztrECtReW';
+
+// $ per million tokens (input/output), and $ per minute for Whisper audio.
+// Update here if Anthropic/OpenAI change pricing.
+const API_PRICING = {
+  'claude-haiku-4-5-20251001':  { inPerM: 1,   outPerM: 5   },
+  'claude-sonnet-4-5-20250929': { inPerM: 3,   outPerM: 15  },
+  'whisper-1':                  { perMinute: 0.006 }
+};
+
+// Fire-and-forget usage logger — never throws, never delays the response
+// to the user. `audioSeconds` is used instead of tokens for Whisper.
+function logApiUsage({ feature, provider, model, inputTokens, outputTokens, audioSeconds, userEmail }) {
+  try {
+    const pricing = API_PRICING[model] || {};
+    let cost = 0;
+    if (typeof audioSeconds === 'number' && pricing.perMinute) {
+      cost = (audioSeconds / 60) * pricing.perMinute;
+    } else {
+      cost = ((inputTokens || 0) / 1e6) * (pricing.inPerM || 0)
+           + ((outputTokens || 0) / 1e6) * (pricing.outPerM || 0);
+    }
+    const fields = {
+      [F_USAGE_TS]: new Date().toISOString(),
+      [F_USAGE_FEATURE]: feature,
+      [F_USAGE_PROVIDER]: provider,
+      [F_USAGE_MODEL]: model || '',
+      [F_USAGE_COST]: Math.round(cost * 10000) / 10000
+    };
+    if (typeof inputTokens === 'number') fields[F_USAGE_IN_TOK] = inputTokens;
+    if (typeof outputTokens === 'number') fields[F_USAGE_OUT_TOK] = outputTokens;
+    if (typeof audioSeconds === 'number') fields[F_USAGE_AUDIO_S] = audioSeconds;
+    if (userEmail) fields[F_USAGE_EMAIL] = userEmail;
+
+    fetch(`https://api.airtable.com/v0/${AT_BASE}/${API_USAGE_TABLE}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields }] })
+    }).catch(e => console.error('logApiUsage error:', e.message));
+  } catch (e) {
+    console.error('logApiUsage error:', e.message);
+  }
+}
+
 // ── Airtable config ──────────────────────────────────────────
 const AT_KEY      = process.env.AIRTABLE_API_KEY;
 const AT_BASE     = 'appqQv0Xog8yZMwI9';
@@ -1253,6 +1310,12 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
     const reply = (data.content && data.content[0] && data.content[0].text) || 'Sorry, I wasn\'t able to generate a response.';
+    logApiUsage({
+      feature: 'Alex Chat', provider: 'Anthropic', model: 'claude-haiku-4-5-20251001',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens,
+      userEmail: req.session.user && req.session.user.email
+    });
     res.json({ reply });
   } catch (err) {
     console.error('help-chat error:', err);
@@ -1321,6 +1384,12 @@ Every one of the 5 "checks" entries must always be present, with status "pass" i
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
     const raw = (data.content && data.content[0] && data.content[0].text) || '';
+    logApiUsage({
+      feature: 'Payslip Check', provider: 'Anthropic', model: 'claude-haiku-4-5-20251001',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens,
+      userEmail: req.session.user && req.session.user.email
+    });
     let parsed;
     try {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -1424,6 +1493,12 @@ Every "checks" entry described above must always be present (${payslipFiles.leng
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
     const raw = (data.content && data.content[0] && data.content[0].text) || '';
+    logApiUsage({
+      feature: 'Bank Statement Check', provider: 'Anthropic', model: 'claude-haiku-4-5-20251001',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens,
+      userEmail: req.session.user && req.session.user.email
+    });
     let parsed;
     try {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -1441,6 +1516,62 @@ Every "checks" entry described above must always be present (${payslipFiles.leng
   } catch (err) {
     console.error('bank-statement-check error:', err);
     res.status(500).json({ error: 'Something went wrong reaching the AI. Please try again.' });
+  }
+});
+
+// GET /api/admin/api-usage-summary — admin-only cost tracking for every
+// Anthropic/OpenAI call KnowledgeHUB makes (see logApiUsage()). Returns
+// totals by feature and by day, plus an overall total, so cost can be
+// tracked without needing to check the Anthropic/OpenAI billing pages.
+app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
+  try {
+    let records = [], offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${API_USAGE_TABLE}${qs}`, {
+        headers: { Authorization: `Bearer ${AT_KEY}` }
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error((data.error && data.error.message) || 'Airtable error');
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+
+    const byFeature = {};
+    const byDay = {};
+    let total = 0;
+    const cutoff30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+    for (const rec of records) {
+      const f = rec.fields || {};
+      const cost = f[F_USAGE_COST] || 0;
+      const ts = f[F_USAGE_TS] || rec.createdTime;
+      const feature = f[F_USAGE_FEATURE] || 'Unknown';
+      total += cost;
+      byFeature[feature] = (byFeature[feature] || 0) + cost;
+      if (ts && new Date(ts).getTime() >= cutoff30) {
+        const day = ts.slice(0, 10);
+        byDay[day] = (byDay[day] || 0) + cost;
+      }
+    }
+
+    const featureBreakdown = Object.keys(byFeature)
+      .map(k => ({ feature: k, cost: Math.round(byFeature[k] * 10000) / 10000 }))
+      .sort((a, b) => b.cost - a.cost);
+    const dailyBreakdown = Object.keys(byDay)
+      .sort()
+      .map(k => ({ day: k, cost: Math.round(byDay[k] * 10000) / 10000 }));
+
+    res.json({
+      totalCostUsd: Math.round(total * 10000) / 10000,
+      totalCalls: records.length,
+      last30DaysCostUsd: Math.round(dailyBreakdown.reduce((s, d) => s + d.cost, 0) * 10000) / 10000,
+      byFeature: featureBreakdown,
+      byDay: dailyBreakdown
+    });
+  } catch (err) {
+    console.error('api-usage-summary error:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -8058,6 +8189,7 @@ app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res
     const form = new FormData();
     form.append('file', new Blob([audioBuffer], { type: mimeType }), `meeting.${ext}`);
     form.append('model', 'whisper-1');
+    form.append('response_format', 'verbose_json');
 
     const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -8067,6 +8199,11 @@ app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res
     const whisperData = await whisperRes.json();
     if (!whisperRes.ok) throw new Error((whisperData.error && whisperData.error.message) || 'Transcription failed');
     const transcript = (whisperData.text || '').trim();
+    logApiUsage({
+      feature: 'Meeting Transcription', provider: 'OpenAI', model: 'whisper-1',
+      audioSeconds: typeof whisperData.duration === 'number' ? Math.round(whisperData.duration) : undefined,
+      userEmail: req.session.user && req.session.user.email
+    });
     if (!transcript) return res.status(422).json({ error: 'Could not detect any speech in the recording.' });
 
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -8090,6 +8227,12 @@ app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res
     });
     const claudeData = await claudeRes.json();
     if (!claudeRes.ok) throw new Error((claudeData.error && claudeData.error.message) || 'AI summarising failed');
+    logApiUsage({
+      feature: 'Meeting Summary', provider: 'Anthropic', model: 'claude-sonnet-4-5-20250929',
+      inputTokens: claudeData.usage && claudeData.usage.input_tokens,
+      outputTokens: claudeData.usage && claudeData.usage.output_tokens,
+      userEmail: req.session.user && req.session.user.email
+    });
     const raw = (claudeData.content && claudeData.content[0] && claudeData.content[0].text) || '{}';
     let parsed;
     try {
