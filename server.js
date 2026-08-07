@@ -94,7 +94,7 @@ function logApiUsage({ feature, provider, model, inputTokens, outputTokens, audi
     fetch(`https://api.airtable.com/v0/${AT_BASE}/${API_USAGE_TABLE}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ records: [{ fields }] })
+      body: JSON.stringify({ records: [{ fields }], typecast: true })
     }).catch(e => console.error('logApiUsage error:', e.message));
   } catch (e) {
     console.error('logApiUsage error:', e.message);
@@ -4453,6 +4453,11 @@ app.get('/api/supervisor/cpd-ai-summary', requireAuth, async (req, res) => {
       const data = await r.json();
       if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
       const summary = (data.content && data.content[0] && data.content[0].text) || fallback;
+      logApiUsage({
+        feature: 'CPD Leadership Summary', provider: 'Anthropic', model: 'claude-sonnet-4-5-20250929',
+        inputTokens: data.usage && data.usage.input_tokens,
+        outputTokens: data.usage && data.usage.output_tokens
+      });
       res.json({ summary, generatedAt: new Date().toISOString() });
     } catch (aiErr) {
       console.error('cpd-ai-summary AI error:', aiErr);
@@ -5690,6 +5695,11 @@ async function crBuildComplianceLogSummary(rows) {
     });
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    logApiUsage({
+      feature: 'Compliance Log Summary', provider: 'Anthropic', model: 'claude-sonnet-4-5-20250929',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens
+    });
     return (data.content && data.content[0] && data.content[0].text) || fallback;
   } catch (e) {
     console.error('crBuildComplianceLogSummary AI error:', e);
@@ -8409,6 +8419,11 @@ async function cdBuildComplianceSummary(responses, isCompanyWide) {
     });
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    logApiUsage({
+      feature: 'Consumer Duty Team Summary', provider: 'Anthropic', model: 'claude-sonnet-4-5-20250929',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens
+    });
     return (data.content && data.content[0] && data.content[0].text) || '';
   } catch (e) {
     console.error('cdBuildComplianceSummary AI error:', e);
@@ -8450,6 +8465,11 @@ async function cdBuildBrokerSummary(brokerName, records) {
     });
     const data = await r.json();
     if (!r.ok) throw new Error((data.error && data.error.message) || 'AI request failed');
+    logApiUsage({
+      feature: 'Consumer Duty Adviser Summary', provider: 'Anthropic', model: 'claude-sonnet-4-5-20250929',
+      inputTokens: data.usage && data.usage.input_tokens,
+      outputTokens: data.usage && data.usage.output_tokens
+    });
     return (data.content && data.content[0] && data.content[0].text) || fallback;
   } catch (e) {
     console.error('cdBuildBrokerSummary AI error:', e);
