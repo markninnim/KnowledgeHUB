@@ -4190,9 +4190,9 @@ Consolidating debts will increase the loan to value which can impact future deal
         <!-- Compliance Log — own card, full width -->
         <div id="bp-complog-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
           <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Compliance Log</div>
-          <div id="bp-complog-wrap" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;">
-            <div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px;gap:0;padding:10px 16px;background:#f5f7fa;border-bottom:1px solid #d1d5db;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">
-              <div>Date</div><div>Type</div><div>Adviser</div><div>Supervisor</div><div>Client</div><div>Status</div>
+          <div id="bp-complog-wrap" style="margin:0 -20px;">
+            <div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px 20px;gap:0;padding:10px 20px;background:#f5f7fa;border-top:1px solid #d1d5db;border-bottom:1px solid #d1d5db;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;">
+              <div>Date</div><div>Type</div><div>Adviser</div><div>Supervisor</div><div>Client</div><div>Status</div><div></div>
             </div>
             <div id="bp-complog-list"></div>
           </div>
@@ -12957,22 +12957,49 @@ function openBrokerProfile(email, name, keepDateRange) {
         var rows = window._bpComplogRows || [];
         if (wrapEl) wrapEl.style.display = '';
         if (!rows.length) {
-          listEl.innerHTML = '<div style="padding:16px;font-size:12.5px;color:#6b7c8f;border-top:1px solid #f0f2f5;">No compliance log entries.</div>';
+          listEl.innerHTML = '<div style="padding:16px 20px;font-size:12.5px;color:#6b7c8f;border-top:1px solid #f0f2f5;">No compliance log entries.</div>';
           return;
         }
         var crStatusColors = { 'New': 'var(--brand-navy)', 'Under Review': '#854d0e', 'Resolved': '#166534' };
         listEl.innerHTML = rows.map(function(row, idx) {
+          var rowId = 'bp-cl-row-' + idx;
           var col = crStatusColors[row.status || 'New'] || '#6b7c8f';
           var when = row.dateSubmitted || '—';
-          return '<div style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px;gap:0;padding:12px 16px;align-items:center;border-top:1px solid #f0f2f5;font-size:12.5px;color:var(--brand-navy);">' +
-            '<div>' + escHtml(when) + '</div>' +
-            '<div>' + escHtml(row.type || '') + '</div>' +
-            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(window._bpComplogAdviserName || '—') + '</div>' +
-            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.supervisorName || '—') + '</div>' +
-            '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.clientName || '—') + '</div>' +
-            '<div><select onchange="bpComplogUpdateStatus(\'' + row.id + '\', this.value)" style="font-size:11px;font-weight:700;color:' + col + ';border:1px solid #d1d5db;border-radius:6px;padding:3px 6px;background:#fff;font-family:inherit;cursor:pointer;">' +
-              ['New', 'Under Review', 'Resolved'].map(function(s) { return '<option value="' + s + '"' + (s === (row.status || 'New') ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
-            '</select></div>' +
+          var extras = CL_EXTRA_FIELDS[row.type] || [];
+          var hasExtras = extras.some(function(f) { var v = row[f.key]; return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length); });
+          var detailHtml = '<div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #eef1f4;font-size:12.5px;color:#6b7c8f;line-height:1.7;">' +
+            (row.summary ? '<div style="font-weight:700;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(row.summary) + '</div>' : '') +
+            (row.incidentDate ? '<div>' + escHtml((CR_CONFIG[row.type] && CR_CONFIG[row.type].incidentLabel) || 'Incident date') + ': ' + escHtml(row.incidentDate) + '</div>' : '') +
+            extras.map(function(f) {
+              var v = row[f.key];
+              if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
+              var display = f.list ? v.join(', ') : (f.money ? ('£' + Number(v).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) : v);
+              return '<div>' + escHtml(f.label) + ': ' + escHtml(String(display)) + '</div>';
+            }).join('') +
+            (row.details ? '<div style="margin-top:8px;"><span style="font-weight:600;">' + escHtml((CR_CONFIG[row.type] && CR_CONFIG[row.type].detailsLabel) || 'Details') + ':</span> ' + escHtml(row.details) + '</div>' : '') +
+            (row.actionTaken ? '<div style="margin-top:6px;"><span style="font-weight:600;">Action taken:</span> ' + escHtml(row.actionTaken) + '</div>' : '') +
+            '<div style="margin-top:12px;" onclick="event.stopPropagation()">' +
+              '<label style="display:block;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Compliance note <span style="font-weight:400;text-transform:none;">(shown to the adviser on their dashboard)</span></label>' +
+              '<textarea id="' + rowId + '-note" rows="2" placeholder="Add context for the adviser — useful before marking as Resolved…" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12.5px;font-family:inherit;color:var(--brand-navy);box-sizing:border-box;resize:vertical;background:#fff;">' + escHtml(row.note || '') + '</textarea>' +
+              '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">' +
+                '<button onclick="complogSaveNote(\'' + row.id + '\',\'' + rowId + '\')" style="background:var(--brand-navy);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Save note</button>' +
+                '<span id="' + rowId + '-note-status" style="font-size:11.5px;color:#6b7c8f;"></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+          return '<div style="border-top:1px solid #f0f2f5;">' +
+            '<div onclick="complogToggleRow(\'' + rowId + '\')" style="display:grid;grid-template-columns:100px 150px 1fr 1fr 1fr 110px 20px;gap:0;padding:12px 20px;align-items:center;cursor:pointer;font-size:12.5px;color:var(--brand-navy);" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'\'">' +
+              '<div>' + escHtml(when) + '</div>' +
+              '<div>' + escHtml(row.type || '') + '</div>' +
+              '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(window._bpComplogAdviserName || '—') + '</div>' +
+              '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.supervisorName || '—') + '</div>' +
+              '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(row.clientName || '—') + '</div>' +
+              '<div onclick="event.stopPropagation()"><select onchange="bpComplogUpdateStatus(\'' + row.id + '\', this.value)" style="font-size:11px;font-weight:700;color:' + col + ';border:1px solid #d1d5db;border-radius:6px;padding:3px 6px;background:#fff;font-family:inherit;cursor:pointer;">' +
+                ['New', 'Under Review', 'Resolved'].map(function(s) { return '<option value="' + s + '"' + (s === (row.status || 'New') ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+              '</select></div>' +
+              '<div id="' + rowId + '-arrow" style="color:#6b7c8f;">' + (hasExtras || row.details ? '▸' : '') + '</div>' +
+            '</div>' +
+            '<div id="' + rowId + '" style="display:none;">' + detailHtml + '</div>' +
           '</div>';
         }).join('');
       };
