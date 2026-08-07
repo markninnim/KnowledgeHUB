@@ -1222,7 +1222,7 @@ app.get('/api/help-broker-count', requireAuth, async (req, res) => {
 // POST /api/help-chat — { message, history: [{role,content}, ...] }
 app.post('/api/help-chat', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'AI help is not configured yet. Ask an admin to add an Anthropic API key.' });
+    return res.status(503).json({ error: 'AI help is not configured yet. Ask Mark to add an Anthropic API key.' });
   }
   const message = (req.body && req.body.message || '').toString().trim();
   if (!message) return res.status(400).json({ error: 'Missing message.' });
@@ -1268,7 +1268,7 @@ app.post('/api/help-chat', requireAuth, async (req, res) => {
 // unexplained variance between periods.
 app.post('/api/lab/payslip-check', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'This tool is not configured yet. Ask an admin to add an Anthropic API key.' });
+    return res.status(503).json({ error: 'This tool is not configured yet. Ask Mark to add an Anthropic API key.' });
   }
   const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
   if (!files.length) return res.status(400).json({ error: 'Upload at least one payslip.' });
@@ -1345,7 +1345,7 @@ Every one of the 5 "checks" entries must always be present, with status "pass" i
 // adviser should be aware of, and drafts follow-up questions for the case.
 app.post('/api/lab/bank-statement-check', requireAuth, async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'This tool is not configured yet. Ask an admin to add an Anthropic API key.' });
+    return res.status(503).json({ error: 'This tool is not configured yet. Ask Mark to add an Anthropic API key.' });
   }
   const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
   if (!files.length) return res.status(400).json({ error: 'Upload at least one bank statement.' });
@@ -8041,10 +8041,10 @@ function requireSupervisorOrAdmin(req, res) {
 app.post('/api/advisor-dashboard-notes/transcribe', requireAuth, async (req, res) => {
   if (!requireSupervisorOrAdmin(req, res)) return;
   if (!OPENAI_API_KEY) {
-    return res.status(503).json({ error: 'Meeting transcription is not configured yet. Ask an admin to add an OpenAI API key.' });
+    return res.status(503).json({ error: 'Meeting transcription is not configured yet. Ask Mark to add an OpenAI API key.' });
   }
   if (!ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'AI summarising is not configured yet. Ask an admin to add an Anthropic API key.' });
+    return res.status(503).json({ error: 'AI summarising is not configured yet. Ask Mark to add an Anthropic API key.' });
   }
   try {
     const audioBase64 = (req.body && req.body.audioBase64) || '';
