@@ -14825,7 +14825,7 @@ function svFpRenderStats() {
   var flagged = _svFpData.filter(function(s) { return s.status === 'Flagged'; }).length;
   var archived = _svFpData.filter(function(s) { return s.status === 'Archived'; }).length;
   document.getElementById('sv-fp-stats').innerHTML =
-    svStatChip(total, 'Submissions') + svStatChip(flagged, 'Flagged') + svStatChip(_svFpNonSubmitters.length, 'No Submission') + svStatChip(archived, 'Archived');
+    svStatChip(total, 'Submissions', "svFpSetStatus('all')") + svStatChip(flagged, 'Flagged', "svFpSetStatus('Flagged')") + svStatChip(_svFpNonSubmitters.length, 'No Submission', "svFpSetStatus('nosub')") + svStatChip(archived, 'Archived', "svFpSetStatus('Archived')");
 }
 
 function svFpClearFilters() {
@@ -14950,8 +14950,13 @@ function svAccToggle(bodyId, chevId) {
   }
 }
 
-function svStatChip(value, label) {
-  return '<div style="text-align:center;"><div style="font-size:24px;font-weight:800;">' + value + '</div><div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.05em;">' + escHtml(label) + '</div></div>';
+function svStatChip(value, label, onclick) {
+  var clickable = onclick ? ' onclick="' + escAttr(onclick) + '" style="text-align:center;cursor:pointer;"' : ' style="text-align:center;"';
+  return '<div' + clickable + '><div style="font-size:24px;font-weight:800;">' + value + '</div><div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.05em;' + (onclick ? 'text-decoration:underline;text-underline-offset:3px;' : '') + '">' + escHtml(label) + '</div></div>';
+}
+function svFpSetStatus(status) {
+  document.getElementById('sv-fp-filter-status').value = status;
+  svFpRender();
 }
 
 // Groups flat Airtable rows (one row per introducer/business, or one lone
