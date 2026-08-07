@@ -3733,25 +3733,56 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
 });
 
 // ── Admin: bulk import users ──────────────────────────────────
+// Upserts by email — existing users get their password (and other fields)
+// UPDATED in place, new emails get CREATED. Previously this always created
+// a new record, so re-running an import against existing users silently
+// did nothing to them (no update, no error) while any row missing an
+// email or password was silently dropped with only an aggregate count —
+// both are called out by name in the response now so nothing goes unnoticed.
 app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
   const users = req.body;
   if (!Array.isArray(users) || users.length === 0)
     return res.status(400).json({ error: 'Expected array of users' });
 
-  const results = { created: 0, skipped: 0, errors: [] };
+  const results = { created: 0, updated: 0, skipped: [], errors: [] };
   const toBool = v => v === true || v === 'true' || v === 'TRUE';
   const BATCH = 10;
 
-  // Hash all passwords async (parallel within each batch)
-  for (let i = 0; i < users.length; i += BATCH) {
-    const batch = users.slice(i, i + BATCH).filter(u => u.email && u.password);
-    if (!batch.length) { results.skipped += BATCH; continue; }
+  // Look up every existing user once, by lowercased email, so we know
+  // whether each row in this import should create or update.
+  const existingByEmail = {};
+  try {
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      (data.records || []).forEach(r => {
+        const email = (r.fields[F_EMAIL] || '').toLowerCase();
+        if (email) existingByEmail[email] = r.id;
+      });
+      offset = data.offset || '';
+    } while (offset);
+  } catch (e) {
+    return res.status(500).json({ error: 'Could not load existing users: ' + e.message });
+  }
 
-    let records;
+  for (let i = 0; i < users.length; i += BATCH) {
+    const batch = users.slice(i, i + BATCH);
+    const validRows = [];
+    batch.forEach(u => {
+      if (!u.email || !u.password) {
+        results.skipped.push({ email: u.email || '(blank)', reason: !u.email ? 'missing email' : 'missing password' });
+      } else {
+        validRows.push(u);
+      }
+    });
+    if (!validRows.length) continue;
+
+    let toCreate = [], toUpdate = [];
     try {
-      records = await Promise.all(batch.map(async u => {
+      await Promise.all(validRows.map(async u => {
         const hash = await bcrypt.hash(String(u.password), 10);
-        return { fields: {
+        const fields = {
           [F_EMAIL]:            String(u.email).trim().toLowerCase(),
           [F_PASSWORD]:         hash,
           [F_SAL]:              u.salutation  || null,
@@ -3767,7 +3798,10 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
           [F_INVESTMENTS]:      toBool(u.sellsInvestments),
           [F_IS_SUPERVISOR]:    toBool(u.isSupervisor),
           [F_SUPERVISOR_EMAIL]: u.supervisorEmail || null
-        }};
+        };
+        const existingId = existingByEmail[String(u.email).trim().toLowerCase()];
+        if (existingId) toUpdate.push({ id: existingId, fields });
+        else toCreate.push({ fields });
       }));
     } catch (e) {
       results.errors.push({ batch: i, error: 'hash error: ' + e.message });
@@ -3775,11 +3809,20 @@ app.post('/api/admin/users/bulk', requireAdmin, async (req, res) => {
     }
 
     try {
-      const data = await atFetch('', {
-        method: 'POST',
-        body: JSON.stringify({ records, returnFieldsByFieldId: true })
-      });
-      results.created += (data.records || []).length;
+      if (toCreate.length) {
+        const data = await atFetch('', {
+          method: 'POST',
+          body: JSON.stringify({ records: toCreate, returnFieldsByFieldId: true })
+        });
+        results.created += (data.records || []).length;
+      }
+      if (toUpdate.length) {
+        const data = await atFetch('', {
+          method: 'PATCH',
+          body: JSON.stringify({ records: toUpdate, returnFieldsByFieldId: true })
+        });
+        results.updated += (data.records || []).length;
+      }
     } catch (e) {
       results.errors.push({ batch: i, error: e.message });
     }
