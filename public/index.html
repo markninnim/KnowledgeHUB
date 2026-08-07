@@ -10174,7 +10174,6 @@ var FEATURE_LABELS = {
   Surveying:   { label: 'Surveying',   tab: 'tab-btn-surveying',        pane: 'tab-surveying',        accessKey: 'surveying' },
   Lab:         { label: 'Lab',         tab: 'tab-btn-lab',              pane: 'tab-lab',              accessKey: 'lab' },
   Earn:        { label: 'Earn',        tab: 'tab-btn-selling-zone',     pane: 'tab-selling-zone',     accessKey: 'sellingZone' },
-  Numbers:     { label: 'Numbers',     tab: 'tab-btn-performance-zone', pane: 'tab-performance-zone', accessKey: 'performanceZone' },
   Supervise:   { label: 'Supervise',   tab: 'tab-btn-supervisor-zone',  pane: 'tab-supervisor-zone',  accessKey: 'supervisorZone' },
   Pay:         { label: 'Pay',         tab: 'tab-btn-pay',              pane: 'tab-pay',              accessKey: 'pay' },
   'AutoCRM™':  { label: 'AutoCRM™',    tab: 'tab-btn-autocrm',          pane: 'tab-autocrm',          accessKey: 'autocrm' },
@@ -10192,7 +10191,7 @@ function applyFeatureFlags() {
     var activePaneId = activePane ? activePane.id : null;
     var activeDisabled = false;
     var isSupervisorOrAdmin = _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin);
-    var supervisorOnlyTabs = { Numbers: true, Supervise: true, Whereabouts: true, Lab: true };
+    var supervisorOnlyTabs = { Supervise: true, Whereabouts: true, Lab: true };
     var userNav = (_currentUser && _currentUser.navAccess) || {};
     Object.keys(FEATURE_LABELS).forEach(function(key){
       var cfg = FEATURE_LABELS[key];
@@ -10538,17 +10537,16 @@ var HELP_JOBDESC_TASKS = [
   'Writing the CPD leadership briefing for the whole company',
   'Summarising Consumer Duty feedback for a supervisor\'s team, or the whole company',
   'Summarising an individual adviser\'s Consumer Duty feedback history',
-  'Sending Consumer Duty questionnaire emails out to customers',
-  'Translating Consumer Duty content into plain, customer-friendly language',
+  'Translating Consumer Duty content into the customer\'s native language, e.g. Romanian',
   'Comparing a customer\'s stated understanding against the mortgage/product they actually took out',
   'Updating brokers on their outstanding Consumer Duty actions',
-  'Building the Feefo review league tables',
+  'Building the Feefo review league tables, distributing reviews out to brokers the moment they arrive',
   'Keeping on top of where everyone stands on their CPD, and helping record it for brokers as it happens',
   'Transcribing recorded 1:1 supervision meetings and writing up the notes and action points',
   'Transcribing lender slide decks',
   'Informing brokers when an AutoCRM™ renewal email has gone out to their client',
   'Informing brokers of upcoming or same-day customer birthdays',
-  'Carrying data back and forth between KnowledgeHUB™ and Airtable behind almost every page'
+  'Carrying data back and forth between KnowledgeHUB™ and the datastore behind almost every page'
 ];
 function helpJobDescLoad() {
   var content = document.getElementById('help-jobdesc-tab-content');
@@ -10556,7 +10554,7 @@ function helpJobDescLoad() {
     return '<li style="padding:8px 0;border-bottom:1px solid #eef0f3;color:#3d4c5c;font-size:13px;line-height:1.5;">' + t + '</li>';
   }).join('');
   content.innerHTML =
-    '<p style="color:#6b7c8f;font-size:13px;margin:0 0 14px;">Everything Alex™ is currently responsible for, whether it\'s a live AI call or an automated Airtable process running quietly in the background.</p>'
+    '<p style="color:#6b7c8f;font-size:13px;margin:0 0 14px;">Everything Alex™ is currently responsible for, whether it\'s a live AI call or an automated process running quietly in the background.</p>'
     + '<ul style="list-style:none;margin:0;padding:0;">' + rows + '</ul>';
 }
 
@@ -18438,10 +18436,6 @@ var KH_KB = [
     question: 'How do I log my whereabouts?',
     answer: 'Whereabouts lets you and your team log where you are — office, home, appointments or annual leave.',
     action: { label: 'Go to Whereabouts', tab: 'whereabouts' } },
-  { keywords: ['numbers', 'performance', 'stats', 'targets', 'sales figures'],
-    question: 'Where do I see my performance numbers?',
-    answer: 'Your production stats and targets are under Numbers.',
-    action: { label: 'Go to Numbers', tab: 'performance-zone' } },
   { keywords: ['autocrm', 'renewal', 'mortgage completion', 'remortgage reminder'],
     question: 'Where do I track mortgage renewals?',
     answer: 'AutoCRM™ tracks upcoming mortgage renewals for your clients so you never miss a repeat business opportunity.',
@@ -19447,8 +19441,6 @@ var QL_DESTINATIONS = {
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M9 22V12h6v10"/></svg>' },
   myteam:        { label: 'Supervise',        tab: 'supervisor-zone', adminOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  numbers:       { label: 'Numbers',          tab: 'performance-zone', adminOnly: true,
-                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>' },
   muttuo:        { label: 'Muttuo',           tab: 'muttuo', fitchOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   leads:         { label: 'Engage™',          tab: 'leadgen', leadGenOnly: true,
