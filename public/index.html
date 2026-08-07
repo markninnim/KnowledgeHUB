@@ -5483,6 +5483,7 @@ Consolidating debts will increase the loan to value which can impact future deal
       <button id="help-kb-tab-btn" onclick="helpKbSwitchTab('kb')" style="background:none;border:none;border-bottom:2px solid var(--brand-navy);color:var(--brand-navy);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Reference Content</button>
       <button id="help-personality-tab-btn" onclick="helpKbSwitchTab('personality')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Personality &amp; Tone</button>
       <button id="help-salary-tab-btn" onclick="helpKbSwitchTab('salary')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Alex's Salary</button>
+      <button id="help-jobdesc-tab-btn" onclick="helpKbSwitchTab('jobdesc')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Job Description</button>
     </div>
     <div id="help-kb-tab-content" style="padding:20px 28px;">
       <button onclick="helpKbAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Topic</button>
@@ -5496,6 +5497,7 @@ Consolidating debts will increase the loan to value which can impact future deal
     <div id="help-salary-tab-content" style="display:none;padding:20px 28px;">
       <div id="help-salary-body"><p style="color:#6b7c8f;font-size:13px;">Loading…</p></div>
     </div>
+    <div id="help-jobdesc-tab-content" style="display:none;padding:20px 28px;"></div>
   </div>
 </div>
 
@@ -10441,12 +10443,14 @@ function helpKbSwitchTab(tab) {
   var kbBtn = document.getElementById('help-kb-tab-btn');
   var pBtn = document.getElementById('help-personality-tab-btn');
   var sBtn = document.getElementById('help-salary-tab-btn');
+  var jBtn = document.getElementById('help-jobdesc-tab-btn');
   var kbContent = document.getElementById('help-kb-tab-content');
   var pContent = document.getElementById('help-personality-tab-content');
   var sContent = document.getElementById('help-salary-tab-content');
+  var jContent = document.getElementById('help-jobdesc-tab-content');
   var subtitle = document.getElementById('help-kb-modal-subtitle');
-  [kbBtn, pBtn, sBtn].forEach(function(b) { b.style.borderBottomColor = 'transparent'; b.style.color = '#6b7c8f'; });
-  [kbContent, pContent, sContent].forEach(function(c) { c.style.display = 'none'; });
+  [kbBtn, pBtn, sBtn, jBtn].forEach(function(b) { b.style.borderBottomColor = 'transparent'; b.style.color = '#6b7c8f'; });
+  [kbContent, pContent, sContent, jContent].forEach(function(c) { c.style.display = 'none'; });
   if (tab === 'personality') {
     pBtn.style.borderBottomColor = 'var(--brand-navy)'; pBtn.style.color = 'var(--brand-navy)';
     pContent.style.display = 'block';
@@ -10457,6 +10461,11 @@ function helpKbSwitchTab(tab) {
     sContent.style.display = 'block';
     subtitle.textContent = "What Alex™ has been paid so far for the work done around the site.";
     helpSalaryLoad();
+  } else if (tab === 'jobdesc') {
+    jBtn.style.borderBottomColor = 'var(--brand-navy)'; jBtn.style.color = 'var(--brand-navy)';
+    jContent.style.display = 'block';
+    subtitle.textContent = "Everything Alex™ is currently responsible for around KnowledgeHUB™.";
+    helpJobDescLoad();
   } else {
     kbBtn.style.borderBottomColor = 'var(--brand-navy)'; kbBtn.style.color = 'var(--brand-navy)';
     kbContent.style.display = 'block';
@@ -10507,9 +10516,7 @@ function helpSalaryLoad() {
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Sick pay</div><div style="color:var(--brand-navy);font-size:15px;font-weight:700;">None taken</div></div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Line manager</div><div style="color:var(--brand-navy);font-size:15px;font-weight:700;">Mark Ninnim</div></div>'
       + '</div>'
-      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Current responsibilities</h3>'
-      + '<p style="color:#3d4c5c;font-size:13px;line-height:1.7;margin:0 0 20px;">Alex™ currently checks customer payslips and bank statements for fraud/affordability red flags in the Lab, writes the recurring compliance and CPD summaries read by supervisors and leadership, carries data back and forth between KnowledgeHUB™ and Airtable behind almost every page, updates brokers on their outstanding Consumer Duty actions, builds the Feefo review league tables, keeps on top of where everyone stands on their CPD and helps record it for brokers as it happens, transcribes lender slide decks and 1:1 meeting recordings, and answers day-to-day questions about the site through the chat widget — plus whatever else gets added to the pile as the site grows.</p>'
-      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Job description (what Alex gets paid for)</h3>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Cost by task</h3>'
       + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + taskRows + '</table>'
       + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Timesheet — last 14 days</h3>'
       + '<table style="width:100%;border-collapse:collapse;">' + dayRows + '</table>'
@@ -10517,6 +10524,40 @@ function helpSalaryLoad() {
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;">Couldn\'t load Alex\'s salary.</p>';
   });
+}
+
+// ── Job Description (admin only) — a thorough, plain-English list of
+// everything Alex™ is responsible for, including the parts handled by
+// Airtable automations rather than a live AI call, so this is a fuller
+// picture than just the AI-cost-tracked tasks on the Salary tab.
+var HELP_JOBDESC_TASKS = [
+  'Answering day-to-day questions about the site through the chat widget',
+  'Checking customer payslips for fraud and affordability red flags (Lab)',
+  'Checking customer bank statements for fraud and affordability red flags (Lab)',
+  'Writing the recurring Compliance Log briefing read by supervisors',
+  'Writing the CPD leadership briefing for the whole company',
+  'Summarising Consumer Duty feedback for a supervisor\'s team, or the whole company',
+  'Summarising an individual adviser\'s Consumer Duty feedback history',
+  'Sending Consumer Duty questionnaire emails out to customers',
+  'Translating Consumer Duty content into plain, customer-friendly language',
+  'Comparing a customer\'s stated understanding against the mortgage/product they actually took out',
+  'Updating brokers on their outstanding Consumer Duty actions',
+  'Building the Feefo review league tables',
+  'Keeping on top of where everyone stands on their CPD, and helping record it for brokers as it happens',
+  'Transcribing recorded 1:1 supervision meetings and writing up the notes and action points',
+  'Transcribing lender slide decks',
+  'Informing brokers when an AutoCRM™ renewal email has gone out to their client',
+  'Informing brokers of upcoming or same-day customer birthdays',
+  'Carrying data back and forth between KnowledgeHUB™ and Airtable behind almost every page'
+];
+function helpJobDescLoad() {
+  var content = document.getElementById('help-jobdesc-tab-content');
+  var rows = HELP_JOBDESC_TASKS.map(function(t) {
+    return '<li style="padding:8px 0;border-bottom:1px solid #eef0f3;color:#3d4c5c;font-size:13px;line-height:1.5;">' + t + '</li>';
+  }).join('');
+  content.innerHTML =
+    '<p style="color:#6b7c8f;font-size:13px;margin:0 0 14px;">Everything Alex™ is currently responsible for, whether it\'s a live AI call or an automated Airtable process running quietly in the background.</p>'
+    + '<ul style="list-style:none;margin:0;padding:0;">' + rows + '</ul>';
 }
 
 // ── Help Personality (admin only) — editable tone/sarcasm rules ────────────
