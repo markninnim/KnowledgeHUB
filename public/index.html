@@ -11484,6 +11484,11 @@ function openCasPath(email, name) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
   document.getElementById('cas-path-name').textContent = name;
   var n2 = document.getElementById('cas-path-name2'); if (n2) n2.textContent = name;
   var n3 = document.getElementById('cas-path-name3'); if (n3) n3.textContent = name;
@@ -12360,6 +12365,12 @@ function bpDownloadPdf() {
 function openBrokerProfile(email, name, keepDateRange) {
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
   var panel = document.getElementById('sv-broker-profile');
   panel.style.display = 'block';
   document.getElementById('bp-name').textContent = name || email;
