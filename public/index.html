@@ -5482,6 +5482,7 @@ Consolidating debts will increase the loan to value which can impact future deal
     <div style="display:flex;gap:4px;padding:14px 28px 0;border-bottom:1px solid #d1d5db;">
       <button id="help-kb-tab-btn" onclick="helpKbSwitchTab('kb')" style="background:none;border:none;border-bottom:2px solid var(--brand-navy);color:var(--brand-navy);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Reference Content</button>
       <button id="help-personality-tab-btn" onclick="helpKbSwitchTab('personality')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Personality &amp; Tone</button>
+      <button id="help-salary-tab-btn" onclick="helpKbSwitchTab('salary')" style="background:none;border:none;border-bottom:2px solid transparent;color:#6b7c8f;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:0 4px 10px;margin-right:12px;">Alex's Salary</button>
     </div>
     <div id="help-kb-tab-content" style="padding:20px 28px;">
       <button onclick="helpKbAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Topic</button>
@@ -5492,21 +5493,8 @@ Consolidating debts will increase the loan to value which can impact future deal
       <button onclick="helpPersonalityAddNew()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;">+ Add Section</button>
       <div id="help-personality-list" style="display:flex;flex-direction:column;gap:14px;"></div>
     </div>
-  </div>
-</div>
-
-<!-- ── API Usage / Cost Tracking (admin only) ──────────────────────────── -->
-<div id="api-usage-modal" onclick="if(event.target===this)closeApiUsageAdmin()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2100;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
-  <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;margin:0 auto 40px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #d1d5db;">
-      <div>
-        <h2 style="color:var(--brand-navy);font-size:18px;margin:0 0 2px;">API Usage &amp; Cost</h2>
-        <p style="color:#6b7c8f;font-size:13px;margin:0;">Estimated Anthropic/OpenAI spend by feature, tracked inside KnowledgeHUB&#8482;.</p>
-      </div>
-      <button onclick="closeApiUsageAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
-    </div>
-    <div id="api-usage-body" style="padding:20px 28px;">
-      <p style="color:#6b7c8f;font-size:13px;">Loading…</p>
+    <div id="help-salary-tab-content" style="display:none;padding:20px 28px;">
+      <div id="help-salary-body"><p style="color:#6b7c8f;font-size:13px;">Loading…</p></div>
     </div>
   </div>
 </div>
@@ -5524,7 +5512,6 @@ Consolidating debts will increase the loan to value which can impact future deal
         <label id="admin-modal-import-excel" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;box-sizing:border-box;height:36px;line-height:36px;"><span style="line-height:normal;">↑ Import Excel</span><input type="file" accept=".xlsx" onchange="importUsersExcel(this)" style="display:none;"></label>
         <button id="admin-audit-btn" onclick="toggleAuditLog()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">Audit Log</button>
         <button id="admin-helpkb-btn" onclick="openHelpKbAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">About Alex™</button>
-        <button id="admin-apiusage-btn" onclick="openApiUsageAdmin()" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;display:none;">API Usage</button>
         <button id="admin-modal-add-user" onclick="openUserForm()" style="background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:0 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;height:36px;box-sizing:border-box;">+ Add User</button>
         <button onclick="closeAdminPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6b7c8f;line-height:1;padding:0 4px;">&#x2715;</button>
       </div>
@@ -9738,8 +9725,6 @@ var _currentUser = null;
       if (auditBtn) auditBtn.style.display = '';
       var helpKbBtn = document.getElementById('admin-helpkb-btn');
       if (helpKbBtn) helpKbBtn.style.display = '';
-      var apiUsageBtn = document.getElementById('admin-apiusage-btn');
-      if (apiUsageBtn) apiUsageBtn.style.display = '';
     }
     if (user && (user.isAdmin || user.isSupervisor)) {
       var mcBtn = document.getElementById('mc-import-btn');
@@ -10315,9 +10300,6 @@ function openAdminPanel() {
   // AI Help Content — admin only
   var helpKbBtn = document.getElementById('admin-helpkb-btn');
   if (helpKbBtn) helpKbBtn.style.display = isAdminUser ? '' : 'none';
-  // API Usage — admin only
-  var apiUsageBtn2 = document.getElementById('admin-apiusage-btn');
-  if (apiUsageBtn2) apiUsageBtn2.style.display = isAdminUser ? '' : 'none';
   // Feature panel — admin only
   var fp = document.getElementById('admin-features-panel');
   if (fp) {
@@ -10458,21 +10440,75 @@ function helpKbDelete(btn) {
 function helpKbSwitchTab(tab) {
   var kbBtn = document.getElementById('help-kb-tab-btn');
   var pBtn = document.getElementById('help-personality-tab-btn');
+  var sBtn = document.getElementById('help-salary-tab-btn');
   var kbContent = document.getElementById('help-kb-tab-content');
   var pContent = document.getElementById('help-personality-tab-content');
+  var sContent = document.getElementById('help-salary-tab-content');
   var subtitle = document.getElementById('help-kb-modal-subtitle');
+  [kbBtn, pBtn, sBtn].forEach(function(b) { b.style.borderBottomColor = 'transparent'; b.style.color = '#6b7c8f'; });
+  [kbContent, pContent, sContent].forEach(function(c) { c.style.display = 'none'; });
   if (tab === 'personality') {
-    kbBtn.style.borderBottomColor = 'transparent'; kbBtn.style.color = '#6b7c8f';
     pBtn.style.borderBottomColor = 'var(--brand-navy)'; pBtn.style.color = 'var(--brand-navy)';
-    kbContent.style.display = 'none'; pContent.style.display = 'block';
+    pContent.style.display = 'block';
     subtitle.textContent = "Tone, sarcasm and personality rules for Alex™. The core data-privacy safety rule is fixed in code and isn't shown here.";
     helpPersonalityLoad();
+  } else if (tab === 'salary') {
+    sBtn.style.borderBottomColor = 'var(--brand-navy)'; sBtn.style.color = 'var(--brand-navy)';
+    sContent.style.display = 'block';
+    subtitle.textContent = "What Alex™ has been paid so far for the work done around the site.";
+    helpSalaryLoad();
   } else {
-    pBtn.style.borderBottomColor = 'transparent'; pBtn.style.color = '#6b7c8f';
     kbBtn.style.borderBottomColor = 'var(--brand-navy)'; kbBtn.style.color = 'var(--brand-navy)';
-    pContent.style.display = 'none'; kbContent.style.display = 'block';
+    kbContent.style.display = 'block';
     subtitle.textContent = 'The whitelist of content Alex™ is allowed to answer from. Nothing outside this list is used.';
   }
+}
+
+// ── Alex's Salary (admin only) — humanised framing of the API usage log:
+// Alex is treated as an employee whose "salary" is the AI API cost, and
+// the technical "features" are described as tasks Alex does around the
+// site, rather than exposing raw model/API terminology to the admin.
+var HELP_SALARY_TASK_LABELS = {
+  'Alex Chat': 'Answering questions in the chat widget',
+  'Payslip Check': 'Checking customer payslips for the Lab',
+  'Bank Statement Check': 'Checking customer bank statements for the Lab',
+  'Meeting Transcription': 'Transcribing recorded 1:1 meetings',
+  'Meeting Summary': 'Writing up 1:1 meeting notes',
+  'CPD Leadership Summary': 'Briefing leadership on CPD progress',
+  'Compliance Log Summary': 'Writing the Compliance Log briefing',
+  'Consumer Duty Team Summary': 'Summarising Consumer Duty feedback for the team',
+  'Consumer Duty Adviser Summary': "Summarising an adviser's Consumer Duty feedback"
+};
+function helpSalaryLoad() {
+  var body = document.getElementById('help-salary-body');
+  body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Checking Alex\'s payslip…</p>';
+  fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
+    if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || "Couldn't load Alex's salary.") + '</p>'; return; }
+    var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
+    var taskRows = (d.byFeature || []).map(function(f) {
+      var label = HELP_SALARY_TASK_LABELS[f.feature] || f.feature;
+      return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + label + '</td>'
+        + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(f.cost) + '</td></tr>';
+    }).join('') || '<tr><td colspan="2" style="padding:8px 0;color:#6b7c8f;font-size:13px;">Alex hasn\'t clocked in yet — no tasks logged.</td></tr>';
+    var dayRows = (d.byDay || []).slice(-14).reverse().map(function(dd) {
+      return '<tr><td style="padding:6px 0;color:var(--brand-navy);font-size:12px;">' + dd.day + '</td>'
+        + '<td style="padding:6px 0;color:#6b7c8f;font-size:12px;text-align:right;">' + fmt(dd.cost) + '</td></tr>';
+    }).join('') || '<tr><td colspan="2" style="padding:6px 0;color:#6b7c8f;font-size:12px;">Nothing on the timesheet for the last 30 days.</td></tr>';
+    body.innerHTML =
+      '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Alex™ doesn\'t take a wage packet home, but here\'s roughly what he/she costs to keep on staff — based on the AI usage behind each task.</p>'
+      + '<div style="display:flex;gap:16px;margin-bottom:20px;">'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Total earned to date</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.totalCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Last 30 days</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.last30DaysCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Tasks completed</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + (d.totalCalls || 0) + '</div></div>'
+      + '</div>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Job description (what Alex gets paid for)</h3>'
+      + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + taskRows + '</table>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Timesheet — last 14 days</h3>'
+      + '<table style="width:100%;border-collapse:collapse;">' + dayRows + '</table>'
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges.</p>';
+  }).catch(function() {
+    body.innerHTML = '<p style="color:#c00;font-size:13px;">Couldn\'t load Alex\'s salary.</p>';
+  });
 }
 
 // ── Help Personality (admin only) — editable tone/sarcasm rules ────────────
