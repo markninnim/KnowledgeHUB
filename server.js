@@ -482,12 +482,15 @@ function getAssetDate(key) {
 // ephemeral filesystem and gets wiped by every redeploy, so any figures
 // entered would silently vanish. Airtable survives deploys.
 const TOOLS_LIST = [
-  { key: 'airtable',   name: 'Airtable — KnowledgeHUB Workspace', description: 'Database behind almost every page: users, CPD, compliance, news, Feefo, and more.' },
-  { key: 'github',     name: 'GitHub',                            description: 'Stores the KnowledgeHUB codebase and triggers each deploy to Railway.' },
-  { key: 'railway',    name: 'Railway',                           description: 'Hosts the live KnowledgeHUB server and website.' },
-  { key: 'vimeo',      name: 'Vimeo',                              description: 'Hosts the Learning tab training videos.' },
-  { key: 'claude',     name: 'Claude (Anthropic)',                description: "Powers Alex™ — chat, summaries, and document checks. Metered usage, tracked separately on Alex's Salary tab." },
-  { key: 'domain',     name: 'Domain / DNS',                      description: 'Registrar hosting knowledgehub.website and dam.simflex.ai.' }
+  { key: 'airtable',    name: 'Airtable — KnowledgeHUB Workspace', description: 'Database behind almost every page: users, CPD, compliance, news, Feefo, and more.' },
+  { key: 'github',      name: 'GitHub',                            description: 'Stores the KnowledgeHUB codebase and triggers each deploy to Railway.' },
+  { key: 'railway',     name: 'Railway',                           description: 'Hosts the live KnowledgeHUB server and website.' },
+  { key: 'vimeo',       name: 'Vimeo',                              description: 'Hosts the Learning tab training videos.' },
+  { key: 'claude-dev',  name: 'Claude — Development',              description: 'Claude/Cowork subscription used to design, build and maintain KnowledgeHUB itself.' },
+  // 'claude' is the last row on purpose — see helpToolsLoad() in index.html,
+  // it's the only auto-filled/read-only row (Alex's real API spend) and is
+  // kept at the bottom of the list to match where a "salary" line would sit.
+  { key: 'claude',      name: "Alex™ (Claude API)",                description: "Alex's own metered API usage — chat, summaries, document checks. Filled in automatically from the Salary tab, not editable here." }
 ];
 const TOOLS_COSTS_TABLE = 'tblj4tso3QbC17ENn';
 const TC_KEY  = 'fldFqrvQDJfdGhOuL'; // Key — matches TOOLS_LIST[].key

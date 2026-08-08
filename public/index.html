@@ -10661,8 +10661,8 @@ function helpToolsLoad() {
       var isClaude = t.key === 'claude';
       var costCell;
       if (isClaude && claudeGbp !== null) {
-        costCell = '<span style="color:var(--brand-navy);font-size:13px;font-weight:600;">£' + claudeGbp.toFixed(2) + '</span>'
-          + '<div style="color:#9aa5b1;font-size:10.5px;">auto — month to date</div>';
+        costCell = '<span style="color:#9aa5b1;font-size:13px;">£</span> '
+          + '<input type="number" value="' + claudeGbp.toFixed(2) + '" disabled title="Auto-filled from Alex\'s month-to-date API usage — not editable here" style="width:80px;padding:5px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;text-align:right;color:var(--brand-navy);font-weight:600;background:#f5f7fa;">';
       } else if (isClaude) {
         costCell = '<span style="color:#9aa5b1;font-size:12px;">— (couldn\'t load usage)</span>';
       } else {
