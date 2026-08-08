@@ -477,11 +477,10 @@ function getAssetDate(key) {
 // cost so the whole running cost of the site is visible in one place.
 // The tool list (name/description) is fixed here in code since it rarely
 // changes; the monthly cost figures are editable by an admin and persisted
-// to tools-costs.json — like the other small local JSON stores in this
-// project (marketing-users.json, extra-products.json, asset-dates.json),
-// note this file lives on Railway's filesystem and is reset by a fresh
-// deploy, so after editing costs it's worth committing tools-costs.json
-// to the repo if you want the figures to survive a redeploy.
+// in the "Alex Tools Costs" Airtable table (not a local JSON file) —
+// costs used to live in tools-costs.json, but that file lives on Railway's
+// ephemeral filesystem and gets wiped by every redeploy, so any figures
+// entered would silently vanish. Airtable survives deploys.
 const TOOLS_LIST = [
   { key: 'airtable',   name: 'Airtable — KnowledgeHUB Workspace', description: 'Database behind almost every page: users, CPD, compliance, news, Feefo, and more.' },
   { key: 'github',     name: 'GitHub',                            description: 'Stores the KnowledgeHUB codebase and triggers each deploy to Railway.' },
@@ -490,12 +489,9 @@ const TOOLS_LIST = [
   { key: 'claude',     name: 'Claude (Anthropic)',                description: "Powers Alex™ — chat, summaries, and document checks. Metered usage, tracked separately on Alex's Salary tab." },
   { key: 'domain',     name: 'Domain / DNS',                      description: 'Registrar hosting knowledgehub.website and dam.simflex.ai.' }
 ];
-const TOOLS_COSTS_PATH = path.join(__dirname, 'tools-costs.json');
-let _toolsCosts = {};
-try { _toolsCosts = JSON.parse(fs.readFileSync(TOOLS_COSTS_PATH, 'utf8')); } catch(_) {}
-function saveToolsCosts() {
-  try { fs.writeFileSync(TOOLS_COSTS_PATH, JSON.stringify(_toolsCosts, null, 2)); } catch(_) {}
-}
+const TOOLS_COSTS_TABLE = 'tblj4tso3QbC17ENn';
+const TC_KEY  = 'fldFqrvQDJfdGhOuL'; // Key — matches TOOLS_LIST[].key
+const TC_COST = 'fldxZG8QKr6Pq4jrV'; // Monthly Cost GBP
 // Routes for these are registered further down (see "Alex's Tools routes"),
 // after session/JSON-body middleware is set up — Express matches routes in
 // registration order, so a route defined this early would run before
@@ -1631,26 +1627,74 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
   }
 });
 
-// ── Alex's Tools routes — see TOOLS_LIST/_toolsCosts declared near the
-// top of the file for context on why these live here rather than there.
-app.get('/api/admin/tools-costs', requireAdmin, (req, res) => {
-  const tools = TOOLS_LIST.map(t => ({ ...t, monthlyCost: _toolsCosts[t.key] || 0 }));
-  const total = tools.reduce((sum, t) => sum + t.monthlyCost, 0);
-  res.json({ tools, total: Math.round(total * 100) / 100 });
+// ── Alex's Tools routes — see TOOLS_LIST/TOOLS_COSTS_TABLE declared near
+// the top of the file for context on why these live here rather than there.
+// Costs are stored in Airtable (one row per tool key), not a local file,
+// so they survive a Railway redeploy.
+app.get('/api/admin/tools-costs', requireAdmin, async (req, res) => {
+  try {
+    const url = `https://api.airtable.com/v0/${AT_BASE}/${TOOLS_COSTS_TABLE}?returnFieldsByFieldId=true&pageSize=100`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || 'Airtable error');
+    const costsByKey = {};
+    (data.records || []).forEach(rec => {
+      const key = rec.fields[TC_KEY];
+      if (key) costsByKey[key] = rec.fields[TC_COST] || 0;
+    });
+    const tools = TOOLS_LIST.map(t => ({ ...t, monthlyCost: costsByKey[t.key] || 0 }));
+    const total = tools.reduce((sum, t) => sum + t.monthlyCost, 0);
+    res.json({ tools, total: Math.round(total * 100) / 100 });
+  } catch (err) {
+    console.error('tools-costs GET error:', err);
+    res.status(500).json({ error: 'Could not load tool costs: ' + err.message });
+  }
 });
 
-app.post('/api/admin/tools-costs', requireAdmin, (req, res) => {
+app.post('/api/admin/tools-costs', requireAdmin, async (req, res) => {
   const { costs } = req.body;
   if (!costs || typeof costs !== 'object') return res.status(400).json({ error: 'Expected { costs: { key: number } }' });
-  TOOLS_LIST.forEach(t => {
-    if (costs[t.key] !== undefined) {
+  try {
+    const listUrl = `https://api.airtable.com/v0/${AT_BASE}/${TOOLS_COSTS_TABLE}?returnFieldsByFieldId=true&pageSize=100`;
+    const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${AT_KEY}` } });
+    const listData = await listRes.json();
+    if (!listRes.ok) throw new Error(listData.error?.message || 'Airtable error');
+    const existingIdByKey = {};
+    (listData.records || []).forEach(rec => {
+      const key = rec.fields[TC_KEY];
+      if (key) existingIdByKey[key] = rec.id;
+    });
+
+    const toCreate = [], toUpdate = [];
+    TOOLS_LIST.forEach(t => {
+      if (costs[t.key] === undefined) return;
       const n = parseFloat(costs[t.key]);
-      _toolsCosts[t.key] = isNaN(n) ? 0 : n;
+      const value = isNaN(n) ? 0 : n;
+      const existingId = existingIdByKey[t.key];
+      if (existingId) toUpdate.push({ id: existingId, fields: { [TC_COST]: value } });
+      else toCreate.push({ fields: { [TC_KEY]: t.key, [TC_COST]: value } });
+    });
+
+    if (toUpdate.length) {
+      await fetch(`https://api.airtable.com/v0/${AT_BASE}/${TOOLS_COSTS_TABLE}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: toUpdate })
+      });
     }
-  });
-  saveToolsCosts();
-  auditLog('tools_costs_updated', { costs: _toolsCosts }, req);
-  res.json({ ok: true });
+    if (toCreate.length) {
+      await fetch(`https://api.airtable.com/v0/${AT_BASE}/${TOOLS_COSTS_TABLE}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: toCreate })
+      });
+    }
+    auditLog('tools_costs_updated', { costs }, req);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('tools-costs POST error:', err);
+    res.status(500).json({ error: 'Could not save tool costs: ' + err.message });
+  }
 });
 
 // ── Help KB admin CRUD — admin-only, so the whitelist of content the AI can
