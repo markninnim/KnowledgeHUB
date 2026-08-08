@@ -503,6 +503,69 @@ const TC_COST = 'fldxZG8QKr6Pq4jrV'; // Monthly Cost GBP
 // default error handler returned an HTML error page instead of JSON, and
 // the front end's fetch().json() blew up trying to parse it.
 
+// ── Site Stats (Airtable, table "Site Stats") ───────────────────
+// Small durable store for site-wide running stats that need to survive
+// Railway redeploys (in-memory state doesn't) — currently just the all-time
+// peak concurrent-user count, shown on User Management's User Engagement
+// panel. Same rationale as Feature Flags/Tools Costs moving off local JSON.
+const SITE_STATS_TABLE = 'tblNO3fDhlerjNDL5';
+const SS_KEY     = 'fldRsn5gww7ck8sJq'; // Key — e.g. "peak_concurrent_users"
+const SS_VALUE   = 'fldih7jr7v7iUmNvN'; // Value — number
+const SS_UPDATED = 'fldXLW4oLfqEjb3F6'; // Updated At — dateTime
+
+// ── "Who's online" tracking ─────────────────────────────────────
+// In-memory only (deliberately) — updated on every authenticated request in
+// requireAuth() below. Resets on redeploy/restart, which is fine: it only
+// backs a live "online now" count, not historical reporting. The one thing
+// worth keeping across restarts — the all-time peak — is written through to
+// the Site Stats table above whenever a new peak is actually hit.
+const ONLINE_WINDOW_MS = 5 * 60 * 1000; // active in the last 5 minutes = "online"
+const _activeUsers = {}; // email -> { name, lastSeen }
+let _peakConcurrent = { value: 0, at: null, recordId: null };
+
+async function loadPeakConcurrentFromAirtable() {
+  try {
+    const formula = encodeURIComponent(`{${SS_KEY}}='peak_concurrent_users'`);
+    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${SITE_STATS_TABLE}?returnFieldsByFieldId=true&filterByFormula=${formula}`, {
+      headers: { Authorization: `Bearer ${AT_KEY}` }
+    });
+    const data = await r.json();
+    const rec = (data.records || [])[0];
+    if (rec) {
+      _peakConcurrent.recordId = rec.id;
+      _peakConcurrent.value = rec.fields[SS_VALUE] || 0;
+      _peakConcurrent.at = rec.fields[SS_UPDATED] || null;
+    }
+  } catch (err) {
+    console.error('loadPeakConcurrentFromAirtable error:', err);
+  }
+}
+loadPeakConcurrentFromAirtable();
+
+function countOnlineNow() {
+  const cutoff = Date.now() - ONLINE_WINDOW_MS;
+  return Object.values(_activeUsers).filter(u => u.lastSeen >= cutoff).length;
+}
+
+function touchActiveUser(req) {
+  const u = req.session && req.session.user;
+  if (!u || !u.email) return;
+  const name = ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || u.email;
+  _activeUsers[u.email.toLowerCase()] = { name, lastSeen: Date.now() };
+  const online = countOnlineNow();
+  if (online > _peakConcurrent.value) {
+    _peakConcurrent.value = online;
+    _peakConcurrent.at = new Date().toISOString();
+    if (_peakConcurrent.recordId) {
+      fetch(`https://api.airtable.com/v0/${AT_BASE}/${SITE_STATS_TABLE}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: [{ id: _peakConcurrent.recordId, fields: { [SS_VALUE]: _peakConcurrent.value, [SS_UPDATED]: _peakConcurrent.at } }] })
+      }).catch(err => console.error('peak-concurrent update error:', err));
+    }
+  }
+}
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];
@@ -775,6 +838,7 @@ function requireAuth(req, res, next) {
     if (req.originalUrl.startsWith('/api/')) return res.status(401).json({ error: 'Session expired — please sign in again' });
     return res.redirect('/login');
   }
+  touchActiveUser(req);
   return next();
 }
 
@@ -3831,6 +3895,46 @@ app.get('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
     } while (offset);
     res.json(users);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/user-engagement — admin-only summary for User Management's
+// User Engagement panel. "Online now" and "peak concurrent" come from the
+// in-memory tracker above (see touchActiveUser); "set up" and "2FA" are
+// derived the same way /api/admin/users already computes them, just counted.
+app.get('/api/admin/user-engagement', requireAdmin, async (req, res) => {
+  try {
+    let total = 0, setUp = 0, has2FA = 0;
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      for (const r of (data.records || [])) {
+        total++;
+        if (r.fields[F_PASSWORD]) setUp++;
+        if (r.fields[F_TOTP]) has2FA++;
+      }
+      offset = data.offset || '';
+    } while (offset);
+
+    const cutoff = Date.now() - ONLINE_WINDOW_MS;
+    const onlineNames = Object.values(_activeUsers)
+      .filter(u => u.lastSeen >= cutoff)
+      .map(u => u.name)
+      .sort();
+
+    res.json({
+      onlineNow: onlineNames.length,
+      onlineNames,
+      peakConcurrent: _peakConcurrent.value,
+      peakConcurrentAt: _peakConcurrent.at,
+      totalUsers: total,
+      setUpUsers: setUp,
+      has2FAUsers: has2FA
+    });
+  } catch (err) {
+    console.error('user-engagement error:', err);
     res.status(500).json({ error: err.message });
   }
 });

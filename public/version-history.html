@@ -125,6 +125,23 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v2.9</span>
+      <span class="version-title">User Engagement Panel Replaces Feature Rollout Controls</span>
+      <span class="version-date">8 August 2026</span>
+    </div>
+    <p class="version-summary">Replaced User Management's Feature Rollout Controls panel with a new User Engagement panel: how many people are online right now, the highest number ever online at once, how many users have actually set a password, and how many have 2FA enabled &mdash; plus a "Creation cost since launch" figure added to Alex's Tools tab and every AI cost figure across the site now shown in &pound; instead of a mix of $ and &pound;.</p>
+    <ul class="changes">
+      <li>Added a lightweight in-memory "who's active" tracker (5-minute window) updated on every authenticated request, backing a live "Online now" count on User Management &mdash; resets on redeploy, since it's only meant for a live snapshot, not historical reporting.</li>
+      <li>Added a new Airtable table, Site Stats, to durably record the all-time peak number of concurrent users (survives Railway redeploys, unlike the in-memory tracker) &mdash; only writes when an actual new peak is hit, so it adds no load to normal requests.</li>
+      <li>"Logged in &amp; set up" and "2FA enabled" counts reuse the same checks already used per-user in the User Management list (has a password set, has a TOTP secret), just totalled up for a quick company-wide view.</li>
+      <li>Removed the Feature Rollout Controls panel and its toggle grid from User Management &mdash; the underlying feature-flag system (used to hide/show nav tabs) is untouched and still stored in Airtable, just no longer editable from this UI.</li>
+      <li>Added a "Creation cost since launch (19 June 2026)" figure to Alex's Tools tab: fixed subscription costs multiplied by how many 19th-of-the-month billing dates have passed, plus Alex's all-time AI spend, both in &pound;.</li>
+      <li>Standardised every AI cost figure across Alex's Salary tab, Alex's Tools tab, and the legacy API Usage admin modal to show &pound; (converted from the underlying USD pricing) instead of a mix of $ and &pound;, which was confusing to compare at a glance.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.7</span>
       <span class="version-title">CPD AI Summary Rewrite, Download Modal &amp; Sim Branding on AI Summaries</span>
       <span class="version-date">2 August 2026</span>

@@ -5526,15 +5526,15 @@ Consolidating debts will increase the loan to value which can impact future deal
       </div>
     </div>
 
-    <!-- Feature toggles (admin only) -->
-    <div id="admin-features-panel" style="display:none;padding:20px 28px;border-bottom:1px solid #d1d5db;background:#f9fafc;">
+    <!-- User engagement (admin only) -->
+    <div id="admin-engagement-panel" style="display:none;padding:20px 28px;border-bottom:1px solid #d1d5db;background:#f9fafc;">
       <div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
-        Feature Rollout Controls
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        User Engagement
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;" id="admin-feature-toggles"></div>
-      <button onclick="saveFeatures()" style="margin-top:14px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save Changes</button>
-      <span id="admin-features-saved" style="display:none;margin-left:10px;font-size:12px;color:#2e7d32;font-weight:600;">✓ Saved</span>
+      <div id="admin-engagement-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+        <p style="color:#6b7c8f;font-size:13px;grid-column:1/-1;">Loading…</p>
+      </div>
     </div>
 
     <!-- Audit log panel (admin only) -->
@@ -10308,11 +10308,11 @@ function openAdminPanel() {
   // AI Help Content — admin only
   var helpKbBtn = document.getElementById('admin-helpkb-btn');
   if (helpKbBtn) helpKbBtn.style.display = isAdminUser ? '' : 'none';
-  // Feature panel — admin only
-  var fp = document.getElementById('admin-features-panel');
-  if (fp) {
-    if (isAdminUser) { fp.style.display = 'block'; renderFeatureToggles(); }
-    else fp.style.display = 'none';
+  // User engagement panel — admin only
+  var ep = document.getElementById('admin-engagement-panel');
+  if (ep) {
+    if (isAdminUser) { ep.style.display = 'block'; loadAdminEngagement(); }
+    else ep.style.display = 'none';
   }
   // Modal title
   var title = m.querySelector('h2');
@@ -10326,6 +10326,30 @@ function closeAdminPanel() {
   var ap = document.getElementById('admin-audit-panel');
   if (ap) ap.style.display = 'none';
   cancelUserForm();
+}
+
+function loadAdminEngagement() {
+  var body = document.getElementById('admin-engagement-body');
+  if (!body) return;
+  fetch('/api/admin/user-engagement').then(function(r){ return r.json(); }).then(function(d) {
+    if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;grid-column:1/-1;">' + ((d && d.error) || 'Could not load engagement data.') + '</p>'; return; }
+    var card = function(label, value, sub, title) {
+      return '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:8px;padding:12px 14px;"' + (title ? ' title="' + title.replace(/"/g,'&quot;') + '"' : '') + '>'
+        + '<div style="color:#6b7c8f;font-size:11.5px;font-weight:600;">' + label + '</div>'
+        + '<div style="color:var(--brand-navy);font-size:20px;font-weight:700;">' + value + '</div>'
+        + (sub ? '<div style="color:#9aa5b1;font-size:11px;">' + sub + '</div>' : '')
+        + '</div>';
+    };
+    var peakAt = d.peakConcurrentAt ? new Date(d.peakConcurrentAt).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : null;
+    var onlineTitle = (d.onlineNames && d.onlineNames.length) ? d.onlineNames.join(', ') : '';
+    body.innerHTML =
+      card('Online now', d.onlineNow, 'active in the last 5 minutes', onlineTitle)
+      + card('Most online at once', d.peakConcurrent, peakAt ? 'on ' + peakAt : 'no activity recorded yet')
+      + card('Logged in &amp; set up', d.setUpUsers + ' / ' + d.totalUsers, 'have set a password')
+      + card('2FA enabled', d.has2FAUsers + ' / ' + d.totalUsers, d.has2FAUsers < d.totalUsers ? (d.totalUsers - d.has2FAUsers) + ' still without it' : 'everyone\'s covered');
+  }).catch(function() {
+    body.innerHTML = '<p style="color:#c00;font-size:13px;grid-column:1/-1;">Could not load engagement data.</p>';
+  });
 }
 
 // ── AI Help Content whitelist (admin only) ──────────────────────────────
