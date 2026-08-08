@@ -10493,17 +10493,51 @@ var HELP_SALARY_TASK_LABELS = {
   'Consumer Duty Team Summary': 'Summarising Consumer Duty feedback for the team',
   'Consumer Duty Adviser Summary': "Summarising an adviser's Consumer Duty feedback"
 };
+// Per-task "freeze" toggle: when a task is frozen, its Cost by task row
+// stops picking up the live figure from each reload and just keeps showing
+// whatever it was the moment it was frozen — handy for stopping a row from
+// jumping around while you're mid-conversation about it. Stored per-browser
+// in localStorage since it's purely a display preference, not real data.
+function helpSalaryFrozenState() {
+  try { return JSON.parse(localStorage.getItem('helpSalaryFrozen') || '{}'); } catch(e) { return {}; }
+}
+function helpSalaryFrozenValues() {
+  try { return JSON.parse(localStorage.getItem('helpSalaryFrozenValues') || '{}'); } catch(e) { return {}; }
+}
+function helpSalaryToggleFreeze(feature, liveCost) {
+  var frozen = helpSalaryFrozenState();
+  var values = helpSalaryFrozenValues();
+  if (frozen[feature]) {
+    delete frozen[feature];
+    delete values[feature];
+  } else {
+    frozen[feature] = true;
+    values[feature] = liveCost;
+  }
+  localStorage.setItem('helpSalaryFrozen', JSON.stringify(frozen));
+  localStorage.setItem('helpSalaryFrozenValues', JSON.stringify(values));
+  helpSalaryLoad();
+}
 function helpSalaryLoad() {
   var body = document.getElementById('help-salary-body');
   body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Checking Alex\'s payslip…</p>';
   fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
     if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || "Couldn't load Alex's salary.") + '</p>'; return; }
     var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
+    var frozen = helpSalaryFrozenState();
+    var frozenValues = helpSalaryFrozenValues();
     var taskRows = (d.byFeature || []).map(function(f) {
       var label = HELP_SALARY_TASK_LABELS[f.feature] || f.feature;
-      return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + label + '</td>'
-        + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(f.cost) + '</td></tr>';
-    }).join('') || '<tr><td colspan="2" style="padding:8px 0;color:#6b7c8f;font-size:13px;">Alex hasn\'t clocked in yet — no tasks logged.</td></tr>';
+      var isFrozen = !!frozen[f.feature];
+      var shown = isFrozen ? (frozenValues[f.feature] || 0) : f.cost;
+      return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + label
+        + (isFrozen ? ' <span style="color:#9aa5b1;font-size:11px;" title="Frozen — not updating live">❄</span>' : '') + '</td>'
+        + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(shown) + '</td>'
+        + '<td style="padding:8px 0;text-align:right;width:60px;">'
+        + '<label style="display:inline-flex;align-items:center;cursor:pointer;" title="' + (isFrozen ? 'Unfreeze — resume live updates' : 'Freeze at current value') + '">'
+        + '<input type="checkbox" ' + (isFrozen ? 'checked' : '') + ' onchange="helpSalaryToggleFreeze(\'' + f.feature.replace(/'/g, "\\'") + '\', ' + f.cost + ')" style="cursor:pointer;">'
+        + '</label></td></tr>';
+    }).join('') || '<tr><td colspan="3" style="padding:8px 0;color:#6b7c8f;font-size:13px;">Alex hasn\'t clocked in yet — no tasks logged.</td></tr>';
     var dayRows = (d.byDay || []).slice(-14).reverse().map(function(dd) {
       return '<tr><td style="padding:6px 0;color:var(--brand-navy);font-size:12px;">' + dd.day + '</td>'
         + '<td style="padding:6px 0;color:#6b7c8f;font-size:12px;text-align:right;">' + fmt(dd.cost) + '</td></tr>';
