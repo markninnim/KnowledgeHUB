@@ -10344,7 +10344,7 @@ function openApiUsageAdmin() {
   body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Loading…</p>';
   fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
     if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || 'Could not load usage data.') + '</p>'; return; }
-    var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
+    var fmt = function(n) { return '£' + ((n || 0) * USD_TO_GBP).toFixed(2); };
     var featureRows = (d.byFeature || []).map(function(f) {
       return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + f.feature + '</td>'
         + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(f.cost) + '</td></tr>';
@@ -10363,7 +10363,7 @@ function openApiUsageAdmin() {
       + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + featureRows + '</table>'
       + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Last 14 days</h3>'
       + '<table style="width:100%;border-collapse:collapse;">' + dayRows + '</table>'
-      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Costs are estimated from published per-token/per-minute model pricing, not exact billing figures — check the Anthropic/OpenAI dashboards for actual invoiced amounts.</p>';
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Costs are estimated from published per-token/per-minute model pricing, converted from USD at an approximate rate — not exact billing figures. Check the Anthropic/OpenAI dashboards for actual invoiced amounts.</p>';
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;">Could not load usage data.</p>';
   });
@@ -10531,7 +10531,7 @@ function helpSalaryLoad() {
   body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Checking Alex\'s payslip…</p>';
   fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
     if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || "Couldn't load Alex's salary.") + '</p>'; return; }
-    var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
+    var fmt = function(n) { return '£' + ((n || 0) * USD_TO_GBP).toFixed(2); };
     var frozen = helpSalaryFrozenState();
     var frozenValues = helpSalaryFrozenValues();
     var taskRows = (d.byFeature || []).map(function(f) {
@@ -10597,7 +10597,7 @@ function helpSalaryLoad() {
       + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Usage</th>'
       + '<th style="text-align:right;padding:6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Cost</th>'
       + '</tr></thead><tbody>' + callRows + '</tbody></table></div>'
-      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges. Call log shows the most recent 200 calls.</p>';
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing, converted from USD at an approximate rate — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges. Call log shows the most recent 200 calls.</p>';
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;">Couldn\'t load Alex\'s salary.</p>';
   });
