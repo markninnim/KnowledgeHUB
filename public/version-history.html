@@ -125,6 +125,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v2.8</span>
+      <span class="version-title">Verified Month-to-Date Cost on Alex's Salary Tab</span>
+      <span class="version-date">8 August 2026</span>
+    </div>
+    <p class="version-summary">Alex's Salary tab now pulls the real, billed month-to-date API spend directly from Anthropic's Usage &amp; Cost Admin API, shown as a "verified" figure alongside the existing estimate &mdash; previously every cost shown was only an estimate built from KnowledgeHUB's own per-call logging and published pricing, not an actual invoice figure.</p>
+    <ul class="changes">
+      <li>Added a new admin-only endpoint, <code>/api/admin/true-cost-report</code>, that calls Anthropic's Usage &amp; Cost Admin API (cost_report) to fetch the real billed spend for the current month on the knowledgehub-help API key.</li>
+      <li>Alex's Salary tab's "Month to date" figure now shows this verified real cost with a green checkmark when available, with the existing estimate shown underneath for comparison &mdash; falls back cleanly to the estimate-only view if no admin key is configured.</li>
+      <li>Alex's Tools tab's auto-filled Claude cost row now also prefers the verified figure over the estimate, keeping both tabs consistent.</li>
+      <li>Requires a separate Anthropic Admin API key (<code>ANTHROPIC_ADMIN_API_KEY</code>, distinct from the existing <code>ANTHROPIC_API_KEY</code>) added to Railway &mdash; the feature is entirely optional and degrades gracefully without it.</li>
+      <li>Per-task cost attribution (e.g. "Summarising an adviser's Consumer Duty feedback") remains an estimate, since Anthropic's billing has no concept of KnowledgeHUB's internal task labels &mdash; only KnowledgeHUB's own call log can attribute cost to a specific feature.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.7</span>
       <span class="version-title">CPD AI Summary Rewrite, Download Modal &amp; Sim Branding on AI Summaries</span>
       <span class="version-date">2 August 2026</span>
