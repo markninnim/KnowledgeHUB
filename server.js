@@ -158,6 +158,8 @@ const LG_REENGAGE_KEY = 'fldVh6JBP5ozDFOhA'; // ReEngage Key — brokerEmail|cas
 // Field IDs
 const F_EMAIL     = 'fldVx5xRa7lXK3SC3';
 const F_PASSWORD  = 'fldWYSyK5TWesxobj';
+const F_RESET_TOKEN         = 'fldye17aVGkaxcRQU'; // Reset Token — persisted so links survive a redeploy
+const F_RESET_TOKEN_EXPIRES = 'fld40ArAdQNtkPS5x'; // Reset Token Expires — epoch ms
 const F_SAL       = 'fldzdw3RKozmShmEr';
 const F_FIRST     = 'flde9n3BkKQsJFoYB';
 const F_LAST      = 'flduFe3YHfQB7f7LQ';
@@ -316,20 +318,42 @@ function getLoginLockStatus(email) {
   return { locked: false, attemptsLeft };
 }
 
-// ── Password reset tokens (in-memory, 1-hour TTL) ────────────────
-// { "token": { email, expires } }
-const _resetTokens = {};
-function createResetToken(email) {
+// ── Password reset tokens (persisted on the Users record, 1-hour TTL) ──
+// Previously these lived only in an in-memory object, which meant every
+// Railway redeploy silently invalidated any reset link already sent —
+// someone could request a reset, then have it stop working through no
+// fault of their own if a deploy happened to land in that hour. Storing
+// the token on the user's own Airtable record means it survives restarts.
+async function createResetToken(email, userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  _resetTokens[token] = { email: email.toLowerCase(), expires: Date.now() + 3600000 };
+  const expires = Date.now() + 3600000;
+  let recordId = userId;
+  if (!recordId) {
+    const formula = encodeURIComponent(`{Email}="${email.toLowerCase()}"`);
+    const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+    if (!data.records || !data.records.length) throw new Error('User not found for reset token');
+    recordId = data.records[0].id;
+  }
+  await atFetch(`/${recordId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { [F_RESET_TOKEN]: token, [F_RESET_TOKEN_EXPIRES]: expires } })
+  });
   return token;
 }
-function consumeResetToken(token) {
-  const rec = _resetTokens[token];
-  if (!rec) return null;
-  if (rec.expires < Date.now()) { delete _resetTokens[token]; return null; }
-  delete _resetTokens[token];
-  return rec.email;
+async function consumeResetToken(token) {
+  const formula = encodeURIComponent(`{Reset Token}="${token}"`);
+  const data = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true`);
+  if (!data.records || !data.records.length) return null;
+  const record  = data.records[0];
+  const expires = record.fields[F_RESET_TOKEN_EXPIRES];
+  // Always clear the token once looked up, whether it's still valid or not,
+  // so a token can only ever be used once.
+  await atFetch(`/${record.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ fields: { [F_RESET_TOKEN]: null, [F_RESET_TOKEN_EXPIRES]: null } })
+  });
+  if (!expires || expires < Date.now()) return null;
+  return (record.fields[F_EMAIL] || '').toLowerCase();
 }
 
 // ── Session invalidation tracker ─────────────────────────────────
@@ -426,11 +450,11 @@ function finalizeLogin(req, email, user) {
 }
 
 // For browser-redirect flows (trusted device skip, or API endpoints)
-function completeLoginRedirect(req, res, email, user) {
+async function completeLoginRedirect(req, res, email, user) {
   finalizeLogin(req, email, user);
   auditLog('login_complete', { email }, req);
   if (_forceReset[email]) {
-    const token = createResetToken(email);
+    const token = await createResetToken(email);
     return res.redirect('/reset-password?token=' + token + '&forced=1');
   }
   res.redirect('/');
@@ -3274,7 +3298,7 @@ app.post('/login', async (req, res) => {
     }
     // Has 2FA — check for a trusted device cookie (skip prompt)
     if (verifyTrustToken(req, emailLower)) {
-      return completeLoginRedirect(req, res, emailLower, req.session.pendingTotp.user);
+      return await completeLoginRedirect(req, res, emailLower, req.session.pendingTotp.user);
     }
     res.redirect('/2fa');
   } catch (err) {
@@ -3301,7 +3325,7 @@ app.post('/api/forgot-password', async (req, res) => {
     }
     const record = data.records[0];
     const user   = recordToUser(record);
-    const token  = createResetToken(emailLower);
+    const token  = await createResetToken(emailLower, record.id);
     const name   = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
     const resetUrl = (process.env.APP_URL || 'https://dam.simflex.ai') + '/reset-password?token=' + token;
     const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
@@ -3336,7 +3360,13 @@ app.post('/api/reset-password', async (req, res) => {
   if (!token || !password || password.length < 12) {
     return res.status(400).json({ error: 'Token and password (min 12 chars) required' });
   }
-  const email = consumeResetToken(token);
+  let email;
+  try {
+    email = await consumeResetToken(token);
+  } catch (err) {
+    console.error('Reset token lookup error:', err);
+    return res.status(500).json({ error: 'Could not reset password' });
+  }
   if (!email) return res.status(400).json({ error: 'Reset link has expired or is invalid' });
   try {
     const formula = encodeURIComponent(`{Email}="${email}"`);
@@ -4030,7 +4060,7 @@ app.post('/api/2fa/setup-verify', async (req, res) => {
   auditLog('2fa_setup_complete', { email }, req);
   finalizeLogin(req, email, user);
   if (_forceReset[email]) {
-    const token = createResetToken(email);
+    const token = await createResetToken(email, userId);
     return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
   }
   res.json({ ok: true, redirect: '/' });
@@ -4067,7 +4097,7 @@ app.post('/api/2fa/verify', async (req, res) => {
   auditLog('login_2fa_ok', { email }, req);
   finalizeLogin(req, email, user);
   if (_forceReset[email]) {
-    const token = createResetToken(email);
+    const token = await createResetToken(email, userId);
     return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
   }
   res.json({ ok: true, redirect: '/' });
