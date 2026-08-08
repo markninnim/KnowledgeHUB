@@ -16000,7 +16000,7 @@ function renderSvDashboard(data) {
   var renderer = isCard ? buildCard : buildListRow;
 
   // Set grid layout
-  ['sv-advisers-list','sv-admin-list','sv-supervisors-list'].forEach(function(id) {
+  ['sv-advisers-list','sv-admin-list','sv-supervisors-list','sv-directors-list'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.gridTemplateColumns = isCard ? 'repeat(3,1fr)' : '1fr';
   });
