@@ -10529,7 +10529,11 @@ function helpSalaryToggleFreeze(feature, liveCost) {
 function helpSalaryLoad() {
   var body = document.getElementById('help-salary-body');
   body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Checking Alex\'s payslip…</p>';
-  fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).then(function(d) {
+  Promise.all([
+    fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }),
+    fetch('/api/admin/true-cost-report').then(function(r){ return r.json(); }).catch(function(){ return { available: false }; })
+  ]).then(function(results) {
+    var d = results[0], trueCost = results[1];
     if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || "Couldn't load Alex's salary.") + '</p>'; return; }
     var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
     var frozen = helpSalaryFrozenState();
@@ -10569,7 +10573,7 @@ function helpSalaryLoad() {
       '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Alex™ doesn\'t take a wage packet home, but here\'s roughly what he/she costs to keep on staff — based on the AI usage behind each task.</p>'
       + '<div style="display:flex;gap:16px;margin-bottom:20px;">'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Total earned to date</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.totalCostUsd) + '</div></div>'
-      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Month to date</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.monthToDateCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Month to date' + (trueCost && trueCost.available ? ' <span style="color:#2f855a;" title="Verified against Anthropic\'s real billing data">✓ verified</span>' : '') + '</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(trueCost && trueCost.available ? trueCost.monthToDateCostUsd : d.monthToDateCostUsd) + '</div>' + (trueCost && trueCost.available ? '<div style="color:#9aa5b1;font-size:11px;">our estimate: ' + fmt(d.monthToDateCostUsd) + '</div>' : '') + '</div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Last 30 days</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.last30DaysCostUsd) + '</div></div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Tasks completed</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + (d.totalCalls || 0) + '</div></div>'
       + '</div>'
@@ -10597,7 +10601,9 @@ function helpSalaryLoad() {
       + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Usage</th>'
       + '<th style="text-align:right;padding:6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Cost</th>'
       + '</tr></thead><tbody>' + callRows + '</tbody></table></div>'
-      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges. Call log shows the most recent 200 calls.</p>';
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">' + (trueCost && trueCost.available
+          ? 'Month to date is now Alex\'s real billed spend, pulled live from Anthropic. Cost by task and the call log below are still estimated from published pricing (per-task breakdowns aren\'t available from Anthropic\'s billing).'
+          : 'Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges.') + ' Call log shows the most recent 200 calls.</p>';
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;">Couldn\'t load Alex\'s salary.</p>';
   });
@@ -10652,11 +10658,13 @@ function helpToolsLoad() {
   content.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Loading…</p>';
   Promise.all([
     fetch('/api/admin/tools-costs').then(function(r){ return r.json(); }),
-    fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).catch(function(){ return null; })
+    fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).catch(function(){ return null; }),
+    fetch('/api/admin/true-cost-report').then(function(r){ return r.json(); }).catch(function(){ return { available: false }; })
   ]).then(function(results) {
-    var d = results[0], usage = results[1];
+    var d = results[0], usage = results[1], trueCost = results[2];
     if (!d || d.error) { content.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || 'Could not load tools.') + '</p>'; return; }
-    var claudeGbp = usage && !usage.error ? Math.round((usage.monthToDateCostUsd || 0) * USD_TO_GBP * 100) / 100 : null;
+    var claudeMtdUsd = (trueCost && trueCost.available) ? trueCost.monthToDateCostUsd : (usage && !usage.error ? usage.monthToDateCostUsd : null);
+    var claudeGbp = claudeMtdUsd !== null ? Math.round(claudeMtdUsd * USD_TO_GBP * 100) / 100 : null;
 
     var rows = (d.tools || []).map(function(t) {
       var isClaude = t.key === 'claude';
