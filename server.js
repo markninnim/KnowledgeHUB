@@ -1592,7 +1592,10 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
     const byFeature = {};
     const byDay = {};
     let total = 0;
+    let monthToDate = 0;
     const cutoff30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).getTime();
 
     for (const rec of records) {
       const f = rec.fields || {};
@@ -1605,6 +1608,9 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
         const day = ts.slice(0, 10);
         byDay[day] = (byDay[day] || 0) + cost;
       }
+      if (ts && new Date(ts).getTime() >= monthStart) {
+        monthToDate += cost;
+      }
     }
 
     const featureBreakdown = Object.keys(byFeature)
@@ -1614,12 +1620,34 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
       .sort()
       .map(k => ({ day: k, cost: Math.round(byDay[k] * 10000) / 10000 }));
 
+    // Individual call log, most recent first — capped at 200 rows so the
+    // Salary tab stays fast even once thousands of calls have been logged.
+    const recentCalls = records
+      .map(rec => {
+        const f = rec.fields || {};
+        return {
+          timestamp: f[F_USAGE_TS] || rec.createdTime,
+          feature: f[F_USAGE_FEATURE] || 'Unknown',
+          provider: f[F_USAGE_PROVIDER] || '',
+          model: f[F_USAGE_MODEL] || '',
+          inputTokens: f[F_USAGE_IN_TOK] || 0,
+          outputTokens: f[F_USAGE_OUT_TOK] || 0,
+          audioSeconds: f[F_USAGE_AUDIO_S] || 0,
+          cost: Math.round((f[F_USAGE_COST] || 0) * 10000) / 10000,
+          email: f[F_USAGE_EMAIL] || ''
+        };
+      })
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 200);
+
     res.json({
       totalCostUsd: Math.round(total * 10000) / 10000,
       totalCalls: records.length,
       last30DaysCostUsd: Math.round(dailyBreakdown.reduce((s, d) => s + d.cost, 0) * 10000) / 10000,
+      monthToDateCostUsd: Math.round(monthToDate * 10000) / 10000,
       byFeature: featureBreakdown,
-      byDay: dailyBreakdown
+      byDay: dailyBreakdown,
+      recentCalls
     });
   } catch (err) {
     console.error('api-usage-summary error:', err);

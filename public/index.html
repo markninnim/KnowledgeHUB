@@ -10552,10 +10552,23 @@ function helpSalaryLoad() {
       return '<tr><td style="padding:6px 0;color:var(--brand-navy);font-size:12px;">' + dd.day + '</td>'
         + '<td style="padding:6px 0;color:#6b7c8f;font-size:12px;text-align:right;">' + fmt(dd.cost) + '</td></tr>';
     }).join('') || '<tr><td colspan="2" style="padding:6px 0;color:#6b7c8f;font-size:12px;">Nothing on the timesheet for the last 30 days.</td></tr>';
+    var callRows = (d.recentCalls || []).map(function(c) {
+      var when = c.timestamp ? new Date(c.timestamp).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+      var label = HELP_SALARY_TASK_LABELS[c.feature] || c.feature;
+      var usage = c.audioSeconds ? (c.audioSeconds + 's audio') : ((c.inputTokens || 0) + ' in / ' + (c.outputTokens || 0) + ' out');
+      return '<tr>'
+        + '<td style="padding:6px 8px 6px 0;color:#6b7c8f;font-size:11.5px;white-space:nowrap;">' + when + '</td>'
+        + '<td style="padding:6px 8px 6px 0;color:var(--brand-navy);font-size:12px;">' + label + '</td>'
+        + '<td style="padding:6px 8px 6px 0;color:#9aa5b1;font-size:11.5px;">' + (c.model || c.provider || '') + '</td>'
+        + '<td style="padding:6px 8px 6px 0;color:#9aa5b1;font-size:11.5px;white-space:nowrap;">' + usage + '</td>'
+        + '<td style="padding:6px 0;color:var(--brand-navy);font-size:12px;text-align:right;font-weight:600;">' + fmt(c.cost) + '</td>'
+        + '</tr>';
+    }).join('') || '<tr><td colspan="5" style="padding:8px 0;color:#6b7c8f;font-size:13px;">No individual calls logged yet.</td></tr>';
     body.innerHTML =
       '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Alex™ doesn\'t take a wage packet home, but here\'s roughly what he/she costs to keep on staff — based on the AI usage behind each task.</p>'
       + '<div style="display:flex;gap:16px;margin-bottom:20px;">'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Total earned to date</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.totalCostUsd) + '</div></div>'
+      + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Month to date</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.monthToDateCostUsd) + '</div></div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Last 30 days</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.last30DaysCostUsd) + '</div></div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Tasks completed</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + (d.totalCalls || 0) + '</div></div>'
       + '</div>'
@@ -10572,8 +10585,18 @@ function helpSalaryLoad() {
       + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Cost by task</h3>'
       + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + taskRows + '</table>'
       + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Timesheet — last 14 days</h3>'
-      + '<table style="width:100%;border-collapse:collapse;">' + dayRows + '</table>'
-      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges.</p>';
+      + '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' + dayRows + '</table>'
+      + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">API call log</h3>'
+      + '<div style="max-height:280px;overflow-y:auto;border:1px solid #e8ecf0;border-radius:8px;padding:4px 12px;">'
+      + '<table style="width:100%;border-collapse:collapse;">'
+      + '<thead><tr style="position:sticky;top:0;background:#fff;">'
+      + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">When</th>'
+      + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Task</th>'
+      + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Model</th>'
+      + '<th style="text-align:left;padding:6px 8px 6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Usage</th>'
+      + '<th style="text-align:right;padding:6px 0;color:#9aa5b1;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;">Cost</th>'
+      + '</tr></thead><tbody>' + callRows + '</tbody></table></div>'
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:16px;">Figures are estimated from published AI model pricing (USD) — not an exact invoice. Check the Anthropic/OpenAI billing dashboards for actual charges. Call log shows the most recent 200 calls.</p>';
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;">Couldn\'t load Alex\'s salary.</p>';
   });
@@ -10615,37 +10638,56 @@ function helpJobDescLoad() {
 }
 
 // ── Alex's Tools (admin only) — every external account/service
-// KnowledgeHUB™ itself runs on (hosting, database, video, AI, email…),
-// with an editable monthly cost per tool so the whole running cost of the
-// site is visible in one place, alongside Alex's own AI cost on the
-// Salary tab. Tool list is fixed in code; costs are saved to the server.
+// KnowledgeHUB™ itself runs on (hosting, database, video, AI, email…).
+// Most rows are an editable monthly £ cost that autosaves as soon as you
+// change it (no Save button — each field persists itself on blur). The
+// Claude row is the one exception: rather than being typed in, it's
+// auto-filled from Alex's real month-to-date API spend (converted from
+// USD, since that's what the underlying model pricing is billed in) and
+// is read-only, so it can never drift out of sync with the Salary tab.
+var USD_TO_GBP = 0.79; // approximate — for display only, not exact
 function helpToolsLoad() {
   var content = document.getElementById('help-tools-tab-content');
   content.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Loading…</p>';
-  fetch('/api/admin/tools-costs').then(function(r){ return r.json(); }).then(function(d) {
+  Promise.all([
+    fetch('/api/admin/tools-costs').then(function(r){ return r.json(); }),
+    fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }).catch(function(){ return null; })
+  ]).then(function(results) {
+    var d = results[0], usage = results[1];
     if (!d || d.error) { content.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || 'Could not load tools.') + '</p>'; return; }
+    var claudeGbp = usage && !usage.error ? Math.round((usage.monthToDateCostUsd || 0) * USD_TO_GBP * 100) / 100 : null;
+
     var rows = (d.tools || []).map(function(t) {
-      return '<tr>'
+      var isClaude = t.key === 'claude';
+      var costCell;
+      if (isClaude && claudeGbp !== null) {
+        costCell = '<span style="color:var(--brand-navy);font-size:13px;font-weight:600;">£' + claudeGbp.toFixed(2) + '</span>'
+          + '<div style="color:#9aa5b1;font-size:10.5px;">auto — month to date</div>';
+      } else if (isClaude) {
+        costCell = '<span style="color:#9aa5b1;font-size:12px;">— (couldn\'t load usage)</span>';
+      } else {
+        costCell = '<span style="color:#9aa5b1;font-size:13px;">£</span> '
+          + '<input type="number" min="0" step="0.01" value="' + t.monthlyCost.toFixed(2) + '" data-key="' + t.key + '" class="help-tools-cost-input" style="width:80px;padding:5px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;text-align:right;" oninput="helpToolsRecalcTotal()" onblur="helpToolsAutosave(this)">'
+          + '<span class="help-tools-row-msg" data-key="' + t.key + '" style="display:none;color:#2f855a;font-size:10.5px;margin-left:6px;">Saved</span>';
+      }
+      return '<tr' + (isClaude ? ' data-claude-cost="' + (claudeGbp || 0) + '"' : '') + '>'
         + '<td style="padding:10px 0;color:var(--brand-navy);font-size:13px;font-weight:600;vertical-align:top;width:220px;">' + t.name + '</td>'
         + '<td style="padding:10px 12px 10px 0;color:#6b7c8f;font-size:12.5px;line-height:1.5;vertical-align:top;">' + t.description + '</td>'
-        + '<td style="padding:10px 0;text-align:right;vertical-align:top;white-space:nowrap;">'
-        + '<span style="color:#9aa5b1;font-size:13px;">£</span> '
-        + '<input type="number" min="0" step="0.01" value="' + t.monthlyCost.toFixed(2) + '" data-key="' + t.key + '" class="help-tools-cost-input" style="width:80px;padding:5px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;text-align:right;" onchange="helpToolsRecalcTotal()">'
-        + '</td></tr>';
+        + '<td style="padding:10px 0;text-align:right;vertical-align:top;white-space:nowrap;">' + costCell + '</td></tr>';
     }).join('');
     content.innerHTML =
-      '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Every account KnowledgeHUB™ runs on behind the scenes. Edit the monthly cost for each and click Save.</p>'
+      '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;">Every account KnowledgeHUB™ runs on behind the scenes. Costs save automatically as you edit them — Claude\'s cost fills in on its own from Alex\'s real API usage.</p>'
       + '<table style="width:100%;border-collapse:collapse;">'
       + '<thead><tr>'
       + '<th style="text-align:left;padding:0 0 8px;color:#9aa5b1;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #d1d5db;">Tool</th>'
       + '<th style="text-align:left;padding:0 12px 8px 0;color:#9aa5b1;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #d1d5db;">Description</th>'
       + '<th style="text-align:right;padding:0 0 8px;color:#9aa5b1;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #d1d5db;">Monthly cost</th>'
       + '</tr></thead><tbody>' + rows + '</tbody></table>'
-      + '<div style="display:flex;justify-content:flex-end;align-items:center;gap:20px;margin-top:16px;padding-top:14px;border-top:2px solid var(--brand-navy);">'
-      + '<div style="color:var(--brand-navy);font-size:14px;font-weight:700;">Total: £<span id="help-tools-total">' + d.total.toFixed(2) + '</span> / month</div>'
-      + '<button onclick="helpToolsSave()" id="help-tools-save-btn" style="background:var(--brand-navy);color:#fff;border:1px solid var(--brand-navy);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>'
+      + '<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:16px;padding-top:14px;border-top:2px solid var(--brand-navy);">'
+      + '<div style="color:var(--brand-navy);font-size:14px;font-weight:700;">Total: £<span id="help-tools-total">0.00</span> / month</div>'
       + '</div>'
-      + '<p id="help-tools-save-msg" style="color:#2f855a;font-size:12px;margin-top:8px;display:none;">Saved.</p>';
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:12px;">Claude\'s figure is converted from USD at an approximate rate and updates each time you open this tab — see Alex\'s Salary tab for the exact underlying number.</p>';
+    helpToolsRecalcTotal();
   }).catch(function() {
     content.innerHTML = '<p style="color:#c00;font-size:13px;">Could not load tools.</p>';
   });
@@ -10655,31 +10697,28 @@ function helpToolsRecalcTotal() {
   document.querySelectorAll('.help-tools-cost-input').forEach(function(inp) {
     total += parseFloat(inp.value) || 0;
   });
+  var claudeRow = document.querySelector('tr[data-claude-cost]');
+  if (claudeRow) total += parseFloat(claudeRow.dataset.claudeCost) || 0;
   var totalEl = document.getElementById('help-tools-total');
   if (totalEl) totalEl.textContent = total.toFixed(2);
 }
-function helpToolsSave() {
+function helpToolsAutosave(input) {
+  var key = input.dataset.key;
+  var value = parseFloat(input.value) || 0;
+  var msg = document.querySelector('.help-tools-row-msg[data-key="' + key + '"]');
   var costs = {};
-  document.querySelectorAll('.help-tools-cost-input').forEach(function(inp) {
-    costs[inp.dataset.key] = parseFloat(inp.value) || 0;
-  });
-  var btn = document.getElementById('help-tools-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  costs[key] = value;
   fetch('/api/admin/tools-costs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ costs: costs })
   }).then(function(r){ return r.json(); }).then(function(d) {
-    btn.disabled = false; btn.textContent = 'Save';
-    var msg = document.getElementById('help-tools-save-msg');
     if (d && d.ok) {
-      msg.style.display = 'block';
-      setTimeout(function(){ msg.style.display = 'none'; }, 2500);
+      if (msg) { msg.style.display = 'inline'; setTimeout(function(){ msg.style.display = 'none'; }, 1800); }
     } else {
       alert((d && d.error) || 'Could not save.');
     }
   }).catch(function() {
-    btn.disabled = false; btn.textContent = 'Save';
     alert('Could not save — please try again.');
   });
 }
