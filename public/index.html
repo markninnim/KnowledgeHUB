@@ -15646,8 +15646,15 @@ function loadSupervisorZone() {
         // Compliance-team people carry the "isSupervisor" flag (for permissions)
         // but aren't people-managers with a team of advisers — split them into
         // their own sidebar group based on job title rather than mixing them
-        // into the adviser-supervisor list.
-        var isComplianceRole = function(s) { return /compliance/i.test(s.jobTitle || ''); };
+        // into the adviser-supervisor list. Torie Maleganeas is the exception:
+        // her job title is "Compliance Manager" but she's a genuine team
+        // supervisor (took over Matt Stephens's team), so force her into the
+        // true Supervisors group regardless of what the title regex would say.
+        var FORCE_TRUE_SUPERVISOR_EMAILS = ['torie.maleganeas@financeplanning.co.uk'];
+        var isComplianceRole = function(s) {
+          if (FORCE_TRUE_SUPERVISOR_EMAILS.indexOf((s.email || '').toLowerCase()) !== -1) return false;
+          return /compliance/i.test(s.jobTitle || '');
+        };
         var trueSupervisors = supervisors.filter(function(s) { return !isComplianceRole(s); });
         var complianceTeam  = supervisors.filter(isComplianceRole);
 
@@ -15931,12 +15938,16 @@ function renderSvDashboard(data) {
     // Drill-down entries panel
     var drillId = 'sv-drill-' + m.email.replace(/[^a-z0-9]/gi, '_');
 
-    var cardBg = m.isSupervisor ? '#f0f2f5' : '#fff';
+    // Non-supervising Directors get the same grey shading as Supervisor cards —
+    // they're senior staff cards, not rank-and-file adviser cards, even though
+    // they don't carry the isSupervisor permission flag.
+    var isDirectorCard = NON_SUPERVISING_DIRECTOR_EMAILS.indexOf((m.email || '').toLowerCase()) !== -1;
+    var cardBg = (m.isSupervisor || isDirectorCard) ? '#f0f2f5' : '#fff';
     var supLabel = m.isSupervisor ? '<span style="background:#6b7c8f;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span style="display:inline-flex;align-items:center;gap:5px;margin-left:6px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#b91c1c;white-space:nowrap;">' + fmtTenureShort(m.startDate) + '</span></span>' : '';
     var cardId = 'sv-card-' + m.email.replace(/[^a-z0-9]/gi, '_');
     var cardClick = !m.isSupervisor ? ' onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\')"' : '';
-    return '<div id="' + cardId + '"' + cardClick + ' class="sv-adv-card" style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);">' +
+    return '<div id="' + cardId + '"' + cardClick + ' class="sv-adv-card" style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);min-height:154px;box-sizing:border-box;">' +
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
