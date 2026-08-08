@@ -489,9 +489,6 @@ const TOOLS_LIST = [
   { key: 'vimeo',      name: 'Vimeo',                              description: 'Hosts the Learning tab training videos.' },
   { key: 'feefo',      name: 'Feefo',                              description: 'Supplies the customer review data shown in the Feefo league tables.' },
   { key: 'claude',     name: 'Claude (Anthropic)',                description: "Powers Alex™ — chat, summaries, and document checks. Metered usage, tracked separately on Alex's Salary tab." },
-  { key: 'openai',     name: 'OpenAI',                            description: 'Whisper transcribes recorded 1:1 meetings before Claude summarises them.' },
-  { key: 'campaignmonitor', name: 'Campaign Monitor',             description: 'Sends password-reset and news bulletin emails.' },
-  { key: 'zoom',       name: 'Zoom',                               description: 'Hosts the live weekly training session linked from the Learning tab.' },
   { key: 'domain',     name: 'Domain / DNS',                      description: 'Registrar hosting knowledgehub.website and dam.simflex.ai.' }
 ];
 const TOOLS_COSTS_PATH = path.join(__dirname, 'tools-costs.json');
@@ -3364,6 +3361,10 @@ app.get('/forgot-password', (req, res) => {
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!process.env.CM_API_KEY) {
+    console.error('forgot-password: CM_API_KEY not set — cannot send reset email');
+    return res.status(503).json({ error: 'Password reset emails are not configured yet. Ask Mark to add a Campaign Monitor API key, or reset the password from User Management instead.' });
+  }
   const emailLower = email.trim().toLowerCase();
   try {
     const formula = encodeURIComponent(`{Email}="${emailLower}"`);

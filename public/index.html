@@ -332,7 +332,6 @@ select:focus { outline:none; }
   <div id="sidebar-learning" style="display:none">
     <h2 style="margin-top: 8px;">Learn</h2>
     <a href="#" id="lv-nav-cas-path" style="display:none;color:#b91c1c;font-weight:700;" onclick="return showLvSection('lv-cas-path-section',this)">My CAS Path</a>
-    <a href="https://us02web.zoom.us/j/97481803945#success" id="lv-nav-live" target="_blank" rel="noopener" onclick="lvLogLiveCpd()" style="text-decoration:none;">View Live</a>
     <a href="#" id="lv-nav-weekly" onclick="return showLvSection('weekly-recordings',this)">Weekly Recordings</a>
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
@@ -16217,13 +16216,6 @@ function saveNewsStory() {
 }
 
 // Live weekly session: opening the Zoom link logs CPD like watching a video
-function lvLogLiveCpd() {
-  fetch('/api/cpd/video', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ videoTitle: 'Live Weekly Training Session', cpdType: '50/50' })
-  }).then(function(){ _cpdLoaded = false; }).catch(function(){});
-}
-
 // ── Compliance reporting forms ────────────────────────────────
 var _crType = 'Complaint';
 var CR_CONFIG = {
@@ -17819,10 +17811,6 @@ async function confirmImport() {
     loadAdminUsers();
   }, 4000);
 }
-
-// ── Knowledge Tests ───────────────────────────────────────────
-
-// ── Induction Tests (SurveyMonkey) ────────────────────────────
 
 // ── Knowledge Tests ───────────────────────────────────────────
 
