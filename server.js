@@ -497,26 +497,13 @@ try { _toolsCosts = JSON.parse(fs.readFileSync(TOOLS_COSTS_PATH, 'utf8')); } cat
 function saveToolsCosts() {
   try { fs.writeFileSync(TOOLS_COSTS_PATH, JSON.stringify(_toolsCosts, null, 2)); } catch(_) {}
 }
-
-app.get('/api/admin/tools-costs', requireAdmin, (req, res) => {
-  const tools = TOOLS_LIST.map(t => ({ ...t, monthlyCost: _toolsCosts[t.key] || 0 }));
-  const total = tools.reduce((sum, t) => sum + t.monthlyCost, 0);
-  res.json({ tools, total: Math.round(total * 100) / 100 });
-});
-
-app.post('/api/admin/tools-costs', requireAdmin, (req, res) => {
-  const { costs } = req.body;
-  if (!costs || typeof costs !== 'object') return res.status(400).json({ error: 'Expected { costs: { key: number } }' });
-  TOOLS_LIST.forEach(t => {
-    if (costs[t.key] !== undefined) {
-      const n = parseFloat(costs[t.key]);
-      _toolsCosts[t.key] = isNaN(n) ? 0 : n;
-    }
-  });
-  saveToolsCosts();
-  auditLog('tools_costs_updated', { costs: _toolsCosts }, req);
-  res.json({ ok: true });
-});
+// Routes for these are registered further down (see "Alex's Tools routes"),
+// after session/JSON-body middleware is set up — Express matches routes in
+// registration order, so a route defined this early would run before
+// req.session and req.body exist, which is exactly the bug that shipped
+// here initially: requireAdmin crashed on a missing req.session, Express's
+// default error handler returned an HTML error page instead of JSON, and
+// the front end's fetch().json() blew up trying to parse it.
 
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
@@ -1643,6 +1630,28 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
     console.error('api-usage-summary error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Alex's Tools routes — see TOOLS_LIST/_toolsCosts declared near the
+// top of the file for context on why these live here rather than there.
+app.get('/api/admin/tools-costs', requireAdmin, (req, res) => {
+  const tools = TOOLS_LIST.map(t => ({ ...t, monthlyCost: _toolsCosts[t.key] || 0 }));
+  const total = tools.reduce((sum, t) => sum + t.monthlyCost, 0);
+  res.json({ tools, total: Math.round(total * 100) / 100 });
+});
+
+app.post('/api/admin/tools-costs', requireAdmin, (req, res) => {
+  const { costs } = req.body;
+  if (!costs || typeof costs !== 'object') return res.status(400).json({ error: 'Expected { costs: { key: number } }' });
+  TOOLS_LIST.forEach(t => {
+    if (costs[t.key] !== undefined) {
+      const n = parseFloat(costs[t.key]);
+      _toolsCosts[t.key] = isNaN(n) ? 0 : n;
+    }
+  });
+  saveToolsCosts();
+  auditLog('tools_costs_updated', { costs: _toolsCosts }, req);
+  res.json({ ok: true });
 });
 
 // ── Help KB admin CRUD — admin-only, so the whitelist of content the AI can
