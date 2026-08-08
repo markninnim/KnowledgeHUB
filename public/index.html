@@ -10647,6 +10647,22 @@ function helpJobDescLoad() {
 // USD, since that's what the underlying model pricing is billed in) and
 // is read-only, so it can never drift out of sync with the Salary tab.
 var USD_TO_GBP = 0.79; // approximate — for display only, not exact
+// Counts how many 19th-of-the-month dates have passed since KnowledgeHUB
+// launched (19 June 2026), inclusive of launch day itself — used to estimate
+// how many months of fixed subscription cost have actually been charged so
+// far, on the assumption those tools renew on the 19th too (no daily
+// proration, since that's how most of these vendors actually bill).
+function helpToolsCyclesSinceLaunch() {
+  var launch = Date.UTC(2026, 5, 19);
+  var cycles = 0;
+  var d = new Date(launch);
+  var now = new Date();
+  while (d.getTime() <= now.getTime()) {
+    cycles++;
+    d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 19));
+  }
+  return cycles;
+}
 function helpToolsLoad() {
   var content = document.getElementById('help-tools-tab-content');
   content.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Loading…</p>';
@@ -10657,6 +10673,10 @@ function helpToolsLoad() {
     var d = results[0], usage = results[1];
     if (!d || d.error) { content.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || 'Could not load tools.') + '</p>'; return; }
     var claudeGbp = usage && !usage.error ? Math.round((usage.monthToDateCostUsd || 0) * USD_TO_GBP * 100) / 100 : null;
+    var cycles = helpToolsCyclesSinceLaunch();
+    var fixedGbpTotal = (d.total || 0) * cycles;
+    var aiGbpAllTime = usage && !usage.error ? (usage.totalCostUsd || 0) * USD_TO_GBP : 0;
+    var creationTotal = fixedGbpTotal + aiGbpAllTime;
 
     var rows = (d.tools || []).map(function(t) {
       var isClaude = t.key === 'claude';
@@ -10687,7 +10707,16 @@ function helpToolsLoad() {
       + '<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:16px;padding-top:14px;border-top:2px solid var(--brand-navy);">'
       + '<div style="color:var(--brand-navy);font-size:14px;font-weight:700;">Total: £<span id="help-tools-total">0.00</span> / month</div>'
       + '</div>'
-      + '<p style="color:#9aa5b1;font-size:11px;margin-top:12px;">Claude\'s figure is converted from USD at an approximate rate and updates each time you open this tab — see Alex\'s Salary tab for the exact underlying number.</p>';
+      + '<p style="color:#9aa5b1;font-size:11px;margin-top:12px;">Claude\'s figure is converted from USD at an approximate rate and updates each time you open this tab — see Alex\'s Salary tab for the exact underlying number.</p>'
+      + '<div style="background:#fffaf0;border:1px solid #fcb034;border-radius:8px;padding:16px 18px;margin-top:20px;">'
+      + '<div style="color:#6b7c8f;font-size:12px;font-weight:600;margin-bottom:10px;">Creation cost since launch (19 June 2026)</div>'
+      + '<div style="display:flex;gap:16px;">'
+      + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:11.5px;">Fixed subscriptions (' + cycles + ' month' + (cycles === 1 ? '' : 's') + ' billed)</div><div style="color:var(--brand-navy);font-size:18px;font-weight:700;">£' + fixedGbpTotal.toFixed(2) + '</div></div>'
+      + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:11.5px;">Alex\'s AI spend to date</div><div style="color:var(--brand-navy);font-size:18px;font-weight:700;">£' + aiGbpAllTime.toFixed(2) + '</div></div>'
+      + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:11.5px;">Total so far</div><div style="color:var(--brand-navy);font-size:18px;font-weight:800;">£' + creationTotal.toFixed(2) + '</div></div>'
+      + '</div>'
+      + '<p style="color:#9aa5b1;font-size:11px;margin:10px 0 0;">Assumes fixed subscriptions renew on the 19th each month at their current rate, and that ' + cycles + ' of those charges have landed since launch — earlier months are priced at today\'s rate, not what was actually paid at the time. AI spend is Alex\'s real logged usage across the same window, estimated from published pricing.</p>'
+      + '</div>';
     helpToolsRecalcTotal();
   }).catch(function() {
     content.innerHTML = '<p style="color:#c00;font-size:13px;">Could not load tools.</p>';
