@@ -1677,10 +1677,17 @@ app.get('/api/admin/true-cost-report', requireAdmin, async (req, res) => {
   }
   try {
     const now = new Date();
+    // starting_at/ending_at query params let callers pull a real cost total for
+    // any date range (e.g. since KnowledgeHUB launched on 19 June 2026), not
+    // just the current calendar month — used by the "since launch" figure.
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const rangeStart = req.query.starting_at ? new Date(req.query.starting_at) : monthStart;
+    const rangeEnd = req.query.ending_at
+      ? new Date(req.query.ending_at)
+      : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
     const params = new URLSearchParams({
-      starting_at: monthStart.toISOString().slice(0, 19) + 'Z',
-      ending_at: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)).toISOString().slice(0, 19) + 'Z',
+      starting_at: rangeStart.toISOString().slice(0, 19) + 'Z',
+      ending_at: rangeEnd.toISOString().slice(0, 19) + 'Z',
       bucket_width: '1d',
       limit: '31'
     });

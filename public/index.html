@@ -10526,14 +10526,53 @@ function helpSalaryToggleFreeze(feature, liveCost) {
   localStorage.setItem('helpSalaryFrozenValues', JSON.stringify(values));
   helpSalaryLoad();
 }
+// Builds the "Production cost since launch" panel on the Salary tab: fixed
+// subscription costs (from Alex's Tools) charged on the 19th of each month
+// since KnowledgeHUB launched (19 June 2026), plus Alex's real AI spend over
+// the same window. Fixed subscriptions are only ever billed in whole-month
+// chunks here (no daily proration) since that's how most of these vendors
+// actually charge — so it's "how many 19ths have passed", not day-counting.
+function helpSalaryProductionCostBlock(d, trueCostSinceLaunch, toolsCosts, cycles, fmt) {
+  var aiCostUsd = (trueCostSinceLaunch && trueCostSinceLaunch.available) ? trueCostSinceLaunch.monthToDateCostUsd : d.totalCostUsd;
+  var aiIsVerified = !!(trueCostSinceLaunch && trueCostSinceLaunch.available);
+  var fixedGbpPerMonth = (toolsCosts && !toolsCosts.error) ? toolsCosts.total : null;
+  var fixedUsdTotal = fixedGbpPerMonth !== null ? (fixedGbpPerMonth / USD_TO_GBP) * cycles : null;
+  var grandTotal = aiCostUsd + (fixedUsdTotal || 0);
+  return '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">Production cost since launch (19 June 2026)</h3>'
+    + '<div style="background:#fffaf0;border:1px solid #fcb034;border-radius:8px;padding:16px 18px;margin-bottom:20px;">'
+    + '<div style="display:flex;gap:16px;margin-bottom:10px;">'
+    + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Alex\'s AI spend' + (aiIsVerified ? ' <span style="color:#2f855a;">✓ verified</span>' : ' <span style="color:#9aa5b1;">(estimate)</span>') + '</div><div style="color:var(--brand-navy);font-size:20px;font-weight:700;">' + fmt(aiCostUsd) + '</div></div>'
+    + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Fixed subscriptions (' + cycles + ' month' + (cycles === 1 ? '' : 's') + ' billed)</div><div style="color:var(--brand-navy);font-size:20px;font-weight:700;">' + (fixedUsdTotal !== null ? fmt(fixedUsdTotal) : '—') + '</div></div>'
+    + '<div style="flex:1;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Total production cost</div><div style="color:var(--brand-navy);font-size:20px;font-weight:800;">' + fmt(grandTotal) + '</div></div>'
+    + '</div>'
+    + '<p style="color:#9aa5b1;font-size:11px;margin:0;">Assumes fixed subscriptions (hosting, database, video, etc. — see Alex\'s Tools) renew on the 19th each month at their current rate, and that ' + cycles + ' of those charges have landed since launch. AI spend is ' + (aiIsVerified ? 'the real billed total from Anthropic' : 'estimated, since verified billing isn\'t available') + ' for the same window. GBP figures converted at an approximate rate.</p>'
+    + '</div>';
+}
 function helpSalaryLoad() {
   var body = document.getElementById('help-salary-body');
   body.innerHTML = '<p style="color:#6b7c8f;font-size:13px;">Checking Alex\'s payslip…</p>';
+  var KH_LAUNCH_DATE = Date.UTC(2026, 5, 19); // 19 June 2026 — KnowledgeHUB's first "billing" day
+  function helpSalaryCyclesSinceLaunch() {
+    // Counts how many 19th-of-the-month dates have passed since launch,
+    // inclusive of launch day itself — used to estimate how many months of
+    // fixed subscription cost (hosting, database, video, etc.) have actually
+    // been charged so far, on the assumption those renew on the 19th too.
+    var cycles = 0;
+    var d = new Date(KH_LAUNCH_DATE);
+    var now = new Date();
+    while (d.getTime() <= now.getTime()) {
+      cycles++;
+      d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 19));
+    }
+    return cycles;
+  }
   Promise.all([
     fetch('/api/admin/api-usage-summary').then(function(r){ return r.json(); }),
-    fetch('/api/admin/true-cost-report').then(function(r){ return r.json(); }).catch(function(){ return { available: false }; })
+    fetch('/api/admin/true-cost-report').then(function(r){ return r.json(); }).catch(function(){ return { available: false }; }),
+    fetch('/api/admin/true-cost-report?starting_at=2026-06-19T00:00:00Z').then(function(r){ return r.json(); }).catch(function(){ return { available: false }; }),
+    fetch('/api/admin/tools-costs').then(function(r){ return r.json(); }).catch(function(){ return null; })
   ]).then(function(results) {
-    var d = results[0], trueCost = results[1];
+    var d = results[0], trueCost = results[1], trueCostSinceLaunch = results[2], toolsCosts = results[3];
     if (!d || d.error) { body.innerHTML = '<p style="color:#c00;font-size:13px;">' + ((d && d.error) || "Couldn't load Alex's salary.") + '</p>'; return; }
     var fmt = function(n) { return '$' + (n || 0).toFixed(2); };
     var frozen = helpSalaryFrozenState();
@@ -10577,6 +10616,7 @@ function helpSalaryLoad() {
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Last 30 days</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + fmt(d.last30DaysCostUsd) + '</div></div>'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Tasks completed</div><div style="color:var(--brand-navy);font-size:22px;font-weight:700;">' + (d.totalCalls || 0) + '</div></div>'
       + '</div>'
+      + helpSalaryProductionCostBlock(d, trueCostSinceLaunch, toolsCosts, helpSalaryCyclesSinceLaunch(), fmt)
       + '<h3 style="color:var(--brand-navy);font-size:14px;margin:0 0 8px;">HR record</h3>'
       + '<div style="display:flex;gap:16px;margin-bottom:12px;">'
       + '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:14px 16px;"><div style="color:#6b7c8f;font-size:12px;font-weight:600;">Start date</div><div style="color:var(--brand-navy);font-size:15px;font-weight:700;">19 June 2026</div></div>'
