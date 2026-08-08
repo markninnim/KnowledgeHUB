@@ -4474,6 +4474,14 @@ Consolidating debts will increase the loan to value which can impact future deal
         </div>
         <div id="sv-supervisors-list" style="display:grid;gap:12px;"></div>
       </div>
+      <!-- Non-supervising Directors section -->
+      <div id="sv-directors-wrap" style="display:none;margin-top:28px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#6b7c8f;flex-shrink:0;"></div>
+          <div style="font-size:13px;font-weight:800;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;">Non-supervising Directors</div>
+        </div>
+        <div id="sv-directors-list" style="display:grid;gap:12px;"></div>
+      </div>
       <div id="sv-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">Loading team…</div>
     </div><!-- /sv-cpd-register -->
 
@@ -15602,6 +15610,7 @@ function svSidebarSelect(email, el) {
   document.getElementById('sv-advisers-wrap').style.display = 'none';
   document.getElementById('sv-admin-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
+  document.getElementById('sv-directors-wrap').style.display = 'none';
   var _ncReset = document.getElementById('sv-sb-noncas'); if (_ncReset) _ncReset.style.display = 'none';
   var url = '/api/supervisor/team?as=' + encodeURIComponent(_svViewAsEmail);
   fetch(url).then(function(r){ return r.json(); }).then(function(data) {
@@ -15624,6 +15633,7 @@ function loadSupervisorZone() {
   document.getElementById('sv-advisers-wrap').style.display = 'none';
   document.getElementById('sv-admin-wrap').style.display = 'none';
   document.getElementById('sv-supervisors-wrap').style.display = 'none';
+  document.getElementById('sv-directors-wrap').style.display = 'none';
 
   // Populate supervisor sidebar on first load
   if (!_svListLoaded) {
@@ -15765,10 +15775,30 @@ function renderSvDashboard(data) {
   }
 
   // Classify members
-  var allAdvisers = [], supervisorCards = [], adminStaff = [];
+  var allAdvisers = [], supervisorCards = [], adminStaff = [], directorStaff = [];
+  // Non-supervising Directors — a short, deliberately hardcoded list (like the
+  // pete.burgess view-as exception below) rather than a job-title regex, since
+  // "Director"/"CEO" job titles alone aren't a reliable enough signal and this
+  // group is small and named explicitly by the business.
+  var NON_SUPERVISING_DIRECTOR_EMAILS = ['mark.ninnim@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'aisling.oates@financeplanning.co.uk'];
   members.forEach(function(m) {
     var cpd = cpdByMember[m.email] || {};
     var isAuthorised = m.sellsMortgages || m.sellsProtection;
+    if (NON_SUPERVISING_DIRECTOR_EMAILS.indexOf((m.email || '').toLowerCase()) !== -1) {
+      var dVisible = isAuthorised ? typeConf.filter(function(t) {
+        return (t.key === 'Mortgage' && m.sellsMortgages) ||
+               (t.key === 'Protection' && m.sellsProtection);
+      }) : [];
+      var dWorstPct = 100, dWorstPaceOk = true;
+      dVisible.forEach(function(t) {
+        var pct = targets[t.key] > 0 ? Math.round(((cpd[t.key]||0) / targets[t.key]) * 100) : 0;
+        if (pct < dWorstPct) dWorstPct = pct;
+        var paceOk = targets[t.key] > 0 && (cpd[t.key]||0) >= targets[t.key] * yearFraction;
+        if (!paceOk) dWorstPaceOk = false;
+      });
+      directorStaff.push({ m: m, cpd: cpd, visible: dVisible, worstPct: dWorstPct, worstPaceOk: dWorstPaceOk });
+      return;
+    }
     // Skip pure admins — admin with no product licences (Mortgages, Protection, Investments)
     if (m.isAdmin && !m.sellsMortgages && !m.sellsProtection && !m.sellsInvestments && !m.equityRelease && !m.commercialMortgages && !m.pmi) return;
     // Admin & Paraplanners (Job Title-based, not the site "Is Admin" permission flag) —
@@ -15814,6 +15844,7 @@ function renderSvDashboard(data) {
   allAdvisers.sort(byFirst);
   supervisorCards.sort(byFirst);
   adminStaff.sort(byFirst);
+  directorStaff.sort(byFirst);
 
   // Supervisor sub-totals (needed for sidebar + stats bar)
   var totalOnTrack  = allAdvisers.filter(function(o){ return o.worstPct >= 100; }).length;
@@ -16031,6 +16062,11 @@ function renderSvDashboard(data) {
   if (supervisorCards.length) {
     document.getElementById('sv-supervisors-wrap').style.display = 'block';
     document.getElementById('sv-supervisors-list').innerHTML = supervisorCards.map(renderer).join('');
+  }
+  // Populate Non-supervising Directors
+  if (directorStaff.length) {
+    document.getElementById('sv-directors-wrap').style.display = 'block';
+    document.getElementById('sv-directors-list').innerHTML = directorStaff.map(renderer).join('');
   }
 
   svStartRotator(svComputeRotatorStats(members, cpdByMember));
