@@ -10890,7 +10890,7 @@ function filterUsers() {
   var filtered = (_adminUsers || []).filter(function(u) {
     if (_userRoleFilter === 'supervisor' && !u.isSupervisor) return false;
     if (_userRoleFilter === 'admin' && !u.isAdmin) return false;
-    if (!q) return true;
+    if (!q || q.length < 3) return true; // wait for at least 3 characters before text-matching
     var name = ((u.firstName || '') + ' ' + (u.lastName || '')).toLowerCase();
     var email = (u.email || '').toLowerCase();
     var title = (u.jobTitle || '').toLowerCase();
