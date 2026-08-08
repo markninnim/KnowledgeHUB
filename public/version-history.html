@@ -125,6 +125,24 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.0</span>
+      <span class="version-title">Admin One-to-One Tool, Non-Supervising Directors &amp; My Team Fixes</span>
+      <span class="version-date">8 August 2026</span>
+    </div>
+    <p class="version-summary">Admin &amp; Paraplanner cards in My Team now open a dedicated one-to-one page instead of the broker profile, giving supervisors a place to log notes and action points and to log/approve holiday requests. Also added a "Non-supervising Directors" section to My Team, reassigned Torie Maleganeas as sole supervisor for Matt Stephens's former team, and fixed several My Team display bugs.</p>
+    <ul class="changes">
+      <li>New Admin &amp; Paraplanner one-to-one page: clicking one of these cards now opens notes/action-points and a holiday request/approve workflow instead of the broker profile, since admin staff don't have CPD, leads, or Feefo data. Notes and holiday requests are stored in two new Airtable tables (Admin One-to-One Notes, Holiday Requests) so they persist across redeploys.</li>
+      <li>Holiday requests are logged by a supervisor against a person and then approved or declined from the same page, with an optional annual allowance and a running total of days approved this year.</li>
+      <li>Added a "Non-supervising Directors" section to My Team (Supervise), listing Mark Ninnim, Terry McCutcheon, Aisling Oates, and Matt Stephens &mdash; senior staff who don't have a team to supervise but shouldn't be mixed in with rank-and-file adviser cards.</li>
+      <li>Reassigned Torie Maleganeas as the sole supervisor for Matt Stephens's former team of 15 advisers; Matt moved into Non-supervising Directors but keeps Supervise access.</li>
+      <li>Fixed Torie Maleganeas being misrouted into the "Compliance Support" sidebar group instead of "Supervisors" &mdash; her job title matched a compliance-detection rule meant for a different group of staff.</li>
+      <li>Fixed inconsistent card styling in My Team: Non-supervising Directors cards now match Supervisor cards' background colour, all cards are a consistent height regardless of content, and adviser names are a consistent navy colour across every card and list-view row (previously grey on supervisor cards).</li>
+      <li>User Management search now only starts filtering once 3 or more characters are typed, instead of filtering on every keystroke.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v2.9</span>
       <span class="version-title">User Engagement Panel Replaces Feature Rollout Controls</span>
       <span class="version-date">8 August 2026</span>

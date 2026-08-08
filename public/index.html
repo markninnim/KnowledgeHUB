@@ -4075,6 +4075,74 @@ Consolidating debts will increase the loan to value which can impact future deal
     </div><!-- /sv-cas-path-panel -->
 
     <!-- Broker Profile Panel (shown when a broker is selected) -->
+    <!-- Admin / Paraplanner one-to-one page: notes + action points + holiday requests.
+         Distinct from the broker profile above — admin staff don't have CPD/leads/Feefo data. -->
+    <div id="sv-admin-profile" style="display:none;max-width:900px;margin:0 auto;padding:32px 8px 0;">
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;">
+        <div style="flex:1;min-width:0;">
+          <div id="ap-name" style="font-size:20px;font-weight:800;color:var(--brand-navy);"></div>
+          <div id="ap-meta" style="font-size:13px;color:#6b7c8f;margin-top:2px;"></div>
+        </div>
+        <button onclick="closeAdminProfile()" style="display:flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #d1d5db;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;font-family:inherit;flex-shrink:0;">← Back</button>
+      </div>
+
+      <div id="ap-loading" style="text-align:center;padding:60px 0;color:#6b7c8f;font-size:13px;">
+        <div class="kh-spinner" style="margin-bottom:10px;"></div>
+        <div>Loading…</div>
+      </div>
+
+      <div id="ap-content" style="display:none;">
+
+        <!-- One-to-one notes & actions -->
+        <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">One-to-One Notes &amp; Actions</div>
+
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;">
+            <textarea id="ap-new-notes" placeholder="Notes from this one-to-one…" style="width:100%;min-height:70px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>
+            <textarea id="ap-new-actions" placeholder="Action points (one per line)…" style="width:100%;min-height:50px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;box-sizing:border-box;resize:vertical;margin-top:8px;"></textarea>
+            <button onclick="apAddNote()" style="margin-top:10px;background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save note</button>
+          </div>
+
+          <div id="ap-notes-list"></div>
+        </div>
+
+        <!-- Holiday requests -->
+        <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">Holiday Requests</div>
+            <div id="ap-holiday-summary" style="font-size:12px;color:#6b7c8f;"></div>
+          </div>
+
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Start date</div>
+              <input type="date" id="ap-hol-start" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">End date</div>
+              <input type="date" id="ap-hol-end" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
+              <input type="number" id="ap-hol-days" min="0.5" step="0.5" style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Annual allowance</div>
+              <input type="number" id="ap-hol-allowance" min="0" step="0.5" placeholder="days/yr" style="width:90px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Notes</div>
+              <input type="text" id="ap-hol-notes" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            </div>
+            <button onclick="apSubmitHoliday()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Log request</button>
+          </div>
+
+          <div id="ap-holiday-list"></div>
+        </div>
+
+      </div>
+    </div>
+
     <div id="sv-broker-profile" style="display:none;max-width:1200px;margin:0 auto;padding:32px 8px 0;">
       <!-- Back + header -->
       <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;">
@@ -11848,6 +11916,7 @@ function openCasPath(email, name) {
   document.getElementById('sv-cas-path-panel').style.display = 'block';
   document.getElementById('sv-cpd-register').style.display = 'none';
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
   document.getElementById('sv-cd-feedback-panel').style.display = 'none';
@@ -12198,6 +12267,7 @@ var _adFlags = [];
 function bpOpenPowerBi() {
   if (!_bpCurrentEmail) return;
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'block';
   document.getElementById('ad-name').textContent = _bpCurrentName || '';
   document.getElementById('ad-meta').textContent = '';
@@ -14639,6 +14709,7 @@ function oppShowPage(page, el) {
 
 function closeBrokerProfile() {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-compliance-log-panel').style.display = 'none';
@@ -14649,6 +14720,174 @@ function closeBrokerProfile() {
   document.getElementById('sv-cpd-register').style.display = 'block';
 }
 
+// ── Admin / Paraplanner one-to-one (notes/actions + holiday requests) ──
+var _apCurrentEmail = null, _apCurrentName = null;
+
+function openAdminProfile(email, name) {
+  document.getElementById('sv-cpd-register').style.display = 'none';
+  document.getElementById('sv-adviser-dashboard').style.display = 'none';
+  document.getElementById('sv-cas-path-panel').style.display = 'none';
+  document.getElementById('sv-compliance-log-panel').style.display = 'none';
+  document.getElementById('sv-cd-feedback-panel').style.display = 'none';
+  document.getElementById('sv-fp-panel').style.display = 'none';
+  document.getElementById('sv-introducers-panel').style.display = 'none';
+  document.getElementById('sv-obi-panel').style.display = 'none';
+  document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
+
+  document.getElementById('sv-admin-profile').style.display = 'block';
+  document.getElementById('ap-name').textContent = name || email;
+  document.getElementById('ap-meta').textContent = email;
+  document.getElementById('ap-loading').style.display = 'block';
+  document.getElementById('ap-content').style.display = 'none';
+  _apCurrentEmail = email;
+  _apCurrentName = name;
+  apLoadData();
+}
+
+function closeAdminProfile() {
+  document.getElementById('sv-admin-profile').style.display = 'none';
+  document.getElementById('sv-cpd-register').style.display = 'block';
+}
+
+function apLoadData() {
+  if (!_apCurrentEmail) return;
+  fetch('/api/supervisor/admin-profile?email=' + encodeURIComponent(_apCurrentEmail))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('ap-loading').style.display = 'none';
+      document.getElementById('ap-content').style.display = 'block';
+
+      var u = d.user || {};
+      document.getElementById('ap-name').textContent = u.fullName || _apCurrentName || _apCurrentEmail;
+      var metaParts = [u.jobTitle, u.email, u.mobile].filter(Boolean).join(' · ');
+      document.getElementById('ap-meta').textContent = metaParts;
+
+      // Notes list
+      var notesHtml = (d.notes || []).map(function(n) {
+        var apHtml = (n.actionPoints || []).map(function(ap, idx) {
+          return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:' + (ap.done ? '#9ca3af' : 'var(--brand-navy)') + ';text-decoration:' + (ap.done ? 'line-through' : 'none') + ';margin-top:6px;cursor:pointer;">' +
+            '<input type="checkbox" ' + (ap.done ? 'checked' : '') + ' onchange="apToggleAction(\'' + n.id + '\',' + idx + ',this.checked)">' +
+            escHtml(ap.text) +
+          '</label>';
+        }).join('');
+        var dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        return '<div style="border-top:1px solid #f0f2f5;padding:14px 0;">' +
+          '<div style="font-size:11px;color:#6b7c8f;margin-bottom:6px;">' + escHtml(dateStr) + (n.createdByName ? ' · ' + escHtml(n.createdByName) : '') + '</div>' +
+          (n.notes ? '<div style="font-size:13px;color:var(--brand-navy);white-space:pre-wrap;">' + escHtml(n.notes) + '</div>' : '') +
+          apHtml +
+        '</div>';
+      }).join('');
+      document.getElementById('ap-notes-list').innerHTML = notesHtml || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No notes yet.</div>';
+
+      // Holiday summary
+      var hs = d.holidaySummary || {};
+      var summaryParts = [];
+      if (hs.allowanceDaysPerYear != null) summaryParts.push(hs.allowanceDaysPerYear + ' days/yr allowance');
+      summaryParts.push((hs.approvedThisYear || 0) + ' days approved this year');
+      document.getElementById('ap-holiday-summary').textContent = summaryParts.join(' · ');
+
+      // Holiday list
+      var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
+      var statusBg = { Pending: '#fef3c7', Approved: '#dcfce7', Rejected: '#fee2e2' };
+      var holHtml = (d.holidays || []).map(function(h) {
+        var actions = h.status === 'Pending' ?
+          '<button onclick="apDecideHoliday(\'' + h.id + '\',\'Approved\')" style="background:#15803d;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-right:6px;">Approve</button>' +
+          '<button onclick="apDecideHoliday(\'' + h.id + '\',\'Rejected\')" style="background:#b91c1c;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Decline</button>' : '';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f5;padding:12px 0;">' +
+          '<div>' +
+            '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(h.startDate) + ' → ' + escHtml(h.endDate) + ' (' + h.days + ' day' + (h.days == 1 ? '' : 's') + ')</div>' +
+            (h.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(h.notes) + '</div>' : '') +
+            (h.decisionNotes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">Decision: ' + escHtml(h.decisionNotes) + '</div>' : '') +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
+            '<span style="background:' + (statusBg[h.status] || '#f0f2f5') + ';color:' + (statusColor[h.status] || '#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status) + '</span>' +
+            actions +
+          '</div>' +
+        '</div>';
+      }).join('');
+      document.getElementById('ap-holiday-list').innerHTML = holHtml || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No holiday requests logged.</div>';
+    })
+    .catch(function(err) {
+      document.getElementById('ap-loading').textContent = 'Failed to load.';
+      console.error('apLoadData error:', err);
+    });
+}
+
+function apAddNote() {
+  if (!_apCurrentEmail) return;
+  var notes = document.getElementById('ap-new-notes').value.trim();
+  var actionsRaw = document.getElementById('ap-new-actions').value.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  if (!notes && !actionsRaw.length) return;
+  var actionPoints = actionsRaw.map(function(t) { return { text: t, done: false }; });
+  fetch('/api/supervisor/admin-notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ staffEmail: _apCurrentEmail, notes: notes, actionPoints: actionPoints })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      document.getElementById('ap-new-notes').value = '';
+      document.getElementById('ap-new-actions').value = '';
+      apLoadData();
+    })
+    .catch(function(err) { console.error('apAddNote error:', err); alert('Could not save note.'); });
+}
+
+function apToggleAction(noteId, idx, checked) {
+  // Find current note's action points from the DOM data via a fresh fetch to stay simple/consistent
+  fetch('/api/supervisor/admin-profile?email=' + encodeURIComponent(_apCurrentEmail))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var note = (d.notes || []).find(function(n) { return n.id === noteId; });
+      if (!note) return;
+      var actionPoints = note.actionPoints || [];
+      if (actionPoints[idx]) actionPoints[idx].done = checked;
+      return fetch('/api/supervisor/admin-notes/' + noteId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionPoints: actionPoints })
+      });
+    })
+    .then(function() { apLoadData(); })
+    .catch(function(err) { console.error('apToggleAction error:', err); });
+}
+
+function apSubmitHoliday() {
+  if (!_apCurrentEmail) return;
+  var startDate = document.getElementById('ap-hol-start').value;
+  var endDate = document.getElementById('ap-hol-end').value;
+  var days = document.getElementById('ap-hol-days').value;
+  var allowance = document.getElementById('ap-hol-allowance').value;
+  var notes = document.getElementById('ap-hol-notes').value.trim();
+  if (!startDate || !endDate) { alert('Please set a start and end date.'); return; }
+  fetch('/api/supervisor/holiday-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ staffEmail: _apCurrentEmail, staffName: _apCurrentName, startDate: startDate, endDate: endDate, days: days, notes: notes, allowanceDaysPerYear: allowance || null })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      document.getElementById('ap-hol-start').value = '';
+      document.getElementById('ap-hol-end').value = '';
+      document.getElementById('ap-hol-days').value = '';
+      document.getElementById('ap-hol-notes').value = '';
+      apLoadData();
+    })
+    .catch(function(err) { console.error('apSubmitHoliday error:', err); alert('Could not log request.'); });
+}
+
+function apDecideHoliday(id, status) {
+  fetch('/api/supervisor/holiday-request/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() { apLoadData(); })
+    .catch(function(err) { console.error('apDecideHoliday error:', err); });
+}
+
 // ── Compliance Log (Supervise) ──────────────────────────────────
 var _complogData = [];
 var _complogLoaded = false;
@@ -14656,6 +14895,7 @@ var CR_TYPE_LIST = ['Breach', 'Complaint', 'Conflict of Interest', 'Gifts & Hosp
 
 function showComplianceLog(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -14672,6 +14912,7 @@ function showComplianceLog(el) {
 
 function showSvCdFeedback(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -14688,6 +14929,7 @@ function showSvCdFeedback(el) {
 
 function showSvFp(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -14704,6 +14946,7 @@ function showSvFp(el) {
 
 function showSvIntroducers(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -14720,6 +14963,7 @@ function showSvIntroducers(el) {
 
 function showSvObi(el) {
   document.getElementById('sv-broker-profile').style.display = 'none';
+  document.getElementById('sv-admin-profile').style.display = 'none';
   document.getElementById('sv-adviser-dashboard').style.display = 'none';
   document.getElementById('sv-cas-path-panel').style.display = 'none';
   document.getElementById('sv-cpd-register').style.display = 'none';
@@ -15811,7 +16055,7 @@ function renderSvDashboard(data) {
     // Admin & Paraplanners (Job Title-based, not the site "Is Admin" permission flag) —
     // shown in their own section under the supervisor's advisers, not mixed in with them.
     if (!isAuthorised && !m.isSupervisor && /^(admin|director|paraplanner|ceo)/i.test(m.jobTitle || '')) {
-      adminStaff.push({ m: m, cpd: cpd, visible: [], worstPct: 0 });
+      adminStaff.push({ m: m, cpd: cpd, visible: [], worstPct: 0, isAdminStaff: true });
       return;
     }
     if (m.isSupervisor && _svViewAsEmail !== 'pete.burgess@financeplanning.co.uk') {
@@ -15946,13 +16190,14 @@ function renderSvDashboard(data) {
     var supLabel = m.isSupervisor ? '<span style="background:#6b7c8f;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Supervisor</span>' : '';
     var nonCasDot = (!m.isSupervisor && !m.cas) ? '<span style="display:inline-flex;align-items:center;gap:5px;margin-left:6px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#b91c1c;white-space:nowrap;">' + fmtTenureShort(m.startDate) + '</span></span>' : '';
     var cardId = 'sv-card-' + m.email.replace(/[^a-z0-9]/gi, '_');
-    var cardClick = !m.isSupervisor ? ' onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\')"' : '';
+    var profileFn = obj.isAdminStaff ? 'openAdminProfile' : 'openBrokerProfile';
+    var cardClick = !m.isSupervisor ? ' onclick="' + profileFn + '(\'' + safeEmail + '\',\'' + safeName + '\')"' : '';
     return '<div id="' + cardId + '"' + cardClick + ' class="sv-adv-card" style="background:' + cardBg + ';border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);min-height:154px;box-sizing:border-box;">' +
       '<div style="padding:16px 20px;">' +
         '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:' + (barsHtml ? '12px' : '0') + ';">' +
           '<div>' +
             '<div style="font-size:14px;font-weight:700;color:var(--brand-navy);display:flex;align-items:center;">' +
-              (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:var(--brand-navy);text-decoration:none;border-bottom:1px solid #d1d5db;" onmouseover="this.style.borderBottomColor=\'var(--brand-navy)\'" onmouseout="this.style.borderBottomColor=\'#d1d5db\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+              (!m.isSupervisor ? '<a href="#" onclick="' + profileFn + '(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:var(--brand-navy);text-decoration:none;border-bottom:1px solid #d1d5db;" onmouseover="this.style.borderBottomColor=\'var(--brand-navy)\'" onmouseout="this.style.borderBottomColor=\'#d1d5db\'">' + escHtml(name) + '</a>' : escHtml(name)) +
               _svBirthdayCake(m) + supLabel + nonCasDot +
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
@@ -15983,10 +16228,11 @@ function renderSvDashboard(data) {
     var totalPct    = totalTarget > 0 ? Math.min(100, Math.round((totalYtd/totalTarget)*100)) : 0;
     var totalPaceOk = totalTarget > 0 && totalYtd >= totalTarget * yearFraction;
     var drillId = 'sv-drill-list-' + m.email.replace(/[^a-z0-9]/gi,'_');
+    var profileFnList = obj.isAdminStaff ? 'openAdminProfile' : 'openBrokerProfile';
     return '<div style="background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:14px;">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="font-size:13px;font-weight:700;color:var(--brand-navy);display:flex;align-items:center;gap:5px;">' +
-          (!m.isSupervisor ? '<a href="#" onclick="openBrokerProfile(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:var(--brand-navy);text-decoration:none;border-bottom:1px solid #d1d5db;" onmouseover="this.style.borderBottomColor=\'var(--brand-navy)\'" onmouseout="this.style.borderBottomColor=\'#d1d5db\'">' + escHtml(name) + '</a>' : escHtml(name)) +
+          (!m.isSupervisor ? '<a href="#" onclick="' + profileFnList + '(\'' + safeEmail + '\',\'' + safeName + '\');return false;" style="color:var(--brand-navy);text-decoration:none;border-bottom:1px solid #d1d5db;" onmouseover="this.style.borderBottomColor=\'var(--brand-navy)\'" onmouseout="this.style.borderBottomColor=\'#d1d5db\'">' + escHtml(name) + '</a>' : escHtml(name)) +
           _svBirthdayCake(m) +
           (!m.isSupervisor && !m.cas ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#b91c1c;white-space:nowrap;">' + fmtTenureShort(m.startDate) + '</span></span>' : '') +
         '</div>' +

@@ -566,6 +566,44 @@ function touchActiveUser(req) {
   }
 }
 
+// ── Admin one-to-one tool (notes/actions + holiday requests) ───
+// For admin/paraplanner staff cards in the Supervisor Zone, which get a
+// dedicated one-to-one page instead of the broker profile (they don't sell,
+// so CPD/leads/Feefo etc. don't apply to them).
+const ADMIN_NOTES_TABLE = 'tblEXIECmFQdVljNW';
+const AN_STAFF_EMAIL  = 'fldQT9SKSUteSfhgR';
+const AN_NOTES        = 'fldq1vfQkQbrzjvZM';
+const AN_ACTION_POINTS= 'fldXjRB2NAvPqljYd';
+const AN_CREATED_BY   = 'fld9zoJoSvCHp48Fb';
+const AN_CREATED_BY_NAME = 'fldWZcGLXiXBYBlRo';
+const AN_CREATED_AT   = 'fldCIJx7vD4ai9xVV';
+
+const HOLIDAY_TABLE = 'tblZUpl8SC5056V8g';
+const HR_STAFF_EMAIL = 'fld1MH7ddC5YndxUT';
+const HR_STAFF_NAME  = 'fldns87uPKP9lDFGM';
+const HR_START_DATE  = 'fldPJkETA0WocMEJD';
+const HR_END_DATE    = 'fldSk6M3i1qVU6es8';
+const HR_DAYS        = 'fldPmxpJTCoAL4rgg';
+const HR_NOTES       = 'fldoxuIz6BFNFu7X9';
+const HR_STATUS      = 'fldfmBGgmeFr2kNh7';
+const HR_REQUESTED_BY= 'flduB9NEGp6FgHcOk';
+const HR_REQUESTED_AT= 'fldSWp8N8dtHt1enk';
+const HR_DECIDED_BY  = 'fld6AbLZXEgD3ntgc';
+const HR_DECIDED_AT  = 'fldN5Gk6AWfpyn6RS';
+const HR_DECISION_NOTES = 'fldTtAOIAMMttvlcx';
+const HR_ALLOWANCE   = 'fld4ZkxyQ9j8Dg3XT';
+
+async function atGenericFetch(tableId, endpoint = '', options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${tableId}${endpoint}`;
+  const r = await fetch(url, {
+    ...options,
+    headers: { Authorization: `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error?.message || `Airtable ${r.status}`);
+  return body;
+}
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];
@@ -8137,6 +8175,173 @@ app.get('/api/supervisor/broker-profile', requireAuth, async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('broker-profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin one-to-one profile (notes/actions + holiday requests) ─
+// Parallel to broker-profile above, but for admin/paraplanner staff who
+// don't have CPD/leads/Feefo data — just supervisor notes, actions, and
+// a holiday request/approval log.
+app.get('/api/supervisor/admin-profile', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const staffEmail = (req.query.email || '').trim().toLowerCase();
+  if (!staffEmail) return res.status(400).json({ error: 'email required' });
+
+  try {
+    const userFormula = encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.replace(/"/g, '\\"')}"`);
+    const uData = await atFetch(`?filterByFormula=${userFormula}&returnFieldsByFieldId=true`);
+    const uRec = (uData.records || [])[0];
+    const uf = uRec ? uRec.fields : {};
+    const fullName = [uf[F_FIRST], uf[F_LAST]].filter(Boolean).join(' ') || staffEmail;
+
+    const noteFormula = encodeURIComponent(`LOWER({${AN_STAFF_EMAIL}}) = "${staffEmail.replace(/"/g, '\\"')}"`);
+    const nData = await atGenericFetch(ADMIN_NOTES_TABLE, `?filterByFormula=${noteFormula}&returnFieldsByFieldId=true&sort[0][field]=${AN_CREATED_AT}&sort[0][direction]=desc`);
+    const notes = (nData.records || []).map(r => ({
+      id: r.id,
+      notes: r.fields[AN_NOTES] || '',
+      actionPoints: (() => { try { return JSON.parse(r.fields[AN_ACTION_POINTS] || '[]'); } catch (_) { return []; } })(),
+      createdByName: r.fields[AN_CREATED_BY_NAME] || r.fields[AN_CREATED_BY] || '',
+      createdAt: r.fields[AN_CREATED_AT] || null
+    }));
+
+    const hFormula = encodeURIComponent(`LOWER({${HR_STAFF_EMAIL}}) = "${staffEmail.replace(/"/g, '\\"')}"`);
+    const hData = await atGenericFetch(HOLIDAY_TABLE, `?filterByFormula=${hFormula}&returnFieldsByFieldId=true&sort[0][field]=${HR_START_DATE}&sort[0][direction]=desc`);
+    const holidays = (hData.records || []).map(r => ({
+      id: r.id,
+      startDate: r.fields[HR_START_DATE] || '',
+      endDate: r.fields[HR_END_DATE] || '',
+      days: r.fields[HR_DAYS] || 0,
+      notes: r.fields[HR_NOTES] || '',
+      status: r.fields[HR_STATUS] || 'Pending',
+      requestedAt: r.fields[HR_REQUESTED_AT] || null,
+      decidedAt: r.fields[HR_DECIDED_AT] || null,
+      decisionNotes: r.fields[HR_DECISION_NOTES] || '',
+      allowanceDaysPerYear: r.fields[HR_ALLOWANCE] || null
+    }));
+    const currentAllowance = holidays.length ? (holidays.find(h => h.allowanceDaysPerYear != null) || {}).allowanceDaysPerYear : null;
+    const approvedThisYear = holidays.filter(h => h.status === 'Approved' && (h.startDate || '').slice(0, 4) === String(new Date().getFullYear())).reduce((s, h) => s + (h.days || 0), 0);
+
+    res.json({
+      user: { email: staffEmail, firstName: uf[F_FIRST] || '', lastName: uf[F_LAST] || '', fullName, jobTitle: uf[F_TITLE] || '', mobile: uf[F_MOBILE] || '' },
+      notes,
+      holidays,
+      holidaySummary: { allowanceDaysPerYear: currentAllowance, approvedThisYear }
+    });
+  } catch (err) {
+    console.error('admin-profile error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/supervisor/admin-notes', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const staffEmail = (req.body.staffEmail || '').trim().toLowerCase();
+  const notes = (req.body.notes || '').trim();
+  const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : [];
+  if (!staffEmail || (!notes && !actionPoints.length)) return res.status(400).json({ error: 'staffEmail and notes/actionPoints required' });
+
+  try {
+    const createdByName = ((caller.firstName || '') + ' ' + (caller.lastName || '')).trim() || caller.email;
+    const body = await atGenericFetch(ADMIN_NOTES_TABLE, '', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: {
+        [AN_STAFF_EMAIL]: staffEmail,
+        [AN_NOTES]: notes,
+        [AN_ACTION_POINTS]: JSON.stringify(actionPoints),
+        [AN_CREATED_BY]: caller.email,
+        [AN_CREATED_BY_NAME]: createdByName,
+        [AN_CREATED_AT]: new Date().toISOString()
+      } }] })
+    });
+    res.json({ ok: true, id: body.records[0].id });
+  } catch (err) {
+    console.error('admin-notes create error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/supervisor/admin-notes/:id', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const actionPoints = Array.isArray(req.body.actionPoints) ? req.body.actionPoints : null;
+  if (!actionPoints) return res.status(400).json({ error: 'actionPoints required' });
+
+  try {
+    await atGenericFetch(ADMIN_NOTES_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [AN_ACTION_POINTS]: JSON.stringify(actionPoints) } }] })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('admin-notes update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/supervisor/holiday-request', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const staffEmail = (req.body.staffEmail || '').trim().toLowerCase();
+  const staffName  = (req.body.staffName || '').trim();
+  const startDate  = (req.body.startDate || '').trim();
+  const endDate    = (req.body.endDate || '').trim();
+  const days       = Number(req.body.days) || 0;
+  const notes      = (req.body.notes || '').trim();
+  const allowance  = req.body.allowanceDaysPerYear != null && req.body.allowanceDaysPerYear !== '' ? Number(req.body.allowanceDaysPerYear) : null;
+  if (!staffEmail || !startDate || !endDate) return res.status(400).json({ error: 'staffEmail, startDate, endDate required' });
+
+  try {
+    const fields = {
+      [HR_STAFF_EMAIL]: staffEmail,
+      [HR_STAFF_NAME]: staffName,
+      [HR_START_DATE]: startDate,
+      [HR_END_DATE]: endDate,
+      [HR_DAYS]: days,
+      [HR_NOTES]: notes,
+      [HR_STATUS]: 'Pending',
+      [HR_REQUESTED_BY]: caller.email,
+      [HR_REQUESTED_AT]: new Date().toISOString()
+    };
+    if (allowance != null) fields[HR_ALLOWANCE] = allowance;
+    const body = await atGenericFetch(HOLIDAY_TABLE, '', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields }] })
+    });
+    res.json({ ok: true, id: body.records[0].id });
+  } catch (err) {
+    console.error('holiday-request create error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const status = req.body.status;
+  if (!['Approved', 'Rejected', 'Pending'].includes(status)) return res.status(400).json({ error: 'invalid status' });
+  const decisionNotes = (req.body.decisionNotes || '').trim();
+
+  try {
+    await atGenericFetch(HOLIDAY_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: {
+        [HR_STATUS]: status,
+        [HR_DECIDED_BY]: caller.email,
+        [HR_DECIDED_AT]: new Date().toISOString(),
+        [HR_DECISION_NOTES]: decisionNotes
+      } }] })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('holiday-request update error:', err);
     res.status(500).json({ error: err.message });
   }
 });
