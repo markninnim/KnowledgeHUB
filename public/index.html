@@ -10538,14 +10538,15 @@ function helpSalaryLoad() {
       var label = HELP_SALARY_TASK_LABELS[f.feature] || f.feature;
       var isFrozen = !!frozen[f.feature];
       var shown = isFrozen ? (frozenValues[f.feature] || 0) : f.cost;
+      var isLive = !isFrozen;
       return '<tr><td style="padding:8px 0;color:var(--brand-navy);font-size:13px;">' + label
         + (isFrozen ? ' <span style="color:#9aa5b1;font-size:11px;" title="Frozen — not updating live">❄</span>' : '') + '</td>'
         + '<td style="padding:8px 0;color:#6b7c8f;font-size:13px;text-align:right;">' + fmt(shown) + '</td>'
         + '<td style="padding:8px 0;text-align:right;width:60px;">'
-        + '<label style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;vertical-align:middle;" title="' + (isFrozen ? 'Unfreeze — resume live updates' : 'Freeze at current value') + '">'
-        + '<input type="checkbox" ' + (isFrozen ? 'checked' : '') + ' onchange="helpSalaryToggleFreeze(\'' + f.feature.replace(/'/g, "\\'") + '\', ' + f.cost + ')" style="opacity:0;width:0;height:0;position:absolute;">'
-        + '<span style="position:absolute;inset:0;background:' + (isFrozen ? 'var(--brand-navy)' : '#d1d5db') + ';border-radius:20px;transition:background .15s;"></span>'
-        + '<span style="position:absolute;top:2px;left:' + (isFrozen ? '18px' : '2px') + ';width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2);"></span>'
+        + '<label style="position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;vertical-align:middle;" title="' + (isLive ? 'Live — click to freeze at current value' : 'Frozen — click to resume live updates') + '">'
+        + '<input type="checkbox" ' + (isLive ? 'checked' : '') + ' onchange="helpSalaryToggleFreeze(\'' + f.feature.replace(/'/g, "\\'") + '\', ' + f.cost + ')" style="opacity:0;width:0;height:0;position:absolute;">'
+        + '<span style="position:absolute;inset:0;background:' + (isLive ? 'var(--brand-navy)' : '#d1d5db') + ';border-radius:20px;transition:background .15s;"></span>'
+        + '<span style="position:absolute;top:2px;left:' + (isLive ? '18px' : '2px') + ';width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2);"></span>'
         + '</label></td></tr>';
     }).join('') || '<tr><td colspan="3" style="padding:8px 0;color:#6b7c8f;font-size:13px;">Alex hasn\'t clocked in yet — no tasks logged.</td></tr>';
     var dayRows = (d.byDay || []).slice(-14).reverse().map(function(dd) {
