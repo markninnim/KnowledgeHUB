@@ -472,6 +472,55 @@ function getAssetDate(key) {
   return _assetDates[key];
 }
 
+// ── Alex's Tools (About Alex™ modal) — the external accounts/services
+// KnowledgeHUB itself runs on, shown to admins alongside Alex's own AI
+// cost so the whole running cost of the site is visible in one place.
+// The tool list (name/description) is fixed here in code since it rarely
+// changes; the monthly cost figures are editable by an admin and persisted
+// to tools-costs.json — like the other small local JSON stores in this
+// project (marketing-users.json, extra-products.json, asset-dates.json),
+// note this file lives on Railway's filesystem and is reset by a fresh
+// deploy, so after editing costs it's worth committing tools-costs.json
+// to the repo if you want the figures to survive a redeploy.
+const TOOLS_LIST = [
+  { key: 'airtable',   name: 'Airtable — KnowledgeHUB Workspace', description: 'Database behind almost every page: users, CPD, compliance, news, Feefo, and more.' },
+  { key: 'github',     name: 'GitHub',                            description: 'Stores the KnowledgeHUB codebase and triggers each deploy to Railway.' },
+  { key: 'railway',    name: 'Railway',                           description: 'Hosts the live KnowledgeHUB server and website.' },
+  { key: 'vimeo',      name: 'Vimeo',                              description: 'Hosts the Learning tab training videos.' },
+  { key: 'feefo',      name: 'Feefo',                              description: 'Supplies the customer review data shown in the Feefo league tables.' },
+  { key: 'claude',     name: 'Claude (Anthropic)',                description: "Powers Alex™ — chat, summaries, and document checks. Metered usage, tracked separately on Alex's Salary tab." },
+  { key: 'openai',     name: 'OpenAI',                            description: 'Whisper transcribes recorded 1:1 meetings before Claude summarises them.' },
+  { key: 'campaignmonitor', name: 'Campaign Monitor',             description: 'Sends password-reset and news bulletin emails.' },
+  { key: 'zoom',       name: 'Zoom',                               description: 'Hosts the live weekly training session linked from the Learning tab.' },
+  { key: 'domain',     name: 'Domain / DNS',                      description: 'Registrar hosting knowledgehub.website and dam.simflex.ai.' }
+];
+const TOOLS_COSTS_PATH = path.join(__dirname, 'tools-costs.json');
+let _toolsCosts = {};
+try { _toolsCosts = JSON.parse(fs.readFileSync(TOOLS_COSTS_PATH, 'utf8')); } catch(_) {}
+function saveToolsCosts() {
+  try { fs.writeFileSync(TOOLS_COSTS_PATH, JSON.stringify(_toolsCosts, null, 2)); } catch(_) {}
+}
+
+app.get('/api/admin/tools-costs', requireAdmin, (req, res) => {
+  const tools = TOOLS_LIST.map(t => ({ ...t, monthlyCost: _toolsCosts[t.key] || 0 }));
+  const total = tools.reduce((sum, t) => sum + t.monthlyCost, 0);
+  res.json({ tools, total: Math.round(total * 100) / 100 });
+});
+
+app.post('/api/admin/tools-costs', requireAdmin, (req, res) => {
+  const { costs } = req.body;
+  if (!costs || typeof costs !== 'object') return res.status(400).json({ error: 'Expected { costs: { key: number } }' });
+  TOOLS_LIST.forEach(t => {
+    if (costs[t.key] !== undefined) {
+      const n = parseFloat(costs[t.key]);
+      _toolsCosts[t.key] = isNaN(n) ? 0 : n;
+    }
+  });
+  saveToolsCosts();
+  auditLog('tools_costs_updated', { costs: _toolsCosts }, req);
+  res.json({ ok: true });
+});
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];
