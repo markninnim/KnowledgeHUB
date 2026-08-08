@@ -4116,15 +4116,15 @@ Consolidating debts will increase the loan to value which can impact future deal
           <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
             <div>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Start date</div>
-              <input type="date" id="ap-hol-start" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <input type="date" id="ap-hol-start" onchange="apCalcHolidayDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
             </div>
             <div>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">End date</div>
-              <input type="date" id="ap-hol-end" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <input type="date" id="ap-hol-end" onchange="apCalcHolidayDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
             </div>
             <div>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
-              <input type="number" id="ap-hol-days" min="0.5" step="0.5" style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+              <input type="number" id="ap-hol-days" readonly title="Calculated automatically from start/end date" style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f0f2f5;color:#6b7c8f;">
             </div>
             <div>
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Annual allowance</div>
@@ -14780,11 +14780,21 @@ function apLoadData() {
       }).join('');
       document.getElementById('ap-notes-list').innerHTML = notesHtml || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No notes yet.</div>';
 
-      // Holiday summary
+      // Holiday summary — taken (past, approved) vs booked (future, approved) this year
       var hs = d.holidaySummary || {};
+      var todayIso = new Date().toISOString().slice(0, 10);
+      var takenDays = 0, bookedDays = 0;
+      (d.holidays || []).forEach(function(h) {
+        if (h.status !== 'Approved') return;
+        if ((h.startDate || '').slice(0, 4) !== String(new Date().getFullYear())) return;
+        if (h.startDate < todayIso) takenDays += (h.days || 0); else bookedDays += (h.days || 0);
+      });
       var summaryParts = [];
       if (hs.allowanceDaysPerYear != null) summaryParts.push(hs.allowanceDaysPerYear + ' days/yr allowance');
-      summaryParts.push((hs.approvedThisYear || 0) + ' days approved this year');
+      summaryParts.push(takenDays + ' taken');
+      summaryParts.push(bookedDays + ' booked');
+      var remaining = hs.allowanceDaysPerYear != null ? (hs.allowanceDaysPerYear - takenDays - bookedDays) : null;
+      if (remaining != null) summaryParts.push(remaining + ' remaining');
       document.getElementById('ap-holiday-summary').textContent = summaryParts.join(' · ');
 
       // Holiday list
@@ -14886,6 +14896,46 @@ function apDecideHoliday(id, status) {
     .then(function(r) { return r.json(); })
     .then(function() { apLoadData(); })
     .catch(function(err) { console.error('apDecideHoliday error:', err); });
+}
+
+// Small "on leave" / "pending request" badge shown on each Admin & Paraplanner
+// card in My Team, so a supervisor can see absence status without opening
+// each person's one-to-one page.
+function svLoadHolidayBadges(adminStaffList) {
+  var emails = adminStaffList.map(function(o) { return o.m.email; }).filter(Boolean);
+  if (!emails.length) return;
+  fetch('/api/supervisor/holiday-summary-bulk?emails=' + encodeURIComponent(emails.join(',')))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var today = new Date().toISOString().slice(0, 10);
+      emails.forEach(function(email) {
+        var d = data[email];
+        if (!d) return;
+        var id = 'sv-hol-badge-' + email.replace(/[^a-z0-9]/gi, '_');
+        var els = document.querySelectorAll('[id="' + id + '"]');
+        var html = '';
+        if (d.nextApproved && d.nextApproved.startDate <= today && d.nextApproved.endDate >= today) {
+          html = '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">On leave until ' + escHtml(d.nextApproved.endDate) + '</span>';
+        } else if (d.nextApproved) {
+          html = '<span style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">Booked from ' + escHtml(d.nextApproved.startDate) + '</span>';
+        }
+        if (d.pendingCount) {
+          html += (html ? ' ' : '') + '<span style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">' + d.pendingCount + ' pending</span>';
+        }
+        els.forEach(function(el) { el.innerHTML = html; });
+      });
+    })
+    .catch(function(err) { console.error('svLoadHolidayBadges error:', err); });
+}
+
+function apCalcHolidayDays() {
+  var startEl = document.getElementById('ap-hol-start');
+  var endEl = document.getElementById('ap-hol-end');
+  var daysEl = document.getElementById('ap-hol-days');
+  if (!startEl.value || !endEl.value) { daysEl.value = ''; return; }
+  var start = new Date(startEl.value), end = new Date(endEl.value);
+  var diff = Math.round((end - start) / 86400000) + 1;
+  daysEl.value = diff > 0 ? diff : '';
 }
 
 // ── Compliance Log (Supervise) ──────────────────────────────────
@@ -16201,6 +16251,7 @@ function renderSvDashboard(data) {
               _svBirthdayCake(m) + supLabel + nonCasDot +
             '</div>' +
             '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(m.jobTitle || m.email) + '</div>' +
+            (obj.isAdminStaff ? '<div id="sv-hol-badge-' + safeEmail.replace(/[^a-z0-9]/gi, '_') + '" style="margin-top:6px;"></div>' : '') +
           '</div>' +
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">' +
             '<span style="font-size:15px;font-weight:800;color:var(--brand-navy);white-space:nowrap;line-height:1.2;">' + fmtMins(cYtd) + '</span>' +
@@ -16237,6 +16288,7 @@ function renderSvDashboard(data) {
           (!m.isSupervisor && !m.cas ? '<span style="display:inline-flex;align-items:center;gap:5px;">' + nonCasDotHtml() + '<span style="font-size:11px;font-weight:600;color:#b91c1c;white-space:nowrap;">' + fmtTenureShort(m.startDate) + '</span></span>' : '') +
         '</div>' +
         '<div style="font-size:11px;color:#6b7c8f;">' + escHtml(m.jobTitle || m.email) + '</div>' +
+        (obj.isAdminStaff ? '<div id="sv-hol-badge-' + safeEmail.replace(/[^a-z0-9]/gi, '_') + '" style="margin-top:4px;"></div>' : '') +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;min-width:180px;">' +
         '<div style="background:#f0f4f8;border-radius:4px;height:6px;flex:1;overflow:hidden;">' +
@@ -16314,6 +16366,7 @@ function renderSvDashboard(data) {
   if (adminStaff.length) {
     document.getElementById('sv-admin-wrap').style.display = 'block';
     document.getElementById('sv-admin-list').innerHTML = adminStaff.map(renderer).join('');
+    svLoadHolidayBadges(adminStaff);
   }
   // Populate Supervisors
   if (supervisorCards.length) {

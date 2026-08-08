@@ -8236,6 +8236,58 @@ app.get('/api/supervisor/admin-profile', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/supervisor/holiday-summary-bulk?emails=a@x.com,b@y.com — small
+// per-card summary (pending count + next approved leave + taken/booked days
+// this year) for the Admin & Paraplanners grid, so supervisors can see
+// absence at a glance without opening each person's one-to-one page.
+app.get('/api/supervisor/holiday-summary-bulk', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const emails = (req.query.emails || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (!emails.length) return res.json({});
+
+  try {
+    let all = [];
+    let offset;
+    do {
+      const data = await atGenericFetch(HOLIDAY_TABLE, `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const yearNow = new Date().getFullYear();
+    const out = {};
+    emails.forEach(e => { out[e] = { pendingCount: 0, nextApproved: null, takenDaysThisYear: 0, bookedDaysThisYear: 0 }; });
+
+    all.forEach(r => {
+      const f = r.fields;
+      const email = (f[HR_STAFF_EMAIL] || '').toLowerCase();
+      if (!out[email]) return;
+      const status = f[HR_STATUS] || 'Pending';
+      const startDate = f[HR_START_DATE] || '';
+      const days = f[HR_DAYS] || 0;
+      if (status === 'Pending') out[email].pendingCount++;
+      if (status === 'Approved') {
+        const inThisYear = startDate.slice(0, 4) === String(yearNow);
+        if (inThisYear) {
+          if (startDate < todayStr) out[email].takenDaysThisYear += days;
+          else out[email].bookedDaysThisYear += days;
+        }
+        if (startDate >= todayStr && (!out[email].nextApproved || startDate < out[email].nextApproved.startDate)) {
+          out[email].nextApproved = { startDate, endDate: f[HR_END_DATE] || '', days };
+        }
+      }
+    });
+
+    res.json(out);
+  } catch (err) {
+    console.error('holiday-summary-bulk error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/supervisor/admin-notes', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
