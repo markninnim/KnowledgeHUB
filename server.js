@@ -43,12 +43,6 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 // Used only to transcribe recorded 1:1 meetings (Whisper) before Claude
 // summarises them — set on Railway once available, same pattern as above.
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-// Admin-scoped key (sk-ant-admin01-...), separate from ANTHROPIC_API_KEY, only
-// used to pull the real billed spend from Anthropic's Usage & Cost Admin API
-// for the Salary tab's "true MTD cost" figure. Optional — if unset, the
-// Salary tab just falls back to its own estimated total, same as before.
-// Create one in the Claude Console under Settings → Admin keys.
-const ANTHROPIC_ADMIN_KEY = process.env.ANTHROPIC_ADMIN_API_KEY;
 
 // ── API Usage Log — every Anthropic/OpenAI call KnowledgeHUB makes is
 // logged here (fire-and-forget, never blocks or breaks the calling
@@ -1661,67 +1655,6 @@ app.get('/api/admin/api-usage-summary', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('api-usage-summary error:', err);
     res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/admin/true-cost-report — the real, billed month-to-date spend on
-// the knowledgehub-help Anthropic API key, pulled live from Anthropic's
-// Usage & Cost Admin API (cost_report endpoint). This is the actual invoice
-// figure, unlike /api/admin/api-usage-summary above which is only an
-// estimate built from our own per-call logging. Requires ANTHROPIC_ADMIN_KEY
-// (a separate sk-ant-admin01-... key) — if that's not set, returns
-// { available: false } and the Salary tab quietly keeps using its estimate.
-app.get('/api/admin/true-cost-report', requireAdmin, async (req, res) => {
-  if (!ANTHROPIC_ADMIN_KEY) {
-    return res.json({ available: false, reason: 'ANTHROPIC_ADMIN_API_KEY not set on Railway.' });
-  }
-  try {
-    const now = new Date();
-    // starting_at/ending_at query params let callers pull a real cost total for
-    // any date range (e.g. since KnowledgeHUB launched on 19 June 2026), not
-    // just the current calendar month — used by the "since launch" figure.
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const rangeStart = req.query.starting_at ? new Date(req.query.starting_at) : monthStart;
-    const rangeEnd = req.query.ending_at
-      ? new Date(req.query.ending_at)
-      : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-    const params = new URLSearchParams({
-      starting_at: rangeStart.toISOString().slice(0, 19) + 'Z',
-      ending_at: rangeEnd.toISOString().slice(0, 19) + 'Z',
-      bucket_width: '1d',
-      limit: '31'
-    });
-    params.append('group_by[]', 'description');
-
-    let allBuckets = [], nextPage = null, pages = 0;
-    do {
-      const qs = new URLSearchParams(params);
-      if (nextPage) qs.set('page', nextPage);
-      const r = await fetch(`https://api.anthropic.com/v1/organizations/cost_report?${qs.toString()}`, {
-        headers: { 'anthropic-version': '2023-06-01', 'x-api-key': ANTHROPIC_ADMIN_KEY }
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error((data.error && data.error.message) || 'Anthropic Admin API error');
-      allBuckets = allBuckets.concat(data.data || []);
-      nextPage = data.has_more ? data.next_page : null;
-      pages++;
-    } while (nextPage && pages < 5);
-
-    const byDay = allBuckets.map(bucket => {
-      const day = (bucket.starting_at || '').slice(0, 10);
-      const cost = (bucket.results || []).reduce((sum, r) => {
-        const amt = typeof r.amount === 'string' ? parseFloat(r.amount) : (r.amount || 0);
-        return sum + (isNaN(amt) ? 0 : amt);
-      }, 0) / 100; // amounts come back in cents
-      return { day, cost: Math.round(cost * 10000) / 10000 };
-    }).sort((a, b) => a.day.localeCompare(b.day));
-
-    const monthToDateCostUsd = Math.round(byDay.reduce((s, d) => s + d.cost, 0) * 10000) / 10000;
-
-    res.json({ available: true, monthToDateCostUsd, byDay });
-  } catch (err) {
-    console.error('true-cost-report error:', err);
-    res.json({ available: false, reason: err.message });
   }
 });
 
