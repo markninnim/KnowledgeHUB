@@ -487,7 +487,6 @@ const TOOLS_LIST = [
   { key: 'github',     name: 'GitHub',                            description: 'Stores the KnowledgeHUB codebase and triggers each deploy to Railway.' },
   { key: 'railway',    name: 'Railway',                           description: 'Hosts the live KnowledgeHUB server and website.' },
   { key: 'vimeo',      name: 'Vimeo',                              description: 'Hosts the Learning tab training videos.' },
-  { key: 'feefo',      name: 'Feefo',                              description: 'Supplies the customer review data shown in the Feefo league tables.' },
   { key: 'claude',     name: 'Claude (Anthropic)',                description: "Powers Alex™ — chat, summaries, and document checks. Metered usage, tracked separately on Alex's Salary tab." },
   { key: 'domain',     name: 'Domain / DNS',                      description: 'Registrar hosting knowledgehub.website and dam.simflex.ai.' }
 ];
