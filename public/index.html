@@ -267,7 +267,7 @@ select:focus { outline:none; }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>My Holiday
     </button>
     <button id="meeting-booker-nav-btn" onclick="openMeetingBooker()" style="display:none;height:36px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:400;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Meeting Booker
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Meeting Planner
     </button>
     <button id="notif-bell-btn" onclick="openNotifications()" style="display:none;position:relative;height:36px;width:36px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;border-radius:50%;cursor:pointer;font-family:inherit;align-items:center;justify-content:center;box-sizing:border-box;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -5661,10 +5661,10 @@ Consolidating debts will increase the loan to value which can impact future deal
 <div id="meeting-booker-modal" onclick="if(event.target===this)closeMeetingBooker()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Booker</div>
+      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Planner</div>
       <button onclick="closeMeetingBooker()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
     </div>
-    <div style="font-size:13px;color:#6b7c8f;margin-bottom:14px;">Pick a date to search from and who you want to attend — we'll find the earliest date everyone's free, plus 5 more options.</div>
+    <div style="font-size:13px;color:#6b7c8f;margin-bottom:14px;">This tool is designed to save you from having to search calendars for absence to find a convenient date. Simply give it a starting date and choose your attendees and it will propose the earliest date and five alternatives.</div>
 
     <div style="margin-bottom:14px;">
       <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Search from</div>
@@ -20428,7 +20428,7 @@ var QL_DESTINATIONS = {
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   leads:         { label: 'Engage™',          tab: 'leadgen', leadGenOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-  meetingbooker: { label: 'Meeting Booker',   action: function(){ openMeetingBooker(); }, danOnly: true,
+  meetingbooker: { label: 'Meeting Planner',  action: function(){ openMeetingBooker(); }, danOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' }
 };
 // Same destination list offered in the "Main Menu" popover — what a tile can be reassigned to
