@@ -15263,12 +15263,17 @@ function openNotifications() {
       var dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
       var typeColor = n.type === 'Holiday Clash' ? '#b91c1c' : '#0369a1';
       var typeBg = n.type === 'Holiday Clash' ? '#fee2e2' : '#e0f2fe';
+      var isHoliday = n.type === 'Holiday Request' || n.type === 'Holiday Clash';
+      var staffNameMatch = isHoliday ? (n.message || '').match(/^([^']+?)(?:’s|\shas requested)/) : null;
+      var staffName = staffNameMatch ? staffNameMatch[1].trim() : '';
+      var reviewBtn = isHoliday ? '<button onclick="notifGoToHoliday(\'' + n.id + '\',\'' + staffName.replace(/'/g, "\\'") + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">Review</button>' : '';
       return '<div style="border-top:1px solid #f0f2f5;padding:12px 0;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
           '<span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">' + escHtml(n.type) + '</span>' +
           '<span style="font-size:11px;color:#6b7c8f;">' + escHtml(dateStr) + '</span>' +
         '</div>' +
         '<div style="font-size:13px;color:var(--brand-navy);margin-bottom:6px;">' + escHtml(n.message) + '</div>' +
+        reviewBtn +
         '<button onclick="notifMarkRead(\'' + n.id + '\')" style="font-size:11px;font-weight:700;color:#6b7c8f;background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-family:inherit;">Mark read</button>' +
       '</div>';
     }).join('');
@@ -15282,6 +15287,23 @@ function notifMarkRead(id) {
   fetch('/api/notifications/' + id + '/read', { method: 'PUT' })
     .then(function() { openNotifications(); loadNotificationBell(); })
     .catch(function(err) { console.error('notifMarkRead error:', err); });
+}
+// "Review" button on a Holiday Request/Clash notification: jumps straight to
+// Supervise > Holiday, pre-filtered to Pending + that person's name, so the
+// approver doesn't have to hunt for the request themselves.
+function notifGoToHoliday(id, staffName) {
+  closeNotifications();
+  switchTab('supervisor-zone');
+  showSvHoliday();
+  var tryFilter = function(attempts) {
+    var nameEl = document.getElementById('sv-hol-filter-name');
+    if (!nameEl) { if (attempts > 0) setTimeout(function() { tryFilter(attempts - 1); }, 150); return; }
+    nameEl.value = staffName || '';
+    document.getElementById('sv-hol-filter-status').value = 'Pending';
+    if (typeof svRenderHolidayAllList === 'function') svRenderHolidayAllList();
+  };
+  tryFilter(10);
+  fetch('/api/notifications/' + id + '/read', { method: 'PUT' }).then(loadNotificationBell).catch(function(){});
 }
 
 // ── Home page holiday ticker (Dan / Pete / Terry) ───────────────
@@ -15437,14 +15459,29 @@ function svRenderHolidayAllList() {
   });
   document.getElementById('sv-hol-all-list').innerHTML = filtered.map(function(r) {
     var label = r.status === 'Approved' && r.endDate && r.endDate < todayIso ? 'Taken' : r.status;
+    var actions = r.status === 'Pending' ?
+      '<button onclick="svDecideHolidayAll(\'' + r.id + '\',\'Approved\')" style="background:var(--brand-navy);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-right:6px;">Approve</button>' +
+      '<button onclick="svDecideHolidayAll(\'' + r.id + '\',\'Rejected\')" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;">Decline</button>' : '';
     return '<div style="padding:8px 0;border-top:1px solid #f0f2f5;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
         '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + ' (' + r.days + ')</span></div>' +
-        '<span style="background:' + (statusBg[label]||'#f0f2f5') + ';color:' + (statusColor[label]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;flex-shrink:0;">' + escHtml(label) + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+          actions +
+          '<span style="background:' + (statusBg[label]||'#f0f2f5') + ';color:' + (statusColor[label]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;">' + escHtml(label) + '</span>' +
+        '</div>' +
       '</div>' +
       (r.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:3px;">' + escHtml(r.notes) + '</div>' : '') +
     '</div>';
   }).join('') || '<div style="font-size:13px;color:#6b7c8f;">No holiday requests match.</div>';
+}
+function svDecideHolidayAll(id, status) {
+  fetch('/api/supervisor/holiday-request/' + id, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() { svLoadHolidayBrowse(); })
+    .catch(function(err) { console.error('svDecideHolidayAll error:', err); alert('Could not update the request.'); });
 }
 
 function showComplianceLog(el) {
