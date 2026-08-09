@@ -783,7 +783,7 @@ select:focus { outline:none; }
            shown at the bottom of Home for anyone with holiday booking enabled
            (explicit toggle, or automatic for Employed advisers). -->
       <div id="home-my-holiday-wrap" style="display:none;margin-top:8px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">My Holiday</div>
+        <div id="hmh-title" style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">My Holiday</div>
         <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
             <div id="hmh-summary" style="font-size:13px;color:#6b7c8f;"></div>
@@ -5658,7 +5658,7 @@ Consolidating debts will increase the loan to value which can impact future deal
 <div id="my-holiday-modal" onclick="if(event.target===this)closeMyHoliday()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">My Holiday</div>
+      <div id="mh-title" style="font-size:18px;font-weight:800;color:var(--brand-navy);">My Holiday</div>
       <button onclick="closeMyHoliday()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
     </div>
     <div id="mh-summary" style="font-size:13px;color:#6b7c8f;margin-bottom:16px;"></div>
@@ -9997,7 +9997,12 @@ var _currentUser = null;
       var holBtn = document.getElementById('holiday-nav-btn');
       if (holBtn) holBtn.style.display = 'inline-flex';
       var homeMh = document.getElementById('home-my-holiday-wrap');
-      if (homeMh) { homeMh.style.display = 'block'; hmhLoadData(); }
+      if (homeMh) {
+        homeMh.style.display = 'block';
+        var hmhTitleEl = document.getElementById('hmh-title');
+        if (hmhTitleEl) hmhTitleEl.textContent = (user.firstName || (user.email||'').split('@')[0] || 'My') + '’s holiday';
+        hmhLoadData();
+      }
     }
     if (user && (user.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk') {
       var mbBtn = document.getElementById('meeting-booker-nav-btn');
@@ -15000,8 +15005,8 @@ function apLoadData() {
       document.getElementById('ap-holiday-summary').textContent = summaryParts.join(' · ');
 
       // Holiday list
-      var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
-      var statusBg = { Pending: '#fef3c7', Approved: '#dcfce7', Rejected: '#fee2e2' };
+      var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Rejected: '#b91c1c' };
+      var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Rejected: '#fee2e2' };
       var holHtml = (d.holidays || []).map(function(h) {
         var actions = h.status === 'Pending' ?
           '<button onclick="apDecideHoliday(\'' + h.id + '\',\'Approved\')" style="background:#15803d;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-right:6px;">Approve</button>' +
@@ -15106,6 +15111,10 @@ function apDecideHoliday(id, status) {
 // the page at once.
 function openMyHoliday() {
   document.getElementById('my-holiday-modal').style.display = 'flex';
+  var u = _currentUser || {};
+  var firstName = u.firstName || (u.email || '').split('@')[0] || 'My';
+  var titleEl = document.getElementById('mh-title');
+  if (titleEl) titleEl.textContent = firstName + '’s holiday';
   mhLoadData('mh');
 }
 function closeMyHoliday() {
@@ -15122,23 +15131,25 @@ function mhLoadData(prefix) {
   prefix = prefix || 'mh';
   fetch('/api/holidays/my').then(function(r){ return r.json(); }).then(function(d) {
     var parts = [];
-    if (d.allowanceDaysPerYear != null) parts.push(d.allowanceDaysPerYear + ' days/yr allowance');
+    if (d.totalAllocatedDays != null) parts.push(d.totalAllocatedDays + ' days total allocated');
+    if (d.carriedOverDays) parts.push(d.carriedOverDays + ' carried over from 2025');
     parts.push((d.takenDays||0) + ' taken');
     parts.push((d.bookedDays||0) + ' booked');
-    if (d.remainingDays != null) parts.push(d.remainingDays + ' remaining');
+    if (d.remainingDays != null) parts.push(d.remainingDays + ' balance');
     document.getElementById(prefix + '-summary').textContent = parts.join(' · ');
     var approverEl = document.getElementById(prefix + '-approver');
     if (approverEl) approverEl.textContent = d.approverEmail ? ('Sent to ' + d.approverEmail + ' for approval') : '';
 
-    var statusBg = { Pending: '#fef3c7', Approved: '#dcfce7', Rejected: '#fee2e2' };
-    var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
+    var todayIso = new Date().toISOString().slice(0, 10);
     var html = (d.holidays || []).map(function(h) {
+      var label = h.status;
+      if (h.status === 'Approved' && h.endDate && h.endDate < todayIso) label = 'Taken';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f5;padding:10px 0;">' +
         '<div>' +
           '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(fmtDateUK(h.startDate)) + ' → ' + escHtml(fmtDateUK(h.endDate)) + ' (' + h.days + ' day' + (h.days==1?'':'s') + ')</div>' +
           (h.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(h.notes) + '</div>' : '') +
         '</div>' +
-        '<span style="background:' + (statusBg[h.status]||'#f0f2f5') + ';color:' + (statusColor[h.status]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status) + '</span>' +
+        '<span style="background:#e6ecf5;color:var(--brand-navy);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(label) + '</span>' +
       '</div>';
     }).join('');
     document.getElementById(prefix + '-list').innerHTML = html || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No requests yet.</div>';
@@ -15340,8 +15351,8 @@ function showSvHoliday(el) {
 
 function svLoadHolidayBrowse() {
   fetch('/api/supervisor/holiday-browse').then(function(r){ return r.json(); }).then(function(d) {
-    var statusBg = { Pending: '#fef3c7', Approved: '#dcfce7', Rejected: '#fee2e2' };
-    var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
+    var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Rejected: '#fee2e2' };
+    var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Rejected: '#b91c1c' };
 
     document.getElementById('sv-hol-today-list').innerHTML = (d.onHolidayToday || []).map(function(r) {
       return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">(back ' + escHtml(fmtDateUK(r.endDate)) + ')</span></div>';

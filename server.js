@@ -611,6 +611,7 @@ async function atGenericFetch(tableId, endpoint = '', options = {}) {
 // Booker tool restricted to Dan Maskell.
 const F_HOLIDAY_BOOKING_ENABLED = 'fld4UkTm2FsiMM5Os';
 const F_HOLIDAY_ALLOWANCE       = 'fldLuhHvgtAJWFNKr';
+const F_HOLIDAY_CARRIED_OVER    = 'fldbdMKkfelSqUgZu'; // days carried over from 2025
 // Who a person's holiday requests are sent to for approval — independent of
 // their line-manager Supervisor. Prepopulated: Admin/Paraplanner staff -> David
 // Riley, everyone else -> Dan Maskell. Editable per-person in User Management.
@@ -8549,6 +8550,8 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
     const uf = ((uData.records || [])[0] || {}).fields || {};
     const enabled = !!uf[F_HOLIDAY_BOOKING_ENABLED] || !!uf[F_EMPLOYED_ADVISER];
     const allowance = uf[F_HOLIDAY_ALLOWANCE] != null ? uf[F_HOLIDAY_ALLOWANCE] : null;
+    const carriedOverDays = uf[F_HOLIDAY_CARRIED_OVER] != null ? uf[F_HOLIDAY_CARRIED_OVER] : 0;
+    const totalAllocatedDays = allowance != null ? (allowance + carriedOverDays) : null;
     const approverEmail = uf[F_HOLIDAY_APPROVER] || '';
 
     const formula = encodeURIComponent(`LOWER({${HR_STAFF_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`);
@@ -8569,7 +8572,17 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       if (h.status !== 'Approved' || h.startDate.slice(0, 4) !== yearNow) return;
       if (h.startDate < todayIso) takenDays += h.days; else bookedDays += h.days;
     });
-    res.json({ enabled, allowanceDaysPerYear: allowance, approverEmail, takenDays, bookedDays, remainingDays: allowance != null ? (allowance - takenDays - bookedDays) : null, holidays });
+    res.json({
+      enabled,
+      allowanceDaysPerYear: allowance,
+      carriedOverDays,
+      totalAllocatedDays,
+      approverEmail,
+      takenDays,
+      bookedDays,
+      remainingDays: totalAllocatedDays != null ? (totalAllocatedDays - takenDays - bookedDays) : null,
+      holidays
+    });
   } catch (err) {
     console.error('holidays/my error:', err);
     res.status(500).json({ error: err.message });
