@@ -8664,7 +8664,7 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       takenDays,
       bookedDays,
       pendingDays,
-      remainingDays: totalAllocatedDays != null ? (totalAllocatedDays - takenDays - bookedDays) : null,
+      remainingDays: totalAllocatedDays != null ? (totalAllocatedDays - takenDays - bookedDays - pendingDays) : null,
       holidays
     });
   } catch (err) {

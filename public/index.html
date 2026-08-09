@@ -15199,6 +15199,7 @@ function mhLoadData(prefix) {
         stat('Carried over', d.carriedOverDays || 0) +
         stat('Taken', d.takenDays || 0) +
         stat('Booked', d.bookedDays || 0) +
+        stat('Requested', d.pendingDays || 0) +
         stat('Balance', d.remainingDays != null ? d.remainingDays : '—') +
       '</div>' +
       mhBuildBar(d.takenDays, d.bookedDays, d.pendingDays, d.totalAllocatedDays) +
