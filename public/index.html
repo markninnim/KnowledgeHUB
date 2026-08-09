@@ -312,7 +312,7 @@ select:focus { outline:none; }
   <div id="sidebar-compliance" style="display:none">
     <h2 style="margin-top: 8px;">Compliance</h2>
     <a href="#" id="cpd-nav-link" onclick="showCpdSection(event)">AutoCPD&#8482;</a>
-    <div id="compliance-advice-standards-block">
+    <div id="compliance-advice-standards-block" style="display:none">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">ADVICE STANDARDS</span></div>
       <a href="#" onclick="return goToAdviceStandards('sp-overview',this);">Overview</a>
       <a href="#" onclick="return goToAdviceStandards('mortgage-advice-standards',this);">Mortgage Advice Standards</a>
@@ -4091,74 +4091,6 @@ Consolidating debts will increase the loan to value which can impact future deal
     </div><!-- /sv-cas-path-panel -->
 
     <!-- Broker Profile Panel (shown when a broker is selected) -->
-    <!-- My Holiday: self-service holiday request modal, for anyone with Holiday Booking enabled -->
-    <div id="my-holiday-modal" onclick="if(event.target===this)closeMyHoliday()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
-      <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">My Holiday</div>
-          <button onclick="closeMyHoliday()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
-        </div>
-        <div id="mh-summary" style="font-size:13px;color:#6b7c8f;margin-bottom:16px;"></div>
-
-        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Start date</div>
-            <input type="date" id="mh-start" onchange="mhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">End date</div>
-            <input type="date" id="mh-end" onchange="mhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
-            <input type="number" id="mh-days" readonly style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f0f2f5;color:#6b7c8f;">
-          </div>
-          <div style="flex:1;min-width:160px;">
-            <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Notes</div>
-            <input type="text" id="mh-notes" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
-          </div>
-          <button onclick="mhSubmitRequest()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Request holiday</button>
-        </div>
-
-        <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">My requests</div>
-        <div id="mh-list"></div>
-      </div>
-    </div>
-
-    <!-- Meeting Booker (Dan Maskell) -->
-    <div id="meeting-booker-modal" onclick="if(event.target===this)closeMeetingBooker()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
-      <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Booker</div>
-          <button onclick="closeMeetingBooker()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
-        </div>
-        <div style="font-size:13px;color:#6b7c8f;margin-bottom:14px;">Pick a date to search from and who you want to attend — we'll find the earliest date everyone's free, plus 5 more options.</div>
-
-        <div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Search from</div>
-          <input type="date" id="mb-from" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
-        </div>
-
-        <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Attendees</div>
-        <div id="mb-attendees" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
-
-        <button onclick="mbSearch()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Search</button>
-
-        <div id="mb-results" style="margin-top:20px;"></div>
-      </div>
-    </div>
-
-    <!-- Notifications -->
-    <div id="notif-modal" onclick="if(event.target===this)closeNotifications()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
-      <div style="background:#fff;border-radius:14px;max-width:480px;width:92%;padding:24px;margin-bottom:60px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div style="font-size:16px;font-weight:800;color:var(--brand-navy);">Notifications</div>
-          <button onclick="closeNotifications()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
-        </div>
-        <div id="notif-list"></div>
-      </div>
-    </div>
-
     <!-- Admin / Paraplanner one-to-one page: notes + action points + holiday requests.
          Distinct from the broker profile above — admin staff don't have CPD/leads/Feefo data. -->
     <div id="sv-admin-profile" style="display:none;max-width:900px;margin:0 auto;padding:32px 8px 0;">
@@ -5687,6 +5619,75 @@ Consolidating debts will increase the loan to value which can impact future deal
     </div>
     <div id="help-jobdesc-tab-content" style="display:none;padding:20px 28px;"></div>
     <div id="help-tools-tab-content" style="display:none;padding:20px 28px;"></div>
+  </div>
+</div>
+
+<!-- My Holiday: self-service holiday request modal, for anyone with Holiday Booking enabled.
+     Top-level (not inside any tab-pane) so it can be opened from any tab via the top bar button. -->
+<div id="my-holiday-modal" onclick="if(event.target===this)closeMyHoliday()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">My Holiday</div>
+      <button onclick="closeMyHoliday()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
+    </div>
+    <div id="mh-summary" style="font-size:13px;color:#6b7c8f;margin-bottom:16px;"></div>
+
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Start date</div>
+        <input type="date" id="mh-start" onchange="mhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">End date</div>
+        <input type="date" id="mh-end" onchange="mhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
+        <input type="number" id="mh-days" readonly style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f0f2f5;color:#6b7c8f;">
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Notes</div>
+        <input type="text" id="mh-notes" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+      </div>
+      <button onclick="mhSubmitRequest()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Request holiday</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">My requests</div>
+    <div id="mh-list"></div>
+  </div>
+</div>
+
+<!-- Meeting Booker (Dan Maskell) — top-level for the same reason as above. -->
+<div id="meeting-booker-modal" onclick="if(event.target===this)closeMeetingBooker()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Booker</div>
+      <button onclick="closeMeetingBooker()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
+    </div>
+    <div style="font-size:13px;color:#6b7c8f;margin-bottom:14px;">Pick a date to search from and who you want to attend — we'll find the earliest date everyone's free, plus 5 more options.</div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Search from</div>
+      <input type="date" id="mb-from" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Attendees</div>
+    <div id="mb-attendees" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
+
+    <button onclick="mbSearch()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Search</button>
+
+    <div id="mb-results" style="margin-top:20px;"></div>
+  </div>
+</div>
+
+<!-- Notifications — top-level for the same reason as above. -->
+<div id="notif-modal" onclick="if(event.target===this)closeNotifications()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:14px;max-width:480px;width:92%;padding:24px;margin-bottom:60px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:800;color:var(--brand-navy);">Notifications</div>
+      <button onclick="closeNotifications()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
+    </div>
+    <div id="notif-list"></div>
   </div>
 </div>
 
@@ -9962,8 +9963,8 @@ var _currentUser = null;
     if (user && user.email) {
       loadNotificationBell();
     }
-    // Holiday ticker on Home — Dan, Pete, Terry only (server also gates this).
-    if (user && ['dan.maskell@financeplanning.co.uk','pete.burgess@financeplanning.co.uk','terry.mccutcheon@financeplanning.co.uk'].indexOf((user.email||'').toLowerCase()) !== -1) {
+    // Holiday ticker on Home — Dan, Pete, Terry, David only (server also gates this).
+    if (user && ['dan.maskell@financeplanning.co.uk','pete.burgess@financeplanning.co.uk','terry.mccutcheon@financeplanning.co.uk','david.riley@financeplanning.co.uk'].indexOf((user.email||'').toLowerCase()) !== -1) {
       loadHomeHolidayTicker();
     }
     if (user && (user.isSupervisor || user.isAdmin)) {
@@ -15188,8 +15189,8 @@ function loadHomeHolidayTicker() {
   fetch('/api/home/holiday-ticker').then(function(r){ return r.json(); }).then(function(d) {
     if (!d.visible) return;
     var parts = [];
-    (d.onHolidayToday || []).forEach(function(p) { parts.push(p.name + ' (back ' + p.endDate + ')'); });
-    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push(p.name + ' from ' + p.startDate); });
+    (d.onHolidayToday || []).forEach(function(p) { parts.push(p.name + ' — on holiday until ' + p.endDate); });
+    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push(p.name + ' — booked from ' + p.startDate + ' until ' + p.endDate); });
     if (!parts.length) return;
     document.getElementById('home-holiday-ticker-text').textContent = parts.join('   •   ');
     document.getElementById('home-holiday-ticker').style.display = 'block';
@@ -20426,7 +20427,9 @@ var QL_DESTINATIONS = {
   muttuo:        { label: 'Muttuo',           tab: 'muttuo', fitchOnly: true,
                     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
   leads:         { label: 'Engage™',          tab: 'leadgen', leadGenOnly: true,
-                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
+                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+  meetingbooker: { label: 'Meeting Booker',   action: function(){ openMeetingBooker(); }, danOnly: true,
+                    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' }
 };
 // Same destination list offered in the "Main Menu" popover — what a tile can be reassigned to
 var QL_EDITABLE_KEYS = ['advice', 'compliance', 'learning', 'marketing', 'opportunities', 'pay', 'surveying'];
@@ -20435,7 +20438,10 @@ var _qlLayout = [];
 function qlDefaultLayout() {
   var u = _currentUser || {};
   var isSvAdmin = u.isSupervisor || u.isAdmin;
-  return ['menu', 'marketing', 'statements', 'autocpd', 'hangouts', 'advice', isSvAdmin ? 'myteam' : 'social'];
+  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk';
+  var layout = ['menu', 'marketing', 'statements', 'autocpd', 'hangouts', 'advice', isSvAdmin ? 'myteam' : 'social'];
+  if (isDan) layout.push('meetingbooker');
+  return layout;
 }
 
 function qlInit() {
@@ -20478,6 +20484,7 @@ function qlRenderGrid() {
 function qlNavigate(key) {
   var d = QL_DESTINATIONS[key];
   if (!d) return;
+  if (d.action) { d.action(); return; }
   switchTab(d.tab);
   if (d.after) d.after();
 }
@@ -20492,7 +20499,8 @@ function qlOpenPicker(e, btn) {
   var isSvAdmin = u.isSupervisor || u.isAdmin;
   var isFitch = ((u.business || '').trim().toLowerCase() === 'fitch and fitch') || u.isAdmin;
   var isLeadGen = u.isLeadGen || u.isAdmin;
-  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []);
+  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk';
+  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []).concat(isDan ? ['meetingbooker'] : []);
 
   var btnStyle = 'width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;border-radius:7px;font-family:inherit;display:block;';
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Change this link to</div>';

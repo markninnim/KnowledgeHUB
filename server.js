@@ -622,8 +622,8 @@ const NOTIF_CREATED   = 'fldk3VzvMgFcpRhbe';
 
 const DAVID_RILEY_EMAIL = 'david.riley@financeplanning.co.uk';
 const DAN_MASKELL_EMAIL = 'dan.maskell@financeplanning.co.uk';
-// Home page holiday ticker — visible to Dan, Pete and Terry only.
-const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk'];
+// Home page holiday ticker — visible to Dan, Pete, Terry and David.
+const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'david.riley@financeplanning.co.uk'];
 // Meeting Booker's attendee pool = Supervisors + this hardcoded Non-supervising
 // Directors list — kept in sync manually with the same list in index.html
 // (renderSvDashboard), since it's a small, rarely-changed set.
@@ -660,6 +660,31 @@ async function fetchAllHolidayRequests() {
 
 function datesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
+}
+
+// email -> { jobTitle, isSupervisor }, used to scope who Dan/David see in the
+// holiday ticker and browse-all view (Dan: Supervisors + Directors only,
+// David: Admin/Paraplanner only — everyone else sees the full company).
+async function getStaffRoleMap() {
+  const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_TITLE}&fields[]=${F_IS_SUPERVISOR}&pageSize=100`);
+  const map = {};
+  (data.records || []).forEach(r => {
+    const email = (r.fields[F_EMAIL] || '').toLowerCase();
+    if (email) map[email] = { jobTitle: r.fields[F_TITLE] || '', isSupervisor: !!r.fields[F_IS_SUPERVISOR] };
+  });
+  return map;
+}
+
+function staffMatchesViewerScope(callerEmail, staffEmail, roleMap) {
+  const email = (callerEmail || '').toLowerCase();
+  const info = roleMap[(staffEmail || '').toLowerCase()] || {};
+  if (email === DAN_MASKELL_EMAIL) {
+    return info.isSupervisor || MEETING_BOOKER_DIRECTOR_EMAILS.indexOf((staffEmail || '').toLowerCase()) !== -1;
+  }
+  if (email === DAVID_RILEY_EMAIL) {
+    return /^(admin|paraplanner)/i.test(info.jobTitle || '');
+  }
+  return true;
 }
 
 // Looks for another Pending/Approved request, for a different person with the
@@ -8602,19 +8627,21 @@ app.get('/api/supervisor/holiday-browse', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
-    const all = await fetchAllHolidayRequests();
+    const [all, roleMap] = await Promise.all([fetchAllHolidayRequests(), getStaffRoleMap()]);
     const todayIso = new Date().toISOString().slice(0, 10);
     const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
-    const requests = all.map(r => ({
-      id: r.id,
-      staffEmail: r.fields[HR_STAFF_EMAIL] || '',
-      staffName: r.fields[HR_STAFF_NAME] || '',
-      startDate: r.fields[HR_START_DATE] || '',
-      endDate: r.fields[HR_END_DATE] || '',
-      days: r.fields[HR_DAYS] || 0,
-      status: r.fields[HR_STATUS] || 'Pending',
-      notes: r.fields[HR_NOTES] || ''
-    })).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+    const requests = all
+      .filter(r => staffMatchesViewerScope(caller.email, r.fields[HR_STAFF_EMAIL] || '', roleMap))
+      .map(r => ({
+        id: r.id,
+        staffEmail: r.fields[HR_STAFF_EMAIL] || '',
+        staffName: r.fields[HR_STAFF_NAME] || '',
+        startDate: r.fields[HR_START_DATE] || '',
+        endDate: r.fields[HR_END_DATE] || '',
+        days: r.fields[HR_DAYS] || 0,
+        status: r.fields[HR_STATUS] || 'Pending',
+        notes: r.fields[HR_NOTES] || ''
+      })).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
 
     const onHolidayToday = requests.filter(r => r.status === 'Approved' && r.startDate <= todayIso && r.endDate >= todayIso);
     const upcoming = requests.filter(r => r.status === 'Approved' && r.startDate > todayIso && r.startDate <= in14);
@@ -8719,10 +8746,12 @@ app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (HOLIDAY_TICKER_EMAILS.indexOf(caller.email.toLowerCase()) === -1 && !caller.isAdmin) return res.json({ visible: false });
   try {
-    const all = await fetchAllHolidayRequests();
+    const [all, roleMap] = await Promise.all([fetchAllHolidayRequests(), getStaffRoleMap()]);
     const todayIso = new Date().toISOString().slice(0, 10);
     const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
-    const approved = all.filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved');
+    const approved = all
+      .filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved')
+      .filter(r => staffMatchesViewerScope(caller.email, r.fields[HR_STAFF_EMAIL] || '', roleMap));
     const onHolidayToday = approved.filter(r => (r.fields[HR_START_DATE] || '') <= todayIso && (r.fields[HR_END_DATE] || '') >= todayIso)
       .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], endDate: r.fields[HR_END_DATE] }));
     const upcoming = approved.filter(r => (r.fields[HR_START_DATE] || '') > todayIso && (r.fields[HR_START_DATE] || '') <= in14)
