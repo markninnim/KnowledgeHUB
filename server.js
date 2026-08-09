@@ -8745,28 +8745,60 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
 
   try {
     const all = await fetchAllHolidayRequests();
+    const nameByEmail = {};
+    all.forEach(r => {
+      const e = (r.fields[HR_STAFF_EMAIL] || '').toLowerCase();
+      if (e && !nameByEmail[e]) nameByEmail[e] = r.fields[HR_STAFF_NAME] || e;
+    });
     const busyRanges = all
       .filter(r => attendees.indexOf((r.fields[HR_STAFF_EMAIL] || '').toLowerCase()) !== -1 && (r.fields[HR_STATUS] || 'Pending') !== 'Rejected')
       .map(r => ({ email: (r.fields[HR_STAFF_EMAIL] || '').toLowerCase(), start: r.fields[HR_START_DATE] || '', end: r.fields[HR_END_DATE] || '' }));
 
-    function isFree(dateStr) {
-      return !busyRanges.some(b => dateStr >= b.start && dateStr <= b.end);
+    // Returns the attendee(s) whose booked/pending holiday rules out this date,
+    // or null if the date is free — this is what drives the "why" explanation
+    // shown next to the earliest date, so the reasoning is transparent rather
+    // than a black box.
+    function blockers(dateStr) {
+      const hits = busyRanges.filter(b => dateStr >= b.start && dateStr <= b.end);
+      if (!hits.length) return null;
+      const names = Array.from(new Set(hits.map(b => nameByEmail[b.email] || b.email)));
+      return names;
     }
 
     const results = [];
+    const skipped = [];
     let cursor = new Date(fromDate + 'T00:00:00Z');
     let guard = 0;
     while (results.length < 6 && guard < 90) {
       guard++;
       const dow = cursor.getUTCDay();
-      if (dow !== 0 && dow !== 6) {
-        const dStr = cursor.toISOString().slice(0, 10);
-        if (isFree(dStr)) results.push({ date: dStr, weekday: cursor.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }) });
+      const dStr = cursor.toISOString().slice(0, 10);
+      if (dow === 0 || dow === 6) {
+        if (!results.length) skipped.push({ date: dStr, reason: 'Weekend' });
+      } else {
+        const blocked = blockers(dStr);
+        if (!blocked) {
+          results.push({ date: dStr, weekday: cursor.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }) });
+        } else if (!results.length) {
+          skipped.push({ date: dStr, reason: blocked.join(' and ') + (blocked.length === 1 ? ' is' : ' are') + ' on holiday' });
+        }
       }
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
-    res.json({ earliest: results[0] || null, alternatives: results.slice(1) });
+    let why;
+    if (!skipped.length) {
+      why = 'All attendees are free on this date.';
+    } else {
+      const weekendCount = skipped.filter(s => s.reason === 'Weekend').length;
+      const holidayReasons = Array.from(new Set(skipped.filter(s => s.reason !== 'Weekend').map(s => s.reason)));
+      const parts = [];
+      if (holidayReasons.length) parts.push(holidayReasons.join('; '));
+      if (weekendCount) parts.push(weekendCount + ' weekend day' + (weekendCount === 1 ? '' : 's') + ' skipped');
+      why = 'Earlier working days were unavailable — ' + parts.join(', ') + '.';
+    }
+
+    res.json({ earliest: results[0] || null, earliestWhy: results[0] ? why : null, alternatives: results.slice(1) });
   } catch (err) {
     console.error('meeting-booker availability error:', err);
     res.status(500).json({ error: err.message });
