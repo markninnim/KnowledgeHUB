@@ -254,7 +254,7 @@ select:focus { outline:none; }
     </div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-    <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
+    <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;height:36px;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Marketing
     </button>
     <button id="supervisor-btn" onclick="openAdminPanel()" style="display:none;height:36px;background:#2e99d5;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -15192,10 +15192,10 @@ function loadHomeHolidayTicker() {
   fetch('/api/home/holiday-ticker').then(function(r){ return r.json(); }).then(function(d) {
     if (!d.visible) return;
     var parts = [];
-    (d.onHolidayToday || []).forEach(function(p) { parts.push(p.name + ' — on holiday until ' + p.endDate); });
-    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push(p.name + ' — booked from ' + p.startDate + ' until ' + p.endDate); });
+    (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday until ' + escHtml(p.endDate)); });
+    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — booked until ' + escHtml(p.endDate)); });
     if (!parts.length) return;
-    document.getElementById('home-holiday-ticker-text').textContent = parts.join('   •   ');
+    document.getElementById('home-holiday-ticker-text').innerHTML = parts.join('   •   ');
     document.getElementById('home-holiday-ticker').style.display = 'block';
   }).catch(function(err) { console.error('loadHomeHolidayTicker error:', err); });
 }
