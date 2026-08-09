@@ -15144,15 +15144,18 @@ function mhCalcDays(prefix) {
   daysEl.value = diff > 0 ? diff : '';
 }
 // Full-width bar of one-unit segments: solid navy = taken, lighter blue =
-// approved-but-not-yet-taken (booked), empty with a border = still available.
-function mhBuildBar(taken, booked, total) {
+// approved-but-not-yet-taken (booked), an even lighter blue = requested but
+// not yet decided (pending), empty with a border = still available.
+function mhBuildBar(taken, booked, pending, total) {
   if (!total || total <= 0) return '';
   taken = Math.max(0, Math.min(taken || 0, total));
   booked = Math.max(0, Math.min(booked || 0, total - taken));
-  var remaining = Math.max(0, total - taken - booked);
+  pending = Math.max(0, Math.min(pending || 0, total - taken - booked));
+  var remaining = Math.max(0, total - taken - booked - pending);
   var segs = [];
   for (var i = 0; i < taken; i++) segs.push('background:var(--brand-navy);border:1px solid var(--brand-navy);');
   for (var j = 0; j < booked; j++) segs.push('background:#a8c5e8;border:1px solid #a8c5e8;');
+  for (var p = 0; p < pending; p++) segs.push('background:#dbe9f8;border:1px solid #dbe9f8;');
   for (var k = 0; k < remaining; k++) segs.push('background:#fff;border:1px solid #d1d5db;');
   var bar = '<div style="display:flex;gap:2px;width:100%;height:14px;">' +
     segs.map(function(s, idx) {
@@ -15160,9 +15163,10 @@ function mhBuildBar(taken, booked, total) {
       return '<div style="flex:1;' + s + radius + '"></div>';
     }).join('') +
   '</div>';
-  var legend = '<div style="display:flex;gap:14px;margin-top:6px;font-size:10.5px;color:#6b7c8f;">' +
+  var legend = '<div style="display:flex;gap:14px;margin-top:6px;font-size:10.5px;color:#6b7c8f;flex-wrap:wrap;">' +
     '<span><span style="display:inline-block;width:9px;height:9px;background:var(--brand-navy);border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Taken (' + taken + ')</span>' +
     '<span><span style="display:inline-block;width:9px;height:9px;background:#a8c5e8;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Approved (' + booked + ')</span>' +
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#dbe9f8;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Requested (' + pending + ')</span>' +
     '<span><span style="display:inline-block;width:9px;height:9px;background:#fff;border:1px solid #d1d5db;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Available (' + remaining + ')</span>' +
   '</div>';
   return '<div style="margin-top:10px;">' + bar + legend + '</div>';
@@ -15182,7 +15186,7 @@ function mhLoadData(prefix) {
         stat('Booked', d.bookedDays || 0) +
         stat('Balance', d.remainingDays != null ? d.remainingDays : '—') +
       '</div>' +
-      mhBuildBar(d.takenDays, d.bookedDays, d.totalAllocatedDays) +
+      mhBuildBar(d.takenDays, d.bookedDays, d.pendingDays, d.totalAllocatedDays) +
     '</div>';
     var approverEl = document.getElementById(prefix + '-approver');
     if (approverEl) approverEl.textContent = d.approverEmail ? ('Sent to ' + d.approverEmail + ' for approval') : '';

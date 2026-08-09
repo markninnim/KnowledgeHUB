@@ -8619,10 +8619,14 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
     }));
     const todayIso = new Date().toISOString().slice(0, 10);
     const yearNow = String(new Date().getFullYear());
-    let takenDays = 0, bookedDays = 0;
+    let takenDays = 0, bookedDays = 0, pendingDays = 0;
     holidays.forEach(h => {
-      if (h.status !== 'Approved' || h.startDate.slice(0, 4) !== yearNow) return;
-      if (h.startDate < todayIso) takenDays += h.days; else bookedDays += h.days;
+      if (h.startDate.slice(0, 4) !== yearNow) return;
+      if (h.status === 'Approved') {
+        if (h.startDate < todayIso) takenDays += h.days; else bookedDays += h.days;
+      } else if (h.status === 'Pending') {
+        pendingDays += h.days;
+      }
     });
     res.json({
       enabled,
@@ -8632,6 +8636,7 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       approverEmail,
       takenDays,
       bookedDays,
+      pendingDays,
       remainingDays: totalAllocatedDays != null ? (totalAllocatedDays - takenDays - bookedDays) : null,
       holidays
     });
