@@ -257,7 +257,7 @@ select:focus { outline:none; }
     <button id="marketing-btn" onclick="openMarketingUpload()" style="display:none;background:#e8740c;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Marketing
     </button>
-    <button id="supervisor-btn" onclick="openAdminPanel()" style="display:none;background:#2e99d5;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
+    <button id="supervisor-btn" onclick="openAdminPanel()" style="display:none;height:36px;background:#2e99d5;color:#fff;border:1px solid transparent;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Supervisor
     </button>
     <button id="admin-btn" onclick="openAdminPanel()" style="display:none;height:36px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:400;cursor:pointer;font-family:inherit;align-items:center;gap:6px;box-sizing:border-box;">
@@ -9956,7 +9956,7 @@ var _currentUser = null;
       var holBtn = document.getElementById('holiday-nav-btn');
       if (holBtn) holBtn.style.display = 'inline-flex';
     }
-    if (user && (user.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk') {
+    if (user && ((user.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk' || user.isAdmin)) {
       var mbBtn = document.getElementById('meeting-booker-nav-btn');
       if (mbBtn) mbBtn.style.display = 'inline-flex';
     }
@@ -20438,9 +20438,8 @@ var _qlLayout = [];
 function qlDefaultLayout() {
   var u = _currentUser || {};
   var isSvAdmin = u.isSupervisor || u.isAdmin;
-  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk';
-  var layout = ['menu', 'marketing', 'statements', 'autocpd', 'hangouts', 'advice', isSvAdmin ? 'myteam' : 'social'];
-  if (isDan) layout.push('meetingbooker');
+  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk' || u.isAdmin;
+  var layout = ['menu', 'marketing', 'statements', 'autocpd', 'hangouts', isDan ? 'meetingbooker' : 'advice', isSvAdmin ? 'myteam' : 'social'];
   return layout;
 }
 
@@ -20448,6 +20447,15 @@ function qlInit() {
   fetch('/api/quick-links').then(function(r){ return r.json(); }).then(function(d) {
     var saved = (d.order || []).filter(function(k){ return QL_DESTINATIONS[k]; });
     _qlLayout = saved.length ? saved : qlDefaultLayout();
+    // Meeting Planner replaces Advice Standards for Dan/admins, even in a
+    // previously-saved layout from before this tile existed — keeps it to
+    // one row of 7 instead of appending an 8th tile.
+    var u = _currentUser || {};
+    var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk' || u.isAdmin;
+    if (isDan && _qlLayout.indexOf('meetingbooker') === -1) {
+      var adviceIdx = _qlLayout.indexOf('advice');
+      if (adviceIdx !== -1) _qlLayout[adviceIdx] = 'meetingbooker';
+    }
     qlRenderGrid();
   }).catch(function() {
     _qlLayout = qlDefaultLayout();
@@ -20499,7 +20507,7 @@ function qlOpenPicker(e, btn) {
   var isSvAdmin = u.isSupervisor || u.isAdmin;
   var isFitch = ((u.business || '').trim().toLowerCase() === 'fitch and fitch') || u.isAdmin;
   var isLeadGen = u.isLeadGen || u.isAdmin;
-  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk';
+  var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk' || u.isAdmin;
   var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []).concat(isDan ? ['meetingbooker'] : []);
 
   var btnStyle = 'width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;border-radius:7px;font-family:inherit;display:block;';

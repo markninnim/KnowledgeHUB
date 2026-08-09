@@ -627,7 +627,7 @@ const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burges
 // Meeting Booker's attendee pool = Supervisors + this hardcoded Non-supervising
 // Directors list — kept in sync manually with the same list in index.html
 // (renderSvDashboard), since it's a small, rarely-changed set.
-const MEETING_BOOKER_DIRECTOR_EMAILS = ['mark.ninnim@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'aisling.oates@financeplanning.co.uk', 'matt.stephens@financeplanning.co.uk'];
+const MEETING_BOOKER_DIRECTOR_EMAILS = ['mark.ninnim@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'aisling.oates@financeplanning.co.uk', 'matt.stephens@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk'];
 
 async function createNotification(recipientEmail, type, message, link) {
   if (!recipientEmail) return;
