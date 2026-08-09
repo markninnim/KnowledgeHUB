@@ -15143,6 +15143,30 @@ function mhCalcDays(prefix) {
   var diff = Math.round((new Date(endEl.value) - new Date(startEl.value)) / 86400000) + 1;
   daysEl.value = diff > 0 ? diff : '';
 }
+// Full-width bar of one-unit segments: solid navy = taken, lighter blue =
+// approved-but-not-yet-taken (booked), empty with a border = still available.
+function mhBuildBar(taken, booked, total) {
+  if (!total || total <= 0) return '';
+  taken = Math.max(0, Math.min(taken || 0, total));
+  booked = Math.max(0, Math.min(booked || 0, total - taken));
+  var remaining = Math.max(0, total - taken - booked);
+  var segs = [];
+  for (var i = 0; i < taken; i++) segs.push('background:var(--brand-navy);border:1px solid var(--brand-navy);');
+  for (var j = 0; j < booked; j++) segs.push('background:#a8c5e8;border:1px solid #a8c5e8;');
+  for (var k = 0; k < remaining; k++) segs.push('background:#fff;border:1px solid #d1d5db;');
+  var bar = '<div style="display:flex;gap:2px;width:100%;height:14px;">' +
+    segs.map(function(s, idx) {
+      var radius = idx === 0 ? 'border-radius:4px 0 0 4px;' : (idx === segs.length - 1 ? 'border-radius:0 4px 4px 0;' : '');
+      return '<div style="flex:1;' + s + radius + '"></div>';
+    }).join('') +
+  '</div>';
+  var legend = '<div style="display:flex;gap:14px;margin-top:6px;font-size:10.5px;color:#6b7c8f;">' +
+    '<span><span style="display:inline-block;width:9px;height:9px;background:var(--brand-navy);border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Taken (' + taken + ')</span>' +
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#a8c5e8;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Approved (' + booked + ')</span>' +
+    '<span><span style="display:inline-block;width:9px;height:9px;background:#fff;border:1px solid #d1d5db;border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>Available (' + remaining + ')</span>' +
+  '</div>';
+  return '<div style="margin-top:10px;">' + bar + legend + '</div>';
+}
 function mhLoadData(prefix) {
   prefix = prefix || 'mh';
   fetch('/api/holidays/my').then(function(r){ return r.json(); }).then(function(d) {
@@ -15150,12 +15174,15 @@ function mhLoadData(prefix) {
       return '<div style="text-align:center;flex:1;min-width:64px;"><div style="font-size:16px;font-weight:800;color:var(--brand-navy);">' + (val != null ? val : '—') + '</div><div style="font-size:10px;color:#6b7c8f;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">' + label + '</div></div>';
     };
     var summaryEl = document.getElementById(prefix + '-summary');
-    summaryEl.innerHTML = '<div style="display:flex;gap:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 6px;">' +
-      stat('Allowance', d.allowanceDaysPerYear != null ? d.allowanceDaysPerYear : 0) +
-      stat('Carried over', d.carriedOverDays || 0) +
-      stat('Taken', d.takenDays || 0) +
-      stat('Booked', d.bookedDays || 0) +
-      stat('Balance', d.remainingDays != null ? d.remainingDays : '—') +
+    summaryEl.innerHTML = '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 6px;">' +
+      '<div style="display:flex;gap:6px;">' +
+        stat('Allowance', d.allowanceDaysPerYear != null ? d.allowanceDaysPerYear : 0) +
+        stat('Carried over', d.carriedOverDays || 0) +
+        stat('Taken', d.takenDays || 0) +
+        stat('Booked', d.bookedDays || 0) +
+        stat('Balance', d.remainingDays != null ? d.remainingDays : '—') +
+      '</div>' +
+      mhBuildBar(d.takenDays, d.bookedDays, d.totalAllocatedDays) +
     '</div>';
     var approverEl = document.getElementById(prefix + '-approver');
     if (approverEl) approverEl.textContent = d.approverEmail ? ('Sent to ' + d.approverEmail + ' for approval') : '';
