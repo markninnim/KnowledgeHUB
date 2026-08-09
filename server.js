@@ -8766,7 +8766,8 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
     }
 
     const results = [];
-    const skipped = [];
+    const blockingNames = new Set();
+    let weekendCount = 0;
     let cursor = new Date(fromDate + 'T00:00:00Z');
     let guard = 0;
     while (results.length < 6 && guard < 90) {
@@ -8774,28 +8775,24 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
       const dow = cursor.getUTCDay();
       const dStr = cursor.toISOString().slice(0, 10);
       if (dow === 0 || dow === 6) {
-        if (!results.length) skipped.push({ date: dStr, reason: 'Weekend' });
+        if (!results.length) weekendCount++;
       } else {
         const blocked = blockers(dStr);
         if (!blocked) {
           results.push({ date: dStr, weekday: cursor.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }) });
         } else if (!results.length) {
-          skipped.push({ date: dStr, reason: blocked.join(' and ') + (blocked.length === 1 ? ' is' : ' are') + ' on holiday' });
+          blocked.forEach(n => blockingNames.add(n));
         }
       }
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
-    let why;
-    if (!skipped.length) {
-      why = 'All attendees are free on this date.';
-    } else {
-      const weekendCount = skipped.filter(s => s.reason === 'Weekend').length;
-      const holidayReasons = Array.from(new Set(skipped.filter(s => s.reason !== 'Weekend').map(s => s.reason)));
+    let why = null;
+    if (results.length && (blockingNames.size || weekendCount)) {
       const parts = [];
-      if (holidayReasons.length) parts.push(holidayReasons.join('; '));
-      if (weekendCount) parts.push(weekendCount + ' weekend day' + (weekendCount === 1 ? '' : 's') + ' skipped');
-      why = 'Earlier working days were unavailable — ' + parts.join(', ') + '.';
+      if (blockingNames.size) parts.push(Array.from(blockingNames).join(', ') + ' had holiday booked');
+      if (weekendCount) parts.push(weekendCount + ' weekend day' + (weekendCount === 1 ? '' : 's'));
+      why = 'Skipped: ' + parts.join(' and ') + '.';
     }
 
     res.json({ earliest: results[0] || null, earliestWhy: results[0] ? why : null, alternatives: results.slice(1) });
