@@ -8691,11 +8691,18 @@ app.get('/api/meeting-booker/attendees', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (caller.email.toLowerCase() !== DAN_MASKELL_EMAIL && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
   try {
-    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_IS_SUPERVISOR}&pageSize=100`);
-    const pool = (data.records || []).filter(r => {
+    let allRecords = [], offset;
+    do {
+      const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_IS_SUPERVISOR}&pageSize=100${offset ? '&offset=' + offset : ''}`);
+      allRecords = allRecords.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+
+    const pool = allRecords.filter(r => {
       const email = (r.fields[F_EMAIL] || '').toLowerCase();
       return r.fields[F_IS_SUPERVISOR] || MEETING_BOOKER_DIRECTOR_EMAILS.indexOf(email) !== -1;
-    }).map(r => ({ email: r.fields[F_EMAIL], name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ') }));
+    }).map(r => ({ email: r.fields[F_EMAIL], name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ') }))
+      .sort((a, b) => a.name.localeCompare(b.name));
     res.json({ attendees: pool });
   } catch (err) {
     console.error('meeting-booker attendees error:', err);

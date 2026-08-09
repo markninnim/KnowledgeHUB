@@ -5661,7 +5661,7 @@ Consolidating debts will increase the loan to value which can impact future deal
 <div id="meeting-booker-modal" onclick="if(event.target===this)closeMeetingBooker()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;">
   <div style="background:#fff;border-radius:14px;max-width:640px;width:92%;padding:28px;margin-bottom:60px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <div style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Planner</div>
+      <div id="mb-title" style="font-size:18px;font-weight:800;color:var(--brand-navy);">Meeting Planner</div>
       <button onclick="closeMeetingBooker()" style="background:none;border:none;font-size:20px;color:#6b7c8f;cursor:pointer;">&times;</button>
     </div>
     <div style="font-size:13px;color:#6b7c8f;margin-bottom:14px;">This tool is designed to save you from having to search calendars for absence to find a convenient date. Simply give it a starting date and choose your attendees and it will propose the earliest date and five alternatives.</div>
@@ -15107,6 +15107,9 @@ function mhSubmitRequest() {
 var _mbAttendeesLoaded = false;
 function openMeetingBooker() {
   document.getElementById('meeting-booker-modal').style.display = 'flex';
+  var u = _currentUser || {};
+  var firstName = u.firstName || (u.email || '').split('@')[0] || 'My';
+  document.getElementById('mb-title').textContent = firstName + '’s Meeting Planner';
   if (!_mbAttendeesLoaded) {
     fetch('/api/meeting-booker/attendees').then(function(r){ return r.json(); }).then(function(d) {
       _mbAttendeesLoaded = true;
