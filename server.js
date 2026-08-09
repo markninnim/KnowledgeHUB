@@ -8485,7 +8485,7 @@ app.post('/api/supervisor/holiday-request', requireAuth, async (req, res) => {
       [HR_NOTES]: notes,
       [HR_STATUS]: 'Pending',
       [HR_REQUESTED_BY]: caller.email,
-      [HR_REQUESTED_AT]: new Date().toISOString()
+      [HR_REQUESTED_AT]: new Date().toISOString().slice(0, 10)
     };
     const body = await atGenericFetch(HOLIDAY_TABLE, '', {
       method: 'POST',
@@ -8512,7 +8512,7 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
       body: JSON.stringify({ records: [{ id: req.params.id, fields: {
         [HR_STATUS]: status,
         [HR_DECIDED_BY]: caller.email,
-        [HR_DECIDED_AT]: new Date().toISOString(),
+        [HR_DECIDED_AT]: new Date().toISOString().slice(0, 10),
         [HR_DECISION_NOTES]: decisionNotes
       } }] })
     });
@@ -8621,7 +8621,7 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
         [HR_NOTES]: notes,
         [HR_STATUS]: 'Pending',
         [HR_REQUESTED_BY]: caller.email,
-        [HR_REQUESTED_AT]: new Date().toISOString()
+        [HR_REQUESTED_AT]: new Date().toISOString().slice(0, 10)
       } }] })
     });
     const recordId = body.records[0].id;
