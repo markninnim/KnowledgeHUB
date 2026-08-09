@@ -639,7 +639,7 @@ async function createNotification(recipientEmail, type, message, link) {
   try {
     await atGenericFetch(NOTIF_TABLE, '', {
       method: 'POST',
-      body: JSON.stringify({ records: [{ fields: {
+      body: JSON.stringify({ typecast: true, records: [{ fields: {
         [NOTIF_RECIPIENT]: recipientEmail.toLowerCase(),
         [NOTIF_TYPE]: type,
         [NOTIF_MESSAGE]: message,
