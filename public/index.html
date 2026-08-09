@@ -11212,6 +11212,16 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// European date display (D/M/YYYY, e.g. "9/8/2026") for ISO "YYYY-MM-DD" strings
+// used across the holiday booking feature — Meeting Planner, My Holiday, the
+// admin one-to-one page, holiday badges/ticker, and the Holiday browse-all view.
+function fmtDateUK(iso) {
+  if (!iso || typeof iso !== 'string') return iso || '';
+  var m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return iso;
+  return parseInt(m[3], 10) + '/' + parseInt(m[2], 10) + '/' + m[1];
+}
+
 // ── Placeholder avatar fallback (male/female) ──
 // Used whenever a person has no uploaded photo. Gender is inferred from
 // Salutation (Mrs/Ms/Miss → female, otherwise male). Uses the static
@@ -14952,7 +14962,7 @@ function apLoadData() {
           '<button onclick="apDecideHoliday(\'' + h.id + '\',\'Rejected\')" style="background:#b91c1c;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Decline</button>' : '';
         return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f5;padding:12px 0;">' +
           '<div>' +
-            '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(h.startDate) + ' → ' + escHtml(h.endDate) + ' (' + h.days + ' day' + (h.days == 1 ? '' : 's') + ')</div>' +
+            '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(fmtDateUK(h.startDate)) + ' → ' + escHtml(fmtDateUK(h.endDate)) + ' (' + h.days + ' day' + (h.days == 1 ? '' : 's') + ')</div>' +
             (h.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(h.notes) + '</div>' : '') +
             (h.decisionNotes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">Decision: ' + escHtml(h.decisionNotes) + '</div>' : '') +
           '</div>' +
@@ -15072,7 +15082,7 @@ function mhLoadData() {
     var html = (d.holidays || []).map(function(h) {
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f5;padding:10px 0;">' +
         '<div>' +
-          '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(h.startDate) + ' → ' + escHtml(h.endDate) + ' (' + h.days + ' day' + (h.days==1?'':'s') + ')</div>' +
+          '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(fmtDateUK(h.startDate)) + ' → ' + escHtml(fmtDateUK(h.endDate)) + ' (' + h.days + ' day' + (h.days==1?'':'s') + ')</div>' +
           (h.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(h.notes) + '</div>' : '') +
         '</div>' +
         '<span style="background:' + (statusBg[h.status]||'#f0f2f5') + ';color:' + (statusColor[h.status]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status) + '</span>' +
@@ -15143,7 +15153,7 @@ function mbSearch() {
     if (d.alternatives && d.alternatives.length) {
       html += '<div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Also available</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + d.alternatives.map(function(a) {
-          return '<span style="background:#f0f2f5;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--brand-navy);">' + escHtml(a.weekday) + ', ' + escHtml(a.date) + '</span>';
+          return '<span style="background:#f0f2f5;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--brand-navy);">' + escHtml(a.weekday) + ', ' + escHtml(fmtDateUK(a.date)) + '</span>';
         }).join('') + '</div>';
     }
     document.getElementById('mb-results').innerHTML = html;
@@ -15192,8 +15202,8 @@ function loadHomeHolidayTicker() {
   fetch('/api/home/holiday-ticker').then(function(r){ return r.json(); }).then(function(d) {
     if (!d.visible) return;
     var parts = [];
-    (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday until ' + escHtml(p.endDate)); });
-    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — booked until ' + escHtml(p.endDate)); });
+    (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday until ' + escHtml(fmtDateUK(p.endDate))); });
+    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — booked until ' + escHtml(fmtDateUK(p.endDate))); });
     if (!parts.length) return;
     document.getElementById('home-holiday-ticker-text').innerHTML = parts.join('   •   ');
     document.getElementById('home-holiday-ticker').style.display = 'block';
@@ -15217,9 +15227,9 @@ function svLoadHolidayBadges(adminStaffList) {
         var els = document.querySelectorAll('[id="' + id + '"]');
         var html = '';
         if (d.nextApproved && d.nextApproved.startDate <= today && d.nextApproved.endDate >= today) {
-          html = '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">On leave until ' + escHtml(d.nextApproved.endDate) + '</span>';
+          html = '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">On leave until ' + escHtml(fmtDateUK(d.nextApproved.endDate)) + '</span>';
         } else if (d.nextApproved) {
-          html = '<span style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">Booked from ' + escHtml(d.nextApproved.startDate) + '</span>';
+          html = '<span style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">Booked from ' + escHtml(fmtDateUK(d.nextApproved.startDate)) + '</span>';
         }
         if (d.pendingCount) {
           html += (html ? ' ' : '') + '<span style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">' + d.pendingCount + ' pending</span>';
@@ -15277,16 +15287,16 @@ function svLoadHolidayBrowse() {
     var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
 
     document.getElementById('sv-hol-today-list').innerHTML = (d.onHolidayToday || []).map(function(r) {
-      return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">(back ' + escHtml(r.endDate) + ')</span></div>';
+      return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">(back ' + escHtml(fmtDateUK(r.endDate)) + ')</span></div>';
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">Nobody is off today.</div>';
 
     document.getElementById('sv-hol-upcoming-list').innerHTML = (d.upcoming || []).map(function(r) {
-      return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(r.startDate) + ' → ' + escHtml(r.endDate) + '</span></div>';
+      return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + '</span></div>';
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">Nothing booked in the next 14 days.</div>';
 
     document.getElementById('sv-hol-all-list').innerHTML = (d.requests || []).map(function(r) {
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #f0f2f5;">' +
-        '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(r.startDate) + ' → ' + escHtml(r.endDate) + ' (' + r.days + ')</span></div>' +
+        '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + ' (' + r.days + ')</span></div>' +
         '<span style="background:' + (statusBg[r.status]||'#f0f2f5') + ';color:' + (statusColor[r.status]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;">' + escHtml(r.status) + '</span>' +
       '</div>';
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">No holiday requests logged yet.</div>';
