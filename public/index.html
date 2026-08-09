@@ -4622,9 +4622,8 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Requests</div>
           <div style="display:flex;gap:8px;">
-            <select id="sv-hol-filter-name" onchange="svRenderHolidayAllList()" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);">
-              <option value="">All names</option>
-            </select>
+            <input type="text" id="sv-hol-filter-name" list="sv-hol-name-list" oninput="svRenderHolidayAllList()" placeholder="Filter by broker…" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);width:160px;">
+            <datalist id="sv-hol-name-list"></datalist>
             <select id="sv-hol-filter-status" onchange="svRenderHolidayAllList()" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);">
               <option value="">All statuses</option>
               <option value="Pending">Pending</option>
@@ -15402,6 +15401,7 @@ function showSvHoliday(el) {
 }
 
 var _svHolAllRequests = [];
+var _svHolFiltersInit = false;
 function svLoadHolidayBrowse() {
   fetch('/api/supervisor/holiday-browse').then(function(r){ return r.json(); }).then(function(d) {
     document.getElementById('sv-hol-today-list').innerHTML = (d.onHolidayToday || []).map(function(r) {
@@ -15413,23 +15413,24 @@ function svLoadHolidayBrowse() {
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">Nothing booked in the next 14 days.</div>';
 
     _svHolAllRequests = d.requests || [];
-    var nameSel = document.getElementById('sv-hol-filter-name');
-    var prevName = nameSel.value;
-    var names = Array.prototype.slice.call(new Set(_svHolAllRequests.map(function(r) { return r.staffName; }).filter(Boolean))).sort();
-    nameSel.innerHTML = '<option value="">All names</option>' + names.map(function(n) { return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>'; }).join('');
-    nameSel.value = names.indexOf(prevName) !== -1 ? prevName : '';
-
+    if (!_svHolFiltersInit) {
+      _svHolFiltersInit = true;
+      document.getElementById('sv-hol-filter-status').value = 'Pending';
+      accLoadAllUsers().then(function(users) {
+        document.getElementById('sv-hol-name-list').innerHTML = users.map(function(u) { return '<option value="' + escHtml(u.name) + '">'; }).join('');
+      });
+    }
     svRenderHolidayAllList();
   }).catch(function(err) { console.error('svLoadHolidayBrowse error:', err); });
 }
 function svRenderHolidayAllList() {
   var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Taken: '#e6ecf5', Rejected: '#fee2e2' };
   var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Taken: 'var(--brand-navy)', Rejected: '#b91c1c' };
-  var nameFilter = document.getElementById('sv-hol-filter-name').value;
+  var nameFilter = document.getElementById('sv-hol-filter-name').value.trim().toLowerCase();
   var statusFilter = document.getElementById('sv-hol-filter-status').value;
   var todayIso = new Date().toISOString().slice(0, 10);
   var filtered = _svHolAllRequests.filter(function(r) {
-    if (nameFilter && r.staffName !== nameFilter) return false;
+    if (nameFilter && (r.staffName || '').toLowerCase().indexOf(nameFilter) === -1) return false;
     var label = r.status === 'Approved' && r.endDate && r.endDate < todayIso ? 'Taken' : r.status;
     if (statusFilter && label !== statusFilter) return false;
     return true;
