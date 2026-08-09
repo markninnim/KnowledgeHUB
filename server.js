@@ -604,6 +604,87 @@ async function atGenericFetch(tableId, endpoint = '', options = {}) {
   return body;
 }
 
+// ── Company-wide holiday booking system ─────────────────────────
+// Self-service requesting (gated by F_HOLIDAY_BOOKING_ENABLED per user, set in
+// User Management), in-app notifications (Notifications table — no email
+// sending is set up for KnowledgeHUB, so this is in-app only), and a Meeting
+// Booker tool restricted to Dan Maskell.
+const F_HOLIDAY_BOOKING_ENABLED = 'fld4UkTm2FsiMM5Os';
+const F_HOLIDAY_ALLOWANCE       = 'fldLuhHvgtAJWFNKr';
+
+const NOTIF_TABLE     = 'tblZqIvcZlWREObnm';
+const NOTIF_RECIPIENT = 'fldboIYXsD2GYSaEp';
+const NOTIF_TYPE      = 'fldjKDVF4DZpuXBGA';
+const NOTIF_MESSAGE   = 'fldjvO4usZ8MiU5EB';
+const NOTIF_LINK      = 'fld1OS7qd6kMetOsW';
+const NOTIF_READ      = 'fldPy3qcQ6lBcgBEH';
+const NOTIF_CREATED   = 'fldk3VzvMgFcpRhbe';
+
+const DAVID_RILEY_EMAIL = 'david.riley@financeplanning.co.uk';
+const DAN_MASKELL_EMAIL = 'dan.maskell@financeplanning.co.uk';
+// Home page holiday ticker — visible to Dan, Pete and Terry only.
+const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk'];
+// Meeting Booker's attendee pool = Supervisors + this hardcoded Non-supervising
+// Directors list — kept in sync manually with the same list in index.html
+// (renderSvDashboard), since it's a small, rarely-changed set.
+const MEETING_BOOKER_DIRECTOR_EMAILS = ['mark.ninnim@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'aisling.oates@financeplanning.co.uk', 'matt.stephens@financeplanning.co.uk'];
+
+async function createNotification(recipientEmail, type, message, link) {
+  if (!recipientEmail) return;
+  try {
+    await atGenericFetch(NOTIF_TABLE, '', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: {
+        [NOTIF_RECIPIENT]: recipientEmail.toLowerCase(),
+        [NOTIF_TYPE]: type,
+        [NOTIF_MESSAGE]: message,
+        [NOTIF_LINK]: link || '',
+        [NOTIF_READ]: false,
+        [NOTIF_CREATED]: new Date().toISOString()
+      } }] })
+    });
+  } catch (err) {
+    console.error('createNotification error:', err);
+  }
+}
+
+async function fetchAllHolidayRequests() {
+  let all = [], offset;
+  do {
+    const data = await atGenericFetch(HOLIDAY_TABLE, `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`);
+    all = all.concat(data.records || []);
+    offset = data.offset;
+  } while (offset);
+  return all;
+}
+
+function datesOverlap(aStart, aEnd, bStart, bEnd) {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+// Looks for another Pending/Approved request, for a different person with the
+// same supervisor (i.e. teammate), whose dates overlap the given range.
+async function checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate, excludeRecordId) {
+  if (!supervisorEmail) return null;
+  const all = await fetchAllHolidayRequests();
+  const teamEmails = new Set();
+  const teamData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_SUPERVISOR_EMAIL}}) = "${supervisorEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMAIL}`);
+  (teamData.records || []).forEach(r => { const e = (r.fields[F_EMAIL] || '').toLowerCase(); if (e && e !== staffEmail.toLowerCase()) teamEmails.add(e); });
+
+  for (const r of all) {
+    if (r.id === excludeRecordId) continue;
+    const f = r.fields;
+    const otherEmail = (f[HR_STAFF_EMAIL] || '').toLowerCase();
+    if (otherEmail === staffEmail.toLowerCase() || !teamEmails.has(otherEmail)) continue;
+    const status = f[HR_STATUS] || 'Pending';
+    if (status === 'Rejected') continue;
+    if (datesOverlap(startDate, endDate, f[HR_START_DATE] || '', f[HR_END_DATE] || '')) {
+      return { otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] };
+    }
+  }
+  return null;
+}
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];
@@ -737,7 +818,9 @@ function recordToUser(record) {
     trusts:              f[F_TRUSTS]               || false,
     avgPayaway:          f[F_AVG_PAYAWAY]          || '',
     buddyEmail:          f[F_BUDDY_EMAIL]          || '',
-    onboardingSeen:      f[F_ONBOARDING_SEEN]      || false
+    onboardingSeen:      f[F_ONBOARDING_SEEN]      || false,
+    holidayBookingEnabled: f[F_HOLIDAY_BOOKING_ENABLED] || false,
+    holidayAllowanceDays:  f[F_HOLIDAY_ALLOWANCE] != null ? f[F_HOLIDAY_ALLOWANCE] : null
   };
 }
 
@@ -4015,7 +4098,9 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
-      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true'
+      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
+      [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
+      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -4187,7 +4272,9 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_TRUSTS]:               req.body.trusts               === true || req.body.trusts               === 'true',
       [F_IS_MARKETING]:         isMarketing === true || isMarketing === 'true',
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
-      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true'
+      [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
+      [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
+      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -8248,18 +8335,12 @@ app.get('/api/supervisor/holiday-summary-bulk', requireAuth, async (req, res) =>
   if (!emails.length) return res.json({});
 
   try {
-    let all = [];
-    let offset;
-    do {
-      const data = await atGenericFetch(HOLIDAY_TABLE, `?returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`);
-      all = all.concat(data.records || []);
-      offset = data.offset;
-    } while (offset);
+    const all = await fetchAllHolidayRequests();
 
     const todayStr = new Date().toISOString().slice(0, 10);
     const yearNow = new Date().getFullYear();
     const out = {};
-    emails.forEach(e => { out[e] = { pendingCount: 0, nextApproved: null, takenDaysThisYear: 0, bookedDaysThisYear: 0 }; });
+    emails.forEach(e => { out[e] = { pendingCount: 0, nextApproved: null, takenDaysThisYear: 0, bookedDaysThisYear: 0, allowanceDaysPerYear: null, remainingDays: null }; });
 
     all.forEach(r => {
       const f = r.fields;
@@ -8278,6 +8359,19 @@ app.get('/api/supervisor/holiday-summary-bulk', requireAuth, async (req, res) =>
         if (startDate >= todayStr && (!out[email].nextApproved || startDate < out[email].nextApproved.startDate)) {
           out[email].nextApproved = { startDate, endDate: f[HR_END_DATE] || '', days };
         }
+      }
+    });
+
+    // Pull each person's annual allowance from Users table (set in User Management).
+    const formula = encodeURIComponent(`OR(${emails.map(e => `LOWER({${F_EMAIL}}) = "${e.replace(/"/g, '\\"')}"`).join(',')})`);
+    const uData = await atFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_HOLIDAY_ALLOWANCE}`);
+    (uData.records || []).forEach(r => {
+      const email = (r.fields[F_EMAIL] || '').toLowerCase();
+      if (!out[email]) return;
+      const allowance = r.fields[F_HOLIDAY_ALLOWANCE];
+      if (allowance != null) {
+        out[email].allowanceDaysPerYear = allowance;
+        out[email].remainingDays = allowance - out[email].takenDaysThisYear - out[email].bookedDaysThisYear;
       }
     });
 
@@ -8391,9 +8485,252 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
         [HR_DECISION_NOTES]: decisionNotes
       } }] })
     });
+
+    if (status === 'Approved') {
+      try {
+        const rec = await atGenericFetch(HOLIDAY_TABLE, `/${req.params.id}?returnFieldsByFieldId=true`);
+        const f = rec.fields || {};
+        const staffEmail = f[HR_STAFF_EMAIL] || '';
+        const staffName  = f[HR_STAFF_NAME] || staffEmail;
+        const startDate  = f[HR_START_DATE] || '', endDate = f[HR_END_DATE] || '';
+        const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+        const supervisorEmail = (((uData.records || [])[0] || {}).fields || {})[F_SUPERVISOR_EMAIL] || '';
+        const clash = await checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate, req.params.id);
+        if (clash) {
+          await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s approved holiday (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+        }
+      } catch (clashErr) {
+        console.error('holiday-request approve clash-check error:', clashErr);
+      }
+    }
+
     res.json({ ok: true });
   } catch (err) {
     console.error('holiday-request update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Self-service holiday booking (any user with Holiday Booking Enabled) ──
+app.get('/api/holidays/my', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  try {
+    const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+    const uf = ((uData.records || [])[0] || {}).fields || {};
+    const enabled = !!uf[F_HOLIDAY_BOOKING_ENABLED];
+    const allowance = uf[F_HOLIDAY_ALLOWANCE] != null ? uf[F_HOLIDAY_ALLOWANCE] : null;
+
+    const formula = encodeURIComponent(`LOWER({${HR_STAFF_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`);
+    const hData = await atGenericFetch(HOLIDAY_TABLE, `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${HR_START_DATE}&sort[0][direction]=desc`);
+    const holidays = (hData.records || []).map(r => ({
+      id: r.id,
+      startDate: r.fields[HR_START_DATE] || '',
+      endDate: r.fields[HR_END_DATE] || '',
+      days: r.fields[HR_DAYS] || 0,
+      notes: r.fields[HR_NOTES] || '',
+      status: r.fields[HR_STATUS] || 'Pending',
+      decisionNotes: r.fields[HR_DECISION_NOTES] || ''
+    }));
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const yearNow = String(new Date().getFullYear());
+    let takenDays = 0, bookedDays = 0;
+    holidays.forEach(h => {
+      if (h.status !== 'Approved' || h.startDate.slice(0, 4) !== yearNow) return;
+      if (h.startDate < todayIso) takenDays += h.days; else bookedDays += h.days;
+    });
+    res.json({ enabled, allowanceDaysPerYear: allowance, takenDays, bookedDays, remainingDays: allowance != null ? (allowance - takenDays - bookedDays) : null, holidays });
+  } catch (err) {
+    console.error('holidays/my error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  const startDate = (req.body.startDate || '').trim();
+  const endDate   = (req.body.endDate || '').trim();
+  const days      = Number(req.body.days) || 0;
+  const notes     = (req.body.notes || '').trim();
+  if (!startDate || !endDate) return res.status(400).json({ error: 'startDate, endDate required' });
+
+  try {
+    const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+    const uf = ((uData.records || [])[0] || {}).fields || {};
+    if (!uf[F_HOLIDAY_BOOKING_ENABLED]) return res.status(403).json({ error: 'Holiday booking is not enabled for your account' });
+
+    const staffName = [uf[F_FIRST], uf[F_LAST]].filter(Boolean).join(' ') || caller.email;
+    const supervisorEmail = (uf[F_SUPERVISOR_EMAIL] || '').trim();
+    const jobTitle = uf[F_TITLE] || '';
+
+    const body = await atGenericFetch(HOLIDAY_TABLE, '', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields: {
+        [HR_STAFF_EMAIL]: caller.email.toLowerCase(),
+        [HR_STAFF_NAME]: staffName,
+        [HR_START_DATE]: startDate,
+        [HR_END_DATE]: endDate,
+        [HR_DAYS]: days,
+        [HR_NOTES]: notes,
+        [HR_STATUS]: 'Pending',
+        [HR_REQUESTED_BY]: caller.email,
+        [HR_REQUESTED_AT]: new Date().toISOString()
+      } }] })
+    });
+    const recordId = body.records[0].id;
+
+    if (supervisorEmail) {
+      await createNotification(supervisorEmail, 'Holiday Request', staffName + ' has requested holiday from ' + startDate + ' to ' + endDate + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
+    }
+    if (/^(admin|paraplanner)/i.test(jobTitle)) {
+      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + startDate + ' to ' + endDate + '.', '/supervise');
+    }
+    const clash = await checkHolidayClash(caller.email, supervisorEmail, startDate, endDate, recordId);
+    if (clash) {
+      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s request (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+    }
+
+    res.json({ ok: true, id: recordId });
+  } catch (err) {
+    console.error('holidays/request-self error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/supervisor/holiday-browse — company-wide view for any supervisor/
+// admin: who's in today, upcoming approved holiday, and the full request list.
+app.get('/api/supervisor/holiday-browse', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (!caller.isSupervisor && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const all = await fetchAllHolidayRequests();
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    const requests = all.map(r => ({
+      id: r.id,
+      staffEmail: r.fields[HR_STAFF_EMAIL] || '',
+      staffName: r.fields[HR_STAFF_NAME] || '',
+      startDate: r.fields[HR_START_DATE] || '',
+      endDate: r.fields[HR_END_DATE] || '',
+      days: r.fields[HR_DAYS] || 0,
+      status: r.fields[HR_STATUS] || 'Pending',
+      notes: r.fields[HR_NOTES] || ''
+    })).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+
+    const onHolidayToday = requests.filter(r => r.status === 'Approved' && r.startDate <= todayIso && r.endDate >= todayIso);
+    const upcoming = requests.filter(r => r.status === 'Approved' && r.startDate > todayIso && r.startDate <= in14);
+    res.json({ requests, onHolidayToday, upcoming });
+  } catch (err) {
+    console.error('holiday-browse error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── In-app notifications (David Riley's holiday alerts today; generic enough
+// to extend to other recipients later) ─────────────────────────
+app.get('/api/notifications', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  try {
+    const formula = encodeURIComponent(`AND(LOWER({${NOTIF_RECIPIENT}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}", {${NOTIF_READ}} = FALSE())`);
+    const data = await atGenericFetch(NOTIF_TABLE, `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${NOTIF_CREATED}&sort[0][direction]=desc&pageSize=50`);
+    const notifications = (data.records || []).map(r => ({
+      id: r.id,
+      type: r.fields[NOTIF_TYPE] || '',
+      message: r.fields[NOTIF_MESSAGE] || '',
+      link: r.fields[NOTIF_LINK] || '',
+      createdAt: r.fields[NOTIF_CREATED] || null
+    }));
+    res.json({ notifications, unreadCount: notifications.length });
+  } catch (err) {
+    console.error('notifications list error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/notifications/:id/read', requireAuth, async (req, res) => {
+  try {
+    await atGenericFetch(NOTIF_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: req.params.id, fields: { [NOTIF_READ]: true } }] })
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('notifications read error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Meeting Booker (Dan Maskell only) ───────────────────────────
+app.get('/api/meeting-booker/attendees', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (caller.email.toLowerCase() !== DAN_MASKELL_EMAIL && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_IS_SUPERVISOR}&pageSize=100`);
+    const pool = (data.records || []).filter(r => {
+      const email = (r.fields[F_EMAIL] || '').toLowerCase();
+      return r.fields[F_IS_SUPERVISOR] || MEETING_BOOKER_DIRECTOR_EMAILS.indexOf(email) !== -1;
+    }).map(r => ({ email: r.fields[F_EMAIL], name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ') }));
+    res.json({ attendees: pool });
+  } catch (err) {
+    console.error('meeting-booker attendees error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (caller.email.toLowerCase() !== DAN_MASKELL_EMAIL && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+
+  const attendees = (req.query.attendees || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (!attendees.length) return res.status(400).json({ error: 'attendees required' });
+  const fromDate = (req.query.from || '').trim() || new Date().toISOString().slice(0, 10);
+
+  try {
+    const all = await fetchAllHolidayRequests();
+    const busyRanges = all
+      .filter(r => attendees.indexOf((r.fields[HR_STAFF_EMAIL] || '').toLowerCase()) !== -1 && (r.fields[HR_STATUS] || 'Pending') !== 'Rejected')
+      .map(r => ({ email: (r.fields[HR_STAFF_EMAIL] || '').toLowerCase(), start: r.fields[HR_START_DATE] || '', end: r.fields[HR_END_DATE] || '' }));
+
+    function isFree(dateStr) {
+      return !busyRanges.some(b => dateStr >= b.start && dateStr <= b.end);
+    }
+
+    const results = [];
+    let cursor = new Date(fromDate + 'T00:00:00Z');
+    let guard = 0;
+    while (results.length < 6 && guard < 90) {
+      guard++;
+      const dow = cursor.getUTCDay();
+      if (dow !== 0 && dow !== 6) {
+        const dStr = cursor.toISOString().slice(0, 10);
+        if (isFree(dStr)) results.push({ date: dStr, weekday: cursor.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }) });
+      }
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+
+    res.json({ earliest: results[0] || null, alternatives: results.slice(1) });
+  } catch (err) {
+    console.error('meeting-booker availability error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Home page holiday ticker (Dan / Pete / Terry) ───────────────
+app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  if (HOLIDAY_TICKER_EMAILS.indexOf(caller.email.toLowerCase()) === -1 && !caller.isAdmin) return res.json({ visible: false });
+  try {
+    const all = await fetchAllHolidayRequests();
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    const approved = all.filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved');
+    const onHolidayToday = approved.filter(r => (r.fields[HR_START_DATE] || '') <= todayIso && (r.fields[HR_END_DATE] || '') >= todayIso)
+      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], endDate: r.fields[HR_END_DATE] }));
+    const upcoming = approved.filter(r => (r.fields[HR_START_DATE] || '') > todayIso && (r.fields[HR_START_DATE] || '') <= in14)
+      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }))
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+    res.json({ visible: true, onHolidayToday, upcoming });
+  } catch (err) {
+    console.error('home holiday-ticker error:', err);
     res.status(500).json({ error: err.message });
   }
 });

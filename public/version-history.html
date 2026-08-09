@@ -125,6 +125,25 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.1</span>
+      <span class="version-title">Company-Wide Holiday Booking System &amp; Meeting Booker</span>
+      <span class="version-date">9 August 2026</span>
+    </div>
+    <p class="version-summary">Extended the Admin one-to-one holiday tool into a full self-service holiday booking system: anyone flagged in User Management can request their own holiday, it goes to their Supervisor to approve, David Riley is notified of Admin/Paraplanner requests and any date clashes, and any supervisor can browse who's off across the whole company. Also added Dan Maskell's Meeting Booker, a Home page holiday ticker for Dan, Pete and Terry, and an in-app notification bell.</p>
+    <ul class="changes">
+      <li>New "Holiday Booking" toggle and annual allowance field per person in User Management &mdash; only people flagged this way can request their own holiday from the new "My Holiday" button in the top bar.</li>
+      <li>Self-requested holiday goes to the requester's own Supervisor for approval; the request record, decision, and full history are kept in the existing Holiday Requests Airtable table so nothing is lost across redeploys.</li>
+      <li>David Riley is notified in-app whenever Admin/Paraplanner staff request holiday, and whenever a request (self-service or supervisor-logged) overlaps with a teammate's existing holiday &mdash; checked both when a request comes in and when one is approved.</li>
+      <li>New in-app notification bell (top bar) shows anyone their unread holiday alerts, with a mark-as-read action; notifications are stored in a new Notifications Airtable table.</li>
+      <li>New "Holiday" page under Supervise, open to any supervisor: who's off today, what's booked in the next 14 days, and the full request list across every team, not just their own.</li>
+      <li>Admin &amp; Paraplanner cards in My Team now show a proper Allowance / Booked / Taken / Remaining stat row instead of just a status badge.</li>
+      <li>New Meeting Booker tool for Dan Maskell: pick a "search from" date and any combination of Supervisors and Non-supervising Directors, and it finds the earliest weekday everyone's free (checking approved/pending holiday) plus 5 further available dates.</li>
+      <li>New Home page ticker, visible only to Dan Maskell, Pete Burgess and Terry McCutcheon, showing who's on holiday today and who's booked in over the next fortnight.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v3.0</span>
       <span class="version-title">Admin One-to-One Tool, Non-Supervising Directors &amp; My Team Fixes</span>
       <span class="version-date">8 August 2026</span>
