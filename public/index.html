@@ -4619,7 +4619,21 @@ Consolidating debts will increase the loan to value which can impact future deal
       </div>
 
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
-        <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">All Requests</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;">All Requests</div>
+          <div style="display:flex;gap:8px;">
+            <select id="sv-hol-filter-name" onchange="svRenderHolidayAllList()" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);">
+              <option value="">All names</option>
+            </select>
+            <select id="sv-hol-filter-status" onchange="svRenderHolidayAllList()" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);">
+              <option value="">All statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Taken">Taken</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
         <div id="sv-hol-all-list"></div>
       </div>
     </div>
@@ -15387,11 +15401,9 @@ function showSvHoliday(el) {
   return false;
 }
 
+var _svHolAllRequests = [];
 function svLoadHolidayBrowse() {
   fetch('/api/supervisor/holiday-browse').then(function(r){ return r.json(); }).then(function(d) {
-    var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Rejected: '#fee2e2' };
-    var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Rejected: '#b91c1c' };
-
     document.getElementById('sv-hol-today-list').innerHTML = (d.onHolidayToday || []).map(function(r) {
       return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">(back ' + escHtml(fmtDateUK(r.endDate)) + ')</span></div>';
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">Nobody is off today.</div>';
@@ -15400,13 +15412,38 @@ function svLoadHolidayBrowse() {
       return '<div style="font-size:13px;color:var(--brand-navy);padding:6px 0;border-top:1px solid #f0f2f5;">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + '</span></div>';
     }).join('') || '<div style="font-size:13px;color:#6b7c8f;">Nothing booked in the next 14 days.</div>';
 
-    document.getElementById('sv-hol-all-list').innerHTML = (d.requests || []).map(function(r) {
-      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #f0f2f5;">' +
-        '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + ' (' + r.days + ')</span></div>' +
-        '<span style="background:' + (statusBg[r.status]||'#f0f2f5') + ';color:' + (statusColor[r.status]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;">' + escHtml(r.status) + '</span>' +
-      '</div>';
-    }).join('') || '<div style="font-size:13px;color:#6b7c8f;">No holiday requests logged yet.</div>';
+    _svHolAllRequests = d.requests || [];
+    var nameSel = document.getElementById('sv-hol-filter-name');
+    var prevName = nameSel.value;
+    var names = Array.prototype.slice.call(new Set(_svHolAllRequests.map(function(r) { return r.staffName; }).filter(Boolean))).sort();
+    nameSel.innerHTML = '<option value="">All names</option>' + names.map(function(n) { return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>'; }).join('');
+    nameSel.value = names.indexOf(prevName) !== -1 ? prevName : '';
+
+    svRenderHolidayAllList();
   }).catch(function(err) { console.error('svLoadHolidayBrowse error:', err); });
+}
+function svRenderHolidayAllList() {
+  var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Taken: '#e6ecf5', Rejected: '#fee2e2' };
+  var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Taken: 'var(--brand-navy)', Rejected: '#b91c1c' };
+  var nameFilter = document.getElementById('sv-hol-filter-name').value;
+  var statusFilter = document.getElementById('sv-hol-filter-status').value;
+  var todayIso = new Date().toISOString().slice(0, 10);
+  var filtered = _svHolAllRequests.filter(function(r) {
+    if (nameFilter && r.staffName !== nameFilter) return false;
+    var label = r.status === 'Approved' && r.endDate && r.endDate < todayIso ? 'Taken' : r.status;
+    if (statusFilter && label !== statusFilter) return false;
+    return true;
+  });
+  document.getElementById('sv-hol-all-list').innerHTML = filtered.map(function(r) {
+    var label = r.status === 'Approved' && r.endDate && r.endDate < todayIso ? 'Taken' : r.status;
+    return '<div style="padding:8px 0;border-top:1px solid #f0f2f5;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+        '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + ' (' + r.days + ')</span></div>' +
+        '<span style="background:' + (statusBg[label]||'#f0f2f5') + ';color:' + (statusColor[label]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;flex-shrink:0;">' + escHtml(label) + '</span>' +
+      '</div>' +
+      (r.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:3px;">' + escHtml(r.notes) + '</div>' : '') +
+    '</div>';
+  }).join('') || '<div style="font-size:13px;color:#6b7c8f;">No holiday requests match.</div>';
 }
 
 function showComplianceLog(el) {
