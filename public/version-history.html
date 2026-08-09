@@ -125,6 +125,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.2</span>
+      <span class="version-title">Holiday Approver Routing, Inline Home Widget &amp; Employed-Adviser Auto-Enable</span>
+      <span class="version-date">9 August 2026</span>
+    </div>
+    <p class="version-summary">Holiday requests now route to a dedicated Holiday Approver per person (prepopulated: David Riley for Admin/Paraplanner staff, Dan Maskell for everyone else), editable per-person in User Management. Everyone flagged Employed adviser now gets holiday booking automatically, without needing the separate toggle. Added an inline copy of "My Holiday" to the bottom of the Home page, and the annual allowance is no longer editable from the request-logging form &mdash; only from User Management.</p>
+    <ul class="changes">
+      <li>New "Holiday Approver Email" field on Users, prepopulated across the company: Admin/Paraplanner job titles default to David Riley, everyone else defaults to Dan Maskell. Editable per-person in User Management if a different approver is needed.</li>
+      <li>Self-service holiday requests now notify the person's Holiday Approver instead of their day-to-day Supervisor; David Riley still always sees Admin/Paraplanner requests even if their approver is overridden.</li>
+      <li>Holiday booking is now automatically available to anyone flagged "Employed adviser" in User Management, in addition to the existing manual "Holiday booking" toggle.</li>
+      <li>Added an inline "My Holiday" panel to the bottom of the Home page (in addition to the existing top-bar button/modal) so it's visible without an extra click for anyone with holiday booking enabled.</li>
+      <li>Removed the "Annual allowance" field from the admin one-to-one holiday-logging form &mdash; allowance is set once in User Management and is not editable by whoever is logging or requesting a holiday.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v3.1</span>
       <span class="version-title">Company-Wide Holiday Booking System &amp; Meeting Booker</span>
       <span class="version-date">9 August 2026</span>

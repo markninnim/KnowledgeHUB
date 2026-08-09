@@ -779,6 +779,41 @@ select:focus { outline:none; }
         </div>
       </div>
 
+      <!-- My Holiday — inline copy of the self-service holiday request tool,
+           shown at the bottom of Home for anyone with holiday booking enabled
+           (explicit toggle, or automatic for Employed advisers). -->
+      <div id="home-my-holiday-wrap" style="display:none;margin-top:8px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">My Holiday</div>
+        <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div id="hmh-summary" style="font-size:13px;color:#6b7c8f;"></div>
+            <div id="hmh-approver" style="font-size:12px;color:#6b7c8f;"></div>
+          </div>
+
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Start date</div>
+              <input type="date" id="hmh-start" onchange="hmhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">End date</div>
+              <input type="date" id="hmh-end" onchange="hmhCalcDays()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
+              <input type="number" id="hmh-days" readonly title="Calculated automatically from start/end date" style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f0f2f5;color:#6b7c8f;">
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Notes</div>
+              <input type="text" id="hmh-notes" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            </div>
+            <button onclick="hmhSubmitRequest()" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Request holiday</button>
+          </div>
+
+          <div id="hmh-list"></div>
+        </div>
+      </div>
+
       <div style="text-align:center;padding:24px 0 8px;font-size:11px;color:#9aa7b3;"><a href="/version-history.html" style="color:#9aa7b3;text-decoration:none;">A Finance Planning Group solution powered by SimFlex.ai</a></div>
     </div><!-- /home-wrap -->
   </div><!-- /tab-home -->
@@ -4142,10 +4177,6 @@ Consolidating debts will increase the loan to value which can impact future deal
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Days</div>
               <input type="number" id="ap-hol-days" readonly title="Calculated automatically from start/end date" style="width:70px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#f0f2f5;color:#6b7c8f;">
             </div>
-            <div>
-              <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Annual allowance</div>
-              <input type="number" id="ap-hol-allowance" min="0" step="0.5" placeholder="days/yr" style="width:90px;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">
-            </div>
             <div style="flex:1;min-width:160px;">
               <div style="font-size:11px;font-weight:600;color:#6b7c8f;margin-bottom:4px;">Notes</div>
               <input type="text" id="ap-hol-notes" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;box-sizing:border-box;">
@@ -5921,15 +5952,22 @@ Consolidating debts will increase the loan to value which can impact future deal
                 <input id="uf-holidaybooking" type="checkbox" style="width:15px;height:15px;cursor:pointer;flex-shrink:0;">
                 <div>
                   <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Holiday booking</div>
-                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can request holiday themselves within KnowledgeHUB</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Can request holiday themselves within KnowledgeHUB (Employed advisers get this automatically)</div>
                 </div>
               </label>
               <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;background:#fafbfc;">
                 <div style="flex:1;">
                   <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Holiday allowance (days/yr)</div>
-                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Used to calculate remaining holiday</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Set here — not editable by the staff member</div>
                 </div>
                 <input id="uf-holidayallowance" type="number" min="0" step="0.5" style="width:70px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;background:#fafbfc;">
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Holiday approver email</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Who this person's requests are sent to (defaults: David Riley for Admin, Dan Maskell for everyone else)</div>
+                </div>
+                <input id="uf-holidayapprover" type="email" placeholder="name@financeplanning.co.uk" style="width:220px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
               </label>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">
@@ -9952,9 +9990,14 @@ var _currentUser = null;
       var mkbtn = document.getElementById('marketing-btn');
       if (mkbtn) mkbtn.style.display = 'inline-flex';
     }
-    if (user && user.holidayBookingEnabled) {
+    // Holiday booking: the explicit toggle, or automatic for anyone flagged
+    // Employed adviser in User Management.
+    var _holidayEnabled = !!(user && (user.holidayBookingEnabled || user.employedAdviser));
+    if (_holidayEnabled) {
       var holBtn = document.getElementById('holiday-nav-btn');
       if (holBtn) holBtn.style.display = 'inline-flex';
+      var homeMh = document.getElementById('home-my-holiday-wrap');
+      if (homeMh) { homeMh.style.display = 'block'; hmhLoadData(); }
     }
     if (user && (user.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk') {
       var mbBtn = document.getElementById('meeting-booker-nav-btn');
@@ -11376,6 +11419,7 @@ function openUserForm(userId) {
     document.getElementById('uf-employedadviser').checked   = u.employedAdviser  || false;
     document.getElementById('uf-holidaybooking').checked    = u.holidayBookingEnabled || false;
     document.getElementById('uf-holidayallowance').value    = u.holidayAllowanceDays != null ? u.holidayAllowanceDays : '';
+    document.getElementById('uf-holidayapprover').value     = u.holidayApproverEmail || '';
     renderNavAccessToggles(u.navAccess, u.isLeadGen || false);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
@@ -11404,6 +11448,7 @@ function openUserForm(userId) {
     document.getElementById('uf-employedadviser').checked  = false;
     document.getElementById('uf-holidaybooking').checked   = false;
     document.getElementById('uf-holidayallowance').value   = '';
+    document.getElementById('uf-holidayapprover').value    = '';
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false }, false);
     populateSupervisorDropdown('');
   }
@@ -11441,6 +11486,7 @@ function saveUser() {
     employedAdviser:  document.getElementById('uf-employedadviser').checked,
     holidayBookingEnabled: document.getElementById('uf-holidaybooking').checked,
     holidayAllowanceDays:  document.getElementById('uf-holidayallowance').value,
+    holidayApproverEmail:  document.getElementById('uf-holidayapprover').value.trim(),
     sellsInvestments:    document.getElementById('uf-investments').checked,
     sellsMortgages:      document.getElementById('uf-mortgages').checked,
     sellsProtection:     document.getElementById('uf-protection').checked,
@@ -15024,13 +15070,12 @@ function apSubmitHoliday() {
   var startDate = document.getElementById('ap-hol-start').value;
   var endDate = document.getElementById('ap-hol-end').value;
   var days = document.getElementById('ap-hol-days').value;
-  var allowance = document.getElementById('ap-hol-allowance').value;
   var notes = document.getElementById('ap-hol-notes').value.trim();
   if (!startDate || !endDate) { alert('Please set a start and end date.'); return; }
   fetch('/api/supervisor/holiday-request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ staffEmail: _apCurrentEmail, staffName: _apCurrentName, startDate: startDate, endDate: endDate, days: days, notes: notes, allowanceDaysPerYear: allowance || null })
+    body: JSON.stringify({ staffEmail: _apCurrentEmail, staffName: _apCurrentName, startDate: startDate, endDate: endDate, days: days, notes: notes })
   })
     .then(function(r) { return r.json(); })
     .then(function() {
@@ -15055,27 +15100,35 @@ function apDecideHoliday(id, status) {
 }
 
 // ── My Holiday (self-service request, for anyone with Holiday Booking enabled) ──
+// Shared by two places: the "My Holiday" modal (prefix "mh") reachable from the
+// top bar, and an inline copy at the bottom of Home (prefix "hmh") — same
+// backend, same markup shape, just different element ids so both can exist on
+// the page at once.
 function openMyHoliday() {
   document.getElementById('my-holiday-modal').style.display = 'flex';
-  mhLoadData();
+  mhLoadData('mh');
 }
 function closeMyHoliday() {
   document.getElementById('my-holiday-modal').style.display = 'none';
 }
-function mhCalcDays() {
-  var startEl = document.getElementById('mh-start'), endEl = document.getElementById('mh-end'), daysEl = document.getElementById('mh-days');
+function mhCalcDays(prefix) {
+  prefix = prefix || 'mh';
+  var startEl = document.getElementById(prefix + '-start'), endEl = document.getElementById(prefix + '-end'), daysEl = document.getElementById(prefix + '-days');
   if (!startEl.value || !endEl.value) { daysEl.value = ''; return; }
   var diff = Math.round((new Date(endEl.value) - new Date(startEl.value)) / 86400000) + 1;
   daysEl.value = diff > 0 ? diff : '';
 }
-function mhLoadData() {
+function mhLoadData(prefix) {
+  prefix = prefix || 'mh';
   fetch('/api/holidays/my').then(function(r){ return r.json(); }).then(function(d) {
     var parts = [];
     if (d.allowanceDaysPerYear != null) parts.push(d.allowanceDaysPerYear + ' days/yr allowance');
     parts.push((d.takenDays||0) + ' taken');
     parts.push((d.bookedDays||0) + ' booked');
     if (d.remainingDays != null) parts.push(d.remainingDays + ' remaining');
-    document.getElementById('mh-summary').textContent = parts.join(' · ');
+    document.getElementById(prefix + '-summary').textContent = parts.join(' · ');
+    var approverEl = document.getElementById(prefix + '-approver');
+    if (approverEl) approverEl.textContent = d.approverEmail ? ('Sent to ' + d.approverEmail + ' for approval') : '';
 
     var statusBg = { Pending: '#fef3c7', Approved: '#dcfce7', Rejected: '#fee2e2' };
     var statusColor = { Pending: '#b45309', Approved: '#15803d', Rejected: '#b91c1c' };
@@ -15088,14 +15141,15 @@ function mhLoadData() {
         '<span style="background:' + (statusBg[h.status]||'#f0f2f5') + ';color:' + (statusColor[h.status]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status) + '</span>' +
       '</div>';
     }).join('');
-    document.getElementById('mh-list').innerHTML = html || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No requests yet.</div>';
+    document.getElementById(prefix + '-list').innerHTML = html || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No requests yet.</div>';
   }).catch(function(err) { console.error('mhLoadData error:', err); });
 }
-function mhSubmitRequest() {
-  var startDate = document.getElementById('mh-start').value;
-  var endDate = document.getElementById('mh-end').value;
-  var days = document.getElementById('mh-days').value;
-  var notes = document.getElementById('mh-notes').value.trim();
+function mhSubmitRequest(prefix) {
+  prefix = prefix || 'mh';
+  var startDate = document.getElementById(prefix + '-start').value;
+  var endDate = document.getElementById(prefix + '-end').value;
+  var days = document.getElementById(prefix + '-days').value;
+  var notes = document.getElementById(prefix + '-notes').value.trim();
   if (!startDate || !endDate) { alert('Please set a start and end date.'); return; }
   fetch('/api/holidays/request-self', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -15104,14 +15158,17 @@ function mhSubmitRequest() {
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.error) { alert(d.error); return; }
-      document.getElementById('mh-start').value = '';
-      document.getElementById('mh-end').value = '';
-      document.getElementById('mh-days').value = '';
-      document.getElementById('mh-notes').value = '';
-      mhLoadData();
+      document.getElementById(prefix + '-start').value = '';
+      document.getElementById(prefix + '-end').value = '';
+      document.getElementById(prefix + '-days').value = '';
+      document.getElementById(prefix + '-notes').value = '';
+      mhLoadData(prefix);
     })
     .catch(function(err) { console.error('mhSubmitRequest error:', err); alert('Could not submit request.'); });
 }
+function hmhCalcDays() { mhCalcDays('hmh'); }
+function hmhLoadData() { mhLoadData('hmh'); }
+function hmhSubmitRequest() { mhSubmitRequest('hmh'); }
 
 // ── Meeting Booker (Dan Maskell) ────────────────────────────────
 var _mbAttendeesLoaded = false;

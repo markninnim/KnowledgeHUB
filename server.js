@@ -611,6 +611,10 @@ async function atGenericFetch(tableId, endpoint = '', options = {}) {
 // Booker tool restricted to Dan Maskell.
 const F_HOLIDAY_BOOKING_ENABLED = 'fld4UkTm2FsiMM5Os';
 const F_HOLIDAY_ALLOWANCE       = 'fldLuhHvgtAJWFNKr';
+// Who a person's holiday requests are sent to for approval — independent of
+// their line-manager Supervisor. Prepopulated: Admin/Paraplanner staff -> David
+// Riley, everyone else -> Dan Maskell. Editable per-person in User Management.
+const F_HOLIDAY_APPROVER        = 'fldbNOHF4nEUWyFrC';
 
 const NOTIF_TABLE     = 'tblZqIvcZlWREObnm';
 const NOTIF_RECIPIENT = 'fldboIYXsD2GYSaEp';
@@ -845,7 +849,8 @@ function recordToUser(record) {
     buddyEmail:          f[F_BUDDY_EMAIL]          || '',
     onboardingSeen:      f[F_ONBOARDING_SEEN]      || false,
     holidayBookingEnabled: f[F_HOLIDAY_BOOKING_ENABLED] || false,
-    holidayAllowanceDays:  f[F_HOLIDAY_ALLOWANCE] != null ? f[F_HOLIDAY_ALLOWANCE] : null
+    holidayAllowanceDays:  f[F_HOLIDAY_ALLOWANCE] != null ? f[F_HOLIDAY_ALLOWANCE] : null,
+    holidayApproverEmail:  f[F_HOLIDAY_APPROVER] || ''
   };
 }
 
@@ -4125,7 +4130,8 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
       [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
       [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
-      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null
+      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null,
+      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -4299,7 +4305,8 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_IS_LEADGEN]:           isLeadGen   === true || isLeadGen   === 'true',
       [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
       [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
-      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null
+      [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null,
+      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -8465,7 +8472,6 @@ app.post('/api/supervisor/holiday-request', requireAuth, async (req, res) => {
   const endDate    = (req.body.endDate || '').trim();
   const days       = Number(req.body.days) || 0;
   const notes      = (req.body.notes || '').trim();
-  const allowance  = req.body.allowanceDaysPerYear != null && req.body.allowanceDaysPerYear !== '' ? Number(req.body.allowanceDaysPerYear) : null;
   if (!staffEmail || !startDate || !endDate) return res.status(400).json({ error: 'staffEmail, startDate, endDate required' });
 
   try {
@@ -8480,7 +8486,6 @@ app.post('/api/supervisor/holiday-request', requireAuth, async (req, res) => {
       [HR_REQUESTED_BY]: caller.email,
       [HR_REQUESTED_AT]: new Date().toISOString()
     };
-    if (allowance != null) fields[HR_ALLOWANCE] = allowance;
     const body = await atGenericFetch(HOLIDAY_TABLE, '', {
       method: 'POST',
       body: JSON.stringify({ records: [{ fields }] })
@@ -8542,8 +8547,9 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
   try {
     const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
     const uf = ((uData.records || [])[0] || {}).fields || {};
-    const enabled = !!uf[F_HOLIDAY_BOOKING_ENABLED];
+    const enabled = !!uf[F_HOLIDAY_BOOKING_ENABLED] || !!uf[F_EMPLOYED_ADVISER];
     const allowance = uf[F_HOLIDAY_ALLOWANCE] != null ? uf[F_HOLIDAY_ALLOWANCE] : null;
+    const approverEmail = uf[F_HOLIDAY_APPROVER] || '';
 
     const formula = encodeURIComponent(`LOWER({${HR_STAFF_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`);
     const hData = await atGenericFetch(HOLIDAY_TABLE, `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${HR_START_DATE}&sort[0][direction]=desc`);
@@ -8563,7 +8569,7 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       if (h.status !== 'Approved' || h.startDate.slice(0, 4) !== yearNow) return;
       if (h.startDate < todayIso) takenDays += h.days; else bookedDays += h.days;
     });
-    res.json({ enabled, allowanceDaysPerYear: allowance, takenDays, bookedDays, remainingDays: allowance != null ? (allowance - takenDays - bookedDays) : null, holidays });
+    res.json({ enabled, allowanceDaysPerYear: allowance, approverEmail, takenDays, bookedDays, remainingDays: allowance != null ? (allowance - takenDays - bookedDays) : null, holidays });
   } catch (err) {
     console.error('holidays/my error:', err);
     res.status(500).json({ error: err.message });
@@ -8581,11 +8587,15 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
   try {
     const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
     const uf = ((uData.records || [])[0] || {}).fields || {};
-    if (!uf[F_HOLIDAY_BOOKING_ENABLED]) return res.status(403).json({ error: 'Holiday booking is not enabled for your account' });
+    if (!uf[F_HOLIDAY_BOOKING_ENABLED] && !uf[F_EMPLOYED_ADVISER]) return res.status(403).json({ error: 'Holiday booking is not enabled for your account' });
 
     const staffName = [uf[F_FIRST], uf[F_LAST]].filter(Boolean).join(' ') || caller.email;
-    const supervisorEmail = (uf[F_SUPERVISOR_EMAIL] || '').trim();
     const jobTitle = uf[F_TITLE] || '';
+    // Requests go to the person's Holiday Approver (prepopulated: David Riley for
+    // Admin/Paraplanner, Dan Maskell for everyone else — editable in User
+    // Management), not their day-to-day Supervisor.
+    const approverEmail = (uf[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
+    const supervisorEmail = (uf[F_SUPERVISOR_EMAIL] || '').trim();
 
     const body = await atGenericFetch(HOLIDAY_TABLE, '', {
       method: 'POST',
@@ -8603,10 +8613,12 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
     });
     const recordId = body.records[0].id;
 
-    if (supervisorEmail) {
-      await createNotification(supervisorEmail, 'Holiday Request', staffName + ' has requested holiday from ' + startDate + ' to ' + endDate + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
+    if (approverEmail) {
+      await createNotification(approverEmail, 'Holiday Request', staffName + ' has requested holiday from ' + startDate + ' to ' + endDate + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
     }
-    if (/^(admin|paraplanner)/i.test(jobTitle)) {
+    // David Riley always sees Admin/Paraplanner requests, even if this person's
+    // approver was manually overridden away from him.
+    if (/^(admin|paraplanner)/i.test(jobTitle) && approverEmail.toLowerCase() !== DAVID_RILEY_EMAIL) {
       await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + startDate + ' to ' + endDate + '.', '/supervise');
     }
     const clash = await checkHolidayClash(caller.email, supervisorEmail, startDate, endDate, recordId);
