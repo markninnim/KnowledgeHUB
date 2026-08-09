@@ -8789,11 +8789,8 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
     }
 
     let why = null;
-    if (results.length && (blockingNames.size || weekendCount)) {
-      const parts = [];
-      if (blockingNames.size) parts.push(Array.from(blockingNames).join(', ') + ' had holiday booked');
-      if (weekendCount) parts.push(weekendCount + ' weekend day' + (weekendCount === 1 ? '' : 's'));
-      why = 'Skipped: ' + parts.join(' and ') + '.';
+    if (results.length && blockingNames.size) {
+      why = Array.from(blockingNames).join(', ') + ' had holiday booked earlier in the week.';
     }
 
     res.json({ earliest: results[0] || null, earliestWhy: results[0] ? why : null, alternatives: results.slice(1) });
