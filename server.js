@@ -667,6 +667,23 @@ function datesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
+// Weekdays only (Mon–Fri) between two YYYY-MM-DD dates, inclusive — weekends
+// aren't part of anyone's holiday allowance, so they shouldn't count as days
+// taken. Used both when a request is created and whenever days are read
+// back, so historic records (e.g. imported from a spreadsheet with calendar
+// days) display and total correctly without needing to be edited in Airtable.
+function countWeekdays(startStr, endStr) {
+  if (!startStr || !endStr) return 0;
+  const start = new Date(startStr + 'T00:00:00Z'), end = new Date(endStr + 'T00:00:00Z');
+  if (isNaN(start) || isNaN(end) || end < start) return 0;
+  let count = 0;
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dow = d.getUTCDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
+
 // email -> { jobTitle, isSupervisor }, used to scope who Dan/David see in the
 // holiday ticker and browse-all view (Dan: Supervisors + Directors only,
 // David: Admin/Paraplanner only — everyone else sees the full company).
@@ -8333,7 +8350,7 @@ app.get('/api/supervisor/admin-profile', requireAuth, async (req, res) => {
       id: r.id,
       startDate: r.fields[HR_START_DATE] || '',
       endDate: r.fields[HR_END_DATE] || '',
-      days: r.fields[HR_DAYS] || 0,
+      days: countWeekdays(r.fields[HR_START_DATE], r.fields[HR_END_DATE]) || (r.fields[HR_DAYS] || 0),
       notes: r.fields[HR_NOTES] || '',
       status: r.fields[HR_STATUS] || 'Pending',
       requestedAt: r.fields[HR_REQUESTED_AT] || null,
@@ -8381,7 +8398,7 @@ app.get('/api/supervisor/holiday-summary-bulk', requireAuth, async (req, res) =>
       if (!out[email]) return;
       const status = f[HR_STATUS] || 'Pending';
       const startDate = f[HR_START_DATE] || '';
-      const days = f[HR_DAYS] || 0;
+      const days = countWeekdays(f[HR_START_DATE], f[HR_END_DATE]) || (f[HR_DAYS] || 0);
       if (status === 'Pending') out[email].pendingCount++;
       if (status === 'Approved') {
         const inThisYear = startDate.slice(0, 4) === String(yearNow);
@@ -8471,9 +8488,9 @@ app.post('/api/supervisor/holiday-request', requireAuth, async (req, res) => {
   const staffName  = (req.body.staffName || '').trim();
   const startDate  = (req.body.startDate || '').trim();
   const endDate    = (req.body.endDate || '').trim();
-  const days       = Number(req.body.days) || 0;
   const notes      = (req.body.notes || '').trim();
   if (!staffEmail || !startDate || !endDate) return res.status(400).json({ error: 'staffEmail, startDate, endDate required' });
+  const days = countWeekdays(startDate, endDate);
 
   try {
     const fields = {
@@ -8604,7 +8621,16 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
     const allowance = uf[F_HOLIDAY_ALLOWANCE] != null ? uf[F_HOLIDAY_ALLOWANCE] : null;
     const carriedOverDays = uf[F_HOLIDAY_CARRIED_OVER] != null ? uf[F_HOLIDAY_CARRIED_OVER] : 0;
     const totalAllocatedDays = allowance != null ? (allowance + carriedOverDays) : null;
-    const approverEmail = uf[F_HOLIDAY_APPROVER] || '';
+    const jobTitle = uf[F_TITLE] || '';
+    // Same fallback as request-self: an explicit Holiday Approver wins, else
+    // Admin/Paraplanner staff go to David Riley and everyone else to Dan.
+    const approverEmail = (uf[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
+    let approverName = approverEmail;
+    if (approverEmail) {
+      const aData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${approverEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+      const af = ((aData.records || [])[0] || {}).fields || {};
+      approverName = [af[F_FIRST], af[F_LAST]].filter(Boolean).join(' ') || approverEmail;
+    }
 
     const formula = encodeURIComponent(`LOWER({${HR_STAFF_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`);
     const hData = await atGenericFetch(HOLIDAY_TABLE, `?filterByFormula=${formula}&returnFieldsByFieldId=true&sort[0][field]=${HR_START_DATE}&sort[0][direction]=desc`);
@@ -8612,7 +8638,7 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       id: r.id,
       startDate: r.fields[HR_START_DATE] || '',
       endDate: r.fields[HR_END_DATE] || '',
-      days: r.fields[HR_DAYS] || 0,
+      days: countWeekdays(r.fields[HR_START_DATE], r.fields[HR_END_DATE]) || (r.fields[HR_DAYS] || 0),
       notes: r.fields[HR_NOTES] || '',
       status: r.fields[HR_STATUS] || 'Pending',
       decisionNotes: r.fields[HR_DECISION_NOTES] || ''
@@ -8634,6 +8660,7 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
       carriedOverDays,
       totalAllocatedDays,
       approverEmail,
+      approverName,
       takenDays,
       bookedDays,
       pendingDays,
@@ -8650,9 +8677,9 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
   const caller = req.session.user;
   const startDate = (req.body.startDate || '').trim();
   const endDate   = (req.body.endDate || '').trim();
-  const days      = Number(req.body.days) || 0;
   const notes     = (req.body.notes || '').trim();
   if (!startDate || !endDate) return res.status(400).json({ error: 'startDate, endDate required' });
+  const days = countWeekdays(startDate, endDate);
 
   try {
     const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
@@ -8720,7 +8747,7 @@ app.get('/api/supervisor/holiday-browse', requireAuth, async (req, res) => {
         staffName: r.fields[HR_STAFF_NAME] || '',
         startDate: r.fields[HR_START_DATE] || '',
         endDate: r.fields[HR_END_DATE] || '',
-        days: r.fields[HR_DAYS] || 0,
+        days: countWeekdays(r.fields[HR_START_DATE], r.fields[HR_END_DATE]) || (r.fields[HR_DAYS] || 0),
         status: r.fields[HR_STATUS] || 'Pending',
         notes: r.fields[HR_NOTES] || '',
         requestedAt: r.fields[HR_REQUESTED_AT] || ''
