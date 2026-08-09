@@ -4626,7 +4626,7 @@ Consolidating debts will increase the loan to value which can impact future deal
             <datalist id="sv-hol-name-list"></datalist>
             <select id="sv-hol-filter-status" onchange="svRenderHolidayAllList()" style="font-size:12px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-family:inherit;color:var(--brand-navy);">
               <option value="">All statuses</option>
-              <option value="Pending">Pending</option>
+              <option value="Pending">Requested</option>
               <option value="Approved">Approved</option>
               <option value="Taken">Taken</option>
               <option value="Rejected">Rejected</option>
@@ -15034,7 +15034,7 @@ function apLoadData() {
             (h.decisionNotes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">Decision: ' + escHtml(h.decisionNotes) + '</div>' : '') +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
-            '<span style="background:' + (statusBg[h.status] || '#f0f2f5') + ';color:' + (statusColor[h.status] || '#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status) + '</span>' +
+            '<span style="background:' + (statusBg[h.status] || '#f0f2f5') + ';color:' + (statusColor[h.status] || '#6b7c8f') + ';font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(h.status === 'Pending' ? 'Requested' : h.status) + '</span>' +
             actions +
           '</div>' +
         '</div>';
@@ -15136,11 +15136,23 @@ function openMyHoliday() {
 function closeMyHoliday() {
   document.getElementById('my-holiday-modal').style.display = 'none';
 }
+// Counts weekdays only (Mon–Fri) between two dates, inclusive — weekends
+// aren't part of anyone's holiday allowance, so they shouldn't eat into it.
+function weekdaysBetween(startStr, endStr) {
+  var start = new Date(startStr), end = new Date(endStr);
+  if (isNaN(start) || isNaN(end) || end < start) return 0;
+  var count = 0;
+  for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
 function mhCalcDays(prefix) {
   prefix = prefix || 'mh';
   var startEl = document.getElementById(prefix + '-start'), endEl = document.getElementById(prefix + '-end'), daysEl = document.getElementById(prefix + '-days');
   if (!startEl.value || !endEl.value) { daysEl.value = ''; return; }
-  var diff = Math.round((new Date(endEl.value) - new Date(startEl.value)) / 86400000) + 1;
+  var diff = weekdaysBetween(startEl.value, endEl.value);
   daysEl.value = diff > 0 ? diff : '';
 }
 // Full-width bar of one-unit segments: solid navy = taken, lighter blue =
@@ -15196,6 +15208,10 @@ function mhLoadData(prefix) {
     var html = (d.holidays || []).map(function(h) {
       var label = h.status;
       if (h.status === 'Approved' && h.endDate && h.endDate < todayIso) label = 'Taken';
+      // "Pending" is the underlying status everywhere (Airtable field,
+      // filters, comparisons) — only the displayed word changes to
+      // "Requested", since that's what staff actually did at this stage.
+      var displayLabel = label === 'Pending' ? 'Requested' : label;
       // Only offer Cancel while it's still Pending or Approved and hasn't
       // started yet — once the start date has passed it's been taken, so
       // cancelling here no longer makes sense (a supervisor would adjust it).
@@ -15208,7 +15224,7 @@ function mhLoadData(prefix) {
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
           cancelBtn +
-          '<span style="' + (pillStyle[label] || 'background:#e6ecf5;color:var(--brand-navy);') + 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(label) + '</span>' +
+          '<span style="' + (pillStyle[label] || 'background:#e6ecf5;color:var(--brand-navy);') + 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(displayLabel) + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -15525,6 +15541,7 @@ function svRenderHolidayAllList() {
   var thisYear = String(new Date().getFullYear());
   document.getElementById('sv-hol-all-list').innerHTML = filtered.map(function(r) {
     var label = r.status === 'Approved' && r.endDate && r.endDate < todayIso ? 'Taken' : r.status;
+    var displayLabel = label === 'Pending' ? 'Requested' : label;
     var actions = r.status === 'Pending' ?
       '<button onclick="svDecideHolidayAll(\'' + r.id + '\',\'Approved\')" style="background:var(--brand-navy);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-right:6px;">Approve</button>' +
       '<button onclick="svDecideHolidayAll(\'' + r.id + '\',\'Rejected\')" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;">Decline</button>' : '';
@@ -15549,7 +15566,7 @@ function svRenderHolidayAllList() {
         '<div style="font-size:13px;color:var(--brand-navy);">' + escHtml(r.staffName) + ' <span style="color:#6b7c8f;">' + escHtml(fmtDateUK(r.startDate)) + ' → ' + escHtml(fmtDateUK(r.endDate)) + ' (' + r.days + ')</span></div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
           actions +
-          '<span style="background:' + (statusBg[label]||'#f0f2f5') + ';color:' + (statusColor[label]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;">' + escHtml(label) + '</span>' +
+          '<span style="background:' + (statusBg[label]||'#f0f2f5') + ';color:' + (statusColor[label]||'#6b7c8f') + ';font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;">' + escHtml(displayLabel) + '</span>' +
         '</div>' +
       '</div>' +
       '<div style="font-size:12px;color:#6b7c8f;margin-top:3px;">' + escHtml(metaParts.join(' · ')) + '</div>' +
