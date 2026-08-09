@@ -498,8 +498,10 @@ select:focus { outline:none; }
       </div>
 
       <!-- Holiday ticker — Dan, Pete, Terry only -->
-      <div id="home-holiday-ticker" style="display:none;background:#f0f2f5;border-radius:10px;padding:12px 18px;margin-bottom:24px;font-size:13px;color:var(--brand-navy);overflow:hidden;white-space:nowrap;">
-        <span style="font-weight:700;margin-right:8px;">🏖 On holiday:</span><span id="home-holiday-ticker-text"></span>
+      <div id="home-holiday-ticker" style="display:none;background:#f0f2f5;border-radius:10px;padding:12px 0;margin-bottom:24px;font-size:13px;color:var(--brand-navy);overflow:hidden;white-space:nowrap;position:relative;">
+        <div id="home-holiday-ticker-track" style="display:inline-block;padding-left:18px;will-change:transform;">
+          <span style="font-weight:700;margin-right:8px;">🏖 On holiday:</span><span id="home-holiday-ticker-text"></span>
+        </div>
       </div>
 
       <!-- Quick links -->
@@ -15275,11 +15277,43 @@ function loadHomeHolidayTicker() {
     if (!d.visible) return;
     var parts = [];
     (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday until ' + escHtml(fmtDateUK(p.endDate))); });
-    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — booked until ' + escHtml(fmtDateUK(p.endDate))); });
+    (d.upcoming || []).slice(0, 5).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — until ' + escHtml(fmtDateUK(p.endDate))); });
     if (!parts.length) return;
     document.getElementById('home-holiday-ticker-text').innerHTML = parts.join('   •   ');
-    document.getElementById('home-holiday-ticker').style.display = 'block';
+    var wrap = document.getElementById('home-holiday-ticker');
+    wrap.style.display = 'block';
+    startHomeHolidayTickerScroll();
   }).catch(function(err) { console.error('loadHomeHolidayTicker error:', err); });
+}
+// Auto-scrolls the ticker track leftwards in a seamless loop when its content
+// is wider than the visible bar; duplicates the content once so the loop has
+// no visible gap, and skips animating (and the duplicate) if it already fits.
+function startHomeHolidayTickerScroll() {
+  var wrap = document.getElementById('home-holiday-ticker');
+  var track = document.getElementById('home-holiday-ticker-track');
+  if (!wrap || !track) return;
+  track.style.animation = 'none';
+  track.style.transform = 'none';
+  if (track.dataset.duped) { track.innerHTML = track.dataset.original; track.dataset.duped = ''; }
+  requestAnimationFrame(function() {
+    var trackWidth = track.scrollWidth, wrapWidth = wrap.clientWidth;
+    if (trackWidth <= wrapWidth) return;
+    track.dataset.original = track.innerHTML;
+    track.innerHTML += '<span style="display:inline-block;width:60px;"></span>' + track.innerHTML;
+    track.dataset.duped = '1';
+    var loopWidth = trackWidth + 60;
+    var styleId = 'home-holiday-ticker-kf';
+    if (!document.getElementById(styleId)) {
+      var style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = '@keyframes homeHolidayTickerScroll { from { transform: translateX(0); } to { transform: translateX(-' + loopWidth + 'px); } }';
+      document.head.appendChild(style);
+    } else {
+      document.getElementById(styleId).textContent = '@keyframes homeHolidayTickerScroll { from { transform: translateX(0); } to { transform: translateX(-' + loopWidth + 'px); } }';
+    }
+    var duration = Math.max(12, Math.round(loopWidth / 60));
+    track.style.animation = 'homeHolidayTickerScroll ' + duration + 's linear infinite';
+  });
 }
 
 // Small "on leave" / "pending request" badge shown on each Admin & Paraplanner
