@@ -8665,7 +8665,8 @@ app.get('/api/supervisor/holiday-browse', requireAuth, async (req, res) => {
         endDate: r.fields[HR_END_DATE] || '',
         days: r.fields[HR_DAYS] || 0,
         status: r.fields[HR_STATUS] || 'Pending',
-        notes: r.fields[HR_NOTES] || ''
+        notes: r.fields[HR_NOTES] || '',
+        requestedAt: r.fields[HR_REQUESTED_AT] || ''
       })).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
 
     const onHolidayToday = requests.filter(r => r.status === 'Approved' && r.startDate <= todayIso && r.endDate >= todayIso);
