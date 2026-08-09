@@ -4630,6 +4630,7 @@ Consolidating debts will increase the loan to value which can impact future deal
               <option value="Approved">Approved</option>
               <option value="Taken">Taken</option>
               <option value="Rejected">Rejected</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -15160,15 +15161,24 @@ function mhLoadData(prefix) {
     if (approverEl) approverEl.textContent = d.approverEmail ? ('Sent to ' + d.approverEmail + ' for approval') : '';
 
     var todayIso = new Date().toISOString().slice(0, 10);
+    var pillStyle = { Cancelled: 'background:#f0f2f5;color:#6b7c8f;', Pending: 'background:#fef3c7;color:#b45309;', Rejected: 'background:#fee2e2;color:#b91c1c;' };
     var html = (d.holidays || []).map(function(h) {
       var label = h.status;
       if (h.status === 'Approved' && h.endDate && h.endDate < todayIso) label = 'Taken';
+      // Only offer Cancel while it's still Pending or Approved and hasn't
+      // started yet — once the start date has passed it's been taken, so
+      // cancelling here no longer makes sense (a supervisor would adjust it).
+      var canCancel = (h.status === 'Pending' || h.status === 'Approved') && h.startDate > todayIso;
+      var cancelBtn = canCancel ? '<button onclick="mhCancelRequest(\'' + prefix + '\',\'' + h.id + '\')" style="background:none;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' : '';
       return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f5;padding:10px 0;">' +
         '<div>' +
           '<div style="font-size:13px;font-weight:600;color:var(--brand-navy);">' + escHtml(fmtDateUK(h.startDate)) + ' → ' + escHtml(fmtDateUK(h.endDate)) + ' (' + h.days + ' day' + (h.days==1?'':'s') + ')</div>' +
           (h.notes ? '<div style="font-size:12px;color:#6b7c8f;margin-top:2px;">' + escHtml(h.notes) + '</div>' : '') +
         '</div>' +
-        '<span style="background:#e6ecf5;color:var(--brand-navy);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(label) + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+          cancelBtn +
+          '<span style="' + (pillStyle[label] || 'background:#e6ecf5;color:var(--brand-navy);') + 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">' + escHtml(label) + '</span>' +
+        '</div>' +
       '</div>';
     }).join('');
     document.getElementById(prefix + '-list').innerHTML = html || '<div style="font-size:13px;color:#6b7c8f;padding:10px 0;">No requests yet.</div>';
@@ -15195,6 +15205,16 @@ function mhSubmitRequest(prefix) {
       mhLoadData(prefix);
     })
     .catch(function(err) { console.error('mhSubmitRequest error:', err); alert('Could not submit request.'); });
+}
+function mhCancelRequest(prefix, id) {
+  if (!confirm('Cancel this holiday request?')) return;
+  fetch('/api/holidays/' + id + '/cancel', { method: 'PUT' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert(d.error); return; }
+      mhLoadData(prefix);
+    })
+    .catch(function(err) { console.error('mhCancelRequest error:', err); alert('Could not cancel the request.'); });
 }
 function hmhCalcDays() { mhCalcDays('hmh'); }
 function hmhLoadData() { mhLoadData('hmh'); }
@@ -15268,8 +15288,8 @@ function openNotifications() {
       var decisionApproved = isDecision && /\bapproved\b/i.test(n.message || '');
       var typeColor = n.type === 'Holiday Clash' ? '#b91c1c' : (isDecision ? (decisionApproved ? '#166534' : '#b91c1c') : '#0369a1');
       var typeBg = n.type === 'Holiday Clash' ? '#fee2e2' : (isDecision ? (decisionApproved ? '#dcfce7' : '#fee2e2') : '#e0f2fe');
-      var isHoliday = n.type === 'Holiday Request' || n.type === 'Holiday Clash';
-      var staffNameMatch = isHoliday ? (n.message || '').match(/^([^']+?)(?:’s|\shas requested)/) : null;
+      var isHoliday = n.type === 'Holiday Request' || n.type === 'Holiday Clash' || n.type === 'Holiday Cancelled';
+      var staffNameMatch = isHoliday ? (n.message || '').match(/^([^']+?)(?:’s|\shas (?:requested|cancelled))/) : null;
       var staffName = staffNameMatch ? staffNameMatch[1].trim() : '';
       var reviewBtn = isHoliday ? '<button onclick="notifGoToHoliday(\'' + n.id + '\',\'' + staffName.replace(/'/g, "\\'") + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">Review</button>' :
         (isDecision ? '<button onclick="notifGoToMyHoliday(\'' + n.id + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">View</button>' : '');
@@ -15460,8 +15480,8 @@ function svLoadHolidayBrowse() {
   }).catch(function(err) { console.error('svLoadHolidayBrowse error:', err); });
 }
 function svRenderHolidayAllList() {
-  var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Taken: '#e6ecf5', Rejected: '#fee2e2' };
-  var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Taken: 'var(--brand-navy)', Rejected: '#b91c1c' };
+  var statusBg = { Pending: '#fef3c7', Approved: '#e6ecf5', Taken: '#e6ecf5', Rejected: '#fee2e2', Cancelled: '#f0f2f5' };
+  var statusColor = { Pending: '#b45309', Approved: 'var(--brand-navy)', Taken: 'var(--brand-navy)', Rejected: '#b91c1c', Cancelled: '#6b7c8f' };
   var nameFilter = document.getElementById('sv-hol-filter-name').value.trim().toLowerCase();
   var statusFilter = document.getElementById('sv-hol-filter-status').value;
   var todayIso = new Date().toISOString().slice(0, 10);

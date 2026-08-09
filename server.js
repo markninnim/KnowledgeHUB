@@ -707,7 +707,7 @@ async function checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate
     const otherEmail = (f[HR_STAFF_EMAIL] || '').toLowerCase();
     if (otherEmail === staffEmail.toLowerCase() || !teamEmails.has(otherEmail)) continue;
     const status = f[HR_STATUS] || 'Pending';
-    if (status === 'Rejected') continue;
+    if (status === 'Rejected' || status === 'Cancelled') continue;
     if (datesOverlap(startDate, endDate, f[HR_START_DATE] || '', f[HR_END_DATE] || '')) {
       return { otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] };
     }
@@ -8548,6 +8548,48 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
     res.json({ ok: true });
   } catch (err) {
     console.error('holiday-request update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Staff cancelling their own not-yet-started holiday (Pending or Approved,
+// start date still in the future — once it's begun it's "taken" and should
+// go through a supervisor decline/adjustment instead, not a self-cancel).
+app.put('/api/holidays/:id/cancel', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  try {
+    const rec = await atGenericFetch(HOLIDAY_TABLE, `/${req.params.id}?returnFieldsByFieldId=true`);
+    const f = rec.fields || {};
+    const staffEmail = (f[HR_STAFF_EMAIL] || '').toLowerCase();
+    if (staffEmail !== caller.email.toLowerCase()) return res.status(403).json({ error: 'Forbidden' });
+
+    const status = f[HR_STATUS] || 'Pending';
+    if (status !== 'Pending' && status !== 'Approved') return res.status(400).json({ error: 'Only Pending or Approved requests can be cancelled' });
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const startDate = f[HR_START_DATE] || '';
+    if (startDate && startDate <= todayIso) return res.status(400).json({ error: 'This holiday has already started and can no longer be cancelled here' });
+
+    await atGenericFetch(HOLIDAY_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ typecast: true, records: [{ id: req.params.id, fields: { [HR_STATUS]: 'Cancelled' } }] })
+    });
+
+    // Let the approver know, so an already-Approved absence they were
+    // planning around doesn't silently disappear from their radar.
+    const staffName = f[HR_STAFF_NAME] || staffEmail;
+    const endDate = f[HR_END_DATE] || '';
+    const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+    const uf = ((uData.records || [])[0] || {}).fields || {};
+    const jobTitle = uf[F_TITLE] || '';
+    const approverEmail = (uf[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
+    if (approverEmail) {
+      await createNotification(approverEmail, 'Holiday Cancelled', staffName + ' has cancelled their holiday request for ' + startDate + ' to ' + endDate + '.', '/supervise');
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('holidays/:id/cancel error:', err);
     res.status(500).json({ error: err.message });
   }
 });
