@@ -15264,12 +15264,15 @@ function openNotifications() {
   fetch('/api/notifications').then(function(r){ return r.json(); }).then(function(d) {
     var html = (d.notifications || []).map(function(n) {
       var dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-      var typeColor = n.type === 'Holiday Clash' ? '#b91c1c' : '#0369a1';
-      var typeBg = n.type === 'Holiday Clash' ? '#fee2e2' : '#e0f2fe';
+      var isDecision = n.type === 'Holiday Decision';
+      var decisionApproved = isDecision && /\bapproved\b/i.test(n.message || '');
+      var typeColor = n.type === 'Holiday Clash' ? '#b91c1c' : (isDecision ? (decisionApproved ? '#166534' : '#b91c1c') : '#0369a1');
+      var typeBg = n.type === 'Holiday Clash' ? '#fee2e2' : (isDecision ? (decisionApproved ? '#dcfce7' : '#fee2e2') : '#e0f2fe');
       var isHoliday = n.type === 'Holiday Request' || n.type === 'Holiday Clash';
       var staffNameMatch = isHoliday ? (n.message || '').match(/^([^']+?)(?:’s|\shas requested)/) : null;
       var staffName = staffNameMatch ? staffNameMatch[1].trim() : '';
-      var reviewBtn = isHoliday ? '<button onclick="notifGoToHoliday(\'' + n.id + '\',\'' + staffName.replace(/'/g, "\\'") + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">Review</button>' : '';
+      var reviewBtn = isHoliday ? '<button onclick="notifGoToHoliday(\'' + n.id + '\',\'' + staffName.replace(/'/g, "\\'") + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">Review</button>' :
+        (isDecision ? '<button onclick="notifGoToMyHoliday(\'' + n.id + '\')" style="font-size:11px;font-weight:700;color:#fff;background:var(--brand-navy);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;margin-right:6px;">View</button>' : '');
       return '<div style="border-top:1px solid #f0f2f5;padding:12px 0;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
           '<span style="background:' + typeBg + ';color:' + typeColor + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;">' + escHtml(n.type) + '</span>' +
@@ -15290,6 +15293,14 @@ function notifMarkRead(id) {
   fetch('/api/notifications/' + id + '/read', { method: 'PUT' })
     .then(function() { openNotifications(); loadNotificationBell(); })
     .catch(function(err) { console.error('notifMarkRead error:', err); });
+}
+// "View" button on a staff-facing Holiday Decision notification (their own
+// request was approved/declined): just opens their own My Holiday panel —
+// no Supervise access needed since this is the staff member, not the approver.
+function notifGoToMyHoliday(id) {
+  closeNotifications();
+  openMyHoliday();
+  fetch('/api/notifications/' + id + '/read', { method: 'PUT' }).then(loadNotificationBell).catch(function(){});
 }
 // "Review" button on a Holiday Request/Clash notification: jumps straight to
 // Supervise > Holiday, pre-filtered to Pending + that person's name, so the

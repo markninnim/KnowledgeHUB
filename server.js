@@ -8517,21 +8517,31 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
       } }] })
     });
 
-    if (status === 'Approved') {
+    if (status === 'Approved' || status === 'Rejected') {
       try {
         const rec = await atGenericFetch(HOLIDAY_TABLE, `/${req.params.id}?returnFieldsByFieldId=true`);
         const f = rec.fields || {};
         const staffEmail = f[HR_STAFF_EMAIL] || '';
         const staffName  = f[HR_STAFF_NAME] || staffEmail;
         const startDate  = f[HR_START_DATE] || '', endDate = f[HR_END_DATE] || '';
-        const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
-        const supervisorEmail = (((uData.records || [])[0] || {}).fields || {})[F_SUPERVISOR_EMAIL] || '';
-        const clash = await checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate, req.params.id);
-        if (clash) {
-          await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s approved holiday (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+
+        // Let the staff member know the outcome — this is what puts the red
+        // dot on their own notification bell, separate from the approver's
+        // "new request" notification.
+        if (staffEmail) {
+          await createNotification(staffEmail, 'Holiday Decision', 'Your holiday request for ' + startDate + ' to ' + endDate + ' was ' + status.toLowerCase() + '.', '/my-holiday');
+        }
+
+        if (status === 'Approved') {
+          const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+          const supervisorEmail = (((uData.records || [])[0] || {}).fields || {})[F_SUPERVISOR_EMAIL] || '';
+          const clash = await checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate, req.params.id);
+          if (clash) {
+            await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s approved holiday (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+          }
         }
       } catch (clashErr) {
-        console.error('holiday-request approve clash-check error:', clashErr);
+        console.error('holiday-request approve/reject notify error:', clashErr);
       }
     }
 
