@@ -8740,7 +8740,7 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (caller.email.toLowerCase() !== DAN_MASKELL_EMAIL && !caller.isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
-  const attendees = (req.query.attendees || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const attendees = Array.from(new Set((req.query.attendees || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)));
   if (!attendees.length) return res.status(400).json({ error: 'attendees required' });
   const fromDate = (req.query.from || '').trim() || new Date().toISOString().slice(0, 10);
 
@@ -8790,7 +8790,7 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
 
     let why = null;
     if (results.length && blockingNames.size) {
-      why = Array.from(blockingNames).join(', ') + ' had holiday booked earlier in the week.';
+      why = 'This is the earliest date ' + attendees.length + (attendees.length === 1 ? ' attendee is' : ' attendees are') + ' available together.';
     }
 
     res.json({ earliest: results[0] || null, earliestWhy: results[0] ? why : null, alternatives: results.slice(1) });
