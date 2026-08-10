@@ -826,7 +826,12 @@ function whaDateForDay(weekStart, dayKey) {
 }
 
 async function whaFindRecord(email, weekStart) {
-  const formula = `AND({${WHA_EMAIL}}="${email}",{${WHA_WEEK_START}}="${weekStart}")`;
+  // Week Start Date is an Airtable Date field — comparing it to a plain
+  // string with = never matches (the field's value isn't text), which was
+  // silently making this always return null and every save fall through to
+  // "create a new record", producing a duplicate row per box clicked instead
+  // of one row per person/week. DATESTR() coerces it to text first.
+  const formula = `AND({${WHA_EMAIL}}="${email}",DATESTR({${WHA_WEEK_START}})="${weekStart}")`;
   const data = await atGenericFetch(WHA_TABLE, `?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=true&maxRecords=1`);
   return (data.records || [])[0] || null;
 }
