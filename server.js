@@ -1082,8 +1082,17 @@ app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
   try {
     const q = (req.query.q || '').toString().trim().toLowerCase();
     if (q.length < 2) return res.json({ results: [] });
-    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100`);
-    const results = (data.records || []).map(r => ({
+    // Users table has 130+ rows — a single pageSize=100 request silently
+    // truncates it, so this must page through with offset (same bug pattern
+    // as getStaffRoleMap/getApproverMap; fixed here first since it was
+    // actively causing real people, e.g. Dan Maskell, to be un-findable).
+    let records = [], offset;
+    do {
+      const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100${offset ? '&offset=' + offset : ''}`);
+      records = records.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    const results = records.map(r => ({
       email: r.fields[F_EMAIL] || '',
       name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '),
       employed: !!r.fields[F_EMPLOYED_ADVISER]
