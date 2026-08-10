@@ -741,51 +741,18 @@ function staffMatchesViewerScope(callerEmail, staffEmail, roleMap) {
   return true;
 }
 
-// Same Holiday Approver resolution used everywhere a request/cancel/clash
+// Same Holiday Approver resolution used everywhere a request/cancel
 // needs to know who's responsible for a given person: an explicit Holiday
 // Approver Email wins, else Admin/Paraplanner staff default to David Riley
-// and everyone else to Dan Maskell.
+// and everyone else to Dan Maskell. Holiday notifications (Request/Decision/
+// Cancelled) are always sent to this resolved approver only — i.e. every
+// notification a person receives is for someone they actually manage
+// holiday for. (Clash-detection between overlapping holidays was removed —
+// it was firing on the approving supervisor's own dashboard for overlaps
+// between two other people's holidays, which wasn't useful signal.)
 function resolveHolidayApprover(f) {
   const jobTitle = f[F_TITLE] || '';
   return (f[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
-}
-
-// email -> resolved Holiday Approver email for every user, used by
-// checkHolidayClash to scope "teammate" to "shares the same holiday
-// approver" rather than the (frequently different) day-to-day Supervisor
-// Email field, so clashes are only ever raised between people the same
-// approver is actually responsible for.
-async function getApproverMap() {
-  const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_TITLE}&fields[]=${F_HOLIDAY_APPROVER}&pageSize=100`);
-  const map = {};
-  (data.records || []).forEach(r => {
-    const email = (r.fields[F_EMAIL] || '').toLowerCase();
-    if (email) map[email] = resolveHolidayApprover(r.fields).toLowerCase();
-  });
-  return map;
-}
-
-// Looks for another Pending/Approved request, for a different person who
-// shares the same Holiday Approver (i.e. teammate for approval purposes),
-// whose dates overlap the given range.
-async function checkHolidayClash(staffEmail, approverEmail, startDate, endDate, excludeRecordId) {
-  if (!approverEmail) return null;
-  const [all, approverMap] = await Promise.all([fetchAllHolidayRequests(), getApproverMap()]);
-  const staffLower = staffEmail.toLowerCase();
-  const approverLower = approverEmail.toLowerCase();
-
-  for (const r of all) {
-    if (r.id === excludeRecordId) continue;
-    const f = r.fields;
-    const otherEmail = (f[HR_STAFF_EMAIL] || '').toLowerCase();
-    if (otherEmail === staffLower || approverMap[otherEmail] !== approverLower) continue;
-    const status = f[HR_STATUS] || 'Pending';
-    if (status === 'Rejected' || status === 'Cancelled') continue;
-    if (datesOverlap(startDate, endDate, f[HR_START_DATE] || '', f[HR_END_DATE] || '')) {
-      return { otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] };
-    }
-  }
-  return null;
 }
 
 // ── Home page Whereabouts grid (own week, self-service) ──────────
@@ -1085,7 +1052,7 @@ app.use('/api/', (req, res, next) => {
 });
 
 // ── Home page Whereabouts grid routes (helpers/consts defined earlier, near
-// checkHolidayClash) — registered here, after session/body-parser middleware
+// resolveHolidayApprover) — registered here, after session/body-parser middleware
 // so req.session and req.body both actually exist by the time these run.
 // (Previously sat too early in the file — before app.use(session(...)) even
 // ran — so req.session was undefined and every call 500'd.)
@@ -8798,18 +8765,8 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
         if (staffEmail) {
           await createNotification(staffEmail, 'Holiday Decision', 'Your holiday request for ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ' was ' + status.toLowerCase() + '.', '/my-holiday');
         }
-
-        if (status === 'Approved') {
-          const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${staffEmail.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
-          const uf = ((uData.records || [])[0] || {}).fields || {};
-          const approverEmail = resolveHolidayApprover(uf);
-          const clash = await checkHolidayClash(staffEmail, approverEmail, startDate, endDate, req.params.id);
-          if (clash && approverEmail) {
-            await createNotification(approverEmail, 'Holiday Clash', staffName + '’s approved holiday (' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ') overlaps with ' + clash.otherName + '’s holiday (' + fmtDateUK(clash.startDate) + ' to ' + fmtDateUK(clash.endDate) + ').', '/supervise');
-          }
-        }
-      } catch (clashErr) {
-        console.error('holiday-request approve/reject notify error:', clashErr);
+      } catch (notifyErr) {
+        console.error('holiday-request approve/reject notify error:', notifyErr);
       }
     }
 
@@ -8956,19 +8913,13 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
     });
     const recordId = body.records[0].id;
 
-    // Only flag a clash against people who share this same Holiday Approver —
-    // i.e. the approver's own team — so David/Dan/whoever isn't pinged about
-    // an overlap between two people they have nothing to do with.
-    const clash = await checkHolidayClash(caller.email, approverEmail, startDate, endDate, recordId);
-    const clashSuffix = clash ? ' This overlaps with ' + clash.otherName + '’s holiday (' + fmtDateUK(clash.startDate) + ' to ' + fmtDateUK(clash.endDate) + ').' : '';
-
     if (approverEmail) {
-      await createNotification(approverEmail, 'Holiday Request', staffName + ' has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').' + clashSuffix, '/supervise');
+      await createNotification(approverEmail, 'Holiday Request', staffName + ' has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
     }
     // David Riley always sees Admin/Paraplanner requests, even if this person's
     // approver was manually overridden away from him.
     if (/^(admin|paraplanner)/i.test(jobTitle) && approverEmail.toLowerCase() !== DAVID_RILEY_EMAIL) {
-      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + '.' + clashSuffix, '/supervise');
+      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + '.', '/supervise');
     }
 
     res.json({ ok: true, id: recordId });

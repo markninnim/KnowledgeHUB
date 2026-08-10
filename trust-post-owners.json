@@ -646,5 +646,59 @@
       "Richard Saunders"
     ],
     "createdAt": "2026-07-22T00:00:00.000Z"
+  },
+  "Dan-Maskell": {
+    "emails": [
+      "dan.maskell@financeplanning.co.uk"
+    ],
+    "names": [
+      "Dan Maskell"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
+  },
+  "Kim-Dock": {
+    "emails": [
+      "kim.dock@financeplanning.co.uk"
+    ],
+    "names": [
+      "Kim Dock"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
+  },
+  "Lucy-Diton": {
+    "emails": [
+      "lucy.diton@financeplanning.co.uk"
+    ],
+    "names": [
+      "Lucy Diton"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
+  },
+  "Torie-Maleganeas": {
+    "emails": [
+      "torie.maleganeas@financeplanning.co.uk"
+    ],
+    "names": [
+      "Torie Maleganeas"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
+  },
+  "Gary-Bray": {
+    "emails": [
+      "gary.bray@financeplanning.co.uk"
+    ],
+    "names": [
+      "Gary Bray"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
+  },
+  "Binita-Gurung": {
+    "emails": [
+      "binita.gurung@financeplanning.co.uk"
+    ],
+    "names": [
+      "Binita Gurung"
+    ],
+    "createdAt": "2026-08-10T00:00:00.000Z"
   }
 }
