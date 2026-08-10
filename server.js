@@ -788,6 +788,160 @@ async function checkHolidayClash(staffEmail, approverEmail, startDate, endDate, 
   return null;
 }
 
+// ── Home page Whereabouts grid (own week, self-service) ──────────
+// A small "where am I this week" card on the Home page — distinct from the
+// Supervise > Whereabouts weekly rota .docx (that's a supervisor-managed
+// office-wide document; this is a per-person AM/PM grid every user edits for
+// themselves and can look up teammates' via search). One Airtable record per
+// person per week (Week Start Date = the Monday), five day columns each
+// split AM/PM. Holiday is auto-filled from the Holiday Requests table and is
+// read-only in the UI (only Office/Home/Out can be typed in).
+const WHA_TABLE      = 'tblD908zU6XS7IRgN';
+const WHA_EMAIL      = 'fldrODWlkFrNoIN5i';
+const WHA_WEEK_START = 'fldDqsYIVYUnvjZgO';
+const WHA_DAY_FIELDS = {
+  Mon: { AM: 'fldnuxz6POB6AsEDu', PM: 'fldpDP3WAFB03Eiqc' },
+  Tue: { AM: 'fldpRxG8tkVavQuWI', PM: 'fldpcbcZ8NrB53WJB' },
+  Wed: { AM: 'fldh233pD9aZ9v7UT', PM: 'fld8eGACRJR9KPprk' },
+  Thu: { AM: 'fldmMiowzYCclhiW7', PM: 'fldxw7qL3VROEVQQn' },
+  Fri: { AM: 'fldWMzb4GRxg6MPL4', PM: 'fld7m3JKnC08s43u2' }
+};
+const WHA_DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const WHA_VALUES = ['Office', 'Home', 'Out', 'Holiday'];
+
+// Monday-of-the-week (as YYYY-MM-DD) for a given ISO date string, or today.
+function whaWeekStart(dateStr) {
+  const d = dateStr ? new Date(dateStr + 'T00:00:00Z') : new Date();
+  const day = d.getUTCDay(); // 0=Sun..6=Sat
+  const diff = day === 0 ? -6 : 1 - day; // move back to Monday
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function whaDateForDay(weekStart, dayKey) {
+  const idx = WHA_DAY_ORDER.indexOf(dayKey);
+  const d = new Date(weekStart + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + idx);
+  return d.toISOString().slice(0, 10);
+}
+
+async function whaFindRecord(email, weekStart) {
+  const formula = `AND({${WHA_EMAIL}}="${email}",{${WHA_WEEK_START}}="${weekStart}")`;
+  const data = await atGenericFetch(WHA_TABLE, `?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=true&maxRecords=1`);
+  return (data.records || [])[0] || null;
+}
+
+// Builds the 5-day AM/PM grid for one person's week, overlaying approved (or
+// pending) holiday on top of whatever they've manually entered — holiday
+// always wins so the box can't be edited into something else while away.
+async function whaGetWeekGrid(email, weekStart) {
+  const rec = await whaFindRecord(email, weekStart);
+  const f = (rec && rec.fields) || {};
+  const grid = {};
+  WHA_DAY_ORDER.forEach(day => {
+    grid[day] = {
+      AM: f[WHA_DAY_FIELDS[day].AM] || null,
+      PM: f[WHA_DAY_FIELDS[day].PM] || null
+    };
+  });
+
+  // Overlay holiday from the Holiday Requests table for this person/week.
+  try {
+    const holidays = await fetchAllHolidayRequests();
+    const emailLower = email.toLowerCase();
+    const mine = holidays.filter(r => (r.fields[HR_STAFF_EMAIL] || '').toLowerCase() === emailLower && (r.fields[HR_STATUS] || 'Pending') !== 'Rejected' && (r.fields[HR_STATUS] || '') !== 'Cancelled');
+    WHA_DAY_ORDER.forEach(day => {
+      const dateStr = whaDateForDay(weekStart, day);
+      const onHoliday = mine.some(r => datesOverlap(dateStr, dateStr, r.fields[HR_START_DATE] || '', r.fields[HR_END_DATE] || ''));
+      if (onHoliday) { grid[day].AM = 'Holiday'; grid[day].PM = 'Holiday'; grid[day].holidayLocked = true; }
+    });
+  } catch (e) {
+    console.error('whaGetWeekGrid holiday overlay error:', e);
+  }
+
+  return { weekStart, grid, recordId: rec ? rec.id : null };
+}
+
+// GET /api/whereabouts-grid/mine — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
+app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  try {
+    const email = (req.session.user.email || '').toLowerCase();
+    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
+    const result = await whaGetWeekGrid(email, weekStart);
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/mine error:', err);
+    res.status(500).json({ error: 'Failed to load your whereabouts.' });
+  }
+});
+
+// PUT /api/whereabouts-grid/mine — set one day/slot for the caller's own week. { week, day, slot, value }
+app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  try {
+    const email = (req.session.user.email || '').toLowerCase();
+    const { day, slot, value } = req.body || {};
+    const weekStart = whaWeekStart((req.body.week || '').toString() || null);
+    if (!WHA_DAY_FIELDS[day] || (slot !== 'AM' && slot !== 'PM')) return res.status(400).json({ error: 'Invalid day/slot' });
+    if (value !== null && WHA_VALUES.indexOf(value) === -1) return res.status(400).json({ error: 'Invalid value' });
+    if (value === 'Holiday') return res.status(400).json({ error: 'Holiday is set automatically from approved holiday requests' });
+
+    // Refuse to overwrite a day that's actually on holiday.
+    const current = await whaGetWeekGrid(email, weekStart);
+    if (current.grid[day].holidayLocked) return res.status(400).json({ error: 'This day is booked as holiday and can\'t be edited here' });
+
+    const fieldId = WHA_DAY_FIELDS[day][slot];
+    const existing = await whaFindRecord(email, weekStart);
+    if (existing) {
+      await atGenericFetch(WHA_TABLE, '', {
+        method: 'PATCH',
+        body: JSON.stringify({ typecast: true, records: [{ id: existing.id, fields: { [fieldId]: value || null } }] })
+      });
+    } else {
+      await atGenericFetch(WHA_TABLE, '', {
+        method: 'POST',
+        body: JSON.stringify({ typecast: true, records: [{ fields: { [WHA_EMAIL]: email, [WHA_WEEK_START]: weekStart, [fieldId]: value || null } }] })
+      });
+    }
+    const result = await whaGetWeekGrid(email, weekStart);
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/mine PUT error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// GET /api/whereabouts-grid/search?q=name — typeahead over staff names/emails, for "look up a colleague"
+app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
+  try {
+    const q = (req.query.q || '').toString().trim().toLowerCase();
+    if (q.length < 2) return res.json({ results: [] });
+    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&pageSize=100`);
+    const results = (data.records || []).map(r => ({
+      email: r.fields[F_EMAIL] || '',
+      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ')
+    })).filter(u => u.email && (u.name.toLowerCase().indexOf(q) !== -1 || u.email.toLowerCase().indexOf(q) !== -1)).slice(0, 8);
+    res.json({ results });
+  } catch (err) {
+    console.error('whereabouts-grid/search error:', err);
+    res.status(500).json({ error: 'Search failed.' });
+  }
+});
+
+// GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week
+app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
+    const result = await whaGetWeekGrid(email, weekStart);
+    result.email = email;
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/user error:', err);
+    res.status(500).json({ error: 'Failed to load.' });
+  }
+});
+
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
 let _featuredSocial = [];

@@ -727,6 +727,30 @@ select:focus { outline:none; }
         <div id="home-cd-list" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;"></div>
       </div>
 
+      <!-- Whereabouts card (own week, above Feefo) -->
+      <div id="home-wha-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/><circle cx="19" cy="7" r="2"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--brand-navy);">Whereabouts</div>
+              <div id="home-wha-week-label" style="font-size:12px;color:#6b7c8f;"></div>
+            </div>
+          </div>
+          <div style="position:relative;">
+            <input id="home-wha-search" type="text" placeholder="Look up a colleague…" autocomplete="off" oninput="whaSearchInput()" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:inherit;width:210px;color:var(--brand-navy);">
+            <div id="home-wha-search-results" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(var(--brand-navy-rgb),.12);z-index:50;min-width:220px;overflow:hidden;"></div>
+          </div>
+        </div>
+        <div id="home-wha-viewing-banner" style="display:none;background:#f0f2f5;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--brand-navy);margin-bottom:12px;align-items:center;justify-content:space-between;">
+          <span id="home-wha-viewing-text"></span>
+          <a href="#" onclick="whaBackToMine();return false;" style="font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;">← Back to my week</a>
+        </div>
+        <div id="home-wha-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;"></div>
+      </div>
+
       <!-- Feefo card (full width) -->
       <div style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:24px;">
         <!-- Header row -->
@@ -9331,6 +9355,116 @@ function toggleLvArchive() {
 
 // ── Home page ──────────────────────────────────────────────────
 
+// ── Home page Whereabouts card (own week, above Feefo) ──────────
+// Distinct from Supervise > Whereabouts (the supervisor-managed weekly rota
+// document) — this is a small self-service AM/PM grid every user fills in
+// for themselves, with holiday auto-filled and read-only, plus a search box
+// to look up (read-only) a colleague's week.
+var WHA_DAY_LABELS = { Mon: 'Mon', Tue: 'Tue', Wed: 'Wed', Thu: 'Thu', Fri: 'Fri' };
+var WHA_STATUS_STYLE = {
+  Office:  { bg: '#eaf3ff', color: 'var(--brand-navy)', label: 'Office' },
+  Home:    { bg: '#eafaf0', color: '#1e7d43',           label: 'Home' },
+  Out:     { bg: '#fff4e5', color: '#a15c00',           label: 'Out' },
+  Holiday: { bg: '#fdeaea', color: '#b3261e',           label: 'Holiday' }
+};
+var _whaViewingEmail = null;
+var _whaSearchTimer = null;
+
+function whaWeekLabel(weekStart) {
+  if (!weekStart) return '';
+  var parts = weekStart.split('-');
+  var mon = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+  var fri = new Date(mon.getTime() + 4 * 86400000);
+  function dm(d) { return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+  return 'Week of ' + dm(mon) + ' – ' + dm(fri);
+}
+
+function loadWhereaboutsGrid(email) {
+  var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/mine';
+  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) return;
+    document.getElementById('home-wha-week-label').textContent = whaWeekLabel(data.weekStart);
+    renderWhaGrid(data.grid, !!email);
+  }).catch(function(e) { console.error('whereabouts grid load error', e); });
+}
+
+function renderWhaGrid(grid, readOnly) {
+  var el = document.getElementById('home-wha-grid');
+  if (!el) return;
+  var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  el.innerHTML = days.map(function(day) {
+    var cell = grid[day] || {};
+    function box(slot) {
+      var val = cell[slot];
+      var style = val ? WHA_STATUS_STYLE[val] : { bg: '#f8fafc', color: '#a0aab5', label: '—' };
+      var locked = readOnly || cell.holidayLocked;
+      var onclick = locked ? '' : ' onclick="whaCycleBox(\'' + day + '\',\'' + slot + '\')"';
+      return '<div' + onclick + ' style="background:' + style.bg + ';color:' + style.color + ';border-radius:6px;padding:6px 0;text-align:center;font-size:11px;font-weight:700;' + (locked ? '' : 'cursor:pointer;') + '">' + style.label + '</div>';
+    }
+    return '<div style="display:flex;flex-direction:column;gap:6px;">' +
+      '<div style="text-align:center;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;">' + WHA_DAY_LABELS[day] + '</div>' +
+      box('AM') + box('PM') +
+      '</div>';
+  }).join('');
+}
+
+// Cycling through Office → Home → Out → (clear) on click keeps this a single
+// click rather than needing a separate dropdown per box.
+var WHA_CYCLE = [null, 'Office', 'Home', 'Out'];
+function whaCycleBox(day, slot) {
+  if (_whaViewingEmail) return; // read-only when looking at someone else
+  fetch('/api/whereabouts-grid/mine').then(function(r) { return r.json(); }).then(function(data) {
+    var current = (data.grid[day] || {})[slot] || null;
+    var idx = WHA_CYCLE.indexOf(current);
+    var next = WHA_CYCLE[(idx + 1) % WHA_CYCLE.length];
+    return fetch('/api/whereabouts-grid/mine', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ week: data.weekStart, day: day, slot: slot, value: next })
+    });
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) { alert(data.error); return; }
+    renderWhaGrid(data.grid, false);
+  }).catch(function(e) { console.error('whereabouts save error', e); });
+}
+
+function whaSearchInput() {
+  var q = document.getElementById('home-wha-search').value.trim();
+  var resultsEl = document.getElementById('home-wha-search-results');
+  clearTimeout(_whaSearchTimer);
+  if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+  _whaSearchTimer = setTimeout(function() {
+    fetch('/api/whereabouts-grid/search?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(data) {
+      var results = data.results || [];
+      if (!results.length) { resultsEl.style.display = 'none'; return; }
+      resultsEl.innerHTML = results.map(function(u) {
+        return '<div onclick="whaSelectUser(\'' + u.email.replace(/'/g, "\\'") + '\',\'' + (u.name || u.email).replace(/'/g, "\\'") + '\')" style="padding:8px 12px;font-size:12.5px;color:var(--brand-navy);cursor:pointer;border-bottom:1px solid #f0f4f8;">' + (u.name || u.email) + '</div>';
+      }).join('');
+      resultsEl.style.display = 'block';
+    }).catch(function() { resultsEl.style.display = 'none'; });
+  }, 200);
+}
+
+function whaSelectUser(email, name) {
+  _whaViewingEmail = email;
+  document.getElementById('home-wha-search').value = '';
+  document.getElementById('home-wha-search-results').style.display = 'none';
+  document.getElementById('home-wha-viewing-banner').style.display = 'flex';
+  document.getElementById('home-wha-viewing-text').textContent = name + '’s week (read-only)';
+  loadWhereaboutsGrid(email);
+}
+
+function whaBackToMine() {
+  _whaViewingEmail = null;
+  document.getElementById('home-wha-viewing-banner').style.display = 'none';
+  loadWhereaboutsGrid(null);
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('home-wha-search-results');
+  if (wrap && wrap.style.display === 'block' && !e.target.closest('#home-wha-card')) wrap.style.display = 'none';
+});
+
+
 function feefoPage(dir) {
   var total = _feefoAll.length;
   var pages = Math.ceil(total / FEEFO_PER_PG);
@@ -9854,6 +9988,9 @@ function loadHomeData() {
     if (df && !df.value) df.value = '2026-01-01';
     if (dt && !dt.value) dt.value = '2026-12-31';
     window.loadFeefoFiltered();
+
+    // ── Whereabouts (own week) ────────────────────────────────
+    loadWhereaboutsGrid(null);
 
     // ── Latest video ────────────────────────────────────────
     var videoCard = document.getElementById('home-video-card');
