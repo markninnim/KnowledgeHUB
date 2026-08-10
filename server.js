@@ -1021,9 +1021,69 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '40mb' }));
 app.set('trust proxy', 1);
 
+// ── Security headers (helmet) ────────────────────────────────
+// CSP disabled — app uses inline scripts; all other headers enabled
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ── Session ──────────────────────────────────────────────────
+const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+app.use(session({
+  secret: SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge:   1000 * 60 * 60 * 24 * 7, // 1 week
+    httpOnly: true,                      // JS cannot read the cookie
+    secure:   isProd,                    // HTTPS only in production
+    sameSite: 'strict'                   // Blocks cross-site request forgery
+  }
+}));
+
+// ── Global API rate limiter ──────────────────────────────────
+// Max 120 API requests per IP per minute (resets each minute)
+const _apiRateMap = {};
+const API_RATE_LIMIT   = 120;
+const API_RATE_WINDOW  = 60 * 1000;
+app.use('/api/', (req, res, next) => {
+  const ip  = req.ip || 'unknown';
+  const now = Date.now();
+  if (!_apiRateMap[ip] || now - _apiRateMap[ip].windowStart > API_RATE_WINDOW) {
+    _apiRateMap[ip] = { count: 1, windowStart: now };
+  } else {
+    _apiRateMap[ip].count++;
+    if (_apiRateMap[ip].count > API_RATE_LIMIT) {
+      return res.status(429).json({ error: 'Too many requests — please slow down.' });
+    }
+  }
+  next();
+});
+
+// ── Origin check on mutating API requests ────────────────────
+// Rejects POST/PUT/PATCH/DELETE from foreign origins (belt-and-suspenders beyond sameSite)
+app.use('/api/', (req, res, next) => {
+  if (!['POST','PUT','PATCH','DELETE'].includes(req.method)) return next();
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      const host = new URL(origin).host;
+      if (host !== req.headers.host) {
+        return res.status(403).json({ error: 'Forbidden: cross-origin request' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Forbidden: invalid origin' });
+    }
+  }
+  next();
+});
+
 // ── Home page Whereabouts grid routes (helpers/consts defined earlier, near
-// checkHolidayClash) — registered here, after the body parser, so PUT's
-// req.body is actually populated. ──────────────────────────────
+// checkHolidayClash) — registered here, after session/body-parser middleware
+// so req.session and req.body both actually exist by the time these run.
+// (Previously sat too early in the file — before app.use(session(...)) even
+// ran — so req.session was undefined and every call 500'd.)
 // GET /api/whereabouts-grid/self — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
 app.get('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
   try {
@@ -1121,64 +1181,6 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
     console.error('whereabouts-grid/user error:', err);
     res.status(500).json({ error: 'Failed to load.' });
   }
-});
-
-// ── Security headers (helmet) ────────────────────────────────
-// CSP disabled — app uses inline scripts; all other headers enabled
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-}));
-
-// ── Session ──────────────────────────────────────────────────
-const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
-app.use(session({
-  secret: SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge:   1000 * 60 * 60 * 24 * 7, // 1 week
-    httpOnly: true,                      // JS cannot read the cookie
-    secure:   isProd,                    // HTTPS only in production
-    sameSite: 'strict'                   // Blocks cross-site request forgery
-  }
-}));
-
-// ── Global API rate limiter ──────────────────────────────────
-// Max 120 API requests per IP per minute (resets each minute)
-const _apiRateMap = {};
-const API_RATE_LIMIT   = 120;
-const API_RATE_WINDOW  = 60 * 1000;
-app.use('/api/', (req, res, next) => {
-  const ip  = req.ip || 'unknown';
-  const now = Date.now();
-  if (!_apiRateMap[ip] || now - _apiRateMap[ip].windowStart > API_RATE_WINDOW) {
-    _apiRateMap[ip] = { count: 1, windowStart: now };
-  } else {
-    _apiRateMap[ip].count++;
-    if (_apiRateMap[ip].count > API_RATE_LIMIT) {
-      return res.status(429).json({ error: 'Too many requests — please slow down.' });
-    }
-  }
-  next();
-});
-
-// ── Origin check on mutating API requests ────────────────────
-// Rejects POST/PUT/PATCH/DELETE from foreign origins (belt-and-suspenders beyond sameSite)
-app.use('/api/', (req, res, next) => {
-  if (!['POST','PUT','PATCH','DELETE'].includes(req.method)) return next();
-  const origin = req.headers.origin;
-  if (origin) {
-    try {
-      const host = new URL(origin).host;
-      if (host !== req.headers.host) {
-        return res.status(403).json({ error: 'Forbidden: cross-origin request' });
-      }
-    } catch {
-      return res.status(403).json({ error: 'Forbidden: invalid origin' });
-    }
-  }
-  next();
 });
 
 app.get('/api/quick-links', requireAuth, async (req, res) => {
