@@ -11157,8 +11157,7 @@ function filterUsers() {
     var name = ((u.firstName || '') + ' ' + (u.lastName || '')).toLowerCase();
     var email = (u.email || '').toLowerCase();
     var title = (u.jobTitle || '').toLowerCase();
-    var sup = (u.supervisorEmail || '').toLowerCase();
-    return name.indexOf(q) !== -1 || email.indexOf(q) !== -1 || title.indexOf(q) !== -1 || sup.indexOf(q) !== -1;
+    return name.indexOf(q) !== -1 || email.indexOf(q) !== -1 || title.indexOf(q) !== -1;
   });
 
   renderUserList(filtered);
