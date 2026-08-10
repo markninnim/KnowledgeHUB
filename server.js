@@ -627,8 +627,11 @@ const NOTIF_CREATED   = 'fldk3VzvMgFcpRhbe';
 
 const DAVID_RILEY_EMAIL = 'david.riley@financeplanning.co.uk';
 const DAN_MASKELL_EMAIL = 'dan.maskell@financeplanning.co.uk';
-// Home page holiday ticker — visible to Dan, Pete, Terry and David.
-const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'david.riley@financeplanning.co.uk'];
+const TERRY_MCCUTCHEON_EMAIL = 'terry.mccutcheon@financeplanning.co.uk';
+const MATT_STEPHENS_EMAIL = 'matt.stephens@financeplanning.co.uk';
+const PETE_BURGESS_EMAIL = 'pete.burgess@financeplanning.co.uk';
+// Home page holiday ticker — visible to Dan, Pete, Terry, Matt and David.
+const HOLIDAY_TICKER_EMAILS = ['dan.maskell@financeplanning.co.uk', 'pete.burgess@financeplanning.co.uk', 'terry.mccutcheon@financeplanning.co.uk', 'david.riley@financeplanning.co.uk', 'matt.stephens@financeplanning.co.uk'];
 // Meeting Booker's attendee pool = Supervisors + this hardcoded Non-supervising
 // Directors list — kept in sync manually with the same list in index.html
 // (renderSvDashboard), since it's a small, rarely-changed set.
@@ -684,15 +687,20 @@ function countWeekdays(startStr, endStr) {
   return count;
 }
 
-// email -> { jobTitle, isSupervisor }, used to scope who Dan/David see in the
-// holiday ticker and browse-all view (Dan: Supervisors + Directors only,
-// David: Admin/Paraplanner only — everyone else sees the full company).
+// email -> { jobTitle, isSupervisor, isAdmin }, used to scope who each named
+// viewer sees in the holiday ticker and browse-all view:
+//   Dan:   Supervisors + Directors only
+//   Terry: Supervisors + Admin only
+//   Matt:  Advisers only
+//   Pete:  Compliance only
+//   David: Admin only
+// Everyone else sees the full company.
 async function getStaffRoleMap() {
-  const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_TITLE}&fields[]=${F_IS_SUPERVISOR}&pageSize=100`);
+  const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_TITLE}&fields[]=${F_IS_SUPERVISOR}&fields[]=${F_ADMIN}&pageSize=100`);
   const map = {};
   (data.records || []).forEach(r => {
     const email = (r.fields[F_EMAIL] || '').toLowerCase();
-    if (email) map[email] = { jobTitle: r.fields[F_TITLE] || '', isSupervisor: !!r.fields[F_IS_SUPERVISOR] };
+    if (email) map[email] = { jobTitle: r.fields[F_TITLE] || '', isSupervisor: !!r.fields[F_IS_SUPERVISOR], isAdmin: !!r.fields[F_ADMIN] };
   });
   return map;
 }
@@ -703,8 +711,17 @@ function staffMatchesViewerScope(callerEmail, staffEmail, roleMap) {
   if (email === DAN_MASKELL_EMAIL) {
     return info.isSupervisor || MEETING_BOOKER_DIRECTOR_EMAILS.indexOf((staffEmail || '').toLowerCase()) !== -1;
   }
+  if (email === TERRY_MCCUTCHEON_EMAIL) {
+    return info.isSupervisor || info.isAdmin;
+  }
+  if (email === MATT_STEPHENS_EMAIL) {
+    return /advis(e|o)r/i.test(info.jobTitle || '');
+  }
+  if (email === PETE_BURGESS_EMAIL) {
+    return /compliance/i.test(info.jobTitle || '');
+  }
   if (email === DAVID_RILEY_EMAIL) {
-    return /^(admin|paraplanner)/i.test(info.jobTitle || '');
+    return /^admin/i.test(info.jobTitle || '');
   }
   return true;
 }
@@ -8884,7 +8901,7 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
   }
 });
 
-// ── Home page holiday ticker (Dan / Pete / Terry) ───────────────
+// ── Home page holiday ticker (Dan / Pete / Terry / Matt / David) ───────────
 app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
   const caller = req.session.user;
   if (HOLIDAY_TICKER_EMAILS.indexOf(caller.email.toLowerCase()) === -1 && !caller.isAdmin) return res.json({ visible: false });

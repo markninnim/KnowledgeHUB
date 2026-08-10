@@ -497,7 +497,7 @@ select:focus { outline:none; }
         </div>
       </div>
 
-      <!-- Holiday ticker — Dan, Pete, Terry only -->
+      <!-- Holiday ticker — Dan, Pete, Terry, Matt, David only -->
       <div id="home-holiday-ticker" style="display:none;background:#f0f2f5;border-radius:10px;padding:12px 0;margin-bottom:24px;font-size:13px;color:var(--brand-navy);overflow:hidden;white-space:nowrap;position:relative;">
         <div id="home-holiday-ticker-track" style="display:inline-block;padding-left:18px;will-change:transform;">
           <span style="font-weight:700;margin-right:8px;">🏖 On holiday:</span><span id="home-holiday-ticker-text"></span>
@@ -15398,7 +15398,7 @@ function notifGoToHoliday(id, staffName) {
   fetch('/api/notifications/' + id + '/read', { method: 'PUT' }).then(loadNotificationBell).catch(function(){});
 }
 
-// ── Home page holiday ticker (Dan / Pete / Terry) ───────────────
+// ── Home page holiday ticker (Dan / Pete / Terry / Matt / David) ───────────
 function loadHomeHolidayTicker() {
   fetch('/api/home/holiday-ticker').then(function(r){ return r.json(); }).then(function(d) {
     if (!d.visible) return;
