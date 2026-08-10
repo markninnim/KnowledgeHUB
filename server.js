@@ -279,9 +279,13 @@ function computeNavDefaults(f) {
 // Configured is unticked), fall back to the computed role-based defaults so
 // nobody loses access. Once configured, the literal stored checkboxes win.
 function computeNavAccess(f) {
-  if (!f[F_ACCESS_CONFIGURED]) return computeNavDefaults(f);
-  const result = {};
-  NAV_TOGGLE_KEYS.forEach(key => { result[key] = !!f[F_ACCESS[key]]; });
+  const result = f[F_ACCESS_CONFIGURED] ? {} : computeNavDefaults(f);
+  if (f[F_ACCESS_CONFIGURED]) {
+    NAV_TOGGLE_KEYS.forEach(key => { result[key] = !!f[F_ACCESS[key]]; });
+  }
+  // Numbers (performanceZone) is retired — hidden for everyone regardless of
+  // role defaults or any admin-configured Access toggle still set in Airtable.
+  result.performanceZone = false;
   return result;
 }
 

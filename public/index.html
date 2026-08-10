@@ -244,7 +244,6 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
     <button class="tab-btn"        id="tab-btn-lab"           onclick="switchTab('lab')" style="display:none;">Lab</button>
     <button class="tab-btn"        id="tab-btn-supervisor-zone" onclick="switchTab('supervisor-zone')" style="display:none;">Supervise</button>
-    <button class="tab-btn"        id="tab-btn-performance-zone" onclick="switchTab('performance-zone')" style="display:none;">Numbers</button>
     <button class="tab-btn"        id="tab-btn-whereabouts"   onclick="switchTab('whereabouts')" style="display:none;">Whereabouts</button>
     <button class="tab-btn"        id="tab-btn-muttuo"        onclick="switchTab('muttuo')" style="display:none;">Muttuo</button>
     <div id="tab-group-crm" style="display:flex;align-items:center;gap:2px;border:1px solid #d1d5db;border-radius:22px;padding:2px;margin-left:2px;">
@@ -20810,7 +20809,7 @@ function qlOpenPicker(e, btn) {
   var isFitch = ((u.business || '').trim().toLowerCase() === 'fitch and fitch') || u.isAdmin;
   var isLeadGen = u.isLeadGen || u.isAdmin;
   var isDan = (u.email || '').toLowerCase() === 'dan.maskell@financeplanning.co.uk' || u.isAdmin;
-  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam', 'numbers'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []).concat(isDan ? ['meetingbooker'] : []);
+  var keys = QL_EDITABLE_KEYS.concat(isSvAdmin ? ['myteam'] : []).concat(isFitch ? ['muttuo'] : []).concat(isLeadGen ? ['leads'] : []).concat(isDan ? ['meetingbooker'] : []);
 
   var btnStyle = 'width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:13px;font-weight:600;color:var(--brand-navy);cursor:pointer;border-radius:7px;font-family:inherit;display:block;';
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Change this link to</div>';
@@ -20927,7 +20926,6 @@ function toggleQlMenu(e) {
   ];
   var adminItems = isSvAdmin ? [
     { label: 'Supervise',  tab: 'supervisor-zone' },
-    { label: 'Numbers',  tab: 'performance-zone' },
   ] : [];
 
   var html = '<div style="font-size:10px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px 4px;">Navigate to</div>';
