@@ -9369,6 +9369,8 @@ var WHA_STATUS_STYLE = {
 };
 var _whaViewingEmail = null;
 var _whaSearchTimer = null;
+var _whaWeekStart = null;
+var WHA_DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 function whaWeekLabel(weekStart) {
   if (!weekStart) return '';
@@ -9379,51 +9381,65 @@ function whaWeekLabel(weekStart) {
   return 'Week of ' + dm(mon) + ' – ' + dm(fri);
 }
 
-function loadWhereaboutsGrid(email) {
-  var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/mine';
-  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.error) return;
-    document.getElementById('home-wha-week-label').textContent = whaWeekLabel(data.weekStart);
-    renderWhaGrid(data.grid, !!email);
-  }).catch(function(e) { console.error('whereabouts grid load error', e); });
-}
-
-function renderWhaGrid(grid, readOnly) {
+// Draws the grid immediately (before any fetch resolves) so the card is
+// never blank — every box is a real <select> the user can open straight
+// away; loadWhereaboutsGrid() below just updates the selected values and
+// swaps in read-only spans for Holiday / another person's week.
+function whaRenderSkeleton() {
   var el = document.getElementById('home-wha-grid');
   if (!el) return;
-  var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  el.innerHTML = days.map(function(day) {
-    var cell = grid[day] || {};
+  el.innerHTML = WHA_DAY_ORDER.map(function(day) {
     function box(slot) {
-      var val = cell[slot];
-      var style = val ? WHA_STATUS_STYLE[val] : { bg: '#f8fafc', color: '#a0aab5', label: '—' };
-      var locked = readOnly || cell.holidayLocked;
-      var onclick = locked ? '' : ' onclick="whaCycleBox(\'' + day + '\',\'' + slot + '\')"';
-      return '<div' + onclick + ' style="background:' + style.bg + ';color:' + style.color + ';border-radius:6px;padding:6px 0;text-align:center;font-size:11px;font-weight:700;' + (locked ? '' : 'cursor:pointer;') + '">' + style.label + '</div>';
+      return '<select id="wha-box-' + day + '-' + slot + '" onchange="whaSetBox(\'' + day + '\',\'' + slot + '\',this.value)" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:6px 2px;text-align:center;font-size:11px;font-weight:700;font-family:inherit;color:var(--brand-navy);background:#f8fafc;cursor:pointer;">' +
+        '<option value="">—</option><option value="Office">Office</option><option value="Home">Home</option><option value="Out">Out</option>' +
+        '</select>';
     }
     return '<div style="display:flex;flex-direction:column;gap:6px;">' +
-      '<div style="text-align:center;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;">' + WHA_DAY_LABELS[day] + '</div>' +
-      box('AM') + box('PM') +
+      '<div style="text-align:center;font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;">' + day + '</div>' +
+      '<div id="wha-cell-' + day + '-AM">' + box('AM') + '</div>' +
+      '<div id="wha-cell-' + day + '-PM">' + box('PM') + '</div>' +
       '</div>';
   }).join('');
 }
 
-// Cycling through Office → Home → Out → (clear) on click keeps this a single
-// click rather than needing a separate dropdown per box.
-var WHA_CYCLE = [null, 'Office', 'Home', 'Out'];
-function whaCycleBox(day, slot) {
-  if (_whaViewingEmail) return; // read-only when looking at someone else
-  fetch('/api/whereabouts-grid/mine').then(function(r) { return r.json(); }).then(function(data) {
-    var current = (data.grid[day] || {})[slot] || null;
-    var idx = WHA_CYCLE.indexOf(current);
-    var next = WHA_CYCLE[(idx + 1) % WHA_CYCLE.length];
-    return fetch('/api/whereabouts-grid/mine', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ week: data.weekStart, day: day, slot: slot, value: next })
+function loadWhereaboutsGrid(email) {
+  whaRenderSkeleton();
+  var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/mine';
+  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) { console.error('whereabouts grid error:', data.error); return; }
+    _whaWeekStart = data.weekStart;
+    document.getElementById('home-wha-week-label').textContent = whaWeekLabel(data.weekStart);
+    applyWhaGrid(data.grid, !!email);
+  }).catch(function(e) { console.error('whereabouts grid load error', e); });
+}
+
+function applyWhaGrid(grid, readOnly) {
+  WHA_DAY_ORDER.forEach(function(day) {
+    var cell = grid[day] || {};
+    ['AM', 'PM'].forEach(function(slot) {
+      var val = cell[slot];
+      var cellEl = document.getElementById('wha-cell-' + day + '-' + slot);
+      if (!cellEl) return;
+      var locked = readOnly || cell.holidayLocked;
+      if (locked) {
+        var style = val ? WHA_STATUS_STYLE[val] : { bg: '#f8fafc', color: '#a0aab5', label: '—' };
+        cellEl.innerHTML = '<div style="background:' + style.bg + ';color:' + style.color + ';border-radius:6px;padding:6px 0;text-align:center;font-size:11px;font-weight:700;">' + style.label + '</div>';
+      } else {
+        var sel = document.getElementById('wha-box-' + day + '-' + slot);
+        if (sel) sel.value = val || '';
+      }
     });
+  });
+}
+
+function whaSetBox(day, slot, value) {
+  if (_whaViewingEmail || !_whaWeekStart) return;
+  fetch('/api/whereabouts-grid/mine', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ week: _whaWeekStart, day: day, slot: slot, value: value || null })
   }).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.error) { alert(data.error); return; }
-    renderWhaGrid(data.grid, false);
+    if (data.error) { alert(data.error); loadWhereaboutsGrid(null); return; }
+    applyWhaGrid(data.grid, false);
   }).catch(function(e) { console.error('whereabouts save error', e); });
 }
 
