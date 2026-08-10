@@ -9416,7 +9416,7 @@ _whaWeekStart = whaLocalMonday();
 function loadWhereaboutsGrid(email) {
   whaRenderSkeleton();
   var labelEl = document.getElementById('home-wha-week-label');
-  var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/mine';
+  var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/self';
   fetch(url).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {
     if (res.data.error) {
       console.error('whereabouts grid error (' + res.status + '):', res.data.error);
@@ -9454,7 +9454,7 @@ function applyWhaGrid(grid, readOnly) {
 function whaSetBox(day, slot, value) {
   if (_whaViewingEmail) return; // read-only while looking at a colleague
   var weekStart = _whaWeekStart || whaLocalMonday();
-  fetch('/api/whereabouts-grid/mine', {
+  fetch('/api/whereabouts-grid/self', {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ week: weekStart, day: day, slot: slot, value: value || null })
   }).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {

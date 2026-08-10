@@ -1024,8 +1024,8 @@ app.set('trust proxy', 1);
 // ── Home page Whereabouts grid routes (helpers/consts defined earlier, near
 // checkHolidayClash) — registered here, after the body parser, so PUT's
 // req.body is actually populated. ──────────────────────────────
-// GET /api/whereabouts-grid/mine — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
-app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+// GET /api/whereabouts-grid/self — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
+app.get('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
   if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const email = (req.session.user.email || '').toLowerCase();
@@ -1033,13 +1033,13 @@ app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
     const result = await whaGetWeekGrid(email, weekStart);
     res.json(result);
   } catch (err) {
-    console.error('whereabouts-grid/mine error:', err);
+    console.error('whereabouts-grid/self GET error:', err);
     res.status(500).json({ error: 'Failed to load your whereabouts: ' + err.message });
   }
 });
 
-// PUT /api/whereabouts-grid/mine — set one day/slot for the caller's own week. { week, day, slot, value }
-app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+// PUT /api/whereabouts-grid/self — set one day/slot for the caller's own week. { week, day, slot, value }
+app.put('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
   if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const email = (req.session.user.email || '').toLowerCase();
@@ -1069,7 +1069,7 @@ app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
     const result = await whaGetWeekGrid(email, weekStart);
     res.json(result);
   } catch (err) {
-    console.error('whereabouts-grid/mine PUT error:', err);
+    console.error('whereabouts-grid/self PUT error:', err);
     res.status(500).json({ error: 'Failed to save: ' + err.message });
   }
 });
