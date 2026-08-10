@@ -1026,8 +1026,8 @@ app.set('trust proxy', 1);
 // req.body is actually populated. ──────────────────────────────
 // GET /api/whereabouts-grid/self — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
 app.get('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
+    if (!req.session.user || !req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
     const email = (req.session.user.email || '').toLowerCase();
     const weekStart = whaWeekStart((req.query.week || '').toString() || null);
     const result = await whaGetWeekGrid(email, weekStart);
@@ -1040,8 +1040,8 @@ app.get('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
 
 // PUT /api/whereabouts-grid/self — set one day/slot for the caller's own week. { week, day, slot, value }
 app.put('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
+    if (!req.session.user || !req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
     const email = (req.session.user.email || '').toLowerCase();
     const { day, slot, value } = req.body || {};
     const weekStart = whaWeekStart((req.body.week || '').toString() || null);
@@ -1078,8 +1078,8 @@ app.put('/api/whereabouts-grid/self', requireAuth, async (req, res) => {
 // (Whereabouts is an employed-staff-only feature — self-employed/AR advisers
 // aren't office-based so don't get a card and shouldn't show up as results).
 app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
+    if (!req.session.user || !req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
     const q = (req.query.q || '').toString().trim().toLowerCase();
     if (q.length < 2) return res.json({ results: [] });
     // Users table has 130+ rows — a single pageSize=100 request silently
@@ -1106,8 +1106,8 @@ app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
 
 // GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week (both caller and target must be employed staff)
 app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
+    if (!req.session.user || !req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
     const email = decodeURIComponent(req.params.email || '').toLowerCase();
     if (!email) return res.status(400).json({ error: 'Email required' });
     const targetData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${email}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMPLOYED_ADVISER}&maxRecords=1`);
@@ -10814,6 +10814,21 @@ app.get('/api/mi/download/:filename', requireAdminOrSupervisor, (req, res) => {
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   fs.createReadStream(filePath).pipe(res);
+});
+
+// ── Global error handler ─────────────────────────────────────
+// Safety net for any route that throws without its own try/catch: without
+// this, Express's default handler returns an HTML "Internal Server Error"
+// page for /api/* requests too, which breaks client-side r.json() parsing
+// silently (surfaces in the browser as a generic "failed to fetch" instead
+// of the real error). Must be registered last, after all routes.
+app.use((err, req, res, next) => {
+  console.error('Unhandled route error:', err);
+  if (res.headersSent) return next(err);
+  if (req.originalUrl && req.originalUrl.startsWith('/api/')) {
+    return res.status(500).json({ error: (err && err.message) || 'Internal server error' });
+  }
+  res.status(500).send('Internal server error');
 });
 
 // ── Start ─────────────────────────────────────────────────────
