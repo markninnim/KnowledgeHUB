@@ -15481,6 +15481,12 @@ function mhCloseClashModal() {
 function mhShowClashModal(prefix, startDate, endDate, days, notes, clash) {
   mhCloseClashModal();
   var suggestion = clash.suggestion;
+  var clashList = clash.clashes || [];
+  var namesLine = clashList.length === 1
+    ? escHtml(clashList[0].otherName) + ' is already booked off ' + escHtml(fmtDateUK(clashList[0].otherStartDate)) + ' → ' + escHtml(fmtDateUK(clashList[0].otherEndDate)) + '.'
+    : clashList.map(function(c) {
+        return escHtml(c.otherName) + ' (' + escHtml(fmtDateUK(c.otherStartDate)) + ' → ' + escHtml(fmtDateUK(c.otherEndDate)) + ')';
+      }).join(', ') + ' are already booked off.';
   var suggestionHtml = suggestion
     ? '<div style="background:#f0f5ff;border:1px solid #c7d7f5;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--brand-navy);">' +
         'Next clear period of the same length: <strong>' + escHtml(fmtDateUK(suggestion.startDate)) + ' → ' + escHtml(fmtDateUK(suggestion.endDate)) + '</strong>' +
@@ -15494,9 +15500,8 @@ function mhShowClashModal(prefix, startDate, endDate, days, notes, clash) {
       '<div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
         '<div style="font-size:16px;font-weight:800;color:var(--brand-navy);margin-bottom:8px;">Holiday clash</div>' +
         '<div style="font-size:13px;color:#374151;line-height:1.5;">' +
-          escHtml(clash.otherName) + ', who shares your job title, is already booked off ' +
-          escHtml(fmtDateUK(clash.otherStartDate)) + ' → ' + escHtml(fmtDateUK(clash.otherEndDate)) +
-          ', which overlaps the dates you\'ve chosen (' + escHtml(fmtDateUK(startDate)) + ' → ' + escHtml(fmtDateUK(endDate)) + ').' +
+          namesLine +
+          ' This overlaps the dates you\'ve chosen (' + escHtml(fmtDateUK(startDate)) + ' → ' + escHtml(fmtDateUK(endDate)) + ').' +
         '</div>' +
         suggestionHtml +
         '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;">' +

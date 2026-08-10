@@ -774,16 +774,18 @@ function addDaysIso(dateStr, n) {
 }
 
 // Looks for another Pending/Approved holiday request, for a different
-// person who shares the caller's (normalised) job title, whose dates
-// overlap the given range. Job title is the whole basis for this check —
-// unlike the Holiday Approver grouping used for notifications, this is
-// meant to catch "two people who do the same job are both going to be out
-// at once", regardless of who approves either of their holiday.
+// people (plural — everyone, not just the first match) who share the
+// caller's (normalised) job title, whose dates overlap the given range.
+// Job title is the whole basis for this check — unlike the Holiday
+// Approver grouping used for notifications, this is meant to catch "two
+// people who do the same job are both going to be out at once", regardless
+// of who approves either of their holiday. Returns an array (empty if none).
 async function checkJobTitleClash(callerEmail, jobTitle, startDate, endDate, excludeRecordId) {
   const normTitle = (jobTitle || '').trim().toLowerCase();
-  if (!normTitle) return null;
+  if (!normTitle) return [];
   const [all, roleMap] = await Promise.all([fetchAllHolidayRequests(), getStaffRoleMap()]);
   const callerLower = callerEmail.toLowerCase();
+  const clashes = [];
 
   for (const r of all) {
     if (r.id === excludeRecordId) continue;
@@ -795,10 +797,11 @@ async function checkJobTitleClash(callerEmail, jobTitle, startDate, endDate, exc
     const status = f[HR_STATUS] || 'Pending';
     if (status === 'Rejected' || status === 'Cancelled') continue;
     if (datesOverlap(startDate, endDate, f[HR_START_DATE] || '', f[HR_END_DATE] || '')) {
-      return { otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] };
+      clashes.push({ otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] });
     }
   }
-  return null;
+  clashes.sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
+  return clashes;
 }
 
 // Finds the next period of the same length (calendar days) with no
@@ -8971,15 +8974,13 @@ app.post('/api/holidays/check-clash', requireAuth, async (req, res) => {
     const uf = ((uData.records || [])[0] || {}).fields || {};
     const jobTitle = uf[F_TITLE] || '';
 
-    const clash = await checkJobTitleClash(caller.email, jobTitle, startDate, endDate, null);
-    if (!clash) return res.json({ clash: false });
+    const clashes = await checkJobTitleClash(caller.email, jobTitle, startDate, endDate, null);
+    if (!clashes.length) return res.json({ clash: false });
 
     const suggestion = await findNextClearPeriod(caller.email, jobTitle, startDate, endDate, null);
     res.json({
       clash: true,
-      otherName: clash.otherName,
-      otherStartDate: clash.startDate,
-      otherEndDate: clash.endDate,
+      clashes: clashes.map(c => ({ otherName: c.otherName, otherStartDate: c.startDate, otherEndDate: c.endDate })),
       suggestion
     });
   } catch (err) {
