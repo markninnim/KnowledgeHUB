@@ -670,6 +670,17 @@ function datesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
+// Displays a stored YYYY-MM-DD date as DD/MM/YYYY (European format) in
+// notification text — Airtable/JS keep the ISO string internally, this is
+// purely for what staff read on screen.
+function fmtDateUK(dateStr) {
+  if (!dateStr) return dateStr || '';
+  const parts = String(dateStr).slice(0, 10).split('-');
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  return `${d}/${m}/${y}`;
+}
+
 // Weekdays only (Mon–Fri) between two YYYY-MM-DD dates, inclusive — weekends
 // aren't part of anyone's holiday allowance, so they shouldn't count as days
 // taken. Used both when a request is created and whenever days are read
@@ -8563,7 +8574,7 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
         // dot on their own notification bell, separate from the approver's
         // "new request" notification.
         if (staffEmail) {
-          await createNotification(staffEmail, 'Holiday Decision', 'Your holiday request for ' + startDate + ' to ' + endDate + ' was ' + status.toLowerCase() + '.', '/my-holiday');
+          await createNotification(staffEmail, 'Holiday Decision', 'Your holiday request for ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ' was ' + status.toLowerCase() + '.', '/my-holiday');
         }
 
         if (status === 'Approved') {
@@ -8571,7 +8582,7 @@ app.put('/api/supervisor/holiday-request/:id', requireAuth, async (req, res) => 
           const supervisorEmail = (((uData.records || [])[0] || {}).fields || {})[F_SUPERVISOR_EMAIL] || '';
           const clash = await checkHolidayClash(staffEmail, supervisorEmail, startDate, endDate, req.params.id);
           if (clash) {
-            await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s approved holiday (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+            await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s approved holiday (' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ') overlaps with ' + clash.otherName + '’s holiday (' + fmtDateUK(clash.startDate) + ' to ' + fmtDateUK(clash.endDate) + ').', '/supervise');
           }
         }
       } catch (clashErr) {
@@ -8618,7 +8629,7 @@ app.put('/api/holidays/:id/cancel', requireAuth, async (req, res) => {
     const jobTitle = uf[F_TITLE] || '';
     const approverEmail = (uf[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
     if (approverEmail) {
-      await createNotification(approverEmail, 'Holiday Cancelled', staffName + ' has cancelled their holiday request for ' + startDate + ' to ' + endDate + '.', '/supervise');
+      await createNotification(approverEmail, 'Holiday Cancelled', staffName + ' has cancelled their holiday request for ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + '.', '/supervise');
     }
 
     res.json({ ok: true });
@@ -8728,16 +8739,16 @@ app.post('/api/holidays/request-self', requireAuth, async (req, res) => {
     const recordId = body.records[0].id;
 
     if (approverEmail) {
-      await createNotification(approverEmail, 'Holiday Request', staffName + ' has requested holiday from ' + startDate + ' to ' + endDate + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
+      await createNotification(approverEmail, 'Holiday Request', staffName + ' has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ' (' + days + ' day' + (days === 1 ? '' : 's') + ').', '/supervise');
     }
     // David Riley always sees Admin/Paraplanner requests, even if this person's
     // approver was manually overridden away from him.
     if (/^(admin|paraplanner)/i.test(jobTitle) && approverEmail.toLowerCase() !== DAVID_RILEY_EMAIL) {
-      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + startDate + ' to ' + endDate + '.', '/supervise');
+      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Request', staffName + ' (' + jobTitle + ') has requested holiday from ' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + '.', '/supervise');
     }
     const clash = await checkHolidayClash(caller.email, supervisorEmail, startDate, endDate, recordId);
     if (clash) {
-      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s request (' + startDate + ' to ' + endDate + ') overlaps with ' + clash.otherName + '’s holiday (' + clash.startDate + ' to ' + clash.endDate + ').', '/supervise');
+      await createNotification(DAVID_RILEY_EMAIL, 'Holiday Clash', staffName + '’s request (' + fmtDateUK(startDate) + ' to ' + fmtDateUK(endDate) + ') overlaps with ' + clash.otherName + '’s holiday (' + fmtDateUK(clash.startDate) + ' to ' + fmtDateUK(clash.endDate) + ').', '/supervise');
     }
 
     res.json({ ok: true, id: recordId });
