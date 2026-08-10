@@ -4,7 +4,7 @@
 import json, os
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = "/sessions/eloquent-keen-meitner/mnt/KnowledgeHUB"
+ROOT = "/sessions/kind-exciting-curie/mnt/KnowledgeHUB"
 TEMPLATES_DIR = f"{ROOT}/public/assets/trust-templates"
 OUT_DIR = f"{ROOT}/public/assets/social-trust-content"
 FONT_BOLD = f"{ROOT}/public/static/fonts/PlusJakartaSans-ExtraBold.ttf"
