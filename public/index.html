@@ -763,12 +763,16 @@ select:focus { outline:none; }
             </div>
             <div id="home-feefo-summary" style="font-size:12px;color:#6b7c8f;">Loading…</div>
           </div>
-          <!-- Date range filter -->
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <input type="date" id="feefo-date-from" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
-            <span style="font-size:12px;color:#6b7c8f;">to</span>
-            <input type="date" id="feefo-date-to" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
-            <button onclick="feefoDateClear()" style="border:1px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
+          <!-- Date range filter — scopes the league tables only; the review
+               list on the left is always all-time, latest first. -->
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+            <span style="font-size:10.5px;color:#9aa7b4;text-transform:uppercase;letter-spacing:.05em;">League table range</span>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <input type="date" id="feefo-date-from" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+              <span style="font-size:12px;color:#6b7c8f;">to</span>
+              <input type="date" id="feefo-date-to" style="border:1px solid #d1d5db;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--brand-navy);font-family:inherit;cursor:pointer;" onchange="loadFeefoFiltered()">
+              <button onclick="feefoDateClear()" style="border:1px solid #d1d5db;border-radius:8px;padding:5px 10px;font-size:12px;color:#6b7c8f;background:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Clear</button>
+            </div>
           </div>
         </div>
 

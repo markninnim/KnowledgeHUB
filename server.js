@@ -7728,11 +7728,16 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
       return records;
     }
 
-    // Fetch all records in date range for leaderboard + user's own
+    // Fetch all records in date range for the leaderboards (these stay
+    // scoped to the selected range — the leaderboard is a year-to-date
+    // "league table", not an all-time one).
     const all = await fetchFeefo(dateClause);
 
-    // User's own records
-    const mine = all.filter(r => (r.fields['Adviser'] || '').toLowerCase().trim() === safeName);
+    // The reviewer's own review list/avg/count is shown all-time regardless
+    // of the leaderboard date range, so fetch it separately with no date
+    // filter, sorted latest first.
+    const mineAllTime = await fetchFeefo(`, LOWER(TRIM({Adviser})) = "${safeName}"`);
+    const mine = mineAllTime;
 
     // Leaderboard: count per adviser
     const counts = {};
@@ -7786,7 +7791,7 @@ app.get('/api/feefo', requireAuth, async (req, res) => {
     const avg   = rated.length ? (rated.reduce((s, r) => s + r.fields['Service Rating'], 0) / rated.length).toFixed(1) : null;
     const reviews = mine
       .filter(r => r.fields['Review'])
-      .sort((a, b) => (b.fields['Service Rating'] || 0) - (a.fields['Service Rating'] || 0))
+      .sort((a, b) => new Date(b.fields['Date'] || 0) - new Date(a.fields['Date'] || 0))
       .map(r => ({ customer: r.fields['Customer Name'] || 'Customer', review: r.fields['Review'], rating: r.fields['Service Rating'] || null, date: r.fields['Date'] || null }));
 
     res.json({ count: mine.length, avg, reviews, rank: rank || null, totalAdvisers: Object.keys(counts).length, leaderboard, leaderboardNps });
