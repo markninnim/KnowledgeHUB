@@ -7161,6 +7161,11 @@ function loadSocialContent() {
     }
     var sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
+    var newestPostDate = function(post) {
+      return post.files.reduce(function(latest, f) { return new Date(f.created) > latest ? new Date(f.created) : latest; }, new Date(0));
+    };
+    posts = posts.slice().sort(function(a, b) { return newestPostDate(b) - newestPostDate(a); });
+
     posts.forEach(function(post) {
       var pillar = pillarFor(post.name);
       var postWrap = document.createElement('div');
