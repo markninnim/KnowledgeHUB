@@ -728,7 +728,7 @@ select:focus { outline:none; }
       </div>
 
       <!-- Whereabouts card (own week, above Feefo) -->
-      <div id="home-wha-card" style="background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div id="home-wha-card" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;padding:20px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -10005,8 +10005,14 @@ function loadHomeData() {
     if (dt && !dt.value) dt.value = '2026-12-31';
     window.loadFeefoFiltered();
 
-    // ── Whereabouts (own week) ────────────────────────────────
-    loadWhereaboutsGrid(null);
+    // ── Whereabouts (own week) — employed staff only ──────────
+    var whaCard = document.getElementById('home-wha-card');
+    if (_currentUser && _currentUser.employedAdviser) {
+      if (whaCard) whaCard.style.display = '';
+      loadWhereaboutsGrid(null);
+    } else if (whaCard) {
+      whaCard.style.display = 'none';
+    }
 
     // ── Latest video ────────────────────────────────────────
     var videoCard = document.getElementById('home-video-card');

@@ -864,6 +864,7 @@ async function whaGetWeekGrid(email, weekStart) {
 
 // GET /api/whereabouts-grid/mine — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
 app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const email = (req.session.user.email || '').toLowerCase();
     const weekStart = whaWeekStart((req.query.week || '').toString() || null);
@@ -877,6 +878,7 @@ app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
 
 // PUT /api/whereabouts-grid/mine — set one day/slot for the caller's own week. { week, day, slot, value }
 app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const email = (req.session.user.email || '').toLowerCase();
     const { day, slot, value } = req.body || {};
@@ -910,28 +912,36 @@ app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/whereabouts-grid/search?q=name — typeahead over staff names/emails, for "look up a colleague"
+// GET /api/whereabouts-grid/search?q=name — typeahead over EMPLOYED staff names/emails only
+// (Whereabouts is an employed-staff-only feature — self-employed/AR advisers
+// aren't office-based so don't get a card and shouldn't show up as results).
 app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const q = (req.query.q || '').toString().trim().toLowerCase();
     if (q.length < 2) return res.json({ results: [] });
-    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&pageSize=100`);
+    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100`);
     const results = (data.records || []).map(r => ({
       email: r.fields[F_EMAIL] || '',
-      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ')
-    })).filter(u => u.email && (u.name.toLowerCase().indexOf(q) !== -1 || u.email.toLowerCase().indexOf(q) !== -1)).slice(0, 8);
-    res.json({ results });
+      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '),
+      employed: !!r.fields[F_EMPLOYED_ADVISER]
+    })).filter(u => u.email && u.employed && (u.name.toLowerCase().indexOf(q) !== -1 || u.email.toLowerCase().indexOf(q) !== -1)).slice(0, 8);
+    res.json({ results: results.map(u => ({ email: u.email, name: u.name })) });
   } catch (err) {
     console.error('whereabouts-grid/search error:', err);
     res.status(500).json({ error: 'Search failed.' });
   }
 });
 
-// GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week
+// GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week (both caller and target must be employed staff)
 app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
     const email = decodeURIComponent(req.params.email || '').toLowerCase();
     if (!email) return res.status(400).json({ error: 'Email required' });
+    const targetData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${email}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMPLOYED_ADVISER}&maxRecords=1`);
+    const targetRec = (targetData.records || [])[0];
+    if (!targetRec || !targetRec.fields[F_EMPLOYED_ADVISER]) return res.status(403).json({ error: 'That person is not on Whereabouts' });
     const weekStart = whaWeekStart((req.query.week || '').toString() || null);
     const result = await whaGetWeekGrid(email, weekStart);
     result.email = email;
