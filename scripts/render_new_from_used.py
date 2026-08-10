@@ -1,6 +1,7 @@
 # Helper (not the scheduled-task entrypoint itself) — reference implementation for
 # rendering a single new Review N folder for one adviser, given a chosen
 # {customerName, review}. Used by the recurring "check Airtable for new reviews" task.
+import hashlib
 import json, os
 from PIL import Image, ImageDraw, ImageFont
 
@@ -80,15 +81,52 @@ def next_review_num(folder):
             except ValueError: pass
     return max(nums, default=0) + 1
 
+def _md5_file(path):
+    with open(path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+def _existing_square_hashes(folder):
+    """MD5 of the 'square' render in every existing Review N folder for this
+    adviser — used as a fingerprint to catch accidental re-renders of the
+    same review (e.g. a text-matching quirk like stray whitespace/quote
+    differences letting the same review through used-reviews.json's text
+    check twice). Comparing just one representative size per folder is
+    enough since all 5 sizes are always rendered from the same input."""
+    hashes = {}
+    if not os.path.isdir(folder):
+        return hashes
+    for name in os.listdir(folder):
+        square_path = os.path.join(folder, name, "square.png")
+        if name.startswith("Review ") and os.path.isfile(square_path):
+            hashes[_md5_file(square_path)] = name
+    return hashes
+
 def add_review_for_adviser(slug, customer_name, review_text):
-    """Renders one new Review N folder for the given adviser slug. Returns the new folder path."""
+    """Renders one new Review N folder for the given adviser slug. Returns the
+    new folder path — or None if this would be a byte-identical duplicate of
+    an existing Review N folder for the same adviser (in which case nothing
+    is written, so callers should still record the review text as used so it
+    isn't retried every run, but should NOT count it as a newly added post)."""
     folder = os.path.join(OUT_DIR, slug)
     if not os.path.isdir(folder):
         raise RuntimeError(f"No existing folder for slug {slug}")
+
+    existing_hashes = _existing_square_hashes(folder)
+
     n = next_review_num(folder)
     dest = os.path.join(folder, f"Review {n}")
     os.makedirs(dest, exist_ok=True)
     for key in SIZES:
         img = render_one(key, review_text, customer_name)
         img.save(f"{dest}/{key}.png")
+
+    new_hash = _md5_file(os.path.join(dest, "square.png"))
+    if new_hash in existing_hashes:
+        # Duplicate of an already-existing post for this adviser — remove
+        # what we just wrote rather than leaving a second identical card.
+        for key in SIZES:
+            os.remove(os.path.join(dest, f"{key}.png"))
+        os.rmdir(dest)
+        return None
+
     return dest
