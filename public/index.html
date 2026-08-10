@@ -9402,15 +9402,34 @@ function whaRenderSkeleton() {
   }).join('');
 }
 
+// Computed locally so a save never depends on the initial GET having
+// succeeded first — the GET is only needed to show what's already saved.
+function whaLocalMonday() {
+  var d = new Date();
+  var day = d.getDay(); // 0=Sun..6=Sat
+  var diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+_whaWeekStart = whaLocalMonday();
+
 function loadWhereaboutsGrid(email) {
   whaRenderSkeleton();
+  var labelEl = document.getElementById('home-wha-week-label');
   var url = email ? '/api/whereabouts-grid/user/' + encodeURIComponent(email) : '/api/whereabouts-grid/mine';
-  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.error) { console.error('whereabouts grid error:', data.error); return; }
-    _whaWeekStart = data.weekStart;
-    document.getElementById('home-wha-week-label').textContent = whaWeekLabel(data.weekStart);
-    applyWhaGrid(data.grid, !!email);
-  }).catch(function(e) { console.error('whereabouts grid load error', e); });
+  fetch(url).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {
+    if (res.data.error) {
+      console.error('whereabouts grid error (' + res.status + '):', res.data.error);
+      if (labelEl) labelEl.textContent = 'Couldn\'t load (' + res.data.error + ')';
+      return;
+    }
+    _whaWeekStart = res.data.weekStart || _whaWeekStart;
+    if (labelEl) labelEl.textContent = whaWeekLabel(res.data.weekStart);
+    applyWhaGrid(res.data.grid, !!email);
+  }).catch(function(e) {
+    console.error('whereabouts grid load error', e);
+    if (labelEl) labelEl.textContent = 'Couldn\'t load whereabouts';
+  });
 }
 
 function applyWhaGrid(grid, readOnly) {
@@ -9433,14 +9452,24 @@ function applyWhaGrid(grid, readOnly) {
 }
 
 function whaSetBox(day, slot, value) {
-  if (_whaViewingEmail || !_whaWeekStart) return;
+  if (_whaViewingEmail) return; // read-only while looking at a colleague
+  var weekStart = _whaWeekStart || whaLocalMonday();
   fetch('/api/whereabouts-grid/mine', {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ week: _whaWeekStart, day: day, slot: slot, value: value || null })
-  }).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.error) { alert(data.error); loadWhereaboutsGrid(null); return; }
-    applyWhaGrid(data.grid, false);
-  }).catch(function(e) { console.error('whereabouts save error', e); });
+    body: JSON.stringify({ week: weekStart, day: day, slot: slot, value: value || null })
+  }).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {
+    if (res.data.error) {
+      alert('Whereabouts save failed (' + res.status + '): ' + res.data.error);
+      console.error('whereabouts save error:', res.status, res.data.error);
+      loadWhereaboutsGrid(null);
+      return;
+    }
+    _whaWeekStart = res.data.weekStart || weekStart;
+    applyWhaGrid(res.data.grid, false);
+  }).catch(function(e) {
+    alert('Whereabouts save failed: could not reach the server.');
+    console.error('whereabouts save network error', e);
+  });
 }
 
 function whaSearchInput() {

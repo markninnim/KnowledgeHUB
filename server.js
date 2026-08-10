@@ -1034,7 +1034,7 @@ app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('whereabouts-grid/mine error:', err);
-    res.status(500).json({ error: 'Failed to load your whereabouts.' });
+    res.status(500).json({ error: 'Failed to load your whereabouts: ' + err.message });
   }
 });
 
@@ -1070,7 +1070,7 @@ app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('whereabouts-grid/mine PUT error:', err);
-    res.status(500).json({ error: 'Failed to save.' });
+    res.status(500).json({ error: 'Failed to save: ' + err.message });
   }
 });
 
