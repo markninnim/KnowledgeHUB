@@ -15436,6 +15436,29 @@ function mhSubmitRequest(prefix) {
   var days = document.getElementById(prefix + '-days').value;
   var notes = document.getElementById(prefix + '-notes').value.trim();
   if (!startDate || !endDate) { alert('Please set a start and end date.'); return; }
+  // Check for a job-title clash first — someone else who does the same
+  // role already booked overlapping dates. This never blocks the booking,
+  // it just warns and offers the next clear period of the same length.
+  fetch('/api/holidays/check-clash', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startDate: startDate, endDate: endDate })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(c) {
+      if (c && c.clash) {
+        mhShowClashModal(prefix, startDate, endDate, days, notes, c);
+      } else {
+        mhDoSubmit(prefix, startDate, endDate, days, notes);
+      }
+    })
+    .catch(function(err) {
+      // If the clash check itself fails, don't let that block booking —
+      // just submit as normal.
+      console.error('holidays/check-clash error:', err);
+      mhDoSubmit(prefix, startDate, endDate, days, notes);
+    });
+}
+function mhDoSubmit(prefix, startDate, endDate, days, notes) {
   fetch('/api/holidays/request-self', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ startDate: startDate, endDate: endDate, days: days, notes: notes })
@@ -15450,6 +15473,56 @@ function mhSubmitRequest(prefix) {
       mhLoadData(prefix);
     })
     .catch(function(err) { console.error('mhSubmitRequest error:', err); alert('Could not submit request.'); });
+}
+function mhCloseClashModal() {
+  var el = document.getElementById('mh-clash-modal');
+  if (el) el.remove();
+}
+function mhShowClashModal(prefix, startDate, endDate, days, notes, clash) {
+  mhCloseClashModal();
+  var suggestion = clash.suggestion;
+  var suggestionHtml = suggestion
+    ? '<div style="background:#f0f5ff;border:1px solid #c7d7f5;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--brand-navy);">' +
+        'Next clear period of the same length: <strong>' + escHtml(fmtDateUK(suggestion.startDate)) + ' → ' + escHtml(fmtDateUK(suggestion.endDate)) + '</strong>' +
+      '</div>'
+    : '<div style="font-size:13px;color:#6b7c8f;margin-top:12px;">No clear period of the same length was found in the next year.</div>';
+  var useSuggestedBtn = suggestion
+    ? '<button onclick="mhUseSuggestedDates(\'' + prefix + '\',\'' + suggestion.startDate + '\',\'' + suggestion.endDate + '\',' + JSON.stringify(days) + ',' + JSON.stringify(notes) + ')" style="background:var(--brand-navy);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Use suggested dates</button>'
+    : '';
+  var html =
+    '<div id="mh-clash-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;">' +
+      '<div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.25);">' +
+        '<div style="font-size:16px;font-weight:800;color:var(--brand-navy);margin-bottom:8px;">Holiday clash</div>' +
+        '<div style="font-size:13px;color:#374151;line-height:1.5;">' +
+          escHtml(clash.otherName) + ', who shares your job title, is already booked off ' +
+          escHtml(fmtDateUK(clash.otherStartDate)) + ' → ' + escHtml(fmtDateUK(clash.otherEndDate)) +
+          ', which overlaps the dates you\'ve chosen (' + escHtml(fmtDateUK(startDate)) + ' → ' + escHtml(fmtDateUK(endDate)) + ').' +
+        '</div>' +
+        suggestionHtml +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;">' +
+          '<button onclick="mhCloseClashModal()" style="background:none;color:#6b7c8f;border:1px solid #d1d9e6;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
+          useSuggestedBtn +
+          '<button onclick="mhProceedAnyway(\'' + prefix + '\')" style="background:#b91c1c;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Book anyway</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  window._mhClashPending = { prefix: prefix, startDate: startDate, endDate: endDate, days: days, notes: notes };
+}
+function mhProceedAnyway(prefix) {
+  var p = window._mhClashPending;
+  mhCloseClashModal();
+  if (!p) return;
+  mhDoSubmit(p.prefix, p.startDate, p.endDate, p.days, p.notes);
+}
+function mhUseSuggestedDates(prefix, startDate, endDate, days, notes) {
+  mhCloseClashModal();
+  document.getElementById(prefix + '-start').value = startDate;
+  document.getElementById(prefix + '-end').value = endDate;
+  if (typeof mhCalcDays === 'function') mhCalcDays(prefix);
+  // Suggested dates are already guaranteed clear, so submit straight away.
+  var recalculatedDays = document.getElementById(prefix + '-days').value || days;
+  mhDoSubmit(prefix, startDate, endDate, recalculatedDays, notes);
 }
 function mhCancelRequest(prefix, id) {
   if (!confirm('Cancel this holiday request?')) return;

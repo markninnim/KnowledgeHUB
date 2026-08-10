@@ -747,12 +747,90 @@ function staffMatchesViewerScope(callerEmail, staffEmail, roleMap) {
 // and everyone else to Dan Maskell. Holiday notifications (Request/Decision/
 // Cancelled) are always sent to this resolved approver only — i.e. every
 // notification a person receives is for someone they actually manage
-// holiday for. (Clash-detection between overlapping holidays was removed —
-// it was firing on the approving supervisor's own dashboard for overlaps
-// between two other people's holidays, which wasn't useful signal.)
+// holiday for. (An earlier version of this also fired a "Holiday Clash"
+// notification to the approver whenever two other people's holidays
+// overlapped — that was removed as unhelpful noise. Clash-checking now
+// happens at booking time instead, see checkJobTitleClash below, and warns
+// the person booking rather than pinging a third party.)
 function resolveHolidayApprover(f) {
   const jobTitle = f[F_TITLE] || '';
   return (f[F_HOLIDAY_APPROVER] || '').trim() || (/^(admin|paraplanner)/i.test(jobTitle) ? DAVID_RILEY_EMAIL : DAN_MASKELL_EMAIL);
+}
+
+// Calendar-day span of a date range, inclusive (used to size the "same
+// length" suggested alternative period — unlike countWeekdays, this
+// preserves weekends within the span so a suggested Mon–Fri request stays
+// Mon–Fri and a request spanning a weekend keeps the same total length).
+function calendarDaySpan(startStr, endStr) {
+  const start = new Date(startStr + 'T00:00:00Z'), end = new Date(endStr + 'T00:00:00Z');
+  if (isNaN(start) || isNaN(end) || end < start) return 0;
+  return Math.round((end - start) / 86400000) + 1;
+}
+
+function addDaysIso(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Looks for another Pending/Approved holiday request, for a different
+// person who shares the caller's (normalised) job title, whose dates
+// overlap the given range. Job title is the whole basis for this check —
+// unlike the Holiday Approver grouping used for notifications, this is
+// meant to catch "two people who do the same job are both going to be out
+// at once", regardless of who approves either of their holiday.
+async function checkJobTitleClash(callerEmail, jobTitle, startDate, endDate, excludeRecordId) {
+  const normTitle = (jobTitle || '').trim().toLowerCase();
+  if (!normTitle) return null;
+  const [all, roleMap] = await Promise.all([fetchAllHolidayRequests(), getStaffRoleMap()]);
+  const callerLower = callerEmail.toLowerCase();
+
+  for (const r of all) {
+    if (r.id === excludeRecordId) continue;
+    const f = r.fields;
+    const otherEmail = (f[HR_STAFF_EMAIL] || '').toLowerCase();
+    if (!otherEmail || otherEmail === callerLower) continue;
+    const otherTitle = ((roleMap[otherEmail] || {}).jobTitle || '').trim().toLowerCase();
+    if (otherTitle !== normTitle) continue;
+    const status = f[HR_STATUS] || 'Pending';
+    if (status === 'Rejected' || status === 'Cancelled') continue;
+    if (datesOverlap(startDate, endDate, f[HR_START_DATE] || '', f[HR_END_DATE] || '')) {
+      return { otherEmail, otherName: f[HR_STAFF_NAME] || otherEmail, startDate: f[HR_START_DATE], endDate: f[HR_END_DATE] };
+    }
+  }
+  return null;
+}
+
+// Finds the next period of the same length (calendar days) with no
+// job-title clash, searching forward day-by-day starting the day after the
+// requested end date. Capped at a year out so a fully-booked team doesn't
+// spin forever; returns null if nothing clear turns up in that window.
+async function findNextClearPeriod(callerEmail, jobTitle, startDate, endDate, excludeRecordId) {
+  const normTitle = (jobTitle || '').trim().toLowerCase();
+  if (!normTitle) return null;
+  const span = calendarDaySpan(startDate, endDate);
+  if (span <= 0) return null;
+  const [all, roleMap] = await Promise.all([fetchAllHolidayRequests(), getStaffRoleMap()]);
+  const callerLower = callerEmail.toLowerCase();
+
+  // Pre-filter to just the same-job-title colleagues' active date ranges —
+  // cheaper to check each candidate window against this short list than to
+  // re-scan every holiday request on every day of the search.
+  const activeRanges = all
+    .filter(r => r.id !== excludeRecordId)
+    .map(r => ({ f: r.fields, email: (r.fields[HR_STAFF_EMAIL] || '').toLowerCase(), status: r.fields[HR_STATUS] || 'Pending' }))
+    .filter(x => x.email && x.email !== callerLower && x.status !== 'Rejected' && x.status !== 'Cancelled')
+    .filter(x => ((roleMap[x.email] || {}).jobTitle || '').trim().toLowerCase() === normTitle)
+    .map(x => ({ start: x.f[HR_START_DATE] || '', end: x.f[HR_END_DATE] || '' }));
+
+  let candidateStart = addDaysIso(endDate, 1);
+  for (let i = 0; i < 366; i++) {
+    const candidateEnd = addDaysIso(candidateStart, span - 1);
+    const clashes = activeRanges.some(r => datesOverlap(candidateStart, candidateEnd, r.start, r.end));
+    if (!clashes) return { startDate: candidateStart, endDate: candidateEnd };
+    candidateStart = addDaysIso(candidateStart, 1);
+  }
+  return null;
 }
 
 // ── Home page Whereabouts grid (own week, self-service) ──────────
@@ -8873,6 +8951,39 @@ app.get('/api/holidays/my', requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('holidays/my error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Called by the self-service booking form before it actually submits, so it
+// can warn "someone else with your job title is already off then" and offer
+// the next clear period of the same length — the person can still proceed
+// anyway (this never blocks the actual booking, request-self below doesn't
+// re-check it).
+app.post('/api/holidays/check-clash', requireAuth, async (req, res) => {
+  const caller = req.session.user;
+  const startDate = (req.body.startDate || '').trim();
+  const endDate   = (req.body.endDate || '').trim();
+  if (!startDate || !endDate) return res.status(400).json({ error: 'startDate, endDate required' });
+
+  try {
+    const uData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}}) = "${caller.email.toLowerCase().replace(/"/g, '\\"')}"`)}&returnFieldsByFieldId=true`);
+    const uf = ((uData.records || [])[0] || {}).fields || {};
+    const jobTitle = uf[F_TITLE] || '';
+
+    const clash = await checkJobTitleClash(caller.email, jobTitle, startDate, endDate, null);
+    if (!clash) return res.json({ clash: false });
+
+    const suggestion = await findNextClearPeriod(caller.email, jobTitle, startDate, endDate, null);
+    res.json({
+      clash: true,
+      otherName: clash.otherName,
+      otherStartDate: clash.startDate,
+      otherEndDate: clash.endDate,
+      suggestion
+    });
+  } catch (err) {
+    console.error('holidays/check-clash error:', err);
     res.status(500).json({ error: err.message });
   }
 });
