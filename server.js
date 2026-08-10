@@ -862,95 +862,11 @@ async function whaGetWeekGrid(email, weekStart) {
   return { weekStart, grid, recordId: rec ? rec.id : null };
 }
 
-// GET /api/whereabouts-grid/mine — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
-app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
-  try {
-    const email = (req.session.user.email || '').toLowerCase();
-    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
-    const result = await whaGetWeekGrid(email, weekStart);
-    res.json(result);
-  } catch (err) {
-    console.error('whereabouts-grid/mine error:', err);
-    res.status(500).json({ error: 'Failed to load your whereabouts.' });
-  }
-});
-
-// PUT /api/whereabouts-grid/mine — set one day/slot for the caller's own week. { week, day, slot, value }
-app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
-  try {
-    const email = (req.session.user.email || '').toLowerCase();
-    const { day, slot, value } = req.body || {};
-    const weekStart = whaWeekStart((req.body.week || '').toString() || null);
-    if (!WHA_DAY_FIELDS[day] || (slot !== 'AM' && slot !== 'PM')) return res.status(400).json({ error: 'Invalid day/slot' });
-    if (value !== null && WHA_VALUES.indexOf(value) === -1) return res.status(400).json({ error: 'Invalid value' });
-    if (value === 'Holiday') return res.status(400).json({ error: 'Holiday is set automatically from approved holiday requests' });
-
-    // Refuse to overwrite a day that's actually on holiday.
-    const current = await whaGetWeekGrid(email, weekStart);
-    if (current.grid[day].holidayLocked) return res.status(400).json({ error: 'This day is booked as holiday and can\'t be edited here' });
-
-    const fieldId = WHA_DAY_FIELDS[day][slot];
-    const existing = await whaFindRecord(email, weekStart);
-    if (existing) {
-      await atGenericFetch(WHA_TABLE, '', {
-        method: 'PATCH',
-        body: JSON.stringify({ typecast: true, records: [{ id: existing.id, fields: { [fieldId]: value || null } }] })
-      });
-    } else {
-      await atGenericFetch(WHA_TABLE, '', {
-        method: 'POST',
-        body: JSON.stringify({ typecast: true, records: [{ fields: { [WHA_EMAIL]: email, [WHA_WEEK_START]: weekStart, [fieldId]: value || null } }] })
-      });
-    }
-    const result = await whaGetWeekGrid(email, weekStart);
-    res.json(result);
-  } catch (err) {
-    console.error('whereabouts-grid/mine PUT error:', err);
-    res.status(500).json({ error: 'Failed to save.' });
-  }
-});
-
-// GET /api/whereabouts-grid/search?q=name — typeahead over EMPLOYED staff names/emails only
-// (Whereabouts is an employed-staff-only feature — self-employed/AR advisers
-// aren't office-based so don't get a card and shouldn't show up as results).
-app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
-  try {
-    const q = (req.query.q || '').toString().trim().toLowerCase();
-    if (q.length < 2) return res.json({ results: [] });
-    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100`);
-    const results = (data.records || []).map(r => ({
-      email: r.fields[F_EMAIL] || '',
-      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '),
-      employed: !!r.fields[F_EMPLOYED_ADVISER]
-    })).filter(u => u.email && u.employed && (u.name.toLowerCase().indexOf(q) !== -1 || u.email.toLowerCase().indexOf(q) !== -1)).slice(0, 8);
-    res.json({ results: results.map(u => ({ email: u.email, name: u.name })) });
-  } catch (err) {
-    console.error('whereabouts-grid/search error:', err);
-    res.status(500).json({ error: 'Search failed.' });
-  }
-});
-
-// GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week (both caller and target must be employed staff)
-app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
-  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
-  try {
-    const email = decodeURIComponent(req.params.email || '').toLowerCase();
-    if (!email) return res.status(400).json({ error: 'Email required' });
-    const targetData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${email}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMPLOYED_ADVISER}&maxRecords=1`);
-    const targetRec = (targetData.records || [])[0];
-    if (!targetRec || !targetRec.fields[F_EMPLOYED_ADVISER]) return res.status(403).json({ error: 'That person is not on Whereabouts' });
-    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
-    const result = await whaGetWeekGrid(email, weekStart);
-    result.email = email;
-    res.json(result);
-  } catch (err) {
-    console.error('whereabouts-grid/user error:', err);
-    res.status(500).json({ error: 'Failed to load.' });
-  }
-});
+// NOTE: the actual app.get/app.put route registrations for
+// /api/whereabouts-grid/* live further down, just after
+// express.json()/urlencoded() are wired up (app.use runs in registration
+// order, so a PUT route registered before the body parser sees an empty
+// req.body — that was silently breaking every save until this was moved).
 
 // ── Featured social posts ──────────────────────────────────────
 const FEATURED_SOCIAL_PATH = path.join(__dirname, 'featured-social.json');
@@ -1104,6 +1020,99 @@ app.use(express.urlencoded({ extended: true }));
 // so this comfortably covers a ~14MB PPTX file.
 app.use(express.json({ limit: '40mb' }));
 app.set('trust proxy', 1);
+
+// ── Home page Whereabouts grid routes (helpers/consts defined earlier, near
+// checkHolidayClash) — registered here, after the body parser, so PUT's
+// req.body is actually populated. ──────────────────────────────
+// GET /api/whereabouts-grid/mine — current user's own week (today's week by default, ?week=YYYY-MM-DD for another Monday)
+app.get('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  try {
+    const email = (req.session.user.email || '').toLowerCase();
+    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
+    const result = await whaGetWeekGrid(email, weekStart);
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/mine error:', err);
+    res.status(500).json({ error: 'Failed to load your whereabouts.' });
+  }
+});
+
+// PUT /api/whereabouts-grid/mine — set one day/slot for the caller's own week. { week, day, slot, value }
+app.put('/api/whereabouts-grid/mine', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  try {
+    const email = (req.session.user.email || '').toLowerCase();
+    const { day, slot, value } = req.body || {};
+    const weekStart = whaWeekStart((req.body.week || '').toString() || null);
+    if (!WHA_DAY_FIELDS[day] || (slot !== 'AM' && slot !== 'PM')) return res.status(400).json({ error: 'Invalid day/slot' });
+    if (value !== null && WHA_VALUES.indexOf(value) === -1) return res.status(400).json({ error: 'Invalid value' });
+    if (value === 'Holiday') return res.status(400).json({ error: 'Holiday is set automatically from approved holiday requests' });
+
+    // Refuse to overwrite a day that's actually on holiday.
+    const current = await whaGetWeekGrid(email, weekStart);
+    if (current.grid[day].holidayLocked) return res.status(400).json({ error: 'This day is booked as holiday and can\'t be edited here' });
+
+    const fieldId = WHA_DAY_FIELDS[day][slot];
+    const existing = await whaFindRecord(email, weekStart);
+    if (existing) {
+      await atGenericFetch(WHA_TABLE, '', {
+        method: 'PATCH',
+        body: JSON.stringify({ typecast: true, records: [{ id: existing.id, fields: { [fieldId]: value || null } }] })
+      });
+    } else {
+      await atGenericFetch(WHA_TABLE, '', {
+        method: 'POST',
+        body: JSON.stringify({ typecast: true, records: [{ fields: { [WHA_EMAIL]: email, [WHA_WEEK_START]: weekStart, [fieldId]: value || null } }] })
+      });
+    }
+    const result = await whaGetWeekGrid(email, weekStart);
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/mine PUT error:', err);
+    res.status(500).json({ error: 'Failed to save.' });
+  }
+});
+
+// GET /api/whereabouts-grid/search?q=name — typeahead over EMPLOYED staff names/emails only
+// (Whereabouts is an employed-staff-only feature — self-employed/AR advisers
+// aren't office-based so don't get a card and shouldn't show up as results).
+app.get('/api/whereabouts-grid/search', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  try {
+    const q = (req.query.q || '').toString().trim().toLowerCase();
+    if (q.length < 2) return res.json({ results: [] });
+    const data = await atFetch(`?returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100`);
+    const results = (data.records || []).map(r => ({
+      email: r.fields[F_EMAIL] || '',
+      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' '),
+      employed: !!r.fields[F_EMPLOYED_ADVISER]
+    })).filter(u => u.email && u.employed && (u.name.toLowerCase().indexOf(q) !== -1 || u.email.toLowerCase().indexOf(q) !== -1)).slice(0, 8);
+    res.json({ results: results.map(u => ({ email: u.email, name: u.name })) });
+  } catch (err) {
+    console.error('whereabouts-grid/search error:', err);
+    res.status(500).json({ error: 'Search failed.' });
+  }
+});
+
+// GET /api/whereabouts-grid/user/:email — read-only lookup of a colleague's current week (both caller and target must be employed staff)
+app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
+  if (!req.session.user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  try {
+    const email = decodeURIComponent(req.params.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const targetData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${email}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMPLOYED_ADVISER}&maxRecords=1`);
+    const targetRec = (targetData.records || [])[0];
+    if (!targetRec || !targetRec.fields[F_EMPLOYED_ADVISER]) return res.status(403).json({ error: 'That person is not on Whereabouts' });
+    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
+    const result = await whaGetWeekGrid(email, weekStart);
+    result.email = email;
+    res.json(result);
+  } catch (err) {
+    console.error('whereabouts-grid/user error:', err);
+    res.status(500).json({ error: 'Failed to load.' });
+  }
+});
 
 // ── Security headers (helmet) ────────────────────────────────
 // CSP disabled — app uses inline scripts; all other headers enabled
