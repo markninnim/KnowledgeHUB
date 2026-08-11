@@ -4381,14 +4381,16 @@ app.get('/api/admin/user-engagement', requireAdmin, async (req, res) => {
     } while (offset);
 
     const cutoff = Date.now() - ONLINE_WINDOW_MS;
-    const onlineNames = Object.values(_activeUsers)
-      .filter(u => u.lastSeen >= cutoff)
-      .map(u => u.name)
-      .sort();
+    const onlineEntries = Object.entries(_activeUsers).filter(([, u]) => u.lastSeen >= cutoff);
+    const onlineNames = onlineEntries.map(([, u]) => u.name).sort();
+    // Emails (already lowercased — they're the object keys) so the client can
+    // put a live dot against each row in the User Management list.
+    const onlineEmails = onlineEntries.map(([email]) => email);
 
     res.json({
       onlineNow: onlineNames.length,
       onlineNames,
+      onlineEmails,
       peakConcurrent: _peakConcurrent.value,
       peakConcurrentAt: _peakConcurrent.at,
       totalUsers: total,

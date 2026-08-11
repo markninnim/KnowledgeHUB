@@ -10809,7 +10809,14 @@ function closeAdminPanel() {
   var ap = document.getElementById('admin-audit-panel');
   if (ap) ap.style.display = 'none';
   cancelUserForm();
+  if (_onlineRefreshTimer) { clearInterval(_onlineRefreshTimer); _onlineRefreshTimer = null; }
 }
+
+// Emails currently "online" (active in the last 5 minutes), lowercased —
+// refreshed by loadAdminEngagement and used by renderUserList to put a live
+// dot against each row in User Management.
+var _onlineEmailSet = new Set();
+var _onlineRefreshTimer = null;
 
 function loadAdminEngagement() {
   var body = document.getElementById('admin-engagement-body');
@@ -10830,9 +10837,18 @@ function loadAdminEngagement() {
       + card('Most online at once', d.peakConcurrent, peakAt ? 'on ' + peakAt : 'no activity recorded yet')
       + card('Logged in &amp; set up', d.setUpUsers + ' / ' + d.totalUsers, 'have set a password')
       + card('2FA enabled', d.has2FAUsers + ' / ' + d.totalUsers, d.has2FAUsers < d.totalUsers ? (d.totalUsers - d.has2FAUsers) + ' still without it' : 'everyone\'s covered');
+
+    // Update the per-row online dots in the user list below, if it's loaded.
+    _onlineEmailSet = new Set((d.onlineEmails || []).map(function(e){ return (e || '').toLowerCase(); }));
+    if (_adminUsers && _adminUsers.length) filterUsers();
   }).catch(function() {
     body.innerHTML = '<p style="color:#c00;font-size:13px;grid-column:1/-1;">Could not load engagement data.</p>';
   });
+
+  // Keep the dots reasonably live while the panel's open (5-min online
+  // window, so a 30s refresh is plenty) — cleared when the modal closes.
+  if (_onlineRefreshTimer) clearInterval(_onlineRefreshTimer);
+  _onlineRefreshTimer = setInterval(loadAdminEngagement, 30000);
 }
 
 // ── AI Help Content whitelist (admin only) ──────────────────────────────
@@ -11422,6 +11438,12 @@ function renderUserList(users) {
     var displayTitle = u.jobTitle || '';
     if (u.sellsMortgages && !u.sellsProtection && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages) displayTitle = 'Mortgage Adviser';
     else if (u.sellsProtection && !u.sellsMortgages && !u.sellsInvestments && !u.equityRelease && !u.commercialMortgages) displayTitle = 'Protection Adviser';
+    // Online dot only makes sense where we actually have live data — that's
+    // admin-only (the engagement panel that feeds _onlineEmailSet is
+    // admin-gated), so supervisors viewing Team Overview don't get a
+    // misleading "everyone's offline" dot.
+    var isOnline = _onlineEmailSet.has((u.email || '').toLowerCase());
+    var onlineDot = isAdmin ? ('<span title="' + (isOnline ? 'Online now (active in the last 5 minutes)' : 'Offline') + '" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;flex-shrink:0;background:' + (isOnline ? '#dc2626' : '#d1d5db') + ';' + (isOnline ? 'box-shadow:0 0 0 3px rgba(220,38,38,.15);' : '') + '"></span>') : '';
     var supInfo = u.supervisorEmail ? '<div style="color:#6b7c8f;font-size:11px;margin-top:2px;">Supervisor: ' + escHtml(u.supervisorEmail) + '</div>' : '';
     var actionBtns = '';
     if (canManageUsers) {
@@ -11438,7 +11460,7 @@ function renderUserList(users) {
     }
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f2f5;">' +
       '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:var(--brand-navy);">' + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + (typeof totpBadge !== 'undefined' ? totpBadge : '') + products.join('') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:var(--brand-navy);display:flex;align-items:center;">' + onlineDot + escHtml(name) + badge + supBadge + casBadge + mktBadge + (typeof frBadge !== 'undefined' ? frBadge : '') + (typeof totpBadge !== 'undefined' ? totpBadge : '') + products.join('') + '</div>' +
         '<div style="font-size:12px;color:#6b7c8f;margin-top:1px;">' + escHtml(u.email) + (displayTitle ? ' · ' + escHtml(displayTitle) : '') + '</div>' +
         supInfo +
       '</div>' +
