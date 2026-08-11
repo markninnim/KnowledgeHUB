@@ -20624,11 +20624,11 @@ function khAddBotMessage(text) {
   var wrap = document.getElementById('kh-messages');
   if (!wrap) return;
   var row = document.createElement('div');
-  row.style.cssText = 'align-self:flex-start;display:flex;align-items:flex-end;gap:6px;max-width:88%;';
+  row.style.cssText = 'align-self:flex-start;display:flex;align-items:flex-start;gap:6px;max-width:88%;';
   var avatar = document.createElement('img');
   avatar.src = '/static/alex-orb.svg';
   avatar.alt = '';
-  avatar.style.cssText = 'width:72px;height:72px;object-fit:contain;flex-shrink:0;margin-bottom:2px;';
+  avatar.style.cssText = 'width:26px;height:26px;object-fit:contain;flex-shrink:0;margin-top:6px;';
   var el = document.createElement('div');
   el.style.cssText = 'background:#fff;border:1px solid #e8ecf0;color:#3d4c5c;padding:9px 13px;border-radius:14px 14px 14px 3px;font-size:13px;line-height:1.6;white-space:pre-line;min-width:0;';
   el.textContent = text;
