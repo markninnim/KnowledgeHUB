@@ -1,0 +1,40 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="alexCore" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#ffd98a"/>
+      <stop offset="100%" stop-color="#fcb034" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="alexRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fcb034"/>
+      <stop offset="100%" stop-color="#4d8fd6"/>
+    </linearGradient>
+    <style>
+      .alex-wave { transform-origin: 50px 50px; animation: alexWave 2.6s ease-out infinite; }
+      .alex-wave.w2 { animation-delay: .9s; }
+      .alex-orbit { transform-origin: 50px 50px; animation: alexOrbit 9s linear infinite; }
+      .alex-orbit.o2 { animation-direction: reverse; animation-duration: 13s; }
+      .alex-core-halo { transform-origin: 50px 50px; animation: alexBreathe 2.4s ease-in-out infinite; }
+      .alex-spark { animation: alexTwinkle 1.8s ease-in-out infinite; }
+      @keyframes alexWave { 0% { transform: scale(.55); opacity: 0; } 15% { opacity: .55; } 100% { transform: scale(1); opacity: 0; } }
+      @keyframes alexOrbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes alexBreathe { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.08); opacity: 1; } }
+      @keyframes alexTwinkle { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+    </style>
+  </defs>
+
+  <circle class="alex-wave" cx="50" cy="50" r="16" fill="none" stroke="#fcb034" stroke-width="1"/>
+  <circle class="alex-wave w2" cx="50" cy="50" r="16" fill="none" stroke="#fcb034" stroke-width="1"/>
+
+  <g class="alex-orbit">
+    <circle cx="50" cy="50" r="23" fill="none" stroke="url(#alexRing)" stroke-width="1.6" stroke-dasharray="3.5 2.5" opacity="0.85"/>
+  </g>
+  <g class="alex-orbit o2">
+    <circle cx="50" cy="50" r="16" fill="none" stroke="url(#alexRing)" stroke-width="1" stroke-dasharray="1.5 3.5" opacity="0.55"/>
+  </g>
+
+  <g class="alex-core-halo">
+    <circle cx="50" cy="50" r="10" fill="url(#alexCore)"/>
+    <circle class="alex-spark" cx="50" cy="50" r="4" fill="#ffffff"/>
+  </g>
+</svg>
