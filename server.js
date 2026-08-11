@@ -2797,6 +2797,46 @@ app.get('/api/newsletters', requireAuth, (req, res) => {
   } catch(e) { res.json([]); }
 });
 
+// ── Compliance News (Learning > Reading) ──────────────────────
+// Mirrors the Monthly Newsletters upload/list pattern: PDFs dropped into
+// public/compliance-news/, filenames free-form (title kept in filename
+// minus extension), reuses public/newsletters/cover.jpg as the card image
+// per the brief ("use the cover that we use for monthly newsletters").
+app.post('/api/compliance-news/upload', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const { title, date, data } = req.body; // data = base64 PDF string
+  if (!title || !date || !data) return res.status(400).json({ error: 'Missing fields' });
+  const safeTitle = String(title).trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+  if (!safeTitle) return res.status(400).json({ error: 'Invalid title' });
+  const filename = date + '__' + safeTitle + '.pdf';
+  const dest = path.join(__dirname, 'public/compliance-news', filename);
+  try {
+    const buf = Buffer.from(data, 'base64');
+    if (buf.length > 20_000_000) return res.status(400).json({ error: 'File too large (max 20MB)' });
+    require('fs').mkdirSync(path.join(__dirname, 'public/compliance-news'), { recursive: true });
+    require('fs').writeFileSync(dest, buf);
+    res.json({ ok: true, filename });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/compliance-news', requireAuth, (req, res) => {
+  const dir = path.join(__dirname, 'public/compliance-news');
+  try {
+    require('fs').mkdirSync(dir, { recursive: true });
+    const files = require('fs').readdirSync(dir)
+      .filter(f => f.endsWith('.pdf') && /^\d{4}-\d{2}-\d{2}__.+\.pdf$/.test(f))
+      .map(f => {
+        const date = f.slice(0, 10);
+        const slug = f.slice(12, -4);
+        const label = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return { file: f, date, label };
+      })
+      .sort((a, b) => b.date.localeCompare(a.date));
+    res.json(files);
+  } catch(e) { res.json([]); }
+});
+
 // ── Weekly Whereabouts (supervisors/admins only) ─────────────
 // A new .docx is dropped into public/whereabouts/ each week. Multiple weeks'
 // files can sit in the folder at once, so pick the one whose filename date is
