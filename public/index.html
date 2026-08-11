@@ -352,9 +352,9 @@ select:focus { outline:none; }
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">READING</span></div>
+    <a href="#" id="lv-nav-compliance-news" onclick="return showLvSection('compliance-news',this)">Compliance News<span id="lv-nav-compliance-news-dot" style="display:none;margin-left:6px;width:7px;height:7px;border-radius:50%;background:#e5484d;"></span></a>
     <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters<span id="lv-nav-newsletters-dot" style="display:none;margin-left:6px;width:7px;height:7px;border-radius:50%;background:#e5484d;"></span></a>
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
-    <a href="#" id="lv-nav-compliance-news" onclick="return showLvSection('compliance-news',this)">Compliance News<span id="lv-nav-compliance-news-dot" style="display:none;margin-left:6px;width:7px;height:7px;border-radius:50%;background:#e5484d;"></span></a>
     <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">KNOWLEDGE TESTS</span></div>
     <a href="#" id="kd-nav-induction" onclick="return ktShowGroup('induction',this)">Induction</a>
     <a href="#" id="kd-nav-revalidation" onclick="return ktShowGroup('revalidation',this)">Revalidation</a>
@@ -16120,15 +16120,9 @@ function refreshLearningUnreadDots() {
       var nlDot = document.getElementById('lv-nav-newsletters-dot');
       var cnDot = document.getElementById('lv-nav-compliance-news-dot');
       var learnDot = document.getElementById('lv-nav-unread-dot');
-      var bellDot = document.getElementById('notif-bell-dot');
-      var bellBtn = document.getElementById('notif-bell-btn');
       if (nlDot) nlDot.style.display = nlUnread ? 'inline-block' : 'none';
       if (cnDot) cnDot.style.display = cnUnread ? 'inline-block' : 'none';
       if (learnDot) learnDot.style.display = (nlUnread || cnUnread) ? 'block' : 'none';
-      if ((nlUnread || cnUnread) && bellBtn && bellDot) {
-        bellBtn.style.display = 'inline-flex';
-        bellDot.style.display = 'block';
-      }
     });
   });
 }
