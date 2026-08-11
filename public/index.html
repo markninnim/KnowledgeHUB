@@ -239,7 +239,7 @@ select:focus { outline:none; }
     <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
     <button class="tab-btn"        id="tab-btn-contacts"      onclick="switchTab('contacts')">Contacts</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Earn</button>
-    <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learn</button>
+    <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')" style="position:relative;">Learn<span id="lv-nav-unread-dot" style="display:none;position:absolute;top:4px;right:2px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid #fff;"></span></button>
     <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
     <button class="tab-btn"        id="tab-btn-pay"           onclick="switchTab('pay')" style="display:none;">Pay</button>
     <button class="tab-btn"        id="tab-btn-surveying"     onclick="switchTab('surveying')">Surveying</button>
@@ -352,9 +352,9 @@ select:focus { outline:none; }
     <a href="#" id="lv-nav-induction" onclick="return showLvSection('induction-recordings',this)">Induction Recordings</a>
     <a href="#" id="lv-nav-revalidation" onclick="return showLvSection('revalidation-recordings',this)">Revalidation Recordings</a>
     <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">READING</span></div>
-    <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters</a>
+    <a href="#" id="lv-nav-newsletters" onclick="return showLvSection('monthly-newsletters',this)">Monthly Newsletters<span id="lv-nav-newsletters-dot" style="display:none;margin-left:6px;width:7px;height:7px;border-radius:50%;background:#e5484d;"></span></a>
     <a href="#" id="lv-nav-mortgage-strategy" onclick="return showLvSection('reading-mortgage-strategy',this)">Industry Reading</a>
-    <a href="#" id="lv-nav-compliance-news" onclick="return showLvSection('compliance-news',this)">Compliance News</a>
+    <a href="#" id="lv-nav-compliance-news" onclick="return showLvSection('compliance-news',this)">Compliance News<span id="lv-nav-compliance-news-dot" style="display:none;margin-left:6px;width:7px;height:7px;border-radius:50%;background:#e5484d;"></span></a>
     <div style="margin:16px 0 2px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">KNOWLEDGE TESTS</span></div>
     <a href="#" id="kd-nav-induction" onclick="return ktShowGroup('induction',this)">Induction</a>
     <a href="#" id="kd-nav-revalidation" onclick="return ktShowGroup('revalidation',this)">Revalidation</a>
@@ -16081,10 +16081,56 @@ function mbSearch() {
 function loadNotificationBell() {
   fetch('/api/notifications').then(function(r){ return r.json(); }).then(function(d) {
     var btn = document.getElementById('notif-bell-btn'), dot = document.getElementById('notif-bell-dot');
-    if (!d.notifications || !d.notifications.length) return;
-    btn.style.display = 'inline-flex';
-    dot.style.display = 'block';
+    if (d.notifications && d.notifications.length) {
+      btn.style.display = 'inline-flex';
+      dot.style.display = 'block';
+    }
   }).catch(function(err) { console.error('loadNotificationBell error:', err); });
+  refreshLearningUnreadDots();
+}
+
+// ── "Unread" dots for new Learning content (Monthly Newsletters / Compliance
+// News) ──────────────────────────────────────────────────────────────────
+// There's no separate "read" flag stored anywhere — instead we reuse the
+// existing CPD-logging signal: opening a newsletter/bulletin for long enough
+// to read it already logs a CPD entry titled after it (see openNewsletter /
+// openComplianceNews). So "unread" here just means "no matching CPD entry
+// yet" — same definition the open-handlers already use for
+// alreadyCredited(), kept in sync deliberately so the dot and the CPD toast
+// never disagree about what counts as "read".
+function lnHasCpdEntry(title) {
+  return (_cpdAllEntries || []).some(function(e) { return e.source === 'Learning Zone' && e.activity === title; });
+}
+function refreshLearningUnreadDots() {
+  var haveCpd = _cpdLoaded ? Promise.resolve() : new Promise(function(resolve) {
+    fetch('/api/cpd').then(function(r){ return r.json(); }).then(function(data) {
+      _cpdAllEntries = data.entries || [];
+      _cpdLoaded = true;
+      resolve();
+    }).catch(resolve);
+  });
+  haveCpd.then(function() {
+    Promise.all([
+      fetch('/api/newsletters').then(function(r){ return r.json(); }).catch(function(){ return []; }),
+      fetch('/api/compliance-news').then(function(r){ return r.json(); }).catch(function(){ return []; })
+    ]).then(function(results) {
+      var nl = results[0] || [], cn = results[1] || [];
+      var nlUnread = nl.some(function(n) { return !lnHasCpdEntry(n.label + ' CPD Round-up'); });
+      var cnUnread = cn.some(function(n) { return !lnHasCpdEntry(n.label); });
+      var nlDot = document.getElementById('lv-nav-newsletters-dot');
+      var cnDot = document.getElementById('lv-nav-compliance-news-dot');
+      var learnDot = document.getElementById('lv-nav-unread-dot');
+      var bellDot = document.getElementById('notif-bell-dot');
+      var bellBtn = document.getElementById('notif-bell-btn');
+      if (nlDot) nlDot.style.display = nlUnread ? 'inline-block' : 'none';
+      if (cnDot) cnDot.style.display = cnUnread ? 'inline-block' : 'none';
+      if (learnDot) learnDot.style.display = (nlUnread || cnUnread) ? 'block' : 'none';
+      if ((nlUnread || cnUnread) && bellBtn && bellDot) {
+        bellBtn.style.display = 'inline-flex';
+        bellDot.style.display = 'block';
+      }
+    });
+  });
 }
 function openNotifications() {
   document.getElementById('notif-modal').style.display = 'flex';
@@ -18934,6 +18980,7 @@ function loadCpd() {
     renderSpecialistCpd();
     renderCpdEntries(_cpdAllEntries);
     cpdCheckMissingLearned();
+    if (typeof refreshLearningUnreadDots === 'function') refreshLearningUnreadDots();
   }).catch(function() {
     document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log.</div>';
   });
