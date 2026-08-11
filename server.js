@@ -4793,6 +4793,19 @@ app.delete('/api/admin/force-reset/:email', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Admin: clear a user's failed-login lockout (3 wrong attempts locks a
+// login for 15 minutes — see LOGIN_MAX/LOGIN_LOCK_MS above). This just
+// clears the in-memory attempt counter so they can try again immediately;
+// it does not touch their password or 2FA.
+app.post('/api/admin/unlock-login', requireAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const emailLower = email.trim().toLowerCase();
+  clearLoginAttempts(emailLower);
+  auditLog('admin_unlock_login', { targetEmail: emailLower, admin: (req.session.user || {}).email }, req);
+  res.json({ ok: true });
+});
+
 // ── Admin: audit log ──────────────────────────────────────────────
 app.get('/api/admin/audit-log', requireAdmin, async (req, res) => {
   try {

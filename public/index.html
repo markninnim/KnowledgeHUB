@@ -11886,6 +11886,7 @@ function renderUserList(users) {
       actionBtns =
         '<button onclick="impersonateUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100px;text-align:center;">View As</button>' +
         (canEditThis && isAdmin ? '<button onclick="adminForceReset(\'' + escHtml(u.email).replace(/'/g,"\\'") + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:82px;text-align:center;">' + (u._forceReset ? '✓ Forced' : 'Force Reset') + '</button>' : '') +
+        (canEditThis && isAdmin ? '<button onclick="adminUnlockLogin(\'' + escHtml(u.email).replace(/'/g,"\\'") + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:70px;text-align:center;">Unlock</button>' : '') +
         (canEditThis && isAdmin && u.hasTOTP ? '<button onclick="adminClear2FA(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fef2f2;color:#b91c1c;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:74px;text-align:center;">Clear 2FA</button>' : '') +
         (canEditThis ? '<button onclick="openUserForm(\'' + u.id + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:52px;text-align:center;">Edit</button>' : '') +
         (canEditThis ? '<button onclick="deleteUser(\'' + u.id + '\',\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:#fff0f0;color:#c00;border:none;padding:6px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:62px;text-align:center;">Delete</button>' : '');
@@ -12262,6 +12263,15 @@ function adminForceReset(email) {
       .then(function(d) { if (d.ok) loadAdminUsers(); else alert(d.error || 'Failed'); })
       .catch(function() { alert('Network error'); });
   }
+}
+
+function adminUnlockLogin(email, name) {
+  // Clears the 3-strikes login lockout (15 min) so they can try logging in
+  // straight away. Doesn't touch their password or 2FA.
+  fetch('/api/admin/unlock-login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email: email }) })
+    .then(function(r) { if (r.status === 401) { khRemoveTyping(); khAddSessionExpiredMessage(); return Promise.reject('handled'); } return r.json(); })
+    .then(function(d) { if (d.ok) { var t = document.getElementById('toast'); if (t) { t.textContent = '✓ Login unlocked for ' + name; t.style.opacity = 1; setTimeout(function(){ t.style.opacity = 0; }, 4000); } } else alert(d.error || 'Failed to unlock'); })
+    .catch(function(e) { if (e !== 'handled') alert('Network error'); });
 }
 
 function adminClear2FA(userId, name) {
