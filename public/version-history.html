@@ -125,6 +125,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.3</span>
+      <span class="version-title">Whereabouts Homepage Card, Feefo Card Fixes &amp; Content Pillar Cleanup</span>
+      <span class="version-date">11 August 2026</span>
+    </div>
+    <p class="version-summary">Added a new "Whereabouts" card to the Home page &mdash; a Monday-to-Friday AM/PM grid, restricted to employed staff, that auto-fills from approved holiday and lets you look up (read-only) a colleague's week. Fixed the Feefo card so a person's own review list, average rating and count are always shown all-time and sorted latest first, while the two league tables on the right stay scoped to the selected date range. Also gave a content pillar to the last 15 "Uncategorised" posts in Bespoke Social Content.</p>
+    <ul class="changes">
+      <li>New Whereabouts card above Feefo on the Home page, visible only to staff flagged "Employed adviser": five day boxes (Mon&ndash;Fri), each split into AM/PM, editable for your own week and automatically overlaid with "Holiday" on any day covered by an approved holiday request.</li>
+      <li>Search box to look up a colleague's week read-only, without leaving the card; results are limited to other employed staff.</li>
+      <li>New "Whereabouts" Airtable table backing the feature, plus four new API routes, all gated so only employed staff can read or write whereabouts data.</li>
+      <li>Feefo card on the Home page: your own review list, star average and review count are now always all-time, sorted latest review first &mdash; previously they were unintentionally scoped to whatever date range was selected. The "Top Reviews" and "Top NPS" league tables keep respecting the date range (defaulting to the current year), now labelled "League table range" to make the split clear.</li>
+      <li>Assigned a content pillar (Property Journey, Renewals &amp; Rates, Protection &amp; Wellbeing, Trust Building, Market &amp; Money News, Community &amp; Culture, or Call to Action) to the 15 Bespoke Social Content posts that were still showing as "Uncategorised", including "Your Home Our Guidance".</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v3.2</span>
       <span class="version-title">Holiday Approver Routing, Inline Home Widget &amp; Employed-Adviser Auto-Enable</span>
       <span class="version-date">9 August 2026</span>
