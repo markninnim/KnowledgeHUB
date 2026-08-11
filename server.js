@@ -2723,6 +2723,9 @@ app.use('/static', express.static(path.join(__dirname, 'public/static')));
 // ── Newsletters (auth-gated PDF + cover serving) ────────────
 app.use('/newsletters', requireAuth, express.static(path.join(__dirname, 'public/newsletters')));
 
+// ── Compliance News (auth-gated PDF/HTML bulletin serving) ──
+app.use('/compliance-news', requireAuth, express.static(path.join(__dirname, 'public/compliance-news')));
+
 // ── Newsletter upload (supervisor/admin only) ─────────────────
 app.post('/api/newsletters/upload', requireAuth, async (req, res) => {
   const user = req.session.user;
