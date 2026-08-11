@@ -2862,16 +2862,29 @@ app.post('/api/compliance-news/upload', requireAuth, async (req, res) => {
 // YYYY-MM-DD__slug.{pdf|html}
 app.get('/api/compliance-news', requireAuth, (req, res) => {
   const dir = path.join(__dirname, 'public/compliance-news');
+  const fsx = require('fs');
   try {
-    require('fs').mkdirSync(dir, { recursive: true });
-    const files = require('fs').readdirSync(dir)
+    fsx.mkdirSync(dir, { recursive: true });
+    const files = fsx.readdirSync(dir)
       .filter(f => /^\d{4}-\d{2}-\d{2}__.+\.(pdf|html)$/.test(f))
       .map(f => {
         const ext = f.endsWith('.html') ? '.html' : '.pdf';
         const date = f.slice(0, 10);
         const slug = f.slice(12, -ext.length);
-        const label = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        return { file: f, date, label };
+        // Fallback label from the filename slug (e.g. for admin-uploaded
+        // PDFs, which don't carry a <title>/<div class="sub"> to read).
+        let label = slug.replace(/-(\d{2})-(\d{4})$/, ' $1/$2').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        let subtitle = '';
+        if (ext === '.html') {
+          try {
+            const html = fsx.readFileSync(path.join(dir, f), 'utf8');
+            const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
+            const subMatch = html.match(/<div class="sub">([^<]*)<\/div>/i);
+            if (titleMatch) label = titleMatch[1];
+            if (subMatch) subtitle = subMatch[1];
+          } catch (e) { /* fall back to slug-derived label */ }
+        }
+        return { file: f, date, label, subtitle };
       })
       .sort((a, b) => b.date.localeCompare(a.date));
     res.json(files);
