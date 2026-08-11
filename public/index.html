@@ -8398,6 +8398,7 @@ function ctPhoneLinks(phone) {
   // Some cells hold several numbers with labels ("07775 550523 / 0345 073
   // 3330 opt 8") — split on '/' and tel:-link just the leading digits of
   // each chunk so a labelled suffix like "opt 8" doesn't end up in the href.
+  // Each number always gets its own line rather than being run together.
   if (!phone) return '';
   return phone.split('/').map(function(part) {
     part = part.trim();
@@ -8406,7 +8407,7 @@ function ctPhoneLinks(phone) {
     var digits = m[0].trim();
     var rest = part.slice(m[0].length).trim();
     return '<a href="tel:' + digits.replace(/\s+/g,'') + '" style="color:var(--brand-navy);text-decoration:none;">' + escHtml(digits) + '</a>' + (rest ? ' <span style="color:#9aa5b1;">' + escHtml(rest) + '</span>' : '');
-  }).join(' &nbsp;/&nbsp; ');
+  }).join('<br>');
 }
 
 function ctEmailLinks(email) {
@@ -8414,15 +8415,15 @@ function ctEmailLinks(email) {
   return email.split('/').map(function(e) {
     e = e.trim();
     return '<a href="mailto:' + e + '" style="color:var(--brand-navy);text-decoration:none;word-break:break-all;">' + escHtml(e) + '</a>';
-  }).join(' &nbsp;/&nbsp; ');
+  }).join('<br>');
 }
 
 function ctCardHtml(c) {
   var roles = (c.roles || []).filter(Boolean);
   return '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;">' +
     '<div style="font-size:14px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">' + escHtml(c.name) + '</div>' +
-    (c.phone ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">&#128222; ' + ctPhoneLinks(c.phone) + '</div>' : '') +
-    (c.email ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">&#9993; ' + ctEmailLinks(c.email) + '</div>' : '') +
+    (c.phone ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">' + ctPhoneLinks(c.phone) + '</div>' : '') +
+    (c.email ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">' + ctEmailLinks(c.email) + '</div>' : '') +
     (roles.length ? '<div style="font-size:12px;color:#6b7c8f;margin-top:6px;line-height:1.6;">' + roles.map(function(r){ return escHtml(r); }).join('<br>') + '</div>' : '') +
   '</div>';
 }
