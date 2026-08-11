@@ -1236,6 +1236,21 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/contacts — the Contacts directory (Finance Planning / Mortgage /
+// Insurance). Backed by a local JSON file rather than Airtable since it's
+// a fairly static reference doc, imported from "FPG Useful Contact
+// Numbers"; admins can hand-edit public/data/contacts.json to update it.
+app.get('/api/contacts', requireAuth, (req, res) => {
+  try {
+    const data = fs.readFileSync(path.join(__dirname, 'public/data/contacts.json'), 'utf8');
+    res.setHeader('Content-Type', 'application/json');
+    res.send(data);
+  } catch (err) {
+    console.error('contacts load error:', err);
+    res.status(500).json({ error: 'Could not load contacts.' });
+  }
+});
+
 app.get('/api/quick-links', requireAuth, async (req, res) => {
   try {
     const id = req.session.user.id;

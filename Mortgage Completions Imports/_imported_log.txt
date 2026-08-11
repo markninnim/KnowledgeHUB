@@ -6,3 +6,4 @@
 # Drop the monthly .xlsx export into this folder (Mortgage Completions Imports).
 # A scheduled task checks daily and imports any new file automatically.
 Base June 26 MG converted.xlsx
+Base July 26 MG converted.xlsx

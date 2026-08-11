@@ -237,6 +237,7 @@ select:focus { outline:none; }
   <div class="tab-nav">
     <button class="tab-btn active" id="tab-btn-home"          onclick="switchTab('home')">Home</button>
     <button class="tab-btn"        id="tab-btn-compliance"    onclick="switchTab('compliance')">Compliance</button>
+    <button class="tab-btn"        id="tab-btn-contacts"      onclick="switchTab('contacts')">Contacts</button>
     <button class="tab-btn"        id="tab-btn-selling-zone"  onclick="switchTab('selling-zone')" style="display:none;">Earn</button>
     <button class="tab-btn"        id="tab-btn-learning"      onclick="switchTab('learning')">Learn</button>
     <button class="tab-btn"        id="tab-btn-marketing"     onclick="switchTab('marketing')">Marketing</button>
@@ -333,6 +334,15 @@ select:focus { outline:none; }
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">CONSUMER DUTY</span></div>
       <a href="#" id="cd-nav-feedback" onclick="return showCdFeedback(event, this)">Questionnaire Feedback</a>
     </div>
+  </div>
+  <!-- Contacts sidebar -->
+  <div id="sidebar-contacts" style="display:none">
+    <h2 style="margin-top: 8px;">Contacts</h2>
+    <a href="#" id="ct-nav-all" class="active" onclick="return ctFilterCategory('all', this)">All Contacts</a>
+    <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">DIRECTORY</span></div>
+    <a href="#" id="ct-nav-finance-planning" onclick="return ctFilterCategory('finance-planning', this)">Finance Planning</a>
+    <a href="#" id="ct-nav-mortgage" onclick="return ctFilterCategory('mortgage', this)">Mortgage</a>
+    <a href="#" id="ct-nav-insurance" onclick="return ctFilterCategory('insurance', this)">Insurance</a>
   </div>
   <!-- Learning sidebar -->
   <div id="sidebar-learning" style="display:none">
@@ -502,7 +512,6 @@ select:focus { outline:none; }
 
       <!-- Quick links -->
       <div style="margin-bottom:32px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#6b7c8f;text-transform:uppercase;margin-bottom:12px;">Quick Links</div>
         <div id="ql-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;position:relative;">
 
           <!-- Main menu popover (populated dynamically) -->
@@ -1492,6 +1501,37 @@ select:focus { outline:none; }
   </div>
 
   </div><!-- /tab-marketing -->
+
+  <!-- ── Contacts tab ──────────────────────────────────────── -->
+  <div id="tab-contacts" class="tab-pane">
+    <div style="padding:32px;">
+      <div style="max-width:980px;margin:0 auto;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px;">
+          <div>
+            <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Contacts</h2>
+            <p style="font-size:13px;color:#6b7c8f;margin:0;">Useful numbers and emails across Finance Planning, Mortgage and Insurance — lenders, insurers, packagers and key FPG staff. Ask Alex too, in the Help widget.</p>
+          </div>
+          <div style="position:relative;flex-shrink:0;width:280px;max-width:100%;">
+            <input id="ct-search" type="text" placeholder="Search name, company or role…" autocomplete="off" oninput="ctRender()" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 34px 9px 12px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+            <svg id="ct-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa5b1" stroke-width="2.2" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+        </div>
+
+        <div id="ct-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px;">
+          <button class="ct-chip active" data-cat="all" onclick="ctFilterCategory('all', this)" style="background:var(--brand-navy);color:#fff;border:1px solid var(--brand-navy);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">All Contacts</button>
+          <button class="ct-chip" data-cat="finance-planning" onclick="ctFilterCategory('finance-planning', this)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Finance Planning</button>
+          <button class="ct-chip" data-cat="mortgage" onclick="ctFilterCategory('mortgage', this)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Mortgage</button>
+          <button class="ct-chip" data-cat="insurance" onclick="ctFilterCategory('insurance', this)" style="background:#f5f7fa;color:var(--brand-navy);border:1px solid #d1d5db;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Insurance</button>
+        </div>
+
+        <div id="ct-results">
+          <div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Loading contacts&hellip;</div>
+        </div>
+        <div id="ct-empty" style="display:none;color:#6b7c8f;font-size:13px;padding:32px 0;text-align:center;">No contacts match that search.</div>
+        <div id="ct-updated" style="color:#9aa5b1;font-size:11px;margin-top:24px;text-align:right;"></div>
+      </div>
+    </div>
+  </div><!-- /tab-contacts -->
 
   <!-- ── Compliance tab ────────────────────────────────────── -->
   <div id="tab-compliance" class="tab-pane">
@@ -8126,7 +8166,7 @@ function generateBrokerBrand() {
 }
 
 // ── Tab switching ─────────────────────────────────────────────
-var TAB_IDS = ['home','marketing','compliance','learning','surveying','lab','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','reengage','muttuo','leadgen'];
+var TAB_IDS = ['home','marketing','compliance','contacts','learning','surveying','lab','sales-process','selling-zone','supervisor-zone','performance-zone','pay','whereabouts','autocrm','reengage','muttuo','leadgen'];
 function switchTab(tab, skipLeadSeen) {
   TAB_IDS.forEach(function(t) {
     var pane    = document.getElementById('tab-' + t);
@@ -8149,6 +8189,7 @@ function switchTab(tab, skipLeadSeen) {
   if (tab === 'surveying')        { loadSurveying(); }
   if (tab === 'learning')         { showLvSection('weekly-recordings', document.getElementById('lv-nav-weekly')); loadLearningZone(); }
   if (tab === 'compliance')       { if (!_cpdLoaded) loadCpd(); }
+  if (tab === 'contacts')         { loadContacts(); }
   if (tab === 'supervisor-zone')  { svInitDates(); loadSupervisorZone(); }
   if (tab === 'sales-process')    { showSpSection('sp-overview', document.getElementById('sp-nav-overview')); }
   if (tab !== 'sales-process')   { stopMasTimer(); stopPasTimer(); }
@@ -8170,6 +8211,113 @@ function switchTab(tab, skipLeadSeen) {
     // you're viewing as) — only when the user actually clicks into it.
     if (!skipLeadSeen && typeof lgMarkLeadsSeen === 'function') lgMarkLeadsSeen();
   } else if (typeof lgStopPolling === 'function') { lgStopPolling(); }
+}
+
+// ── Contacts directory ───────────────────────────────────────────────
+// Loaded once from /api/contacts (backed by public/data/contacts.json) and
+// cached client-side; search/category filtering happens locally against
+// _ctData rather than round-tripping to the server on every keystroke.
+var _ctData = null;
+var _ctCategory = 'all';
+
+function loadContacts() {
+  if (_ctData) { ctRender(); return; }
+  fetch('/api/contacts').then(function(r){ return r.json(); }).then(function(d) {
+    _ctData = d;
+    var upd = document.getElementById('ct-updated');
+    if (upd && d.updated) upd.textContent = 'Directory last updated ' + d.updated;
+    ctRender();
+  }).catch(function() {
+    var el = document.getElementById('ct-results');
+    if (el) el.innerHTML = '<div style="color:#c00;font-size:13px;padding:20px 0;">Could not load contacts.</div>';
+  });
+}
+
+function ctFilterCategory(cat, btn) {
+  _ctCategory = cat;
+  document.querySelectorAll('.ct-chip').forEach(function(b) {
+    var active = b.getAttribute('data-cat') === cat;
+    b.classList.toggle('active', active);
+    b.style.background = active ? 'var(--brand-navy)' : '#f5f7fa';
+    b.style.color = active ? '#fff' : 'var(--brand-navy)';
+    b.style.borderColor = active ? 'var(--brand-navy)' : '#d1d5db';
+  });
+  document.querySelectorAll('#sidebar-contacts a').forEach(function(a) { a.classList.remove('active'); });
+  var navLink = document.getElementById('ct-nav-' + cat);
+  if (navLink) navLink.classList.add('active');
+  ctRender();
+  return false;
+}
+
+function ctPhoneLinks(phone) {
+  // Some cells hold several numbers with labels ("07775 550523 / 0345 073
+  // 3330 opt 8") — split on '/' and tel:-link just the leading digits of
+  // each chunk so a labelled suffix like "opt 8" doesn't end up in the href.
+  if (!phone) return '';
+  return phone.split('/').map(function(part) {
+    part = part.trim();
+    var m = part.match(/^[\d\s()+]+/);
+    if (!m) return escHtml(part);
+    var digits = m[0].trim();
+    var rest = part.slice(m[0].length).trim();
+    return '<a href="tel:' + digits.replace(/\s+/g,'') + '" style="color:var(--brand-navy);text-decoration:none;">' + escHtml(digits) + '</a>' + (rest ? ' <span style="color:#9aa5b1;">' + escHtml(rest) + '</span>' : '');
+  }).join(' &nbsp;/&nbsp; ');
+}
+
+function ctEmailLinks(email) {
+  if (!email) return '';
+  return email.split('/').map(function(e) {
+    e = e.trim();
+    return '<a href="mailto:' + e + '" style="color:var(--brand-navy);text-decoration:none;word-break:break-all;">' + escHtml(e) + '</a>';
+  }).join(' &nbsp;/&nbsp; ');
+}
+
+function ctCardHtml(c) {
+  var roles = (c.roles || []).filter(Boolean);
+  return '<div style="background:#fff;border:1px solid #e8ecf0;border-radius:10px;padding:14px 16px;">' +
+    '<div style="font-size:14px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">' + escHtml(c.name) + '</div>' +
+    (c.phone ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">&#128222; ' + ctPhoneLinks(c.phone) + '</div>' : '') +
+    (c.email ? '<div style="font-size:12.5px;color:#3a4756;margin-bottom:2px;">&#9993; ' + ctEmailLinks(c.email) + '</div>' : '') +
+    (roles.length ? '<div style="font-size:12px;color:#6b7c8f;margin-top:6px;line-height:1.6;">' + roles.map(function(r){ return escHtml(r); }).join('<br>') + '</div>' : '') +
+  '</div>';
+}
+
+function ctMatches(c, q) {
+  if (!q) return true;
+  var hay = (c.name + ' ' + (c.phone||'') + ' ' + (c.email||'') + ' ' + (c.roles||[]).join(' ')).toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+
+function ctRender() {
+  var resultsEl = document.getElementById('ct-results');
+  var emptyEl   = document.getElementById('ct-empty');
+  if (!resultsEl || !_ctData) return;
+  var q = (document.getElementById('ct-search').value || '').trim().toLowerCase();
+  var cats = (_ctData.categories || []).filter(function(cat) { return _ctCategory === 'all' || cat.key === _ctCategory; });
+
+  var html = '';
+  var anyMatch = false;
+  cats.forEach(function(cat) {
+    var catHtml = '';
+    (cat.groups || []).forEach(function(group) {
+      var matching = (group.contacts || []).filter(function(c) { return ctMatches(c, q); });
+      if (!matching.length) return;
+      anyMatch = true;
+      catHtml += '<div style="margin:18px 0 10px;">' +
+        '<span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#6b7c8f;text-transform:uppercase;">' + escHtml(group.label) + '</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">' +
+        matching.map(ctCardHtml).join('') +
+        '</div>';
+    });
+    if (catHtml) {
+      html += (_ctCategory === 'all' ? '<h3 style="color:var(--brand-navy);font-size:14px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--brand-orange);">' + escHtml(cat.label) + '</h3>' : '') + catHtml;
+    }
+  });
+
+  resultsEl.innerHTML = html;
+  resultsEl.style.display = anyMatch ? '' : 'none';
+  if (emptyEl) emptyEl.style.display = anyMatch ? 'none' : '';
 }
 
 // Home page globals — must be declared before hash routing IIFE runs
@@ -20289,6 +20437,51 @@ function khContactLookup(query) {
     });
 }
 
+// Contacts directory (lenders, insurers, packagers, IT support) — a fixed
+// list of company/organisation names pulled from public/data/contacts.json
+// at build time, kept here purely so intent detection is synchronous. The
+// actual answer content is always fetched live from /api/contacts so the
+// widget never goes stale relative to the page. Deliberately excludes the
+// "key personnel" FPG staff group — those are better served by the existing
+// live-Airtable khContactLookup (mobile/email/job title, always current).
+var CT_DIRECTORY_NAMES = ['weald','acre','l&g mortgage club','accord','aldermore','barclays','bm solutions','coventry','godiva','co-op','clydesdale','virgin','digital','atom bank','generation home','halifax','hsbc','suffolk','leeds','metro bank','nationwide','tmw','nat west','natwest','april mortgages','pepper money','bank of ireland','santander','skipton','tsb','osb','precise','rely','interbay','complete fs','positive lending','sbg','l&g','aviva','guardian','lv','royal london','scottish widows','the exeter','vitality','zurich','uinsure','paymentshield','payment shield','cirencester','british friendly','shepherds friendly','holloway','hive','met life','national friendly','wessex','best insurance'];
+function khIsContactsDirectoryQuery(q) {
+  if (khWantsRichAnswer(q)) return false;
+  var ql = (q || '').toLowerCase();
+  return CT_DIRECTORY_NAMES.some(function(n) { return khKeywordRegex(n).test(ql); });
+}
+var _ctAiCache = null;
+function khContactsDirectoryLookup(query) {
+  khShowTyping();
+  var ready = _ctAiCache ? Promise.resolve(_ctAiCache) : fetch('/api/contacts').then(function(r) { return r.json(); }).then(function(d) { _ctAiCache = d; return d; });
+  ready.then(function(d) {
+    khRemoveTyping();
+    var ql = query.toLowerCase();
+    var hit = null, hitGroup = null;
+    (d.categories || []).forEach(function(cat) {
+      (cat.groups || []).forEach(function(g) {
+        (g.contacts || []).forEach(function(c) {
+          if (!hit && ql.indexOf(c.name.toLowerCase()) !== -1) { hit = c; hitGroup = g.label; }
+        });
+      });
+    });
+    if (!hit) {
+      khAddBotMessage('I couldn\'t find that one in the Contacts directory — take a look under the Contacts tab, or search there directly.');
+      khAddActionButton('Open Contacts', 'contacts');
+      return;
+    }
+    var lines = [hit.name + (hitGroup ? ' (' + hitGroup + ')' : '')];
+    if (hit.phone) lines.push('Tel: ' + hit.phone);
+    if (hit.email) lines.push('Email: ' + hit.email);
+    (hit.roles || []).forEach(function(r) { lines.push(r); });
+    khAddBotMessage(lines.join('\n'));
+    khAddActionButton('Open Contacts', 'contacts');
+  }).catch(function() {
+    khRemoveTyping();
+    khAddBotMessage('Something went wrong looking that up — please try again.');
+  });
+}
+
 // "Who has the most reviews?" / "who's top rated?" — real, aggregate Feefo
 // performance stats already shown publicly on Opportunities cards, so this is
 // safe to answer directly rather than deflecting. Answered via
@@ -20694,6 +20887,15 @@ function khAnswer(query) {
   if (khIsSpecialistAdviserQuery(query)) {
     _khLastTopic = null;
     khSpecialistAdvisersLookup(query);
+    return;
+  }
+  // Lender/insurer/packager directory lookups (Contacts tab data) — must win
+  // over both the generic local KB and the FPG-staff contact lookup below,
+  // since a company name like "Halifax" isn't a person Users can be searched
+  // for.
+  if (khIsContactsDirectoryQuery(query)) {
+    _khLastTopic = null;
+    khContactsDirectoryLookup(query);
     return;
   }
   // Contact-detail lookups (real staff-directory data) must win over a

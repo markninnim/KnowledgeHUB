@@ -1,0 +1,130 @@
+{
+  "updated": "2026-06-01",
+  "source": "FPG Useful Contact Numbers - June 2026.docx",
+  "categories": [
+    {
+      "key": "finance-planning",
+      "label": "Finance Planning",
+      "groups": [
+        {
+          "key": "key-personnel",
+          "label": "FPG Key Personnel",
+          "contacts": [
+            { "name": "Terry McCutcheon", "phone": "01444 449200", "email": "T.mccutcheon@financeplanning.co.uk", "roles": ["Firm CEO", "Publicity"] },
+            { "name": "Dan Maskell", "phone": "07889 438942", "email": "Dan.maskell@financeplanning.co.uk", "roles": ["Sales Management", "Lenders & Insurers"] },
+            { "name": "Pete Burgess", "phone": "07917 644636", "email": "Pete.burgess@financeplanning.co.uk", "roles": ["Sales Management", "Risk, Fraud & Compliance", "Advertising & Complaints"] },
+            { "name": "Mark Ninnim", "phone": "07525 932299", "email": "Mark.ninnim@financeplanning.co.uk", "roles": ["Marketing"] },
+            { "name": "Caitlin Ferguson", "phone": "01444 449200", "email": "Caitlin.ferguson@financeplanning.co.uk", "roles": ["Acre Flags", "Record Keeping", "CIC Reports"] },
+            { "name": "David Riley", "phone": "07824 595495", "email": "David.riley@financeplanning.co.uk", "roles": ["Sales Management", "Acre support"] },
+            { "name": "Richard Hamley", "phone": "07846 029146", "email": "Richard.hamley@financeplanning.co.uk", "roles": ["Training & Development", "Record Keeping"] },
+            { "name": "Aisling Oates", "phone": "01444 449200", "email": "Aisling.oates@financeplanning.co.uk", "roles": ["Adviser Pay"] },
+            { "name": "Kirstin Richardson", "phone": "01444 449200", "email": "Kirstin.richardson@financeplanning.co.uk", "roles": ["Fee Agreements", "Adviser Pay & Commission Queries", "EWS"] },
+            { "name": "Jill Craigs", "phone": "01444 449200", "email": "Jill.craigs@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Angela Yeats", "phone": "01444 449200", "email": "Angela.yeats@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Roberta Thiruthippully", "phone": "01444 449200", "email": "roberta@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Maria Crawley", "phone": "01444 449200", "email": "maria.crawley@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Kudzai Manjengwa", "phone": "01444 449200", "email": "kudzai@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Henry Clark", "phone": "01444 449200", "email": "Henry.clark@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Oli Beattie", "phone": "01444 449200", "email": "Oli.beattie@financeplanning.co.uk", "roles": ["Adviser Dedicated Support"] },
+            { "name": "Lynn Strange", "phone": "01444 449200", "email": "Lynn.strange@financeplanning.co.uk", "roles": ["Meeting-room bookings"] },
+            { "name": "Dean Aspinall", "phone": "07763 764460", "email": "dean.aspinall@financeplanning.co.uk", "roles": ["Sales Management", "Acre support"] },
+            { "name": "Matt Stephens", "phone": "07833 241625", "email": "Matt.stephens@financeplanning.co.uk", "roles": ["Sales Management", "Protection Development", "Account Management"] },
+            { "name": "Torie Maleganeas", "phone": "07435 924550", "email": "Victoria.worthington@financeplanning.co.uk", "roles": ["Sales Management", "Acre flags", "Record Keeping"] }
+          ]
+        },
+        {
+          "key": "it-support",
+          "label": "IT Support",
+          "contacts": [
+            { "name": "David Riley", "phone": "01444 449200", "email": "David.riley@financeplanning.co.uk", "roles": [] },
+            { "name": "Weald", "phone": "01444 241381", "email": "", "roles": ["Please seek approval from FPG first"] },
+            { "name": "Acre", "phone": "", "email": "support@myac.re", "roles": ["Best option is to report a problem from your Acre login (report a problem)"] }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "mortgage",
+      "label": "Mortgage",
+      "groups": [
+        {
+          "key": "mortgage-club",
+          "label": "L&G Mortgage Club Helpdesk",
+          "contacts": [
+            { "name": "L&G Mortgage Club Helpdesk", "phone": "0345 026 0092", "email": "mortgageclub@landg.com", "roles": ["Mortgage Queries"] }
+          ]
+        },
+        {
+          "key": "lender-bdms",
+          "label": "Lender BDMs",
+          "contacts": [
+            { "name": "Accord", "phone": "07738 785230", "email": "Mhouston@ybs.co.uk", "roles": ["BDM: Mike Houston"] },
+            { "name": "Aldermore", "phone": "07468 860132", "email": "danielle.walters@aldermore.co.uk", "roles": ["BDM: Danielle Walters"] },
+            { "name": "Barclays", "phone": "07775 550523 / 0345 073 3330 opt 8 (pre-app underwriter)", "email": "claire.macphail@barclays.com", "roles": ["BDM: Claire MacPhail"] },
+            { "name": "BM Solutions", "phone": "07976 778836 / 0345 835 7859 (desk-based support)", "email": "mark_penfold@birminghammidshires.co.uk / bmbdmsouth@birminghammidshires.co.uk", "roles": ["BDM: Mark Penfold"] },
+            { "name": "Coventry & Godiva & Co-op", "phone": "07483 174942 / 0800 121 7788", "email": "stephen.barrettbdm@thecoventry.co.uk", "roles": ["BDM: Steve Barrett"] },
+            { "name": "Clydesdale & Virgin", "phone": "07484 010545 / 0141 621 5872 / 0345 603 3822 (Virgin pre-app underwriter)", "email": "lara.stanley@virginmoney.com / paul.jennings@virginmoney.com", "roles": ["BDM: Lara Stanley", "Virgin pre-app underwriter: Paul Jennings"] },
+            { "name": "Digital (Atom Bank)", "phone": "07921 806636", "email": "Tim.gunning@atombank.co.uk", "roles": ["BDM: Tim Gunning"] },
+            { "name": "Generation Home", "phone": "07897 036783", "email": "joshua.holmes@generationhome.com", "roles": ["BDM: Josh Holmes"] },
+            { "name": "Halifax", "phone": "07768 557393", "email": "clivemoreton@halifax.co.uk", "roles": ["BDM: Clive Moreton"] },
+            { "name": "HSBC", "phone": "07468 703045 / 07387 244370", "email": "joe.tyler@hsbc.com / matt.dimmock@hsbc.com", "roles": ["BDMs: Joe Tyler, Matt Dimmock"] },
+            { "name": "Suffolk Building Society", "phone": "07715 764131", "email": "andrewsadler@suffolkbuildingsociety.co.uk", "roles": ["BDM: Andrew Sadler"] },
+            { "name": "Leeds Building Society", "phone": "07551 142662", "email": "schapman@leedsbuildingsociety.co.uk", "roles": ["BDM: Simon Chapman"] },
+            { "name": "Metro Bank", "phone": "07812 670469 / 07422 075062 (desk-based)", "email": "martin.burgess@metrobank.plc.uk / Anthony.brooks@metrobank.plc.uk", "roles": ["BDM: Martin Burgess", "Desk-based: Anthony Brooks"] },
+            { "name": "Nationwide & TMW", "phone": "07525 104333", "email": "Debbie.carr@nationwide.co.uk", "roles": ["BDM: Debbie Carr"] },
+            { "name": "NatWest", "phone": "07974 888870 / 0345 026 0020 (priority line)", "email": "tom.spatchurst@natwest.com", "roles": ["BDM: Tom Spatchurst"] },
+            { "name": "April Mortgages", "phone": "0333 456 0333 / 07865 868949", "email": "brokersupportdesk@aprilmortgages.co.uk / Rachael.hunnisett@aprilmortgages.co.uk", "roles": ["BDM: Rachael Hunnisett"] },
+            { "name": "Pepper Money", "phone": "07860 188112", "email": "sam.bickerton@pepper.money", "roles": ["BDM: Sam Bickerton"] },
+            { "name": "Bank of Ireland", "phone": "07760 345019", "email": "hayley.jones1@boi.com", "roles": ["BDM: Hayley Jones"] },
+            { "name": "Santander", "phone": "07747 763696", "email": "katrina.simpson@santander.co.uk", "roles": ["BDM: Kat Simpson"] },
+            { "name": "Skipton", "phone": "07977 396592", "email": "Grace.vickery@skipton.co.uk", "roles": ["BDM: Grace Vickery"] },
+            { "name": "TSB", "phone": "07881 356044", "email": "sophie.carter@tsb.co.uk", "roles": ["BDM: Sophie Carter"] },
+            { "name": "OSB (Precise, RELY, Interbay)", "phone": "07552 213795", "email": "Jonathan.mann@osb.co.uk", "roles": ["BDM: Jonathan Mann"] }
+          ]
+        },
+        {
+          "key": "packagers-2nd-charge",
+          "label": "Packagers & 2nd Charge",
+          "contacts": [
+            { "name": "Complete FS", "phone": "023 8045 6999", "email": "enquiries@complete-fs.co.uk", "roles": ["Packaging Services, including Adverse, Bridging, Commercial, 2nd Charges", "www.complete-fs.co.uk"] },
+            { "name": "Positive Lending", "phone": "07714 255930 / 01202 850830", "email": "David.coleman@positivelending.co.uk / SpecialistSales@positivelending.co.uk", "roles": ["Specialists in Commercial, Bridging and 2nd Charges", "Account Manager: Dave Coleman", "2nd Charge, Bridging, Development & Commercial enquiries"] }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "insurance",
+      "label": "Insurance",
+      "groups": [
+        {
+          "key": "insurer-contacts",
+          "label": "Insurer Contacts",
+          "contacts": [
+            { "name": "SBG Protection Helpdesk", "phone": "0161 527 0193 (Doug) / 0161 527 0118 (Chris)", "email": "protectionhelpdesk@sbg.co.uk", "roles": ["For help with hard-to-place protection cases — this Helpdesk helps you find an insurer from the panel; you then apply directly to that insurer yourself."] },
+            { "name": "L&G", "phone": "0345 070 5018 (BDM) / 0370 050 0276 (New Business)", "email": "gareth2.jones@landg.com / rosie.heslop@landg.com / partnerfirstsupport@landg.com", "roles": ["Desk-based BDM: Gareth Jones", "Account Manager: Rosie Heslop (07392 121837)", "New Business email: partnerfirstsupport@landg.com"] },
+            { "name": "Aviva", "phone": "07741 681731 (BDM) / 0800 056 2181 (New Business) / 0800 533 5192 (Pre-sales medical) / 0800 285 1101 (Underwriting)", "email": "Dan.hill@aviva.com / protsup@aviva.com / protectionuw@aviva.com", "roles": ["BDM: Dan Hill", "Products, Literature, New Business", "Pre-sales medical queries", "Underwriting, Case loading queries"] },
+            { "name": "Guardian", "phone": "07570 751350 (BDM) / 07386 969375 (Account Manager) / 0808 133 1821 (Queries)", "email": "josh.padfield@guardianfs.co.uk / paul.dewick@guardianfs.co.uk / advisers@guardianfs.co.uk", "roles": ["BDM: Josh Padfield", "Account Manager: Paul Dewick", "Pre-sales underwriting: advisers@guardianfs.co.uk"] },
+            { "name": "LV", "phone": "07815 582121 (BDM) / 0800 028 6333 (New Business / Activate policy) / 0800 678 1893 (Pre-sales underwriting) / 0800 678 1906 (Existing business)", "email": "mike.kerr@lv.com / protection.admin@LV.com / preunderwriting@LV.com / golive@LV.com / ebprotection@LV.com", "roles": ["BDM: Mike Kerr", "New business team", "Pre-sales underwriting", "Activate an LV policy", "Existing business team"] },
+            { "name": "Royal London", "phone": "0131 672 6027 (Account Manager) / 0345 609 3601 ext 712026 (Case Manager) / ext 790610 (Pre-Sale Underwriting)", "email": "Liam.connelly@rlisales.com / PriscillaSetsoafiaTukpeyi.Casemanager@royallondon.com / christophertaylor.underwriter@royallondon.com", "roles": ["Account Manager: Liam Connelly", "Case Manager: Prescilla Frimpong / Karen Bond", "Pre-Sale Underwriting: Chris Taylor"] },
+            { "name": "Scottish Widows", "phone": "07385 364351 (BDM) / 0131 655 4053 (Telephone BDM) / 0345 030 6240 (Head Office)", "email": "sara.tuscher@scottishwidows.co.uk / dean.sinyemu@scottishwidows.co.uk / protect@scottishwidows.co.uk", "roles": ["BDM: Sara Tuscher", "Telephone BDM: Dean Sinyemu", "Head Office"] },
+            { "name": "The Exeter", "phone": "07483 451886 (Key Account Manager) / 0161 383 7464 (Telephone Account Manager)", "email": "James.Bowles@the-exeter.com / christa.arliss@the-exeter.com / underwriting@the-exeter.com", "roles": ["Key Account Manager: James Bowles", "Telephone Account Manager: Christa Arliss", "Pre-sales underwriting"] },
+            { "name": "Vitality Life", "phone": "07760 170828 (Business Consultant) / 01306 400425 ext 2025 (Case Manager) / 0161 216 6982 (New Business & Servicing) / 0800 012 1796 (Pre-sales Underwriting)", "email": "rebecca.gabriel@vitality.co.uk / chloe.flint@vitality.co.uk / thamesnb@vitality.co.uk / thamesserv@vitality.co.uk / presale_underwriting@vitality.co.uk", "roles": ["Business Consultant: Becky Gabriel", "Dedicated Case Manager: Chloe Flint", "New Business (Pre-activation)", "Servicing (Post-activation)", "Pre-sales Underwriting"] },
+            { "name": "Zurich", "phone": "07875 477624 (Account Manager) / 0370 243 0901 (Pre-App Queries) / 0370 850 5682 (Post-App Support) / 01793 505754 (Large Cases)", "email": "ashley.tongue@uk.zurich.com / uw.preapp.enquiry@uk.zurich.com / customerwebservice@uk.zurich.com / largecaseunderwriting@uk.zurich.com", "roles": ["Account Manager: Ashley Tongue", "Protection Pre-App Queries", "Underwriting Post-App Support", "Email docs to: customerwebservice@uk.zurich.com", "Large Cases"] },
+            { "name": "Uinsure", "phone": "0344 844 3844 (Head Office)", "email": "Natalie.adewusi@uinsure.co.uk", "roles": ["BDM: Natalie Adewusi"] },
+            { "name": "LV= G.I.", "phone": "07385 513357 (BDM) / 07733 307298 (Account Manager)", "email": "ross.morgan@allianz.co.uk / rachel.oldroyd@lv.co.uk", "roles": ["BDM: Ross Morgan", "Account Manager: Rachel Oldroyd"] },
+            { "name": "PaymentShield", "phone": "01704 518522 (BDM) / 07540 200943 (National Account Manager) / 0345 0615 100 (Broker Support)", "email": "sophie.j-Fyles@paymentshield.co.uk / dean.marson@paymentshield.co.uk", "roles": ["BDM: Sophie Johnson-Fyles", "National Account Manager: Dean Marson", "Broker Support"] },
+            { "name": "Cirencester Friendly", "phone": "07729 073243", "email": "shaun.riley-potente@cirencester-friendly.co.uk", "roles": ["BDM: Shaun Riley-Potente"] },
+            { "name": "British Friendly", "phone": "01234 369187", "email": "t.breedon@britishfriendly.com", "roles": ["BDM: Tom Breedon"] },
+            { "name": "Shepherds Friendly", "phone": "07432 851462", "email": "vthomas@shepherdsfriendly.co.uk", "roles": ["BDM: Vicki Thomas"] },
+            { "name": "Holloway Friendly", "phone": "07903 077017 (BDM) / 01452 938730 (Desk-Based BDM)", "email": "may.stone@holloway.co.uk / karen.paice@holloway.co.uk", "roles": ["BDM: May Stone", "Desk-Based BDM: Karen Paice"] },
+            { "name": "Hive", "phone": "07498 999102", "email": "jonnyr@hiveinsurance.co.uk", "roles": ["BDM: Jonny Rawlings"] },
+            { "name": "Met Life", "phone": "01273 876365 (BDM) / 0800 917 2221 / 01273 876111 (Protection Team)", "email": "Finnie.patel@metlife.com / protection@metlife.com", "roles": ["BDM: Finnie Patel", "Protection Team"] },
+            { "name": "National Friendly", "phone": "07586 066690", "email": "dmorris@nationalfriendly.co.uk", "roles": ["National Account Manager: David Morris"] },
+            { "name": "Wessex", "phone": "01962 893712", "email": "", "roles": ["ASU"] },
+            { "name": "Best Insurance", "phone": "0330 330 9465", "email": "bestbrokersupport@bestinsurance.co.uk", "roles": ["ASU"] }
+          ]
+        }
+      ]
+    }
+  ]
+}
