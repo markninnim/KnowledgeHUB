@@ -1251,6 +1251,42 @@ app.get('/api/contacts', requireAuth, (req, res) => {
   }
 });
 
+// POST /api/contacts — add a new contact to the directory (supervisors/
+// admins only). Appends into the matching category/group in
+// public/data/contacts.json, creating the group if it doesn't exist yet.
+app.post('/api/contacts', requireAuth, (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  const { category, categoryLabel, group, groupLabel, name, phone, email, roles } = req.body;
+  if (!category || !group || !name) return res.status(400).json({ error: 'Missing fields' });
+  const file = path.join(__dirname, 'public/data/contacts.json');
+  try {
+    const dataObj = JSON.parse(fs.readFileSync(file, 'utf8'));
+    let cat = (dataObj.categories || []).find(c => c.key === category);
+    if (!cat) {
+      cat = { key: category, label: categoryLabel || category, groups: [] };
+      dataObj.categories.push(cat);
+    }
+    let grp = (cat.groups || []).find(g => g.key === group);
+    if (!grp) {
+      grp = { key: group, label: groupLabel || group, contacts: [] };
+      cat.groups.push(grp);
+    }
+    grp.contacts.push({
+      name: String(name).trim(),
+      phone: (phone || '').trim(),
+      email: (email || '').trim(),
+      roles: Array.isArray(roles) ? roles.filter(Boolean) : (roles ? [String(roles).trim()] : [])
+    });
+    dataObj.updated = new Date().toISOString().split('T')[0];
+    fs.writeFileSync(file, JSON.stringify(dataObj, null, 2));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('contacts add error:', err);
+    res.status(500).json({ error: 'Could not save contact.' });
+  }
+});
+
 app.get('/api/quick-links', requireAuth, async (req, res) => {
   try {
     const id = req.session.user.id;
@@ -2820,15 +2856,20 @@ app.post('/api/compliance-news/upload', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// Bulletins can be either a PDF (admin-uploaded) or a hand-authored HTML page
+// (e.g. bulletins re-typed from an email into a branded page rather than
+// scanned as a PDF) — filename pattern is the same either way:
+// YYYY-MM-DD__slug.{pdf|html}
 app.get('/api/compliance-news', requireAuth, (req, res) => {
   const dir = path.join(__dirname, 'public/compliance-news');
   try {
     require('fs').mkdirSync(dir, { recursive: true });
     const files = require('fs').readdirSync(dir)
-      .filter(f => f.endsWith('.pdf') && /^\d{4}-\d{2}-\d{2}__.+\.pdf$/.test(f))
+      .filter(f => /^\d{4}-\d{2}-\d{2}__.+\.(pdf|html)$/.test(f))
       .map(f => {
+        const ext = f.endsWith('.html') ? '.html' : '.pdf';
         const date = f.slice(0, 10);
-        const slug = f.slice(12, -4);
+        const slug = f.slice(12, -ext.length);
         const label = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         return { file: f, date, label };
       })

@@ -1512,9 +1512,53 @@ select:focus { outline:none; }
             <h2 style="color:var(--brand-navy);font-size:20px;margin:0 0 4px;">Contacts</h2>
             <p style="font-size:13px;color:#6b7c8f;margin:0;">Useful numbers and emails across Finance Planning, Mortgage and Insurance — lenders, insurers, packagers and key FPG staff. Ask Alex too, in the Help widget.</p>
           </div>
-          <div style="position:relative;flex-shrink:0;width:280px;max-width:100%;">
-            <input id="ct-search" type="text" placeholder="Search name, company or role…" autocomplete="off" oninput="ctRender()" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 34px 9px 12px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
-            <svg id="ct-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa5b1" stroke-width="2.2" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <div style="display:flex;gap:10px;align-items:flex-start;flex-shrink:0;">
+            <div style="position:relative;width:280px;max-width:100%;">
+              <input id="ct-search" type="text" placeholder="Search name, company or role…" autocomplete="off" oninput="ctRender()" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:9px 34px 9px 12px;font-size:13px;font-family:inherit;color:var(--brand-navy);">
+              <svg id="ct-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa5b1" stroke-width="2.2" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <button id="ct-add-btn" onclick="ctToggleAdd()" style="display:none;align-items:center;gap:7px;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Contact
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Contact panel: supervisors/admins only -->
+        <div id="ct-add-panel" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.10);padding:20px;margin:14px 0;max-width:420px;">
+          <h3 style="color:var(--brand-navy);font-size:14px;font-weight:700;margin:0 0 14px;">Add Contact</h3>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">CATEGORY</label>
+            <select id="ct-add-category" onchange="ctAddCategoryChanged()" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;">
+              <option value="finance-planning">Finance Planning</option>
+              <option value="mortgage">Mortgage</option>
+              <option value="insurance">Insurance</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">GROUP</label>
+            <select id="ct-add-group" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;"></select>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">NAME</label>
+            <input id="ct-add-name" type="text" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">PHONE</label>
+            <input id="ct-add-phone" type="text" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">EMAIL</label>
+            <input id="ct-add-email" type="text" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:700;color:#6b7c8f;display:block;margin-bottom:4px;">ROLE(S) — comma-separated</label>
+            <input id="ct-add-roles" type="text" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div id="ct-add-status" style="font-size:12px;color:#6b7c8f;margin-bottom:10px;min-height:16px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="ctSaveAdd()" style="flex:1;background:transparent;color:#6b7c8f;border:1px solid #d1d5db;padding:9px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>
+            <button onclick="ctToggleAdd()" style="background:#fff;color:#6b7c8f;border:1px solid #d1d5db;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
           </div>
         </div>
 
@@ -8277,6 +8321,63 @@ function loadContacts() {
   });
 }
 
+var CT_GROUP_OPTIONS = {
+  'finance-planning': [{key:'key-personnel', label:'FPG Key Personnel'}, {key:'it-support', label:'IT Support'}],
+  'mortgage': [{key:'mortgage-club', label:'Mortgage Club'}, {key:'lender-bdms', label:'Lender BDMs'}, {key:'packagers-2nd-charge', label:'Packagers & 2nd Charge'}],
+  'insurance': [{key:'insurer-contacts', label:'Insurer Contacts'}]
+};
+
+function ctToggleAdd() {
+  var panel = document.getElementById('ct-add-panel');
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  document.getElementById('ct-add-status').textContent = '';
+  if (!open) {
+    document.getElementById('ct-add-name').value = '';
+    document.getElementById('ct-add-phone').value = '';
+    document.getElementById('ct-add-email').value = '';
+    document.getElementById('ct-add-roles').value = '';
+    ctAddCategoryChanged();
+  }
+}
+
+function ctAddCategoryChanged() {
+  var cat = document.getElementById('ct-add-category').value;
+  var groupSel = document.getElementById('ct-add-group');
+  groupSel.innerHTML = (CT_GROUP_OPTIONS[cat] || []).map(function(g) {
+    return '<option value="' + escAttr(g.key) + '">' + escHtml(g.label) + '</option>';
+  }).join('');
+}
+
+function ctSaveAdd() {
+  var status = document.getElementById('ct-add-status');
+  var category = document.getElementById('ct-add-category').value;
+  var groupSel = document.getElementById('ct-add-group');
+  var group = groupSel.value;
+  var groupLabel = groupSel.options[groupSel.selectedIndex] ? groupSel.options[groupSel.selectedIndex].text : group;
+  var name = document.getElementById('ct-add-name').value.trim();
+  var phone = document.getElementById('ct-add-phone').value.trim();
+  var email = document.getElementById('ct-add-email').value.trim();
+  var roles = document.getElementById('ct-add-roles').value.split(',').map(function(r){ return r.trim(); }).filter(Boolean);
+  if (!name) { status.textContent = 'Please enter a name.'; status.style.color = '#c00'; return; }
+  status.textContent = 'Saving…'; status.style.color = '#6b7c8f';
+  fetch('/api/contacts', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ category: category, group: group, groupLabel: groupLabel, name: name, phone: phone, email: email, roles: roles })
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    if (d.ok) {
+      status.textContent = '✓ Contact added'; status.style.color = '#22c55e';
+      _ctData = null; // force refresh from server
+      setTimeout(function() {
+        ctToggleAdd();
+        loadContacts();
+      }, 900);
+    } else {
+      status.textContent = d.error || 'Save failed.'; status.style.color = '#c00';
+    }
+  }).catch(function() { status.textContent = 'Save failed.'; status.style.color = '#c00'; });
+}
+
 function ctFilterCategory(cat, btn) {
   _ctCategory = cat;
   document.querySelectorAll('.ct-chip').forEach(function(b) {
@@ -10568,6 +10669,8 @@ var _currentUser = null;
       if (nlup) nlup.style.display = 'block';
       var cnup = document.getElementById('cn-upload-wrap');
       if (cnup) cnup.style.display = 'block';
+      var ctAddBtn = document.getElementById('ct-add-btn');
+      if (ctAddBtn) ctAddBtn.style.display = 'inline-flex';
       var newsBtn = document.getElementById('news-add-btn');
       if (newsBtn) newsBtn.style.display = 'inline-block';
       var cdNavBlock = document.getElementById('cd-nav-block');
