@@ -20581,7 +20581,15 @@ function khIsContactQuery(q) {
     /^\s*who('?s| is)\b/i.test(q) ||
     // "a broker/adviser/colleague called Adeel", "someone named Dan" — a real
     // introduction of a specific person, not a policy/general question.
-    /\b(broker|adviser|advisor|colleague|someone|person)\b.*\b(called|named)\b/i.test(q);
+    /\b(broker|adviser|advisor|colleague|someone|person)\b.*\b(called|named)\b/i.test(q) ||
+    // A bare "Firstname Lastname" with nothing else — e.g. someone just typing
+    // "pete burgess" into the box means "look this person up", even without
+    // "who is"/"email"/etc. Restrict to 2-3 short alphabetic words so this
+    // doesn't swallow ordinary sentences/questions.
+    (function() {
+      var words = q.trim().split(/\s+/);
+      return words.length >= 2 && words.length <= 3 && words.every(function(w) { return /^[a-z][a-z'-]*$/i.test(w); });
+    })();
   if (!trigger) return false;
   return !khIsGenericContactPhrase(khExtractPersonName(q));
 }
