@@ -9417,6 +9417,21 @@ const UK_BANK_HOLIDAYS = new Set([
   '2027-01-01', '2027-03-26', '2027-03-29', '2027-05-03', '2027-05-31', '2027-08-30', '2027-12-27', '2027-12-28'
 ]);
 
+// Next working day (Mon-Fri, not a UK bank holiday) after a given YYYY-MM-DD
+// date — used to show "returns <date>" on the home holiday ticker rather
+// than the holiday's own end date, since the end date is the last day away,
+// not the day someone's actually back at work.
+function nextWorkingDay(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00Z');
+  let guard = 0;
+  do {
+    d.setUTCDate(d.getUTCDate() + 1);
+    guard++;
+  } while (guard < 14 && (d.getUTCDay() === 0 || d.getUTCDay() === 6 || UK_BANK_HOLIDAYS.has(d.toISOString().slice(0, 10))));
+  return d.toISOString().slice(0, 10);
+}
+
 // ── Meeting Booker (Dan Maskell only) ───────────────────────────
 app.get('/api/meeting-booker/attendees', requireAuth, async (req, res) => {
   const caller = req.session.user;
@@ -9521,7 +9536,7 @@ app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
       .filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved')
       .filter(r => staffMatchesViewerScope(caller.email, r.fields[HR_STAFF_EMAIL] || '', roleMap));
     const onHolidayToday = approved.filter(r => (r.fields[HR_START_DATE] || '') <= todayIso && (r.fields[HR_END_DATE] || '') >= todayIso)
-      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }));
+      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE], returnDate: nextWorkingDay(r.fields[HR_END_DATE]) }));
     const upcoming = approved.filter(r => (r.fields[HR_START_DATE] || '') > todayIso && (r.fields[HR_START_DATE] || '') <= in14)
       .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }))
       .sort((a, b) => a.startDate.localeCompare(b.startDate));

@@ -16319,7 +16319,7 @@ function loadHomeHolidayTicker() {
   fetch('/api/home/holiday-ticker').then(function(r){ return r.json(); }).then(function(d) {
     if (!d.visible) return;
     var parts = [];
-    (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday from ' + escHtml(fmtDateUK(p.startDate)) + ' until ' + escHtml(fmtDateUK(p.endDate))); });
+    (d.onHolidayToday || []).forEach(function(p) { parts.push('<strong>' + escHtml(p.name) + '</strong> — on holiday from ' + escHtml(fmtDateUK(p.startDate)) + ', returns ' + escHtml(fmtDateUK(p.returnDate || p.endDate))); });
     if (!parts.length) return;
     document.getElementById('home-holiday-ticker-text').innerHTML = parts.join('   •   ');
     var wrap = document.getElementById('home-holiday-ticker');
