@@ -9524,6 +9524,27 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
   }
 });
 
+// Merges a person's separately-booked holiday requests into continuous
+// blocks wherever one ends and the next begins with only a weekend/bank
+// holiday in between (e.g. a Mon-Fri booking followed by another Mon-Fri
+// booking the next week is, in practice, one uninterrupted holiday — just
+// booked as two Airtable rows). Without this, the ticker's "returns" date
+// for the first booking would show the Monday in between as their return,
+// which is wrong if they're actually off again that same day.
+function mergeHolidayRanges(ranges) {
+  const sorted = ranges.slice().sort((a, b) => a.start.localeCompare(b.start));
+  const merged = [];
+  sorted.forEach(r => {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= nextWorkingDay(last.end)) {
+      if (r.end > last.end) last.end = r.end;
+    } else {
+      merged.push({ start: r.start, end: r.end });
+    }
+  });
+  return merged;
+}
+
 // ── Home page holiday ticker (Dan / Pete / Terry / Matt / David) ───────────
 app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
   const caller = req.session.user;
@@ -9535,8 +9556,25 @@ app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
     const approved = all
       .filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved')
       .filter(r => staffMatchesViewerScope(caller.email, r.fields[HR_STAFF_EMAIL] || '', roleMap));
-    const onHolidayToday = approved.filter(r => (r.fields[HR_START_DATE] || '') <= todayIso && (r.fields[HR_END_DATE] || '') >= todayIso)
-      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE], returnDate: nextWorkingDay(r.fields[HR_END_DATE]) }));
+
+    // Group by person, merge each person's ranges, then find whichever
+    // merged block (if any) covers today.
+    const byPerson = {};
+    approved.forEach(r => {
+      const email = (r.fields[HR_STAFF_EMAIL] || '').toLowerCase();
+      if (!email) return;
+      if (!byPerson[email]) byPerson[email] = { name: r.fields[HR_STAFF_NAME] || email, ranges: [] };
+      byPerson[email].ranges.push({ start: r.fields[HR_START_DATE] || '', end: r.fields[HR_END_DATE] || '' });
+    });
+    const onHolidayToday = [];
+    Object.keys(byPerson).forEach(email => {
+      const person = byPerson[email];
+      const merged = mergeHolidayRanges(person.ranges);
+      const covering = merged.find(m => m.start <= todayIso && m.end >= todayIso);
+      if (covering) {
+        onHolidayToday.push({ name: person.name, startDate: covering.start, endDate: covering.end, returnDate: nextWorkingDay(covering.end) });
+      }
+    });
     const upcoming = approved.filter(r => (r.fields[HR_START_DATE] || '') > todayIso && (r.fields[HR_START_DATE] || '') <= in14)
       .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }))
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
