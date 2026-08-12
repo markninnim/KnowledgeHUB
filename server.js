@@ -1236,14 +1236,18 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/whereabouts-grid/team — the current week's grid for everyone the
-// caller is the resolved Holiday Approver for (supervisors/admins only).
-// Powers the "My Team" expand on the Home page Whereabouts card. Deliberately
-// uses the same resolveHolidayApprover() grouping as holiday notifications —
-// not the separate Supervisor Email field used by /api/supervisor/team —
-// since "who does this person's holiday get approved by" is the relationship
-// that actually matters for a whereabouts view (e.g. Dan Maskell is everyone's
-// default approver unless they have an explicit Holiday Approver override).
+// GET /api/whereabouts-grid/team — the current week's grid for the caller's
+// actual team (supervisors/admins only). Powers the "My Team" expand on the
+// Home page Whereabouts card.
+//
+// This intentionally does NOT use resolveHolidayApprover() directly — that
+// function defaults everyone without an explicit override to Dan Maskell
+// (or David Riley for admin/paraplanner titles), which is the right behaviour
+// for routing a holiday notification somewhere, but wrongly pulled Dan's "My
+// Team" list in to basically the whole company. Here membership instead
+// requires either an explicit Holiday Approver override pointing at the
+// caller, or the person's actual reporting line (Supervisor Email) pointing
+// at the caller — never the blanket company-wide default.
 app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -1261,7 +1265,12 @@ app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
     const members = allRecords
       .filter(r => r.fields[F_EMPLOYED_ADVISER]) // only employed staff use Whereabouts
       .filter(r => (r.fields[F_EMAIL] || '').toLowerCase() !== myEmail) // exclude self
-      .filter(r => resolveHolidayApprover(r.fields).toLowerCase() === myEmail)
+      .filter(r => {
+        const explicitApprover = (r.fields[F_HOLIDAY_APPROVER] || '').trim().toLowerCase();
+        const supervisorEmail = (r.fields[F_SUPERVISOR_EMAIL] || '').trim().toLowerCase();
+        if (explicitApprover) return explicitApprover === myEmail;
+        return supervisorEmail === myEmail;
+      })
       .map(r => ({
         email: (r.fields[F_EMAIL] || '').toLowerCase(),
         firstName: r.fields[F_FIRST] || '',
@@ -9442,7 +9451,7 @@ app.get('/api/home/holiday-ticker', requireAuth, async (req, res) => {
       .filter(r => (r.fields[HR_STATUS] || 'Pending') === 'Approved')
       .filter(r => staffMatchesViewerScope(caller.email, r.fields[HR_STAFF_EMAIL] || '', roleMap));
     const onHolidayToday = approved.filter(r => (r.fields[HR_START_DATE] || '') <= todayIso && (r.fields[HR_END_DATE] || '') >= todayIso)
-      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], endDate: r.fields[HR_END_DATE] }));
+      .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }));
     const upcoming = approved.filter(r => (r.fields[HR_START_DATE] || '') > todayIso && (r.fields[HR_START_DATE] || '') <= in14)
       .map(r => ({ name: r.fields[HR_STAFF_NAME] || r.fields[HR_STAFF_EMAIL], startDate: r.fields[HR_START_DATE], endDate: r.fields[HR_END_DATE] }))
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
