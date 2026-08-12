@@ -1237,9 +1237,13 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
 });
 
 // GET /api/whereabouts-grid/team — the current week's grid for everyone the
-// caller supervises (supervisors/admins only). Powers the "My Team" expand
-// on the Home page Whereabouts card. Reuses the same team-membership logic
-// as /api/supervisor/team, but only needs email/name — no CPD lookups.
+// caller is the resolved Holiday Approver for (supervisors/admins only).
+// Powers the "My Team" expand on the Home page Whereabouts card. Deliberately
+// uses the same resolveHolidayApprover() grouping as holiday notifications —
+// not the separate Supervisor Email field used by /api/supervisor/team —
+// since "who does this person's holiday get approved by" is the relationship
+// that actually matters for a whereabouts view (e.g. Dan Maskell is everyone's
+// default approver unless they have an explicit Holiday Approver override).
 app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -1253,16 +1257,11 @@ app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
       offset = page.offset || '';
     } while (offset);
 
-    let lookupEmail = (user.email || '').toLowerCase();
-    if (!user.isAdmin) {
-      const svRecord = allRecords.find(r => (r.fields[F_EMAIL] || '').toLowerCase() === lookupEmail);
-      const coEmail = svRecord?.fields[F_CO_SUPERVISES];
-      if (coEmail) lookupEmail = coEmail.toLowerCase();
-    }
-
+    const myEmail = (user.email || '').toLowerCase();
     const members = allRecords
-      .filter(r => user.isAdmin ? true : (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === lookupEmail)
       .filter(r => r.fields[F_EMPLOYED_ADVISER]) // only employed staff use Whereabouts
+      .filter(r => (r.fields[F_EMAIL] || '').toLowerCase() !== myEmail) // exclude self
+      .filter(r => resolveHolidayApprover(r.fields).toLowerCase() === myEmail)
       .map(r => ({
         email: (r.fields[F_EMAIL] || '').toLowerCase(),
         firstName: r.fields[F_FIRST] || '',
