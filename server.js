@@ -1240,14 +1240,13 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
 // actual team (supervisors/admins only). Powers the "My Team" expand on the
 // Home page Whereabouts card.
 //
-// This intentionally does NOT use resolveHolidayApprover() directly — that
-// function defaults everyone without an explicit override to Dan Maskell
-// (or David Riley for admin/paraplanner titles), which is the right behaviour
-// for routing a holiday notification somewhere, but wrongly pulled Dan's "My
-// Team" list in to basically the whole company. Here membership instead
-// requires either an explicit Holiday Approver override pointing at the
-// caller, or the person's actual reporting line (Supervisor Email) pointing
-// at the caller — never the blanket company-wide default.
+// Membership is based purely on Supervisor Email (the real reporting line —
+// same field and same "Co-supervises Email" override that /api/supervisor/team
+// uses for My Team elsewhere on the site). This deliberately ignores the
+// Holiday Approver field: that's a separate admin/HR routing decision for
+// who gets pinged when someone requests leave, and plenty of staff have it
+// set to Dan regardless of who their actual supervisor is (e.g. Pete's own
+// team) — using it here was wrongly merging Dan's and Pete's teams together.
 app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
   const user = req.session.user;
   if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -1262,15 +1261,15 @@ app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
     } while (offset);
 
     const myEmail = (user.email || '').toLowerCase();
+    let lookupEmail = myEmail;
+    const myRecord = allRecords.find(r => (r.fields[F_EMAIL] || '').toLowerCase() === myEmail);
+    const coEmail = myRecord?.fields[F_CO_SUPERVISES];
+    if (coEmail) lookupEmail = coEmail.toLowerCase();
+
     const members = allRecords
       .filter(r => r.fields[F_EMPLOYED_ADVISER]) // only employed staff use Whereabouts
       .filter(r => (r.fields[F_EMAIL] || '').toLowerCase() !== myEmail) // exclude self
-      .filter(r => {
-        const explicitApprover = (r.fields[F_HOLIDAY_APPROVER] || '').trim().toLowerCase();
-        const supervisorEmail = (r.fields[F_SUPERVISOR_EMAIL] || '').trim().toLowerCase();
-        if (explicitApprover) return explicitApprover === myEmail;
-        return supervisorEmail === myEmail;
-      })
+      .filter(r => (r.fields[F_SUPERVISOR_EMAIL] || '').trim().toLowerCase() === lookupEmail)
       .map(r => ({
         email: (r.fields[F_EMAIL] || '').toLowerCase(),
         firstName: r.fields[F_FIRST] || '',
