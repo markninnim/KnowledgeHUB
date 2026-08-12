@@ -1,8 +1,9 @@
 KnowledgeHUB — Full Git Commit Log Export
 Generated: 2026-08-12
-Total commits: 1457
-Range: 2026-06-19 to 2026-08-11
+Total commits: 1458
+Range: 2026-06-19 to 2026-08-12
 ============================================================
+2026-08-12 | 9ba8a91 | Auto-regenerate git-log-export.txt on every build (fixes stale Full Commit Log fallback)
 2026-08-11 | c71b96e | Add v3.5 version-history entry: Alex redesign, Compliance News, unread dots, Add Contact
 2026-08-11 | ea38848 | Move Ask a question placeholder text 20px left
 2026-08-11 | 4488c8a | Revert last two deploys: input Alex position and approver text alignment

@@ -3862,6 +3862,62 @@ app.get('/api/git-log', (req, res) => {
   }
 });
 
+// ── Commit-time stats (for the "outside working hours" chart on
+// version-history.html) — same live-git-with-static-fallback pattern as
+// /api/git-log above. MVP milestone date is v2.0 in version-history.html.
+const GIT_LOG_MVP_DATE = '2026-07-17';
+let _gitLogStatsCache = { data: null, at: 0 };
+app.get('/api/git-log-stats', (req, res) => {
+  const CACHE_MS = 5 * 60 * 1000;
+  if (_gitLogStatsCache.data && (Date.now() - _gitLogStatsCache.at) < CACHE_MS) {
+    return res.json(_gitLogStatsCache.data);
+  }
+  try {
+    const { execFileSync } = require('child_process');
+    const raw = execFileSync('git', ['log', '--all', '--pretty=format:%ai'], {
+      cwd: __dirname,
+      encoding: 'utf8',
+      maxBuffer: 20 * 1024 * 1024
+    });
+    const rows = raw.split('\n').filter(Boolean).map(l => {
+      const date = l.slice(0, 10);
+      const hour = parseInt(l.slice(11, 13), 10);
+      const d = new Date(l.slice(0, 19).replace(' ', 'T'));
+      return { date, hour, weekday: d.getDay() };
+    });
+    const byHour = new Array(24).fill(0);
+    const byWeekday = new Array(7).fill(0);
+    rows.forEach(r => { byHour[r.hour]++; byWeekday[r.weekday]++; });
+    const bucket = (set) => {
+      let within = 0, weekend = 0, weekdayOutside = 0;
+      set.forEach(r => {
+        const isWeekend = r.weekday === 0 || r.weekday === 6;
+        const inHours = r.hour >= 9 && r.hour < 17;
+        if (isWeekend) weekend++;
+        else if (!inHours) weekdayOutside++;
+        else within++;
+      });
+      const total = set.length;
+      return { total, within, outside: weekend + weekdayOutside, weekend, weekdayOutside };
+    };
+    const data = {
+      generatedAt: new Date().toISOString().slice(0, 10),
+      mvpDate: GIT_LOG_MVP_DATE,
+      overall: bucket(rows),
+      preMvp: bucket(rows.filter(r => r.date < GIT_LOG_MVP_DATE)),
+      byHour,
+      byWeekday
+    };
+    _gitLogStatsCache = { data, at: Date.now() };
+    res.json(data);
+  } catch (err) {
+    console.error('git log stats unavailable, falling back to static export:', err.message);
+    const p = path.join(__dirname, 'public/static/git-log-stats.json');
+    if (require('fs').existsSync(p)) return res.sendFile(p);
+    res.status(500).json({ error: 'Commit stats unavailable.' });
+  }
+});
+
 // ── Change Requests page (auth required; supervisor/admin can submit) ───
 app.get('/change-requests.html', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/change-requests.html'));

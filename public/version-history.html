@@ -55,6 +55,93 @@
     border: 1px solid var(--orange);
     background: #fffaf0;
   }
+  .hc-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+  }
+  .hc-stat {
+    flex: 1;
+    min-width: 130px;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .hc-stat .num {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--blue);
+    line-height: 1.1;
+  }
+  .hc-stat .lbl {
+    font-size: 11px;
+    color: var(--grey);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .hc-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .hc-bar-label {
+    width: 92px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #3a4756;
+  }
+  .hc-bar-track {
+    flex: 1;
+    display: flex;
+    height: 22px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #eef2f6;
+  }
+  .hc-bar-within { background: var(--blue); }
+  .hc-bar-outside { background: var(--orange); }
+  .hc-bar-pct {
+    width: 46px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #3a4756;
+    text-align: right;
+  }
+  .hc-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--grey);
+    margin-top: 6px;
+  }
+  .hc-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .hc-legend .sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+  .hc-hour-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 90px;
+    margin: 18px 0 6px;
+  }
+  .hc-hour-bar {
+    flex: 1;
+    background: var(--blue);
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+  }
+  .hc-hour-bar.outside { background: var(--orange); }
+  .hc-hour-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9.5px;
+    color: var(--grey);
+  }
   .milestone-tag {
     background: var(--orange);
     color: #1a2a3a;
@@ -478,6 +565,14 @@
     </ul>
   </div>
 
+  <div class="version-card" id="hours-card">
+    <div class="version-head">
+      <span class="version-title">Built Outside the 9&ndash;5</span>
+    </div>
+    <p id="hours-summary" class="version-summary">Loading commit-time analysis&hellip;</p>
+    <div id="hours-chart"></div>
+  </div>
+
   <div class="version-card">
     <div class="version-head">
       <span class="version-title">Full Commit Log</span>
@@ -505,6 +600,64 @@ function formatDateLong(iso) {
   var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return d.getUTCDate() + ' ' + months[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
 }
+
+function hcPct(n, d) { return d ? Math.round((n / d) * 100) : 0; }
+
+function hcBarRow(label, within, outside) {
+  var total = within + outside;
+  var withinPct = hcPct(within, total);
+  var outsidePct = 100 - withinPct;
+  return '<div class="hc-bar-row">' +
+    '<div class="hc-bar-label">' + label + '</div>' +
+    '<div class="hc-bar-track">' +
+      (withinPct ? '<div class="hc-bar-within" style="width:' + withinPct + '%;"></div>' : '') +
+      (outsidePct ? '<div class="hc-bar-outside" style="width:' + outsidePct + '%;"></div>' : '') +
+    '</div>' +
+    '<div class="hc-bar-pct">' + outsidePct + '%</div>' +
+  '</div>';
+}
+
+fetch('/api/git-log-stats')
+  .then(function(r){ return r.json(); })
+  .then(function(s){
+    var mvpLong = formatDateLong(s.mvpDate);
+    var overallPct = hcPct(s.overall.outside, s.overall.total);
+    var preMvpPct = hcPct(s.preMvp.outside, s.preMvp.total);
+
+    var summaryEl = document.getElementById('hours-summary');
+    if (summaryEl) {
+      summaryEl.innerHTML = 'Every commit is timestamped, which makes the level of personal input behind KnowledgeHUB&#8482; measurable rather than anecdotal. Across the full build, <strong>' + overallPct + '%</strong> of the ' + s.overall.total.toLocaleString() + ' commits were made outside standard Monday&ndash;Friday, 9am&ndash;5pm hours. In the run-up to MVP approval on ' + mvpLong + ' (v2.0), that figure was even higher: <strong>' + preMvpPct + '%</strong> of the ' + s.preMvp.total.toLocaleString() + ' commits made before MVP fell outside working hours &mdash; evenings, early mornings and weekends spent getting the platform to that milestone.';
+    }
+
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var maxHour = Math.max.apply(null, s.byHour);
+    var hourBars = s.byHour.map(function(count, hr) {
+      var isOutside = hr < 9 || hr >= 17;
+      var h = maxHour ? Math.max(2, Math.round((count / maxHour) * 90)) : 2;
+      return '<div class="hc-hour-bar' + (isOutside ? ' outside' : '') + '" style="height:' + h + 'px;" title="' + (hr < 10 ? '0' + hr : hr) + ':00 &mdash; ' + count + ' commits"></div>';
+    }).join('');
+
+    var chartEl = document.getElementById('hours-chart');
+    if (chartEl) {
+      chartEl.innerHTML =
+        '<div class="hc-stats">' +
+          '<div class="hc-stat"><div class="num">' + s.overall.total.toLocaleString() + '</div><div class="lbl">Total commits</div></div>' +
+          '<div class="hc-stat"><div class="num">' + overallPct + '%</div><div class="lbl">Outside Mon&ndash;Fri 9&ndash;5 (overall)</div></div>' +
+          '<div class="hc-stat"><div class="num">' + preMvpPct + '%</div><div class="lbl">Outside hours, pre-MVP</div></div>' +
+          '<div class="hc-stat"><div class="num">' + s.overall.weekend.toLocaleString() + '</div><div class="lbl">Commits made on weekends</div></div>' +
+        '</div>' +
+        hcBarRow('Pre-MVP', s.preMvp.within, s.preMvp.outside) +
+        hcBarRow('Post-MVP', s.overall.within - s.preMvp.within, s.overall.outside - s.preMvp.outside) +
+        hcBarRow('Overall', s.overall.within, s.overall.outside) +
+        '<div class="hc-legend"><span><span class="sw" style="background:var(--blue);"></span>Mon&ndash;Fri, 9am&ndash;5pm</span><span><span class="sw" style="background:var(--orange);"></span>Outside working hours</span></div>' +
+        '<div class="hc-hour-chart">' + hourBars + '</div>' +
+        '<div class="hc-hour-axis"><span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span></div>';
+    }
+  })
+  .catch(function(){
+    var summaryEl = document.getElementById('hours-summary');
+    if (summaryEl) summaryEl.textContent = 'Commit-time analysis is temporarily unavailable.';
+  });
 
 fetch('/api/git-log')
   .then(function(r){ return r.text(); })
