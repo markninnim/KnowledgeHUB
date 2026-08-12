@@ -749,9 +749,12 @@ select:focus { outline:none; }
               <div id="home-wha-week-label" style="font-size:12px;color:#6b7c8f;"></div>
             </div>
           </div>
-          <div style="position:relative;">
-            <input id="home-wha-search" type="text" placeholder="Look up a colleague…" autocomplete="off" oninput="whaSearchInput()" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:inherit;width:210px;color:var(--brand-navy);">
-            <div id="home-wha-search-results" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(var(--brand-navy-rgb),.12);z-index:50;min-width:220px;overflow:hidden;"></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="home-wha-team-toggle" onclick="whaToggleTeam()" style="display:none;border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;font-family:inherit;color:var(--brand-navy);background:#f5f7fa;cursor:pointer;white-space:nowrap;">My Team &#9662;</button>
+            <div style="position:relative;">
+              <input id="home-wha-search" type="text" placeholder="Look up a colleague…" autocomplete="off" oninput="whaSearchInput()" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:inherit;width:210px;color:var(--brand-navy);">
+              <div id="home-wha-search-results" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(var(--brand-navy-rgb),.12);z-index:50;min-width:220px;overflow:hidden;"></div>
+            </div>
           </div>
         </div>
         <div id="home-wha-viewing-banner" style="display:none;background:#f0f2f5;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--brand-navy);margin-bottom:12px;align-items:center;justify-content:space-between;">
@@ -759,6 +762,10 @@ select:focus { outline:none; }
           <a href="#" onclick="whaBackToMine();return false;" style="font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;">← Back to my week</a>
         </div>
         <div id="home-wha-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;"></div>
+        <div id="home-wha-team-wrap" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid #e8ecf0;">
+          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">My Team</div>
+          <div id="home-wha-team-rows"></div>
+        </div>
       </div>
 
       <!-- Feefo card (full width) -->
@@ -9957,6 +9964,61 @@ function whaBackToMine() {
   loadWhereaboutsGrid(null);
 }
 
+// "My Team" expand — supervisors/admins only. Shows a read-only row per
+// direct report so a manager can see everyone's week at a glance, rather
+// than looking colleagues up one at a time via search.
+var _whaTeamLoaded = false;
+function whaToggleTeam() {
+  var wrap = document.getElementById('home-wha-team-wrap');
+  var btn = document.getElementById('home-wha-team-toggle');
+  if (!wrap) return;
+  var showing = wrap.style.display !== 'none';
+  if (showing) {
+    wrap.style.display = 'none';
+    if (btn) btn.innerHTML = 'My Team &#9662;';
+    return;
+  }
+  wrap.style.display = 'block';
+  if (btn) btn.innerHTML = 'My Team &#9652;';
+  if (!_whaTeamLoaded) whaLoadTeam();
+}
+
+function whaLoadTeam() {
+  var rowsEl = document.getElementById('home-wha-team-rows');
+  if (!rowsEl) return;
+  rowsEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;padding:8px 0;">Loading your team…</div>';
+  fetch('/api/whereabouts-grid/team').then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) {
+      rowsEl.innerHTML = '<div style="font-size:12px;color:#b3261e;padding:8px 0;">' + data.error + '</div>';
+      return;
+    }
+    var members = data.members || [];
+    if (!members.length) {
+      rowsEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;padding:8px 0;">No team members are set up on Whereabouts yet.</div>';
+      return;
+    }
+    _whaTeamLoaded = true;
+    rowsEl.innerHTML = members.map(function(m) {
+      var name = (m.firstName + ' ' + m.lastName).trim() || m.email;
+      var dayCells = WHA_DAY_ORDER.map(function(day) {
+        var cell = (m.grid && m.grid[day]) || {};
+        function chip(slot) {
+          var val = cell[slot];
+          var style = val ? WHA_STATUS_STYLE[val] : { bg: '#f8fafc', color: '#a0aab5', label: '—' };
+          return '<div style="background:' + style.bg + ';color:' + style.color + ';border-radius:5px;padding:4px 0;text-align:center;font-size:10px;font-weight:700;">' + style.label + '</div>';
+        }
+        return '<div style="flex:1;display:flex;flex-direction:column;gap:3px;">' + chip('AM') + chip('PM') + '</div>';
+      }).join('');
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f0f4f8;">' +
+        '<div style="width:120px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--brand-navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
+        '<div style="flex:1;display:flex;gap:6px;">' + dayCells + '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function() {
+    rowsEl.innerHTML = '<div style="font-size:12px;color:#b3261e;padding:8px 0;">Couldn\'t load your team\'s whereabouts.</div>';
+  });
+}
+
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('home-wha-search-results');
   if (wrap && wrap.style.display === 'block' && !e.target.closest('#home-wha-card')) wrap.style.display = 'none';
@@ -10494,6 +10556,10 @@ function loadHomeData() {
       loadWhereaboutsGrid(null);
     } else if (whaCard) {
       whaCard.style.display = 'none';
+    }
+    var whaTeamToggle = document.getElementById('home-wha-team-toggle');
+    if (whaTeamToggle && _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin)) {
+      whaTeamToggle.style.display = '';
     }
 
     // ── Latest video ────────────────────────────────────────

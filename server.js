@@ -1236,6 +1236,59 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/whereabouts-grid/team — the current week's grid for everyone the
+// caller supervises (supervisors/admins only). Powers the "My Team" expand
+// on the Home page Whereabouts card. Reuses the same team-membership logic
+// as /api/supervisor/team, but only needs email/name — no CPD lookups.
+app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const allRecords = [];
+    let offset = '';
+    do {
+      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
+      const page = await atFetch(qs);
+      allRecords.push(...(page.records || []));
+      offset = page.offset || '';
+    } while (offset);
+
+    let lookupEmail = (user.email || '').toLowerCase();
+    if (!user.isAdmin) {
+      const svRecord = allRecords.find(r => (r.fields[F_EMAIL] || '').toLowerCase() === lookupEmail);
+      const coEmail = svRecord?.fields[F_CO_SUPERVISES];
+      if (coEmail) lookupEmail = coEmail.toLowerCase();
+    }
+
+    const members = allRecords
+      .filter(r => user.isAdmin ? true : (r.fields[F_SUPERVISOR_EMAIL] || '').toLowerCase() === lookupEmail)
+      .filter(r => r.fields[F_EMPLOYED_ADVISER]) // only employed staff use Whereabouts
+      .map(r => ({
+        email: (r.fields[F_EMAIL] || '').toLowerCase(),
+        firstName: r.fields[F_FIRST] || '',
+        lastName: r.fields[F_LAST] || ''
+      }))
+      .filter(m => m.email);
+
+    if (!members.length) return res.json({ members: [] });
+
+    const weekStart = whaWeekStart((req.query.week || '').toString() || null);
+    const results = await Promise.all(members.map(async m => {
+      try {
+        const grid = await whaGetWeekGrid(m.email, weekStart);
+        return { email: m.email, firstName: m.firstName, lastName: m.lastName, grid: grid.grid, weekStart: grid.weekStart };
+      } catch (err) {
+        return { email: m.email, firstName: m.firstName, lastName: m.lastName, grid: null, weekStart };
+      }
+    }));
+    results.sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
+    res.json({ members: results });
+  } catch (err) {
+    console.error('whereabouts-grid/team error:', err);
+    res.status(500).json({ error: 'Failed to load team whereabouts.' });
+  }
+});
+
 // GET /api/contacts — the Contacts directory (Finance Planning / Mortgage /
 // Insurance). Backed by a local JSON file rather than Airtable since it's
 // a fairly static reference doc, imported from "FPG Useful Contact
