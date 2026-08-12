@@ -18,6 +18,14 @@ const QRCode    = require('qrcode');
 const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
+// ── Global email kill switch ─────────────────────────────────
+// Set to false to silently stop ALL outbound email from this app — every
+// _mailer.sendMail() call site, present and future, goes through this one
+// transporter, so this single flag is a guaranteed single point of control.
+// While off, sendMail resolves without sending anything (logged to console
+// instead) so calling code doesn't need its own on/off checks.
+const EMAILS_ENABLED = false;
+
 // ── Campaign Monitor SMTP transporter ────────────────────────
 // Set CM_API_KEY and CM_FROM_EMAIL in Railway environment variables
 const _mailer = nodemailer.createTransport({
@@ -31,6 +39,16 @@ const _mailer = nodemailer.createTransport({
   greetingTimeout: 8000,
   socketTimeout: 8000
 });
+if (!EMAILS_ENABLED) {
+  const _realSendMail = _mailer.sendMail.bind(_mailer);
+  _mailer.sendMail = (opts) => {
+    console.log('[EMAILS_ENABLED=false] Suppressed email:', opts && opts.subject, '->', opts && opts.to);
+    return Promise.resolve({ suppressed: true });
+  };
+  // Keep a reference in case anything needs to force a send later without
+  // flipping the global switch (not currently used anywhere).
+  _mailer._realSendMail = _realSendMail;
+}
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -231,6 +249,7 @@ const F_IS_MARKETING       = 'fldzlNzW2l0kAcK4v'; // Is Marketing
 const F_IS_LEADGEN         = 'fldpnrV5krN03XAjN'; // Is LeadGen
 const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true if employed rather than self-employed/AR
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
+
 const NAV_TOGGLE_KEYS = [
   'marketing', 'compliance', 'learning', 'surveying', 'lab', 'sellingZone',
   'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'supervisorZone', 'contacts'
@@ -4212,7 +4231,25 @@ app.post('/login', async (req, res) => {
     }
     const record = data.records[0];
     const hash = record.fields[F_PASSWORD];
-    if (!hash || !bcrypt.compareSync(password, hash)) {
+    if (!hash) {
+      // No password has ever been set for this account (e.g. bulk-imported
+      // user) — this isn't a wrong-password guess, so don't count it against
+      // the lockout. While EMAILS_ENABLED is off, sendPasswordLinkEmail's
+      // underlying sendMail is silently suppressed, so calling it here is
+      // harmless — but skip it outright to avoid the misleading 'setup=1'
+      // ("we've emailed you") message when nothing was actually sent.
+      auditLog('login_no_password', { email: emailLower }, req);
+      if (EMAILS_ENABLED && process.env.CM_API_KEY) {
+        try {
+          await sendPasswordLinkEmail(emailLower, record, 'setup');
+          return res.redirect('/login?setup=1');
+        } catch (mailErr) {
+          console.error('Auto setup-email error:', mailErr);
+        }
+      }
+      return res.redirect('/login?nopw=1');
+    }
+    if (!bcrypt.compareSync(password, hash)) {
       recordFailedLogin(emailLower);
       auditLog('login_failed', { email: emailLower, reason: 'bad_password' }, req);
       const ls = getLoginLockStatus(emailLower);
@@ -4250,9 +4287,43 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/forgot-password.html'));
 });
 
+// Shared password-link email — used both for user-initiated "forgot
+// password" and for the automatic first-time "set up your password" email
+// triggered when someone with no password on file tries to log in.
+// mode: 'reset' (existing account, forgot password) or 'setup' (new account,
+// no password ever set) — same reset-token mechanism, different copy so the
+// email doesn't confusingly say "reset" to someone who never had a password.
+async function sendPasswordLinkEmail(emailLower, record, mode) {
+  const user = recordToUser(record);
+  const token = await createResetToken(emailLower, record.id);
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+  const resetUrl = (process.env.APP_URL || 'https://dam.simflex.ai') + '/reset-password?token=' + token;
+  const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
+  const isSetup = mode === 'setup';
+  await _mailer.sendMail({
+    from: `"Finance Planning Group" <${fromEmail}>`,
+    to: emailLower,
+    subject: isSetup ? 'Set up your FPG Knowledge Hub password' : 'Reset your FPG Knowledge Hub password',
+    html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+      <img src="https://dam.simflex.ai/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
+      <h2 style="color:#003768;margin:0 0 12px;">${isSetup ? 'Set up your password' : 'Password reset request'}</h2>
+      <p style="color:#4a5a6a;line-height:1.6;">Hi ${name},<br><br>${isSetup
+        ? 'Your KnowledgeHUB&trade; account is ready, but you haven’t set a password yet. Click the button below to choose one — this link is valid for <strong>1 hour</strong>.'
+        : 'We received a request to reset your password. Click the button below — this link is valid for <strong>1 hour</strong>.'}</p>
+      <a href="${resetUrl}" style="display:inline-block;margin:20px 0;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">${isSetup ? 'Set Password' : 'Reset Password'}</a>
+      <p style="color:#6b7c8f;font-size:13px;">${isSetup ? 'If this wasn’t you, you can safely ignore this email.' : 'If you didn’t request this, you can safely ignore this email. Your password will not change.'}</p>
+      <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
+      <p style="color:#6b7c8f;font-size:12px;">Finance Planning Group · FPG Knowledge Hub</p>
+    </div>`
+  });
+}
+
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!EMAILS_ENABLED) {
+    return res.status(503).json({ error: 'Password reset emails are temporarily disabled. Contact Mark to reset your password from User Management instead.' });
+  }
   if (!process.env.CM_API_KEY) {
     console.error('forgot-password: CM_API_KEY not set — cannot send reset email');
     return res.status(503).json({ error: 'Password reset emails are not configured yet. Ask Mark to add a Campaign Monitor API key, or reset the password from User Management instead.' });
@@ -4266,25 +4337,7 @@ app.post('/api/forgot-password', async (req, res) => {
       return res.json({ ok: true });
     }
     const record = data.records[0];
-    const user   = recordToUser(record);
-    const token  = await createResetToken(emailLower, record.id);
-    const name   = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
-    const resetUrl = (process.env.APP_URL || 'https://dam.simflex.ai') + '/reset-password?token=' + token;
-    const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
-    await _mailer.sendMail({
-      from: `"Finance Planning Group" <${fromEmail}>`,
-      to: emailLower,
-      subject: 'Reset your FPG Knowledge Hub password',
-      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
-        <img src="https://dam.simflex.ai/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
-        <h2 style="color:#003768;margin:0 0 12px;">Password reset request</h2>
-        <p style="color:#4a5a6a;line-height:1.6;">Hi ${name},<br><br>We received a request to reset your password. Click the button below — this link is valid for <strong>1 hour</strong>.</p>
-        <a href="${resetUrl}" style="display:inline-block;margin:20px 0;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Reset Password</a>
-        <p style="color:#6b7c8f;font-size:13px;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
-        <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
-        <p style="color:#6b7c8f;font-size:12px;">Finance Planning Group · FPG Knowledge Hub</p>
-      </div>`
-    });
+    await sendPasswordLinkEmail(emailLower, record, record.fields[F_PASSWORD] ? 'reset' : 'setup');
     res.json({ ok: true });
   } catch (err) {
     console.error('Forgot password error:', err);

@@ -211,6 +211,12 @@
     <div id="locked-msg" class="error" style="display:none;background:#fff8e1;border-color:#ffe082;color:#7a5400;">
       ⏳ Account locked after 3 failed attempts. Try again in <strong id="lock-mins"></strong> minute(s), or <a href="/forgot-password" style="color:#003768;">reset your password</a>.
     </div>
+    <div id="setup-msg" class="error" style="display:none;background:#eef6ff;border-color:#bcdcff;color:#003768;">
+      👋 Your account hasn't been set up yet. We've emailed you a link to set your password — check your inbox.
+    </div>
+    <div id="nopw-msg" class="error" style="display:none;background:#eef6ff;border-color:#bcdcff;color:#003768;">
+      👋 Your account hasn't had a password set up yet. Contact <a href="mailto:mark.ninnim@financeplanning.co.uk" style="color:#003768;">mark.ninnim@financeplanning.co.uk</a> to get one set.
+    </div>
 
     <form method="POST" action="/login">
       <label for="email">Email Address</label>
@@ -245,6 +251,10 @@
     if (params.get('locked')) {
       document.getElementById('locked-msg').style.display = 'block';
       document.getElementById('lock-mins').textContent = params.get('mins') || '15';
+    } else if (params.get('setup')) {
+      document.getElementById('setup-msg').style.display = 'block';
+    } else if (params.get('nopw')) {
+      document.getElementById('nopw-msg').style.display = 'block';
     } else if (params.get('error')) {
       document.getElementById('error-msg').style.display = 'block';
       var left = params.get('left');
