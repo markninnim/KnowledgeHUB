@@ -6143,6 +6143,13 @@ Consolidating debts will increase the loan to value which can impact future deal
                 </div>
                 <input id="uf-holidayapprover" type="email" placeholder="name@financeplanning.co.uk" style="width:220px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
               </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;background:#fafbfc;">
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Whereabouts approver email</div>
+                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Whose "My Team" card on Whereabouts this person shows under — independent of Supervisor and Holiday approver, no default. Leave blank to not show under anyone.</div>
+                </div>
+                <input id="uf-whereaboutsapprover" type="email" placeholder="name@financeplanning.co.uk" style="width:220px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
+              </label>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">
               <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Top Nav Tabs</span>
@@ -12169,6 +12176,7 @@ function openUserForm(userId) {
     document.getElementById('uf-holidaybooking').checked    = u.holidayBookingEnabled || false;
     document.getElementById('uf-holidayallowance').value    = u.holidayAllowanceDays != null ? u.holidayAllowanceDays : '';
     document.getElementById('uf-holidayapprover').value     = u.holidayApproverEmail || '';
+    document.getElementById('uf-whereaboutsapprover').value = u.whereaboutsApproverEmail || '';
     renderNavAccessToggles(u.navAccess, u.isLeadGen || false);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
@@ -12198,6 +12206,7 @@ function openUserForm(userId) {
     document.getElementById('uf-holidaybooking').checked   = false;
     document.getElementById('uf-holidayallowance').value   = '';
     document.getElementById('uf-holidayapprover').value    = '';
+    document.getElementById('uf-whereaboutsapprover').value = '';
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false }, false);
     populateSupervisorDropdown('');
   }
@@ -12236,6 +12245,7 @@ function saveUser() {
     holidayBookingEnabled: document.getElementById('uf-holidaybooking').checked,
     holidayAllowanceDays:  document.getElementById('uf-holidayallowance').value,
     holidayApproverEmail:  document.getElementById('uf-holidayapprover').value.trim(),
+    whereaboutsApproverEmail: document.getElementById('uf-whereaboutsapprover').value.trim(),
     sellsInvestments:    document.getElementById('uf-investments').checked,
     sellsMortgages:      document.getElementById('uf-mortgages').checked,
     sellsProtection:     document.getElementById('uf-protection').checked,
