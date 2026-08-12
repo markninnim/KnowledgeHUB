@@ -233,7 +233,7 @@ const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true i
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'marketing', 'compliance', 'learning', 'surveying', 'lab', 'sellingZone',
-  'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'supervisorZone'
+  'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'supervisorZone', 'contacts'
 ];
 // Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
 const F_ACCESS = {
@@ -249,7 +249,8 @@ const F_ACCESS = {
   engage:           'fldWAyCsuGjqwLbqZ',
   muttuo:           'fld43JfbHdXVVRICX',
   whereabouts:      'fld55LR2YmiAoar8I',
-  supervisorZone:   'fldA5LN46IfVgo00Q'
+  supervisorZone:   'fldA5LN46IfVgo00Q',
+  contacts:         'fldS5TMkS49hi9ndd'
 };
 function computeNavDefaults(f) {
   const isAdmin = f[F_ADMIN] || false;
@@ -269,7 +270,8 @@ function computeNavDefaults(f) {
     engage:          true,
     muttuo:          isAdmin || business === 'fitch and fitch',
     whereabouts:     supervisorOrAdmin,
-    supervisorZone:  supervisorOrAdmin
+    supervisorZone:  supervisorOrAdmin,
+    contacts:        true
   };
 }
 // `f` is the raw Airtable fields object (returnFieldsByFieldId=true) for this

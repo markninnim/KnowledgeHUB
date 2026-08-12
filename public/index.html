@@ -10807,7 +10807,8 @@ var _currentUser = null;
       engage:           'tab-btn-leadgen',
       muttuo:           'tab-btn-muttuo',
       whereabouts:      'tab-btn-whereabouts',
-      supervisorZone:   'tab-btn-supervisor-zone'
+      supervisorZone:   'tab-btn-supervisor-zone',
+      contacts:         'tab-btn-contacts'
     };
     if (user) {
       var nav = user.navAccess || {};
@@ -12143,7 +12144,8 @@ var NAV_TOGGLE_LABELS = {
   engage:           'Engage™',
   muttuo:           'Muttuo',
   whereabouts:      'Whereabouts',
-  supervisorZone:   'Supervise'
+  supervisorZone:   'Supervise',
+  contacts:         'Contacts'
 };
 function renderNavAccessToggles(navAccess, isLeadGen) {
   var container = document.getElementById('uf-nav-toggles');
@@ -12237,7 +12239,7 @@ function openUserForm(userId) {
     document.getElementById('uf-holidaybooking').checked   = false;
     document.getElementById('uf-holidayallowance').value   = '';
     document.getElementById('uf-holidayapprover').value    = '';
-    renderNavAccessToggles({ muttuo: false, whereabouts: false, supervisorZone: false }, false);
+    renderNavAccessToggles({ muttuo: false, whereabouts: false, supervisorZone: false, contacts: true }, false);
     populateSupervisorDropdown('');
   }
   form.style.display = 'block';
