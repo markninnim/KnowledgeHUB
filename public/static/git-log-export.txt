@@ -1,9 +1,158 @@
 KnowledgeHUB — Full Git Commit Log Export
-Generated: 2026-08-02
-Total commits: 1307
-Range: 2026-06-19 to 2026-08-02
+Generated: 2026-08-12
+Total commits: 1457
+Range: 2026-06-19 to 2026-08-11
 ============================================================
-
+2026-08-11 | c71b96e | Add v3.5 version-history entry: Alex redesign, Compliance News, unread dots, Add Contact
+2026-08-11 | ea38848 | Move Ask a question placeholder text 20px left
+2026-08-11 | 4488c8a | Revert last two deploys: input Alex position and approver text alignment
+2026-08-11 | 4eb1474 | Vertically center approver text with Request holiday button
+2026-08-11 | f39c697 | Even out spacing around input-field Alex icon (8px both sides)
+2026-08-11 | 6ba9239 | Nudge input-field Alex icon 5px further left
+2026-08-11 | 3290a5c | Nudge input-field Alex icon left to align with rounded corner curvature
+2026-08-11 | 0b821c8 | Double size of Alex icon inside chat input field
+2026-08-11 | d62563f | Enlarge header Alex orb, remove small per-message avatars, add Alex icon inside input field
+2026-08-11 | b20cb0e | Shrink and top-align chat avatar to remove wasted space next to long messages
+2026-08-11 | 19ba263 | Alex: scale-up CD summary icons without layout shift, remove leftover bubble bounce, nudge Ask Alex panel text left
+2026-08-11 | 9c039ee | Alex orb: bump all sizes ~20% for more visible detail
+2026-08-11 | 7931d85 | Alex orb: drop header background circle, enlarge header + chat avatars
+2026-08-11 | 0c76ca6 | Alex orb: bigger sizes, drop outer bounce animation
+2026-08-11 | b83c3b1 | Replace Sim mascot with animated Alex energy-orb avatar everywhere
+2026-08-11 | 44b0d1d | Drop bell dot for unread Learning content, keep nav dots only
+2026-08-11 | bd67ee9 | Add unread red-dot indicators for new Newsletters/Compliance News
+2026-08-11 | c902fe2 | Add jul-2026 and aug-2026 monthly newsletters
+2026-08-11 | 4c8099b | Serve compliance-news bulletin files (was 404ing — missing static route)
+2026-08-11 | 3259609 | Add admin Unlock button to clear login lockouts
+2026-08-11 | b7bb04d | Compliance News cards: show proper NN/2026 label + real subtitle
+2026-08-11 | daf825f | Contacts cards: drop phone/email icons, stack multiple numbers on new lines
+2026-08-11 | b8be0b4 | Populate Compliance News with 11 bulletins from Outlook; support HTML entries; add Contacts add-contact feature; fix Alex bare-name lookup
+2026-08-11 | 5c9dea9 | Fix Alex: bare name query now triggers live contact lookup
+2026-08-11 | df1bf5b | Add Compliance News section to Learning > Reading
+2026-08-11 | f89f506 | Add Contacts directory (Finance Planning/Mortgage/Insurance) with search + Alex integration
+2026-08-11 | b233007 | Add v3.4 to version history: online status dot in User Management
+2026-08-11 | e6094ac | Add per-user online status dot to User Management list
+2026-08-11 | 76d32f1 | Add v3.3 to version history: Whereabouts card, Feefo card fixes, pillar cleanup
+2026-08-10 | 571ebe8 | Assign content pillars to remaining 15 uncategorised social posts
+2026-08-10 | d62632c | Sort social content posts newest first
+2026-08-10 | 4e6956e | Add new social content: 627 x 1200 - li.jpg, 1200 x 1200 - ig fb li.jpg, 630 x 1200 - fb.jpg, 1080 x 1920 - tik.jpg, 1080 x 1350 - ig.jpg
+2026-08-10 | fbeb586 | Remove duplicate legacy marketing/review assets
+2026-08-10 | e458a6c | Add new adviser reviews from Feefo (39 advisers)
+2026-08-10 | c6ae712 | Add job-title holiday clash warning with suggested next clear period
+2026-08-10 | 15eed56 | Add job-title holiday clash warning with suggested next clear period
+2026-08-10 | 7205358 | Remove holiday clash notifications
+2026-08-10 | 86c3215 | Feefo home card: reviews all-time (latest first), leaderboards stay year-to-date
+2026-08-10 | 2c3e982 | Add new adviser review from Feefo
+2026-08-10 | ef00cf9 | Fix Whereabouts: DATESTR() the Date field comparison in whaFindRecord — string equality against a Date field never matched, so every save created a duplicate row instead of updating the existing one
+2026-08-10 | e1d5518 | Fix Whereabouts 500: routes were registered before session middleware, so req.session was undefined
+2026-08-10 | 10e2cff | Fix Whereabouts 500: employedAdviser guard threw outside try block; add global JSON error handler safety net
+2026-08-10 | 52cb8d7 | Rename Whereabouts save endpoint from /mine to /self — /mine is a common ad-blocker false-positive pattern (crypto-mining blocklists)
+2026-08-10 | 1f49e78 | Whereabouts: don't gate saves on initial load succeeding; surface real error messages instead of failing silently
+2026-08-10 | e0e2df1 | Fix Whereabouts colleague search: paginate Users table (133 rows > 100-row page cap)
+2026-08-10 | f884843 | Fix Whereabouts save: route registered before body-parser meant req.body was always empty
+2026-08-10 | e862f51 | Restrict Whereabouts card and API to employed staff only
+2026-08-10 | 02bc945 | Fix blank Whereabouts grid: render AM/PM dropdowns immediately, populate from fetch
+2026-08-10 | 70c806c | Add self-service Whereabouts card to Home page (AM/PM grid, holiday auto-fill, colleague search)
+2026-08-10 | 16894c8 | Scope holiday clashes to shared approver; fold clash info into request notification
+2026-08-10 | 898394f | User search: match name/email/title only, not supervisor
+2026-08-10 | f52868f | Remove Numbers (performance-zone) tab for all users
+2026-08-10 | 1735d4c | Remove My Holiday button from top nav
+2026-08-10 | 4bddb80 | Format holiday notification dates as DD/MM/YYYY; scope holiday ticker per viewer
+2026-08-10 | 134846a | Scope holiday ticker visibility per named viewer (Terry/Matt/Pete/David)
+2026-08-09 | eb57d6c | Animate holiday bar fill on open; move approver line next to Request button
+2026-08-09 | acbad6a | Add Requested stat; deduct requested days from Balance
+2026-08-09 | a8422ff | Show approver name (not email); recompute holiday days as weekdays everywhere
+2026-08-09 | d811d55 | Count weekdays only for holiday days; rename Pending status label to Requested
+2026-08-09 | 493aa0c | Add Requested segment to holiday usage bar
+2026-08-09 | 4c7bf39 | Add segmented holiday usage bar to My Holiday panel
+2026-08-09 | 099a56b | Add self-service cancel for not-yet-started holiday requests
+2026-08-09 | 34e02f9 | Fix Holiday Decision notifications not saving (missing typecast)
+2026-08-09 | 2161453 | Notify staff when their holiday request is approved/declined
+2026-08-09 | f09b116 | Dedupe meeting planner attendee list so the count is accurate
+2026-08-09 | 07ba335 | Drop weekend mention from earliest-available explanation
+2026-08-09 | 61fab6a | Show days taken so far and notice period on each holiday request row
+2026-08-09 | e5ab8c5 | Simplify meeting planner earliest-date explanation to one line
+2026-08-09 | 123b813 | Explain why the earliest available meeting date was chosen
+2026-08-09 | 7157aa3 | Fix Meeting Planner earliest-available date to UK format
+2026-08-09 | 99fcd16 | Add Review link on holiday notifications + inline approve/decline in All Requests
+2026-08-09 | c0d3a2e | Default holiday requests filter to Pending; broker name filter with type-ahead from user list
+2026-08-09 | 3772336 | Add name/status filters and notes display to supervisor All Requests holiday list
+2026-08-09 | e858806 | Fix 'Requested At'/'Decided At' date format in holiday request routes
+2026-08-09 | dbd8b6b | Simplify ticker wording to 'until' for upcoming holidays
+2026-08-09 | bcbe95e | Show Allowance/Carried Over/Taken/Booked/Balance as stat row in My Holiday
+2026-08-09 | 4a3d5e2 | Reassign holiday approvers per user record; add carried-over days, taken status, blue pills to My Holiday
+2026-08-09 | ba0bde4 | Holiday Approver field (prepopulated David Riley/Dan Maskell), auto-enable for Employed advisers, inline Home widget, lock allowance to User Management
+2026-08-09 | 69a878a | European date format (D/M/YYYY) throughout the holiday booking feature
+2026-08-09 | 63435d3 | Home holiday ticker: bold names, drop start date from booked entries
+2026-08-09 | 7e17e5a | Fix Meeting Planner attendees pagination bug, sort alphabetically, dynamic per-user title
+2026-08-09 | cbfaba3 | Remove Meeting Planner top-bar button for admins (Dan only)
+2026-08-09 | 78152c8 | Fix Supervisor pill height to match other top-bar buttons
+2026-08-09 | db8db7c | Rename Meeting Booker to Meeting Planner
+2026-08-09 | 8b4033d | Fix Meeting Booker not opening (was trapped in Supervisor Zone tab), add as Dan's quick link, remove Advice Standards sidebar link, scope holiday ticker/browse by viewer role
+2026-08-09 | b9537a3 | Company-wide holiday booking system: self-service requests, notifications, Meeting Booker, home ticker
+2026-08-08 | 469a275 | Auto-calc holiday days, taken/booked summary, holiday badges on admin cards
+2026-08-08 | bcb9bcb | Add admin one-to-one tool (notes/actions + holiday requests); v3.0 version history
+2026-08-08 | 7aa3c08 | Match card/list name colour for supervisors with everyone else
+2026-08-08 | 832188a | Match director card colour/height to supervisors; fix Torie routing to Supervisors nav group
+2026-08-08 | 3c205a2 | Move Matt Stephens to Non-supervising Directors; Torie takes sole supervision of his former team
+2026-08-08 | ebd5cbf | Fix Non-supervising Directors card grid to 3 columns like other sections
+2026-08-08 | cfebb9e | Add Non-supervising Directors section to My Team; require 3+ chars for user search
+2026-08-08 | 3a4087b | Add Non-supervising Directors section to My Team
+2026-08-08 | 22e8ce6 | Replace Feature Rollout Controls with User Engagement panel
+2026-08-08 | b778c54 | Add creation cost since launch panel to Alex's Tools tab
+2026-08-08 | 9e0532c | Show all AI cost figures in GBP; revert unworkable verified-cost feature
+2026-08-08 | 1f254f1 | Revert verified MTD cost feature — Admin API requires a Team+ Console plan, not available on this account
+2026-08-08 | d7d31c7 | Add true MTD cost and since-launch production cost to Alex's Salary tab
+2026-08-08 | 261063e | Add true MTD cost from Anthropic Admin API to Alex's Salary tab
+2026-08-08 | 207fa4a | Add true MTD cost from Anthropic Admin API to Alex's Salary tab
+2026-08-08 | 6364a6e | Reverse salary task freeze toggle: blue/on now means live
+2026-08-08 | d9a3883 | Split Claude into Development and Alex API rows; remove Domain/DNS from Alex's Tools
+2026-08-08 | 728c32a | Auto-fill Claude cost from Alex's real usage in Tools tab; autosave every other row
+2026-08-08 | b43ba7d | Move Alex's Tools costs from local JSON file to Airtable so they survive redeploys
+2026-08-08 | aec2ccf | Remove Feefo from Alex's Tools list
+2026-08-08 | 10fd5d3 | Fix Alex's Tools 500 error: routes were registered before session/body middleware
+2026-08-08 | 98aad15 | Remove Zoom live link and dead SurveyMonkey reference; trim unconfigured tools from Alex's Tools; explicit error when email isn't configured
+2026-08-08 | 7bced6c | Add Alex's Tools tab: cost tracker for external accounts KnowledgeHUB runs on
+2026-08-08 | 391640b | Style Alex Salary freeze checkbox as an on/off toggle
+2026-08-08 | eb9f9fa | Add per-task freeze toggle to Alex's Salary cost breakdown
+2026-08-07 | 9ab47df | Bulk import: existing users get password-only update, never overwrite other fields
+2026-08-07 | 2c66275 | Fix bulk user import to upsert by email with per-row reporting
+2026-08-07 | 24e53da | Fix bulk user import to upsert by email with per-row reporting
+2026-08-07 | 44e96ac | Add supervisor/admin 'Broker Name' field to Compliance Reporting forms to file on a broker's behalf
+2026-08-07 | 610e226 | Broker Profile Compliance Log: flatten nested card, full-width table, expandable rows with editable notes matching main log
+2026-08-07 | 9202644 | Add expired renewals notice and daily social post suggestion to Alex's Job Description
+2026-08-07 | 3213f80 | Add start date and 6-month probation to Alex's HR record
+2026-08-07 | 400b0e8 | Edit Job Description task list per feedback
+2026-08-07 | 53a88ff | Add separate Job Description tab (bullet list, incl. Airtable-automated tasks); remove paragraph from Salary tab
+2026-08-07 | 45e7bcc | Add HR record (holiday/sick pay/line manager) and responsibilities paragraph to Alex's Salary tab
+2026-08-07 | 63becc7 | Move API cost tracking into About Alex modal as 'Alex's Salary' tab, humanised as employee tasks
+2026-08-07 | 9669cee | Track remaining 4 AI summary calls (CPD, compliance log, consumer duty) in API usage log
+2026-08-07 | a274e96 | Add API usage/cost tracking: log every AI call to Airtable, admin API Usage view
+2026-08-07 | 4568281 | AI key error messages: ask Mark instead of an admin; add TM to KnowledgeHUB in Alex personality text
+2026-08-07 | 9b28307 | Add TM to KnowledgeHUB in Alex off-topic/inappropriate reply personality text
+2026-08-07 | 60c2642 | Fix openBrokerProfile not hiding all sibling Supervise panels
+2026-08-07 | a868736 | Make Fitness & Properness stat tiles clickable to filter the list
+2026-08-07 | f8f08a2 | Default Lab tab on for admins
+2026-08-06 | cdd8c0d | Use per-type field labels in Compliance Log detail view
+2026-08-06 | 08122b1 | Match Compliance Questionnaire Feedback view to Supervise for admins/supervisors
+2026-08-06 | e612065 | Show filtered response count next to Clear filters button
+2026-08-06 | 34f0c62 | Fix stacked empty-state messages and surface real errors on Questionnaire Feedback pages
+2026-08-04 | c345276 | Fix false-positive Forbidden error on CPD entry edit/delete due to email case mismatch
+2026-08-04 | c221de3 | Rename protection/redundancy brochure card titles to new format
+2026-08-04 | 3a4c0ef | Rename AI Parameters button to About Alex™
+2026-08-04 | 1793c0d | Rename Consumer Duty Summary heading to Alex™ Consumer Duty Summary
+2026-08-04 | af5c091 | Update Alex assistant subtitle, add trademark to Alex throughout
+2026-08-04 | 6c4a86c | Remove SimFlex joke from Alex's marketing tour message
+2026-08-04 | 8b13fb2 | Rename assistant mascot from Sim to Alex
+2026-08-04 | 781324f | Add personalised redundancy brochure card, generalise personalise-brochure route for multiple templates
+2026-08-04 | 6326004 | Add Redundancy Protection brochure card
+2026-08-03 | d619db6 | Fix Adviser filter dropdown scroll on Questionnaire Feedback page
+2026-08-03 | d467957 | Fix Q2.2 label to show actual question wording
+2026-08-02 | 19a458d | Revalidation card: drop summary line, date modules by when the test score was recorded
+2026-08-02 | 1a8ad92 | Infer revalidation video watch dates from passed test results when no CPD Log entry exists
+2026-08-02 | af9b57a | Specialist CPD bars/icons turn green on YTD pace, not just full completion
+2026-08-02 | 665711e | Rename Sim AI summary title to 'Your Intelligent Supervision Assistant'
+2026-08-02 | f8ffb30 | Home CPD Summary: turn bars green when on pace, matching other CPD progress views
+2026-08-02 | 256b41d | Refresh stale commit-log fallback export; make commit-log summary text live-computed
 2026-08-02 | 4466c6b | Add Sim icon to AI summaries, FP unread red-dot, and version history entry
 2026-08-02 | 5696ac4 | Add Sim icon to all AI summaries incl. Consumer Duty broker profile; add unread red-dot for FP submissions
 2026-08-02 | ea0f224 | Add Sim icon and SIM title to Compliance Log and Consumer Duty AI summary panels
