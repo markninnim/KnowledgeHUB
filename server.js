@@ -9449,7 +9449,6 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
   if (!attendees.length) return res.status(400).json({ error: 'attendees required' });
   const fromDate = (req.query.from || '').trim() || new Date().toISOString().slice(0, 10);
   const toDate = (req.query.to || '').trim() || null;
-  const includeWeekends = req.query.includeWeekends === 'true' || req.query.includeWeekends === '1';
 
   try {
     const all = await fetchAllHolidayRequests();
@@ -9485,8 +9484,8 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
       const dow = cursor.getUTCDay();
       const dStr = cursor.toISOString().slice(0, 10);
       if (toDate && dStr > toDate) break;
-      if (!includeWeekends && (dow === 0 || dow === 6)) {
-        // weekends excluded from candidacy entirely, not counted as a blocker
+      if (dow === 0 || dow === 6) {
+        // weekends aren't working days — excluded from candidacy entirely
       } else {
         const blocked = blockers(dStr);
         if (!blocked) {
