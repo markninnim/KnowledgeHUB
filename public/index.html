@@ -763,7 +763,13 @@ select:focus { outline:none; }
         </div>
         <div id="home-wha-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;"></div>
         <div id="home-wha-team-wrap" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid #e8ecf0;">
-          <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">My Team</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.05em;">My Team</div>
+            <div style="position:relative;">
+              <input id="home-wha-team-add-search" type="text" placeholder="+ Add a colleague…" autocomplete="off" oninput="whaTeamAddSearchInput()" style="border:1px solid #d1d5db;border-radius:8px;padding:6px 10px;font-size:12px;font-family:inherit;width:180px;color:var(--brand-navy);">
+              <div id="home-wha-team-add-results" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(var(--brand-navy-rgb),.12);z-index:50;min-width:200px;overflow:hidden;"></div>
+            </div>
+          </div>
           <div id="home-wha-team-rows"></div>
         </div>
       </div>
@@ -6143,13 +6149,6 @@ Consolidating debts will increase the loan to value which can impact future deal
                 </div>
                 <input id="uf-holidayapprover" type="email" placeholder="name@financeplanning.co.uk" style="width:220px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
               </label>
-              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #d1d5db;border-radius:8px;background:#fafbfc;">
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:600;color:#6b7c8f;">Whereabouts approver email</div>
-                  <div style="font-size:11px;color:#6b7c8f;margin-top:1px;">Whose "My Team" card on Whereabouts this person shows under — independent of Supervisor and Holiday approver, no default. Leave blank to not show under anyone.</div>
-                </div>
-                <input id="uf-whereaboutsapprover" type="email" placeholder="name@financeplanning.co.uk" style="width:220px;border:1px solid #d1d5db;border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;">
-              </label>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;">
               <span style="font-size:11px;font-weight:700;color:#6b7c8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Top Nav Tabs</span>
@@ -9971,9 +9970,12 @@ function whaBackToMine() {
   loadWhereaboutsGrid(null);
 }
 
-// "My Team" expand — supervisors/admins only. Shows a read-only row per
-// direct report so a manager can see everyone's week at a glance, rather
-// than looking colleagues up one at a time via search.
+// "My Team" expand — a personal, self-managed watchlist. Anyone on
+// Whereabouts can search for and add colleagues here (server-side, stored
+// against their own user record) so they can see everyone's week at a
+// glance, rather than looking colleagues up one at a time via search.
+// Deliberately not tied to Supervisor Email or Holiday Approver — those are
+// separate relationships and don't dictate who someone wants on this card.
 var _whaTeamLoaded = false;
 function whaToggleTeam() {
   var wrap = document.getElementById('home-wha-team-wrap');
@@ -10001,7 +10003,7 @@ function whaLoadTeam() {
     }
     var members = data.members || [];
     if (!members.length) {
-      rowsEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;padding:8px 0;">No team members are set up on Whereabouts yet.</div>';
+      rowsEl.innerHTML = '<div style="font-size:12px;color:#6b7c8f;padding:8px 0;">Nobody added yet — use "+ Add a colleague" above to build your team view.</div>';
       return;
     }
     _whaTeamLoaded = true;
@@ -10016,14 +10018,56 @@ function whaLoadTeam() {
         }
         return '<div style="flex:1;display:flex;flex-direction:column;gap:3px;">' + chip('AM') + chip('PM') + '</div>';
       }).join('');
-      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f0f4f8;">' +
-        '<div style="width:120px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--brand-navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f4f8;">' +
+        '<div style="width:110px;flex-shrink:0;font-size:12px;font-weight:600;color:var(--brand-navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>' +
         '<div style="flex:1;display:flex;gap:6px;">' + dayCells + '</div>' +
+        '<button onclick="whaTeamRemove(\'' + m.email.replace(/'/g, "\\'") + '\')" title="Remove from My Team" style="background:none;border:none;color:#a0aab5;font-size:15px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">&times;</button>' +
       '</div>';
     }).join('');
   }).catch(function() {
     rowsEl.innerHTML = '<div style="font-size:12px;color:#b3261e;padding:8px 0;">Couldn\'t load your team\'s whereabouts.</div>';
   });
+}
+
+var _whaTeamAddSearchTimer = null;
+function whaTeamAddSearchInput() {
+  var input = document.getElementById('home-wha-team-add-search');
+  var resultsEl = document.getElementById('home-wha-team-add-results');
+  var q = input.value.trim();
+  clearTimeout(_whaTeamAddSearchTimer);
+  if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+  _whaTeamAddSearchTimer = setTimeout(function() {
+    fetch('/api/whereabouts-grid/search?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(data) {
+      var results = data.results || [];
+      if (!results.length) { resultsEl.style.display = 'none'; return; }
+      resultsEl.innerHTML = results.map(function(u) {
+        return '<div onclick="whaTeamAdd(\'' + u.email.replace(/'/g, "\\'") + '\')" style="padding:8px 12px;font-size:12.5px;color:var(--brand-navy);cursor:pointer;border-bottom:1px solid #f0f4f8;">' + (u.name || u.email) + '</div>';
+      }).join('');
+      resultsEl.style.display = 'block';
+    }).catch(function() { resultsEl.style.display = 'none'; });
+  }, 200);
+}
+
+function whaTeamAdd(email) {
+  document.getElementById('home-wha-team-add-search').value = '';
+  document.getElementById('home-wha-team-add-results').style.display = 'none';
+  fetch('/api/whereabouts-grid/team/add', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  }).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {
+    if (res.data.error) { alert('Couldn\'t add: ' + res.data.error); return; }
+    whaLoadTeam();
+  }).catch(function() { alert('Couldn\'t add — please try again.'); });
+}
+
+function whaTeamRemove(email) {
+  fetch('/api/whereabouts-grid/team/remove', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  }).then(function(r) { return r.json().then(function(data) { return { status: r.status, data: data }; }); }).then(function(res) {
+    if (res.data.error) { alert('Couldn\'t remove: ' + res.data.error); return; }
+    whaLoadTeam();
+  }).catch(function() { alert('Couldn\'t remove — please try again.'); });
 }
 
 document.addEventListener('click', function(e) {
@@ -10565,7 +10609,7 @@ function loadHomeData() {
       whaCard.style.display = 'none';
     }
     var whaTeamToggle = document.getElementById('home-wha-team-toggle');
-    if (whaTeamToggle && _currentUser && (_currentUser.isSupervisor || _currentUser.isAdmin)) {
+    if (whaTeamToggle && _currentUser && _currentUser.employedAdviser) {
       whaTeamToggle.style.display = '';
     }
 
@@ -12176,7 +12220,6 @@ function openUserForm(userId) {
     document.getElementById('uf-holidaybooking').checked    = u.holidayBookingEnabled || false;
     document.getElementById('uf-holidayallowance').value    = u.holidayAllowanceDays != null ? u.holidayAllowanceDays : '';
     document.getElementById('uf-holidayapprover').value     = u.holidayApproverEmail || '';
-    document.getElementById('uf-whereaboutsapprover').value = u.whereaboutsApproverEmail || '';
     renderNavAccessToggles(u.navAccess, u.isLeadGen || false);
     populateSupervisorDropdown(u.supervisorEmail || '');
   } else {
@@ -12206,7 +12249,6 @@ function openUserForm(userId) {
     document.getElementById('uf-holidaybooking').checked   = false;
     document.getElementById('uf-holidayallowance').value   = '';
     document.getElementById('uf-holidayapprover').value    = '';
-    document.getElementById('uf-whereaboutsapprover').value = '';
     renderNavAccessToggles({ muttuo: false, whereabouts: false, performanceZone: false, supervisorZone: false }, false);
     populateSupervisorDropdown('');
   }
@@ -12245,7 +12287,6 @@ function saveUser() {
     holidayBookingEnabled: document.getElementById('uf-holidaybooking').checked,
     holidayAllowanceDays:  document.getElementById('uf-holidayallowance').value,
     holidayApproverEmail:  document.getElementById('uf-holidayapprover').value.trim(),
-    whereaboutsApproverEmail: document.getElementById('uf-whereaboutsapprover').value.trim(),
     sellsInvestments:    document.getElementById('uf-investments').checked,
     sellsMortgages:      document.getElementById('uf-mortgages').checked,
     sellsProtection:     document.getElementById('uf-protection').checked,

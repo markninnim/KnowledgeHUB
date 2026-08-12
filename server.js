@@ -620,11 +620,15 @@ const F_HOLIDAY_CARRIED_OVER    = 'fldbdMKkfelSqUgZu'; // days carried over from
 // their line-manager Supervisor. Prepopulated: Admin/Paraplanner staff -> David
 // Riley, everyone else -> Dan Maskell. Editable per-person in User Management.
 const F_HOLIDAY_APPROVER        = 'fldbNOHF4nEUWyFrC';
-// Who this person's Whereabouts "My Team" card should show under — entirely
-// independent of Supervisor Email (line-management) and Holiday Approver
-// (holiday-request routing). No default/fallback: if blank, the person just
-// doesn't show under anyone's My Team. Editable per-person in User Management.
-const F_WHEREABOUTS_APPROVER    = 'fldPFJ2QEGMEOQt9w';
+// Self-managed "who do I want to see in my Whereabouts My Team" list — a
+// comma-separated string of colleague emails stored on the viewer's OWN
+// record. The person picks who's in it themselves (search + add/remove in
+// the UI) — it's not an admin-set field and has nothing to do with
+// Supervisor Email or Holiday Approver. Superseded the earlier
+// F_WHEREABOUTS_APPROVER approach (an admin-set field on each person's own
+// record pointing at who manages them) once it became clear the requirement
+// was viewer-controlled, not admin-assigned.
+const F_WHEREABOUTS_WATCHLIST   = 'flde17qh7eZc41N5t';
 
 const NOTIF_TABLE     = 'tblZqIvcZlWREObnm';
 const NOTIF_RECIPIENT = 'fldboIYXsD2GYSaEp';
@@ -1062,8 +1066,7 @@ function recordToUser(record) {
     onboardingSeen:      f[F_ONBOARDING_SEEN]      || false,
     holidayBookingEnabled: f[F_HOLIDAY_BOOKING_ENABLED] || false,
     holidayAllowanceDays:  f[F_HOLIDAY_ALLOWANCE] != null ? f[F_HOLIDAY_ALLOWANCE] : null,
-    holidayApproverEmail:  f[F_HOLIDAY_APPROVER] || '',
-    whereaboutsApproverEmail: f[F_WHEREABOUTS_APPROVER] || ''
+    holidayApproverEmail:  f[F_HOLIDAY_APPROVER] || ''
   };
 }
 
@@ -1242,35 +1245,36 @@ app.get('/api/whereabouts-grid/user/:email', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/whereabouts-grid/team — the current week's grid for the caller's
-// actual Whereabouts team (supervisors/admins only). Powers the "My Team"
-// expand on the Home page Whereabouts card.
-//
-// Membership is driven entirely by F_WHEREABOUTS_APPROVER — a dedicated field
-// set per-person in User Management, independent of both Supervisor Email
-// (line-management/CPD "My Team") and Holiday Approver (leave-request
-// routing, which defaults almost everyone to Dan Maskell and was wrongly
-// merging Dan's and Pete's teams together when this route used it). There is
-// no fallback/default here on purpose — if it's blank, that person just
-// doesn't show under anyone's Whereabouts team until an admin sets it.
+// Whereabouts "My Team" is a self-managed watchlist — the viewer themselves
+// picks which colleagues appear in it (search + add/remove), stored as a
+// comma-separated list of emails on their own record (F_WHEREABOUTS_WATCHLIST).
+// It has nothing to do with Supervisor Email or Holiday Approver — those
+// earlier attempts kept conflating "who reports to me" / "whose holiday do I
+// approve" with "who do I personally want to see on this card", which is what
+// was actually being asked for.
+function whaParseWatchlist(raw) {
+  return (raw || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+}
+
+// GET /api/whereabouts-grid/team — the current week's grid for everyone on
+// the caller's own watchlist. Powers the "My Team" expand on the Home page
+// Whereabouts card. Available to any employed staff member (not just
+// supervisors/admins) since it's just a personal watchlist, not a real
+// management view.
 app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
   const user = req.session.user;
-  if (!user.isSupervisor && !user.isAdmin) return res.status(403).json({ error: 'Forbidden' });
+  if (!user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
   try {
-    const allRecords = [];
-    let offset = '';
-    do {
-      const qs = `?returnFieldsByFieldId=true&pageSize=50${offset ? '&offset=' + offset : ''}`;
-      const page = await atFetch(qs);
-      allRecords.push(...(page.records || []));
-      offset = page.offset || '';
-    } while (offset);
-
     const myEmail = (user.email || '').toLowerCase();
-    const members = allRecords
-      .filter(r => r.fields[F_EMPLOYED_ADVISER]) // only employed staff use Whereabouts
-      .filter(r => (r.fields[F_EMAIL] || '').toLowerCase() !== myEmail) // exclude self
-      .filter(r => (r.fields[F_WHEREABOUTS_APPROVER] || '').trim().toLowerCase() === myEmail)
+    const myData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${myEmail}"`)}&returnFieldsByFieldId=true&fields[]=${F_WHEREABOUTS_WATCHLIST}&maxRecords=1`);
+    const myRec = (myData.records || [])[0];
+    const watchEmails = whaParseWatchlist(myRec?.fields?.[F_WHEREABOUTS_WATCHLIST]);
+    if (!watchEmails.length) return res.json({ members: [] });
+
+    const emailFilter = watchEmails.map(e => `LOWER({${F_EMAIL}})="${e}"`).join(',');
+    const data = await atFetch(`?filterByFormula=${encodeURIComponent(`OR(${emailFilter})`)}&returnFieldsByFieldId=true&fields[]=${F_EMAIL}&fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMPLOYED_ADVISER}&pageSize=100`);
+    const members = (data.records || [])
+      .filter(r => r.fields[F_EMPLOYED_ADVISER])
       .map(r => ({
         email: (r.fields[F_EMAIL] || '').toLowerCase(),
         firstName: r.fields[F_FIRST] || '',
@@ -1294,6 +1298,59 @@ app.get('/api/whereabouts-grid/team', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('whereabouts-grid/team error:', err);
     res.status(500).json({ error: 'Failed to load team whereabouts.' });
+  }
+});
+
+// POST /api/whereabouts-grid/team/add — add a colleague's email to the
+// caller's own watchlist. { email }
+app.post('/api/whereabouts-grid/team/add', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  const addEmail = (req.body.email || '').trim().toLowerCase();
+  if (!addEmail) return res.status(400).json({ error: 'email required' });
+  try {
+    const myEmail = (user.email || '').toLowerCase();
+    const targetData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${addEmail}"`)}&returnFieldsByFieldId=true&fields[]=${F_EMPLOYED_ADVISER}&maxRecords=1`);
+    const targetRec = (targetData.records || [])[0];
+    if (!targetRec || !targetRec.fields[F_EMPLOYED_ADVISER]) return res.status(403).json({ error: 'That person is not on Whereabouts' });
+
+    const myData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${myEmail}"`)}&returnFieldsByFieldId=true&fields[]=${F_WHEREABOUTS_WATCHLIST}&maxRecords=1`);
+    const myRec = (myData.records || [])[0];
+    if (!myRec) return res.status(404).json({ error: 'Your user record could not be found' });
+    const current = whaParseWatchlist(myRec.fields?.[F_WHEREABOUTS_WATCHLIST]);
+    if (!current.includes(addEmail)) current.push(addEmail);
+    await atGenericFetch(AT_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: myRec.id, fields: { [F_WHEREABOUTS_WATCHLIST]: current.join(', ') } }] })
+    });
+    res.json({ watchlist: current });
+  } catch (err) {
+    console.error('whereabouts-grid/team/add error:', err);
+    res.status(500).json({ error: 'Failed to add to your team.' });
+  }
+});
+
+// POST /api/whereabouts-grid/team/remove — remove a colleague's email from
+// the caller's own watchlist. { email }
+app.post('/api/whereabouts-grid/team/remove', requireAuth, async (req, res) => {
+  const user = req.session.user;
+  if (!user.employedAdviser) return res.status(403).json({ error: 'Whereabouts is only available to employed staff' });
+  const removeEmail = (req.body.email || '').trim().toLowerCase();
+  if (!removeEmail) return res.status(400).json({ error: 'email required' });
+  try {
+    const myEmail = (user.email || '').toLowerCase();
+    const myData = await atFetch(`?filterByFormula=${encodeURIComponent(`LOWER({${F_EMAIL}})="${myEmail}"`)}&returnFieldsByFieldId=true&fields[]=${F_WHEREABOUTS_WATCHLIST}&maxRecords=1`);
+    const myRec = (myData.records || [])[0];
+    if (!myRec) return res.status(404).json({ error: 'Your user record could not be found' });
+    const current = whaParseWatchlist(myRec.fields?.[F_WHEREABOUTS_WATCHLIST]).filter(e => e !== removeEmail);
+    await atGenericFetch(AT_TABLE, '', {
+      method: 'PATCH',
+      body: JSON.stringify({ records: [{ id: myRec.id, fields: { [F_WHEREABOUTS_WATCHLIST]: current.join(', ') } }] })
+    });
+    res.json({ watchlist: current });
+  } catch (err) {
+    console.error('whereabouts-grid/team/remove error:', err);
+    res.status(500).json({ error: 'Failed to remove from your team.' });
   }
 });
 
@@ -4673,8 +4730,7 @@ app.post('/api/admin/users', requireAdminOrSupervisor, async (req, res) => {
       [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
       [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
       [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null,
-      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null,
-      [F_WHEREABOUTS_APPROVER]: req.body.whereaboutsApproverEmail || null
+      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
@@ -4849,8 +4905,7 @@ app.put('/api/admin/users/:id', requireAdminOrSupervisor, async (req, res) => {
       [F_EMPLOYED_ADVISER]:     req.body.employedAdviser === true || req.body.employedAdviser === 'true',
       [F_HOLIDAY_BOOKING_ENABLED]: req.body.holidayBookingEnabled === true || req.body.holidayBookingEnabled === 'true',
       [F_HOLIDAY_ALLOWANCE]:    (req.body.holidayAllowanceDays !== undefined && req.body.holidayAllowanceDays !== null && req.body.holidayAllowanceDays !== '') ? Number(req.body.holidayAllowanceDays) : null,
-      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null,
-      [F_WHEREABOUTS_APPROVER]: req.body.whereaboutsApproverEmail || null
+      [F_HOLIDAY_APPROVER]:     req.body.holidayApproverEmail || null
     };
     // Per-user top-nav tab Access — permanently recorded in Airtable so it
     // survives redeploys. Marks Access Configured so future reads use these
