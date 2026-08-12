@@ -212,6 +212,22 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.6</span>
+      <span class="version-title">Whereabouts Watchlist Rebuild, Meeting Planner Bank Holidays &amp; Email Kill Switch</span>
+      <span class="version-date">12 August 2026</span>
+    </div>
+    <p class="version-summary">Reworked "My Team" on Whereabouts into a self-managed watchlist instead of an auto-grouped list that had been mixing up different supervisors' teams, and gave the Meeting Planner a proper search-until date that always skips weekends and UK bank holidays. The Home holiday ticker now shows the real next working day someone's back, and outbound email now has a single Airtable-controlled kill switch admins can flip from User Management.</p>
+    <ul class="changes">
+      <li>Rebuilt "My Team" on the Whereabouts card as a self-managed watchlist &mdash; supervisors and admins search for and add/remove the colleagues they want to track, rather than the system guessing a team from Supervisor Email or Holiday Approver (which had been merging separate teams together). Added a dedicated Whereabouts Approver field, fully independent of those other two fields.</li>
+      <li>Meeting Planner now takes a "search until" date and always excludes weekends and UK bank holidays when finding a free slot, instead of an optional "include weekends" checkbox.</li>
+      <li>Home holiday ticker now shows the actual next working day someone returns, merging weekend-interrupted holiday bookings into one continuous block and only showing people currently on holiday (dropped upcoming entries).</li>
+      <li>Replaced scattered email on/off logic with a single global "Emails Enabled" kill switch, stored as an Airtable-backed feature flag with a visual toggle in User Management, covering all outbound mail from the site.</li>
+      <li>Added Contacts to the per-user Access panel toggles, removed the retired Performance Zone feature and its unused assets, fixed the trademark symbol rendering as a separated "TM" on the login/2FA/password pages, and restyled the Alex&#8482; welcome-tour modal with a navy header banner and larger label text.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v3.5</span>
       <span class="version-title">Alex&#8482; Energy-Orb Redesign, Compliance News &amp; Help Widget Improvements</span>
       <span class="version-date">11 August 2026</span>
