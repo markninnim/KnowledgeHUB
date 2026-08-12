@@ -9408,6 +9408,15 @@ app.put('/api/notifications/:id/read', requireAuth, async (req, res) => {
   }
 });
 
+// England & Wales bank holidays — used by Meeting Booker to keep it from
+// ever proposing a date nobody would actually be in the office for. Covers
+// the range this tool realistically searches within (up to 90 days ahead).
+const UK_BANK_HOLIDAYS = new Set([
+  '2025-01-01', '2025-04-18', '2025-04-21', '2025-05-05', '2025-05-26', '2025-08-25', '2025-12-25', '2025-12-26',
+  '2026-01-01', '2026-04-03', '2026-04-06', '2026-05-04', '2026-05-25', '2026-08-31', '2026-12-25', '2026-12-28',
+  '2027-01-01', '2027-03-26', '2027-03-29', '2027-05-03', '2027-05-31', '2027-08-30', '2027-12-27', '2027-12-28'
+]);
+
 // ── Meeting Booker (Dan Maskell only) ───────────────────────────
 app.get('/api/meeting-booker/attendees', requireAuth, async (req, res) => {
   const caller = req.session.user;
@@ -9439,6 +9448,8 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
   const attendees = Array.from(new Set((req.query.attendees || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)));
   if (!attendees.length) return res.status(400).json({ error: 'attendees required' });
   const fromDate = (req.query.from || '').trim() || new Date().toISOString().slice(0, 10);
+  const toDate = (req.query.to || '').trim() || null;
+  const includeWeekends = req.query.includeWeekends === 'true' || req.query.includeWeekends === '1';
 
   try {
     const all = await fetchAllHolidayRequests();
@@ -9454,8 +9465,10 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
     // Returns the attendee(s) whose booked/pending holiday rules out this date,
     // or null if the date is free — this is what drives the "why" explanation
     // shown next to the earliest date, so the reasoning is transparent rather
-    // than a black box.
+    // than a black box. A bank holiday blocks everyone, same as a shared
+    // holiday clash, since nobody would actually be in on that date.
     function blockers(dateStr) {
+      if (UK_BANK_HOLIDAYS.has(dateStr)) return ['Bank Holiday'];
       const hits = busyRanges.filter(b => dateStr >= b.start && dateStr <= b.end);
       if (!hits.length) return null;
       const names = Array.from(new Set(hits.map(b => nameByEmail[b.email] || b.email)));
@@ -9464,15 +9477,16 @@ app.get('/api/meeting-booker/availability', requireAuth, async (req, res) => {
 
     const results = [];
     const blockingNames = new Set();
-    let weekendCount = 0;
     let cursor = new Date(fromDate + 'T00:00:00Z');
     let guard = 0;
-    while (results.length < 6 && guard < 90) {
+    const maxGuard = toDate ? 400 : 90; // toDate can push the window out further than the default 90-day search
+    while (results.length < 6 && guard < maxGuard) {
       guard++;
       const dow = cursor.getUTCDay();
       const dStr = cursor.toISOString().slice(0, 10);
-      if (dow === 0 || dow === 6) {
-        if (!results.length) weekendCount++;
+      if (toDate && dStr > toDate) break;
+      if (!includeWeekends && (dow === 0 || dow === 6)) {
+        // weekends excluded from candidacy entirely, not counted as a blocker
       } else {
         const blocked = blockers(dStr);
         if (!blocked) {
