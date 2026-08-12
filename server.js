@@ -19,12 +19,15 @@ const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
 // ── Global email kill switch ─────────────────────────────────
-// Set to false to silently stop ALL outbound email from this app — every
-// _mailer.sendMail() call site, present and future, goes through this one
-// transporter, so this single flag is a guaranteed single point of control.
-// While off, sendMail resolves without sending anything (logged to console
-// instead) so calling code doesn't need its own on/off checks.
-const EMAILS_ENABLED = false;
+// Backed by the "Emails Enabled" row in the Feature Flags Airtable table
+// (see _features below) rather than a hardcoded const, so it can be flipped
+// live from the visual toggle in User Management (admin panel) without a
+// code deploy. emailsEnabled() is read at send-time by every
+// _mailer.sendMail() call site (present and future) via the wrapper below,
+// so this is a guaranteed single point of control. Defaults to false
+// (suppressed) until Feature Flags have loaded from Airtable and/or an
+// admin explicitly turns it on.
+function emailsEnabled() { return _features['Emails Enabled'] === true; }
 
 // ── Campaign Monitor SMTP transporter ────────────────────────
 // Set CM_API_KEY and CM_FROM_EMAIL in Railway environment variables
@@ -39,16 +42,14 @@ const _mailer = nodemailer.createTransport({
   greetingTimeout: 8000,
   socketTimeout: 8000
 });
-if (!EMAILS_ENABLED) {
-  const _realSendMail = _mailer.sendMail.bind(_mailer);
-  _mailer.sendMail = (opts) => {
-    console.log('[EMAILS_ENABLED=false] Suppressed email:', opts && opts.subject, '->', opts && opts.to);
+const _realSendMail = _mailer.sendMail.bind(_mailer);
+_mailer.sendMail = (opts) => {
+  if (!emailsEnabled()) {
+    console.log('[emails disabled] Suppressed email:', opts && opts.subject, '->', opts && opts.to);
     return Promise.resolve({ suppressed: true });
-  };
-  // Keep a reference in case anything needs to force a send later without
-  // flipping the global switch (not currently used anywhere).
-  _mailer._realSendMail = _realSendMail;
-}
+  }
+  return _realSendMail(opts);
+};
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -970,7 +971,12 @@ const FEATURES_DEFAULT = {
   Marketing: true, Compliance: true,
   Learn: true, Surveying: true, Lab: true, Earn: true,
   Numbers: true, Supervise: true,
-  Pay: true, 'AutoCRM™': true, 'ReEngage™': true, Muttuo: true, Whereabouts: true, 'Engage™': true
+  Pay: true, 'AutoCRM™': true, 'ReEngage™': true, Muttuo: true, Whereabouts: true, 'Engage™': true,
+  // Global email kill switch — NOT a nav-tab toggle (see FEATURE_TOGGLE_EXTRA_LABELS
+  // in index.html). Defaults off; an admin must explicitly enable it in
+  // User Management before any outbound email (password links, holiday
+  // notifications, compliance emails, etc.) will actually send.
+  'Emails Enabled': false
 };
 let _features = { ...FEATURES_DEFAULT };
 let _featureFlagRecordIds = {}; // key -> Airtable record id, so writes PATCH the right row
@@ -4234,12 +4240,12 @@ app.post('/login', async (req, res) => {
     if (!hash) {
       // No password has ever been set for this account (e.g. bulk-imported
       // user) — this isn't a wrong-password guess, so don't count it against
-      // the lockout. While EMAILS_ENABLED is off, sendPasswordLinkEmail's
+      // the lockout. While emails are disabled, sendPasswordLinkEmail's
       // underlying sendMail is silently suppressed, so calling it here is
       // harmless — but skip it outright to avoid the misleading 'setup=1'
       // ("we've emailed you") message when nothing was actually sent.
       auditLog('login_no_password', { email: emailLower }, req);
-      if (EMAILS_ENABLED && process.env.CM_API_KEY) {
+      if (emailsEnabled() && process.env.CM_API_KEY) {
         try {
           await sendPasswordLinkEmail(emailLower, record, 'setup');
           return res.redirect('/login?setup=1');
@@ -4321,7 +4327,7 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email required' });
-  if (!EMAILS_ENABLED) {
+  if (!emailsEnabled()) {
     return res.status(503).json({ error: 'Password reset emails are temporarily disabled. Contact Mark to reset your password from User Management instead.' });
   }
   if (!process.env.CM_API_KEY) {

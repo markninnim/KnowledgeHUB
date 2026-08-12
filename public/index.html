@@ -5911,6 +5911,22 @@ Consolidating debts will increase the loan to value which can impact future deal
       </div>
     </div>
 
+    <!-- Global email kill switch (admin only) -->
+    <div id="admin-emails-banner" style="display:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;border-bottom:1px solid #d1d5db;background:#fff8e6;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a4f00" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#7a4f00;">Outbound emails <span id="admin-emails-status">OFF</span></div>
+          <div style="font-size:12px;color:#8a6c2f;">Controls every email the app sends — password links, holiday notifications, compliance emails, everything.</div>
+        </div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;cursor:pointer;">
+        <input type="checkbox" id="admin-emails-toggle" onchange="onEmailsToggle(this)" style="opacity:0;width:0;height:0;position:absolute;">
+        <span id="admin-emails-slider" style="position:absolute;inset:0;border-radius:24px;background:#cbd5e1;transition:background .2s;"></span>
+        <span id="admin-emails-dot" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);"></span>
+      </label>
+    </div>
+
     <!-- User engagement (admin only) -->
     <div id="admin-engagement-panel" style="display:none;padding:20px 28px;border-bottom:1px solid #d1d5db;background:#f9fafc;">
       <div style="font-size:13px;font-weight:700;color:var(--brand-navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
@@ -11273,6 +11289,36 @@ function renderFeatureToggles() {
   }).join('');
 }
 
+// Global email kill switch — piggybacks on the same Feature Flags Airtable
+// row/endpoint as everything else in this file (key 'Emails Enabled'), but
+// gets its own dedicated, always-visible banner in User Management rather
+// than sitting inside the (currently unused/unwired) Feature Flags rollout
+// toggle list, since this is a safety control admins need to find fast.
+function renderEmailsToggle(enabled) {
+  var input  = document.getElementById('admin-emails-toggle');
+  var slider = document.getElementById('admin-emails-slider');
+  var dot    = document.getElementById('admin-emails-dot');
+  var status = document.getElementById('admin-emails-status');
+  if (input)  input.checked = enabled;
+  if (slider) slider.style.background = enabled ? '#2f9e44' : '#cbd5e1';
+  if (dot)    dot.style.left = enabled ? '23px' : '3px';
+  if (status) { status.textContent = enabled ? 'ON' : 'OFF'; status.style.color = enabled ? '#2f9e44' : '#c00'; }
+}
+function loadEmailsToggle() {
+  fetch('/api/admin/features').then(function(r){ return r.json(); }).then(function(f){
+    renderEmailsToggle(f['Emails Enabled'] === true);
+  }).catch(function(){});
+}
+function onEmailsToggle(input) {
+  var enabled = input.checked;
+  renderEmailsToggle(enabled);
+  fetch('/api/admin/features', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 'Emails Enabled': enabled })
+  }).catch(function(){});
+}
+
 function onFeatureToggle(input) {
   var key = input.dataset.feature;
   _features[key] = input.checked;
@@ -11336,6 +11382,12 @@ function openAdminPanel() {
   if (ep) {
     if (isAdminUser) { ep.style.display = 'block'; loadAdminEngagement(); }
     else ep.style.display = 'none';
+  }
+  // Global email kill switch — admin only
+  var eb = document.getElementById('admin-emails-banner');
+  if (eb) {
+    if (isAdminUser) { eb.style.display = 'flex'; loadEmailsToggle(); }
+    else eb.style.display = 'none';
   }
   // Modal title
   var title = m.querySelector('h2');
