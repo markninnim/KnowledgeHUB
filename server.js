@@ -233,7 +233,7 @@ const F_EMPLOYED_ADVISER   = 'fld5Al5NrBoToE3MF'; // Employed Adviser — true i
 const F_ACCESS_CONFIGURED  = 'fldH2y8RsOiO2aMhS'; // Access Configured — true once an admin has explicitly saved this user's Access toggles
 const NAV_TOGGLE_KEYS = [
   'marketing', 'compliance', 'learning', 'surveying', 'lab', 'sellingZone',
-  'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'performanceZone', 'supervisorZone'
+  'pay', 'autocrm', 'reEngage', 'engage', 'muttuo', 'whereabouts', 'supervisorZone'
 ];
 // Field IDs for each per-tab Access checkbox, keyed the same as NAV_TOGGLE_KEYS
 const F_ACCESS = {
@@ -249,7 +249,6 @@ const F_ACCESS = {
   engage:           'fldWAyCsuGjqwLbqZ',
   muttuo:           'fld43JfbHdXVVRICX',
   whereabouts:      'fld55LR2YmiAoar8I',
-  performanceZone:  'fldCXyV5roVcw8hQv',
   supervisorZone:   'fldA5LN46IfVgo00Q'
 };
 function computeNavDefaults(f) {
@@ -270,7 +269,6 @@ function computeNavDefaults(f) {
     engage:          true,
     muttuo:          isAdmin || business === 'fitch and fitch',
     whereabouts:     supervisorOrAdmin,
-    performanceZone: supervisorOrAdmin,
     supervisorZone:  supervisorOrAdmin
   };
 }
@@ -283,9 +281,6 @@ function computeNavAccess(f) {
   if (f[F_ACCESS_CONFIGURED]) {
     NAV_TOGGLE_KEYS.forEach(key => { result[key] = !!f[F_ACCESS[key]]; });
   }
-  // Numbers (performanceZone) is retired — hidden for everyone regardless of
-  // role defaults or any admin-configured Access toggle still set in Airtable.
-  result.performanceZone = false;
   return result;
 }
 
