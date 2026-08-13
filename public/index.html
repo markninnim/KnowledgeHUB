@@ -9837,6 +9837,8 @@ var WHA_STATUS_STYLE = {
   Office:  { bg: '#eaf3ff', color: 'var(--brand-navy)', label: 'Office' },
   Home:    { bg: '#eafaf0', color: '#1e7d43',           label: 'Home' },
   Out:     { bg: '#fff4e5', color: '#a15c00',           label: 'Out' },
+  Off:     { bg: '#f0f0f0', color: '#5a6169',           label: 'Off' },
+  'Out to External meeting': { bg: '#f3ecfd', color: '#6b2fb3', label: 'Ext. Meeting' },
   Holiday: { bg: '#fdeaea', color: '#b3261e',           label: 'Holiday' }
 };
 var _whaViewingEmail = null;
@@ -9863,7 +9865,7 @@ function whaRenderSkeleton() {
   el.innerHTML = WHA_DAY_ORDER.map(function(day) {
     function box(slot) {
       return '<select id="wha-box-' + day + '-' + slot + '" onchange="whaSetBox(\'' + day + '\',\'' + slot + '\',this.value)" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:6px 2px;text-align:center;font-size:11px;font-weight:700;font-family:inherit;color:var(--brand-navy);background:#f8fafc;cursor:pointer;">' +
-        '<option value="">—</option><option value="Office">Office</option><option value="Home">Home</option><option value="Out">Out</option>' +
+        '<option value="">—</option><option value="Office">Office</option><option value="Home">Home</option><option value="Out">Out</option><option value="Off">Off</option><option value="Out to External meeting">Out to External meeting</option>' +
         '</select>';
     }
     return '<div style="display:flex;flex-direction:column;gap:6px;">' +

@@ -881,7 +881,7 @@ const WHA_DAY_FIELDS = {
   Fri: { AM: 'fldWMzb4GRxg6MPL4', PM: 'fld7m3JKnC08s43u2' }
 };
 const WHA_DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-const WHA_VALUES = ['Office', 'Home', 'Out', 'Holiday'];
+const WHA_VALUES = ['Office', 'Home', 'Out', 'Off', 'Out to External meeting', 'Holiday'];
 
 // Monday-of-the-week (as YYYY-MM-DD) for a given ISO date string, or today.
 function whaWeekStart(dateStr) {
