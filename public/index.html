@@ -16263,14 +16263,20 @@ function loadNotificationBell() {
 // yet" — same definition the open-handlers already use for
 // alreadyCredited(), kept in sync deliberately so the dot and the CPD toast
 // never disagree about what counts as "read".
+var _lnCpdEntriesCache = null;
 function lnHasCpdEntry(title) {
-  return (_cpdAllEntries || []).some(function(e) { return e.source === 'Learning Zone' && e.activity === title; });
+  var entries = _cpdLoaded ? _cpdAllEntries : _lnCpdEntriesCache;
+  return (entries || []).some(function(e) { return e.source === 'Learning Zone' && e.activity === title; });
 }
 function refreshLearningUnreadDots() {
+  // NOTE: deliberately does NOT set _cpdLoaded/_cpdAllEntries — those are
+  // owned by loadCpd() and gate whether the Compliance tab's CPD UI has been
+  // rendered. Setting them here from a background call let this function
+  // mark CPD as "loaded" before the tab was ever rendered, leaving the
+  // Compliance tab stuck on "Loading..." until a full page refresh.
   var haveCpd = _cpdLoaded ? Promise.resolve() : new Promise(function(resolve) {
     fetch('/api/cpd').then(function(r){ return r.json(); }).then(function(data) {
-      _cpdAllEntries = data.entries || [];
-      _cpdLoaded = true;
+      _lnCpdEntriesCache = data.entries || [];
       resolve();
     }).catch(resolve);
   });
