@@ -19127,8 +19127,8 @@ function _periodTarget(annualTarget, period) {
 }
 
 function loadCpd() {
-  _cpdLoaded = true;
   fetch('/api/cpd').then(r => r.json()).then(function(data) {
+    _cpdLoaded = true;
     _cpdAllEntries = (data.entries || []).sort(function(a, b) {
       return (b.date || '').localeCompare(a.date || '');
     });
@@ -19140,7 +19140,8 @@ function loadCpd() {
     cpdCheckMissingLearned();
     if (typeof refreshLearningUnreadDots === 'function') refreshLearningUnreadDots();
   }).catch(function() {
-    document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log.</div>';
+    _cpdLoaded = false;
+    document.getElementById('cpd-entries').innerHTML = '<div style="padding:40px;text-align:center;color:#c00;font-size:13px;">Could not load CPD log. <a href="#" onclick="loadCpd();return false;" style="color:#0a3d62;text-decoration:underline;">Retry</a></div>';
   });
 }
 
