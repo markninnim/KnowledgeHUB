@@ -994,7 +994,13 @@ async function featureFlagsFetch(endpoint, options = {}) {
 
 async function loadFeatureFlagsFromAirtable() {
   try {
-    const data = await featureFlagsFetch('');
+    // Must pass returnFieldsByFieldId=true — without it Airtable returns
+    // fields keyed by NAME ("Key", "Enabled", "Label"), but the code below
+    // reads them by field ID (F_FF_KEY etc). Without this param every row's
+    // r.fields[F_FF_KEY] is undefined, so every record was silently skipped
+    // and the flags always fell back to FEATURES_DEFAULT regardless of what
+    // was actually set in Airtable.
+    const data = await featureFlagsFetch('?returnFieldsByFieldId=true');
     const loaded = { ...FEATURES_DEFAULT };
     const ids = {};
     const dupes = [];
