@@ -212,6 +212,21 @@
 
   <div class="version-card">
     <div class="version-head">
+      <span class="version-tag">v3.12</span>
+      <span class="version-title">Outbound Email Fixed: New Delivery Provider, Working Feature Flags &amp; Logo Fixes</span>
+      <span class="version-date">10 September 2026</span>
+    </div>
+    <p class="version-summary">Fixed outbound email, which had stopped working because Railway blocks the SMTP ports the site relied on &mdash; emails now send through Campaign Monitor's HTTP API instead. Also fixed the "Emails Enabled" feature flag (and feature flags generally) silently failing to load from Airtable, and made sure the KnowledgeHUB&#8482; logo displays correctly everywhere, including in emails.</p>
+    <ul class="changes">
+      <li>Switched outbound email from SMTP to Campaign Monitor's HTTP Transactional API, since Railway blocks the outbound SMTP ports the site previously used &mdash; this had been silently preventing password reset, 2FA and other system emails from sending.</li>
+      <li>Fixed feature flags (including the "Emails Enabled" kill switch) never loading correctly from Airtable: unchecked checkboxes were wrongly read as enabled, and a missing option meant every row was silently skipped.</li>
+      <li>Updated the password reset email's sender name and subject line to read KnowledgeHUB&#8482;.</li>
+      <li>Fixed the KnowledgeHUB logo across the site and in emails, and embedded the email logo directly in the message instead of loading it remotely, since mail clients were blocking the external image.</li>
+    </ul>
+  </div>
+
+  <div class="version-card">
+    <div class="version-head">
       <span class="version-tag">v3.11</span>
       <span class="version-title">September Monthly Newsletter Published</span>
       <span class="version-date">5 September 2026</span>
