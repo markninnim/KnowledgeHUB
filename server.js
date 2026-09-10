@@ -16,7 +16,6 @@ const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, appendBez
 const fontkit = require('@pdf-lib/fontkit');
 const QRCode    = require('qrcode');
 const speakeasy = require('speakeasy');
-const nodemailer = require('nodemailer');
 
 // ── Global email kill switch ─────────────────────────────────
 // Backed by the "Emails Enabled" row in the Feature Flags Airtable table
@@ -29,26 +28,58 @@ const nodemailer = require('nodemailer');
 // admin explicitly turns it on.
 function emailsEnabled() { return _features['Emails Enabled'] === true; }
 
-// ── Campaign Monitor SMTP transporter ────────────────────────
-// Set CM_API_KEY and CM_FROM_EMAIL in Railway environment variables
-const _mailer = nodemailer.createTransport({
-  host: 'smtp.api.createsend.com',
-  port: 587,
-  auth: {
-    user: process.env.CM_API_KEY || '',
-    pass: process.env.CM_API_KEY || ''
-  },
-  connectionTimeout: 8000, // ms — fail fast instead of hanging the request that awaits sendMail
-  greetingTimeout: 8000,
-  socketTimeout: 8000
-});
-const _realSendMail = _mailer.sendMail.bind(_mailer);
-_mailer.sendMail = (opts) => {
-  if (!emailsEnabled()) {
-    console.log('[emails disabled] Suppressed email:', opts && opts.subject, '->', opts && opts.to);
-    return Promise.resolve({ suppressed: true });
+// ── Campaign Monitor Transactional email, over HTTPS (not SMTP) ─────
+// Railway (like most PaaS hosts) blocks outbound SMTP ports (25/465/587) to
+// stop the platform being used for spam — this was confirmed live via an
+// ETIMEDOUT on the SMTP CONN step, not a credentials problem. Campaign
+// Monitor's "classic email" Transactional API sends over plain HTTPS
+// instead, using the same SMTP token as the API key (Basic auth, token as
+// username, any password). Set CM_API_KEY and CM_FROM_EMAIL in Railway env.
+// _mailer.sendMail(opts) keeps the same {from, to, subject, html,
+// attachments} shape as the old nodemailer-based call sites expected, so no
+// call site needed to change — only this transport underneath.
+const CM_SEND_URL = 'https://api.createsend.com/api/v3.2/transactional/classicEmail/send';
+
+function _cmAttachment(a) {
+  // Old nodemailer shape: {filename, content: Buffer, contentType}.
+  // Campaign Monitor shape: {Name, Content: base64 string, Type}.
+  const content = Buffer.isBuffer(a.content) ? a.content : Buffer.from(a.content);
+  return { Name: a.filename || 'attachment', Content: content.toString('base64'), Type: a.contentType || 'application/octet-stream' };
+}
+
+async function _realSendMail(opts) {
+  const body = {
+    From: opts.from,
+    To: Array.isArray(opts.to) ? opts.to : [opts.to],
+    Subject: opts.subject,
+    Html: opts.html,
+    ConsentToTrack: 'Unchanged'
+  };
+  if (opts.attachments && opts.attachments.length) {
+    body.Attachments = opts.attachments.map(_cmAttachment);
   }
-  return _realSendMail(opts);
+  const res = await fetch(CM_SEND_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${process.env.CM_API_KEY || ''}:x`).toString('base64'),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  const respBody = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(`Campaign Monitor send failed (${res.status}): ${respBody ? JSON.stringify(respBody) : res.statusText}`);
+  }
+  return respBody;
+}
+const _mailer = {
+  sendMail: (opts) => {
+    if (!emailsEnabled()) {
+      console.log('[emails disabled] Suppressed email:', opts && opts.subject, '->', opts && opts.to);
+      return Promise.resolve({ suppressed: true });
+    }
+    return _realSendMail(opts);
+  }
 };
 
 const app  = express();
