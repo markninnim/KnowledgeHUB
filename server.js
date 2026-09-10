@@ -4359,9 +4359,9 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
   const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
   const isSetup = mode === 'setup';
   await _mailer.sendMail({
-    from: `"Finance Planning Group" <${fromEmail}>`,
+    from: `"KnowledgeHUB™" <${fromEmail}>`,
     to: emailLower,
-    subject: isSetup ? 'Set up your FPG Knowledge Hub password' : 'Reset your FPG Knowledge Hub password',
+    subject: isSetup ? 'Set up your KnowledgeHUB™ password' : 'Reset your KnowledgeHUB™ password',
     html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
       <img src="${appUrl}/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
       <h2 style="color:#003768;margin:0 0 12px;">${isSetup ? 'Set up your password' : 'Password reset request'}</h2>
