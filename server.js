@@ -88,6 +88,26 @@ const _mailer = {
   }
 };
 
+// ── Email logo, inlined as base64 ────────────────────────────
+// Emails used to reference the logo via a remote <img src="{appUrl}/public-logo">
+// URL. The route itself worked fine (verified 200/image-png), but many mail
+// clients — especially Outlook/Exchange — block loading remote images by
+// default from domains their security filters haven't categorised yet,
+// which a brand-new temporary domain like knowledgehub.simflex.ai never
+// will be. That showed up as a broken-image placeholder. Embedding the
+// logo directly as a base64 data URI removes the external fetch entirely,
+// so nothing can block it. Uses a small (320px) version so the inline
+// data stays well under email clipping size limits (~16KB base64).
+const EMAIL_LOGO_DATA_URI = (() => {
+  try {
+    const p = path.join(__dirname, 'public/assets/logos/web/FPG-Logo-Email.png');
+    return 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
+  } catch (e) {
+    console.error('Failed to load email logo:', e.message);
+    return '';
+  }
+})();
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
@@ -4363,7 +4383,7 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
     to: emailLower,
     subject: isSetup ? 'Set up your KnowledgeHUB™ password' : 'Reset your KnowledgeHUB™ password',
     html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
-      <img src="${appUrl}/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
+      <img src="${EMAIL_LOGO_DATA_URI}" alt="FPG" style="height:48px;margin-bottom:24px;">
       <h2 style="color:#003768;margin:0 0 12px;">${isSetup ? 'Set up your password' : 'Password reset request'}</h2>
       <p style="color:#4a5a6a;line-height:1.6;">Hi ${name},<br><br>${isSetup
         ? 'Your KnowledgeHUB&trade; account is ready, but you haven’t set a password yet. Click the button below to choose one — this link is valid for <strong>1 hour</strong>.'
@@ -7545,7 +7565,7 @@ app.post('/api/share-social-post', requireAuth, async (req, res) => {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
         <tr><td style="background:#fff;padding:24px 32px;border-bottom:1px solid #e8ecf0;">
-          <img src="${appUrl}/public-logo" alt="FPG" style="height:36px;display:block;">
+          <img src="${EMAIL_LOGO_DATA_URI}" alt="FPG" style="height:36px;display:block;">
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="margin:0 0 8px;font-size:13px;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;font-weight:700;">SOCIAL POST</p>
@@ -10791,7 +10811,7 @@ app.post('/api/share/standards', requireAuth, async (req, res) => {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a2a3a;">
       <div style="background:#fff;padding:20px 28px;border-radius:8px 8px 0 0;border-bottom:1px solid #e8ecf0;">
-        <img src="${appUrl}/public-logo" alt="FPG" style="height:32px;margin-bottom:10px;">
+        <img src="${EMAIL_LOGO_DATA_URI}" alt="FPG" style="height:32px;margin-bottom:10px;">
         <p style="margin:0;font-size:13px;color:#6b7c8f;">Advice Standards</p>
       </div>
       <div style="padding:24px 28px;background:#fff;border:1px solid #e8ecf0;border-top:none;">
