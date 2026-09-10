@@ -38,7 +38,13 @@ function emailsEnabled() { return _features['Emails Enabled'] === true; }
 // _mailer.sendMail(opts) keeps the same {from, to, subject, html,
 // attachments} shape as the old nodemailer-based call sites expected, so no
 // call site needed to change — only this transport underneath.
-const CM_SEND_URL = 'https://api.createsend.com/api/v3.2/transactional/classicEmail/send';
+// This Campaign Monitor account is set up in agency mode, so an
+// account-level API key (what we're using) must specify which Client to
+// send under via ?clientID= — confirmed via GET /api/v3.3/clients.json,
+// which returned a single client "Finance Planning Group". Override with
+// CM_CLIENT_ID in Railway env if this ever changes.
+const CM_CLIENT_ID = process.env.CM_CLIENT_ID || '6d1d48d56d90dc9ba7fcad7bef36c7ca';
+const CM_SEND_URL = `https://api.createsend.com/api/v3.2/transactional/classicEmail/send?clientID=${CM_CLIENT_ID}`;
 
 function _cmAttachment(a) {
   // Old nodemailer shape: {filename, content: Buffer, contentType}.
