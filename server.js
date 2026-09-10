@@ -32,7 +32,7 @@ function emailsEnabled() { return _features['Emails Enabled'] === true; }
 // ── Campaign Monitor SMTP transporter ────────────────────────
 // Set CM_API_KEY and CM_FROM_EMAIL in Railway environment variables
 const _mailer = nodemailer.createTransport({
-  host: 'smtp.createsend.com',
+  host: 'smtp.api.createsend.com',
   port: 587,
   auth: {
     user: process.env.CM_API_KEY || '',
@@ -1006,7 +1006,15 @@ async function loadFeatureFlagsFromAirtable() {
       const key = r.fields[F_FF_KEY];
       if (!key) return;
       if (ids[key]) { dupes.push(r.id); return; }
-      loaded[key] = r.fields[F_FF_ENABLED] !== false;
+      // Airtable's API omits checkbox fields entirely from a record when they
+      // are unchecked, so a bare `!== false` check can never see an "off"
+      // value — it always reads as enabled, even for flags (like Emails
+      // Enabled) that must default off. Fix: only trust the field when
+      // Airtable actually returned it (which only happens when true);
+      // otherwise fall back to this key's own FEATURES_DEFAULT rather than
+      // blanket-assuming true, so default-off flags stay off and existing
+      // default-on flags keep their prior behaviour unchanged.
+      loaded[key] = (F_FF_ENABLED in r.fields) || (FEATURES_DEFAULT[key] === true);
       ids[key] = r.id;
     });
     _features = loaded;
@@ -4303,7 +4311,8 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
   const user = recordToUser(record);
   const token = await createResetToken(emailLower, record.id);
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
-  const resetUrl = (process.env.APP_URL || 'https://dam.simflex.ai') + '/reset-password?token=' + token;
+  const appUrl = process.env.APP_URL || 'https://knowledgehub.simflex.ai';
+  const resetUrl = appUrl + '/reset-password?token=' + token;
   const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
   const isSetup = mode === 'setup';
   await _mailer.sendMail({
@@ -4311,7 +4320,7 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
     to: emailLower,
     subject: isSetup ? 'Set up your FPG Knowledge Hub password' : 'Reset your FPG Knowledge Hub password',
     html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
-      <img src="https://dam.simflex.ai/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
+      <img src="${appUrl}/public-logo" alt="FPG" style="height:48px;margin-bottom:24px;">
       <h2 style="color:#003768;margin:0 0 12px;">${isSetup ? 'Set up your password' : 'Password reset request'}</h2>
       <p style="color:#4a5a6a;line-height:1.6;">Hi ${name},<br><br>${isSetup
         ? 'Your KnowledgeHUB&trade; account is ready, but you haven’t set a password yet. Click the button below to choose one — this link is valid for <strong>1 hour</strong>.'
@@ -4319,7 +4328,7 @@ async function sendPasswordLinkEmail(emailLower, record, mode) {
       <a href="${resetUrl}" style="display:inline-block;margin:20px 0;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">${isSetup ? 'Set Password' : 'Reset Password'}</a>
       <p style="color:#6b7c8f;font-size:13px;">${isSetup ? 'If this wasn’t you, you can safely ignore this email.' : 'If you didn’t request this, you can safely ignore this email. Your password will not change.'}</p>
       <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
-      <p style="color:#6b7c8f;font-size:12px;">Finance Planning Group · FPG Knowledge Hub</p>
+      <p style="color:#6b7c8f;font-size:12px;">KnowledgeHUB&trade;</p>
     </div>`
   });
 }
@@ -7471,6 +7480,7 @@ app.post('/api/share-social-post', requireAuth, async (req, res) => {
   const sender = req.session.user;
   const fromName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || 'Finance Planning Group';
   const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
+  const appUrl = process.env.APP_URL || 'https://knowledgehub.simflex.ai';
 
   // Build attachments from images array [{filename, dataUrl}]
   const attachments = (images || []).map(function(img) {
@@ -7491,8 +7501,8 @@ app.post('/api/share-social-post', requireAuth, async (req, res) => {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 16px;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-        <tr><td style="background:#003768;padding:24px 32px;">
-          <p style="margin:0;color:#fff;font-size:20px;font-weight:700;">Finance Planning Group</p>
+        <tr><td style="background:#fff;padding:24px 32px;border-bottom:1px solid #e8ecf0;">
+          <img src="${appUrl}/public-logo" alt="FPG" style="height:36px;display:block;">
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="margin:0 0 8px;font-size:13px;color:#6b7c8f;text-transform:uppercase;letter-spacing:.5px;font-weight:700;">SOCIAL POST</p>
@@ -7504,7 +7514,7 @@ app.post('/api/share-social-post', requireAuth, async (req, res) => {
           <p style="margin:24px 0 0;font-size:13px;color:#6b7c8f;">Shared by <strong>${fromName}</strong></p>
         </td></tr>
         <tr><td style="background:#f9fafc;padding:16px 32px;border-top:1px solid #e8ecf0;">
-          <p style="margin:0;font-size:11px;color:#9ca8b4;">Finance Planning Group Ltd &mdash; financeplanning.co.uk</p>
+          <p style="margin:0;font-size:11px;color:#9ca8b4;">KnowledgeHUB&trade;</p>
         </td></tr>
       </table>
     </td></tr>
@@ -10732,14 +10742,14 @@ app.post('/api/share/standards', requireAuth, async (req, res) => {
 
   const sender = req.session.user;
   const senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || sender.email;
-  const appUrl = process.env.APP_URL || 'https://your-app.railway.app';
+  const appUrl = process.env.APP_URL || 'https://knowledgehub.simflex.ai';
   const linkUrl = appUrl + (deepLink || '');
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a2a3a;">
-      <div style="background:#003768;padding:20px 28px;border-radius:8px 8px 0 0;">
-        <h1 style="margin:0;font-size:20px;color:#fff;font-weight:700;">Finance Planning Group</h1>
-        <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.7);">Advice Standards</p>
+      <div style="background:#fff;padding:20px 28px;border-radius:8px 8px 0 0;border-bottom:1px solid #e8ecf0;">
+        <img src="${appUrl}/public-logo" alt="FPG" style="height:32px;margin-bottom:10px;">
+        <p style="margin:0;font-size:13px;color:#6b7c8f;">Advice Standards</p>
       </div>
       <div style="padding:24px 28px;background:#fff;border:1px solid #e8ecf0;border-top:none;">
         <p style="margin:0 0 16px;font-size:14px;color:#2c3e50;">
@@ -10751,10 +10761,10 @@ app.post('/api/share/standards', requireAuth, async (req, res) => {
         <div style="font-size:13px;color:#2c3e50;line-height:1.7;margin-bottom:24px;">
           ${bodyHtml || ''}
         </div>
-        <a href="${linkUrl}" style="display:inline-block;background:#003768;color:#fff;text-decoration:none;padding:11px 22px;border-radius:7px;font-size:14px;font-weight:600;">Open in FPG Hub →</a>
+        <a href="${linkUrl}" style="display:inline-block;background:#003768;color:#fff;text-decoration:none;padding:11px 22px;border-radius:7px;font-size:14px;font-weight:600;">Open in KnowledgeHUB&trade; →</a>
       </div>
       <div style="padding:14px 28px;background:#f5f7fa;border:1px solid #e8ecf0;border-top:none;border-radius:0 0 8px 8px;font-size:11px;color:#9baabb;">
-        Sent by ${senderName} via FPG Digital Hub
+        Sent by ${senderName} via KnowledgeHUB&trade;
       </div>
     </div>`;
 
@@ -10762,7 +10772,7 @@ app.post('/api/share/standards', requireAuth, async (req, res) => {
     const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@knowledgehub.website';
     await Promise.all(recipients.map(email =>
       _mailer.sendMail({
-        from: `"${senderName} via FPG Hub" <${fromEmail}>`,
+        from: `"${senderName} via KnowledgeHUB" <${fromEmail}>`,
         to: email,
         subject: `${senderName} shared: ${sectionTitle} – ${docTitle}`,
         html,
