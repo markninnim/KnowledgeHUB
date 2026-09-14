@@ -8554,11 +8554,14 @@ function tmOpenModal(taskId, presetArea) {
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Duration</label>' +
         '<input type="text" id="tm-f-duration" value="' + (task ? tmEsc(task.duration) : '') + '" placeholder="e.g. 1 hr" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
       '</div>' +
-      '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
-        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Subtasks done</label>' +
-        '<input type="number" min="0" id="tm-f-sub-done" value="' + (task ? task.subtasksDone : 0) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
-        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Subtasks total</label>' +
-        '<input type="number" min="0" id="tm-f-sub-total" value="' + (task ? task.subtasksTotal : 0) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Subtasks</label>' +
+      '<div id="tm-f-subtasks-wrap" style="background:#f9fafc;border:1px solid #d1d5db;border-radius:8px;padding:12px;margin-bottom:12px;">' +
+        '<div id="tm-f-subtasks-progress" style="margin-bottom:10px;"></div>' +
+        '<div id="tm-f-subtasks-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<input type="text" id="tm-f-subtask-input" placeholder="Add a subtask…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tmModalAddSubtask();}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+          '<button type="button" onclick="tmModalAddSubtask()" style="background:#003768;border:1px solid transparent;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Add</button>' +
+        '</div>' +
       '</div>' +
       '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Due date</label>' +
@@ -8580,27 +8583,74 @@ function tmOpenModal(taskId, presetArea) {
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
+  // Subtasks are edited as an in-memory list scoped to this modal session —
+  // ticking/adding/removing just re-renders locally; the whole list is sent
+  // to the server together with the rest of the form on Save.
+  _tmModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(function(s) { return { text: s.text, done: s.done }; });
+  tmModalRenderSubtasks();
 }
 
 function tmCloseModal() {
   var overlay = document.getElementById('tm-modal-overlay');
   if (overlay) overlay.remove();
+  _tmModalSubtasks = [];
+}
+
+var _tmModalSubtasks = [];
+
+function tmModalRenderSubtasks() {
+  var listEl = document.getElementById('tm-f-subtasks-list');
+  var progEl = document.getElementById('tm-f-subtasks-progress');
+  if (!listEl || !progEl) return;
+  var done = _tmModalSubtasks.filter(function(s) { return s.done; }).length;
+  var total = _tmModalSubtasks.length;
+  var pct = total ? Math.round((done / total) * 100) : 0;
+  progEl.innerHTML = total ?
+    '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#6b7c8f;margin-bottom:4px;"><span>Progress</span><span style="color:#003768;font-weight:700;">' + done + '/' + total + ' done</span></div>' +
+    '<div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:#2e99d5;"></div></div>'
+    : '<div style="font-size:12.5px;color:#6b7c8f;">No subtasks yet.</div>';
+  listEl.innerHTML = _tmModalSubtasks.map(function(s, i) {
+    return '' +
+      '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+        '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmModalToggleSubtask(' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;">' +
+        '<span style="flex:1;font-size:13px;' + (s.done ? 'color:#6b7c8f;text-decoration:line-through;' : 'color:#003768;') + '">' + tmEsc(s.text) + '</span>' +
+        '<button type="button" onclick="tmModalRemoveSubtask(' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+      '</div>';
+  }).join('');
+}
+
+function tmModalAddSubtask() {
+  var input = document.getElementById('tm-f-subtask-input');
+  var text = (input && input.value || '').trim();
+  if (!text) return;
+  _tmModalSubtasks.push({ text: text, done: false });
+  if (input) input.value = '';
+  tmModalRenderSubtasks();
+  if (input) input.focus();
+}
+
+function tmModalToggleSubtask(i) {
+  if (!_tmModalSubtasks[i]) return;
+  _tmModalSubtasks[i].done = !_tmModalSubtasks[i].done;
+  tmModalRenderSubtasks();
+}
+
+function tmModalRemoveSubtask(i) {
+  _tmModalSubtasks.splice(i, 1);
+  tmModalRenderSubtasks();
 }
 
 function tmSaveTask(taskId) {
   var title = (document.getElementById('tm-f-title') || {}).value || '';
   if (!title.trim()) { alert('Title is required.'); return; }
   var priorityVal = (document.getElementById('tm-f-priority') || {}).value;
-  var subDoneVal = (document.getElementById('tm-f-sub-done') || {}).value;
-  var subTotalVal = (document.getElementById('tm-f-sub-total') || {}).value;
   var payload = {
     title: title.trim(),
     area: (document.getElementById('tm-f-area') || {}).value,
     type: (document.getElementById('tm-f-type') || {}).value,
     duration: (document.getElementById('tm-f-duration') || {}).value,
     priority: priorityVal !== '' ? parseInt(priorityVal, 10) : undefined,
-    subtasksDone: subDoneVal !== '' ? parseInt(subDoneVal, 10) : undefined,
-    subtasksTotal: subTotalVal !== '' ? parseInt(subTotalVal, 10) : undefined,
+    subtasks: _tmModalSubtasks,
     dueDate: (document.getElementById('tm-f-due') || {}).value,
     notes: (document.getElementById('tm-f-notes') || {}).value,
     status: (document.getElementById('tm-f-status') || {}).value

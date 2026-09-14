@@ -6004,7 +6004,20 @@ const TM_DUE      = 'fldCtuupDin4CEFP6';
 const TM_NOTES    = 'fldjLeEIAXCAasRHU';
 const TM_ADDED    = 'fld4gk31JmFdzQZng';
 const TM_STATUS   = 'fldmMMp1xKlEXME4g';
+const TM_SUBTASKS = 'flduPrEauGepX18Cj'; // JSON array of { text, done } — the actual checklist items
 const TM_AREAS = ['General Marketing', 'Brand Strategy', 'Recruitment', 'Recruitment Prospects', 'Retention Strategies', 'LeadGEN', 'Tech/Compliance', 'Data'];
+
+// Parses the Subtasks JSON field defensively (blank/malformed -> []).
+function tmParseSubtasks(raw) {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.map(s => ({ text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) }));
+  } catch (e) {
+    return [];
+  }
+}
 
 async function tmFetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${TM_TABLE}${endpoint}`;
@@ -6019,6 +6032,12 @@ async function tmFetch(endpoint, options = {}) {
 
 function tmRecordToTask(record) {
   const f = record.fields;
+  const subtasks = tmParseSubtasks(f[TM_SUBTASKS]);
+  // subtasksDone/subtasksTotal are derived from the checklist whenever it has
+  // items, so the progress bar can never drift out of sync with the list.
+  // Falls back to the plain numeric fields for the 108 migrated tasks that
+  // only ever had a done/total count, never a named checklist.
+  const hasList = subtasks.length > 0;
   return {
     id:            record.id,
     title:         f[TM_TITLE]    || '',
@@ -6026,8 +6045,9 @@ function tmRecordToTask(record) {
     type:          f[TM_TYPE]     || 'One-off',
     duration:      f[TM_DURATION] || '',
     priority:      typeof f[TM_PRIORITY] === 'number' ? f[TM_PRIORITY] : null,
-    subtasksDone:  typeof f[TM_SUB_DONE] === 'number' ? f[TM_SUB_DONE] : 0,
-    subtasksTotal: typeof f[TM_SUB_TOT] === 'number' ? f[TM_SUB_TOT] : 0,
+    subtasks:      subtasks,
+    subtasksDone:  hasList ? subtasks.filter(s => s.done).length : (typeof f[TM_SUB_DONE] === 'number' ? f[TM_SUB_DONE] : 0),
+    subtasksTotal: hasList ? subtasks.length : (typeof f[TM_SUB_TOT] === 'number' ? f[TM_SUB_TOT] : 0),
     dueDate:       f[TM_DUE]      || '',
     notes:         f[TM_NOTES]    || '',
     added:         f[TM_ADDED]    || record.createdTime.slice(0, 10),
@@ -6053,9 +6073,17 @@ app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, 
   }
 });
 
+// Sanitises a subtasks array from the client into { text, done } pairs
+// ready to store as JSON — drops anything malformed rather than erroring,
+// and caps length/count so a stray paste can't blow up the field.
+function tmSanitizeSubtasks(arr) {
+  if (!Array.isArray(arr)) return null;
+  return arr.slice(0, 100).map(s => ({ text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) })).filter(s => s.text);
+}
+
 // POST /api/task-manager — create task
 app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
-  const { title, area, type, duration, priority, subtasksTotal, dueDate, notes, status } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksTotal, dueDate, notes, status } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
     const fields = {
@@ -6069,7 +6097,12 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
     };
     if (duration) fields[TM_DURATION] = duration;
     if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
-    if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
+    const cleanSubtasks = tmSanitizeSubtasks(subtasks);
+    if (cleanSubtasks && cleanSubtasks.length) {
+      fields[TM_SUBTASKS] = JSON.stringify(cleanSubtasks);
+    } else if (typeof subtasksTotal === 'number') {
+      fields[TM_SUB_TOT] = subtasksTotal;
+    }
     if (dueDate) fields[TM_DUE] = dueDate;
     if (notes) fields[TM_NOTES] = notes;
     const data = await tmFetch('', {
@@ -6087,7 +6120,7 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
 
 // PATCH /api/task-manager/:id — edit task (partial update; also used for subtask progress + status toggles)
 app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
-  const { title, area, type, duration, priority, subtasksDone, subtasksTotal, dueDate, notes, status } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, dueDate, notes, status } = req.body;
   try {
     const fields = {};
     if (title !== undefined) fields[TM_TITLE] = title;
@@ -6095,8 +6128,16 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
     if (type !== undefined) fields[TM_TYPE] = type;
     if (duration !== undefined) fields[TM_DURATION] = duration;
     if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
-    if (typeof subtasksDone === 'number') fields[TM_SUB_DONE] = subtasksDone;
-    if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
+    if (subtasks !== undefined) {
+      // Whole-checklist replace — the client always sends the full current
+      // list (add/remove/tick all mutate it locally first), so this is a
+      // plain overwrite, not a merge.
+      const cleanSubtasks = tmSanitizeSubtasks(subtasks) || [];
+      fields[TM_SUBTASKS] = JSON.stringify(cleanSubtasks);
+    } else {
+      if (typeof subtasksDone === 'number') fields[TM_SUB_DONE] = subtasksDone;
+      if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
+    }
     if (dueDate !== undefined) fields[TM_DUE] = dueDate;
     if (notes !== undefined) fields[TM_NOTES] = notes;
     if (status !== undefined) fields[TM_STATUS] = status;
