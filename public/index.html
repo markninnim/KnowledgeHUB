@@ -5159,18 +5159,39 @@ Consolidating debts will increase the loan to value which can impact future deal
             <p style="color:#6b7c8f;font-size:13px;margin:0;line-height:1.6;">Migrated from the FPG Task Manager (tasks.readdy.co) — internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.</p>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button id="tm-select-btn" onclick="tmToggleSelectMode()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Select</button>
             <button onclick="tmOpenSectionModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Section</button>
             <button onclick="tmOpenModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
           </div>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <div id="tm-quick-filters" style="display:flex;gap:8px;margin-bottom:12px;"></div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
           <input type="text" id="tm-search" oninput="tmRender()" placeholder="Search tasks…" style="flex:1;min-width:200px;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#003768;">
           <select id="tm-status-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="">All statuses</option>
             <option value="Active">Active</option>
             <option value="Done">Done</option>
           </select>
+          <select id="tm-sponsor-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
+            <option value="">All sponsors</option>
+          </select>
+          <select id="tm-sort" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
+            <option value="priority">Sort: Priority</option>
+            <option value="due">Sort: Due date</option>
+            <option value="sponsor">Sort: Sponsor</option>
+            <option value="title">Sort: Title</option>
+          </select>
+        </div>
+
+        <div id="tm-bulk-bar" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;background:#f0f6fc;border:1px solid #bcd9f0;border-radius:8px;padding:10px 14px;margin-bottom:16px;">
+          <span id="tm-bulk-count" style="font-size:13px;font-weight:700;color:#003768;"></span>
+          <button onclick="tmBulkMarkStatus('Done')" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Mark Done</button>
+          <button onclick="tmBulkMarkStatus('Active')" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Mark Active</button>
+          <select id="tm-bulk-section" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12.5px;font-family:inherit;color:#6b7c8f;background:#fff;"></select>
+          <button onclick="tmBulkMoveSection()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Move</button>
+          <button onclick="tmClearSelection()" style="background:transparent;border:none;color:#6b7c8f;padding:6px 4px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;margin-left:auto;">Clear selection</button>
         </div>
 
         <div id="tm-list" style="display:flex;flex-direction:column;gap:22px;"></div>
@@ -8361,6 +8382,9 @@ var _tmSections = [];    // live section list shown on the page — starts as _t
                           // any area already used by a task plus any sections added this session
 var _tmCollapsed = {};   // { sectionName: true } for collapsed sections
 var _tmSponsors = [];    // { name, email }[] — every registered user, for the Sponsor dropdown
+var _tmQuickFilter = null;  // 'overdue' | 'mine' | null
+var _tmSelectMode = false;
+var _tmSelected = {};    // { taskId: true } — only meaningful while _tmSelectMode is on
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
@@ -8369,6 +8393,12 @@ function loadTaskManager() {
     _tmAreas = d.areas || [];
     _tmSponsors = d.sponsors || [];
     tmRebuildSections();
+    var sponsorSel = document.getElementById('tm-sponsor-filter');
+    if (sponsorSel) {
+      sponsorSel.innerHTML = '<option value="">All sponsors</option>' + _tmSponsors.map(function(u) {
+        return '<option value="' + tmEsc(u.email) + '">' + tmEsc(u.name) + '</option>';
+      }).join('');
+    }
     tmRender();
   }).catch(function() {
     var el = document.getElementById('tm-list');
@@ -8378,7 +8408,9 @@ function loadTaskManager() {
 
 // Sections shown on the page = the fixed starting areas, plus any area a
 // task actually uses that isn't already in the list (keeps things in sync
-// if a task gets moved to a brand-new section from another browser tab).
+// if a task gets moved to a brand-new section from another browser tab),
+// then reordered to match whatever order was last saved (+ Move Up/Down)
+// in this browser — section order isn't stored in Airtable, just locally.
 function tmRebuildSections() {
   var seen = {};
   var next = [];
@@ -8388,7 +8420,38 @@ function tmRebuildSections() {
   _tmTasks.forEach(function(t) {
     if (t.area && !seen[t.area]) { seen[t.area] = true; next.push(t.area); }
   });
+  var saved = tmLoadSectionOrder();
+  if (saved.length) {
+    var savedSet = {};
+    var ordered = saved.filter(function(s) { return seen[s]; });
+    ordered.forEach(function(s) { savedSet[s] = true; });
+    next.forEach(function(s) { if (!savedSet[s]) ordered.push(s); });
+    next = ordered;
+  }
   _tmSections = next;
+}
+
+function tmLoadSectionOrder() {
+  try {
+    var raw = localStorage.getItem('tm-section-order');
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function tmSaveSectionOrder() {
+  try { localStorage.setItem('tm-section-order', JSON.stringify(_tmSections)); } catch (e) {}
+}
+
+function tmMoveSection(section, dir) {
+  var i = _tmSections.indexOf(section);
+  var j = i + dir;
+  if (i === -1 || j < 0 || j >= _tmSections.length) return;
+  var tmp = _tmSections[i];
+  _tmSections[i] = _tmSections[j];
+  _tmSections[j] = tmp;
+  tmSaveSectionOrder();
+  tmRender();
 }
 
 function tmEsc(s) {
@@ -8474,10 +8537,14 @@ function tmTaskCard(t) {
   var overdue = t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString());
   var expanded = !!_tmExpanded[t.id];
   var idArg = tmIdArg(t.id);
+  var selected = !!_tmSelected[t.id];
+  var headerClick = _tmSelectMode ? ('tmToggleSelect(' + idArg + ')') : ('tmToggleExpand(' + idArg + ')');
   return '' +
-    '<div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">' +
-      '<div onclick="tmToggleExpand(' + idArg + ')" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
-        '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">' +
+    '<div style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';border-radius:8px;overflow:hidden;">' +
+      '<div onclick="' + headerClick + '" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
+        (_tmSelectMode ?
+          '<input type="checkbox"' + (selected ? ' checked' : '') + ' onclick="event.stopPropagation();tmToggleSelect(' + idArg + ')" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">'
+          : '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">') +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transform:rotate(' + (expanded ? '0deg' : '-90deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
@@ -8591,6 +8658,90 @@ function tmInlineAddSubtask(taskId) {
   tmPersistSubtasks(taskId, next);
 }
 
+function tmIsOverdue(t) {
+  return !!(t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString()));
+}
+
+// Quick-filter chips (Overdue / My Tasks) — counts always reflect the whole
+// dataset, not whatever's currently filtered, so the chips stay stable.
+function tmRenderQuickFilters() {
+  var el = document.getElementById('tm-quick-filters');
+  if (!el || !_tmTasks) return;
+  var myEmail = (_currentUser && _currentUser.email || '').toLowerCase();
+  var overdueCount = _tmTasks.filter(tmIsOverdue).length;
+  var mineCount = myEmail ? _tmTasks.filter(function(t) { return t.sponsorEmail === myEmail; }).length : 0;
+  function chip(key, label, count, active) {
+    return '<button onclick="tmSetQuickFilter(' + tmIdArg(key) + ')" style="background:' + (active ? '#003768' : 'transparent') + ';color:' + (active ? '#fff' : '#6b7c8f') + ';border:1px solid ' + (active ? '#003768' : '#d1d5db') + ';padding:6px 13px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">' + label + ' (' + count + ')</button>';
+  }
+  var chips = [chip('overdue', 'Overdue', overdueCount, _tmQuickFilter === 'overdue')];
+  if (myEmail) chips.push(chip('mine', 'My Tasks', mineCount, _tmQuickFilter === 'mine'));
+  el.innerHTML = chips.join('');
+}
+
+function tmSetQuickFilter(key) {
+  _tmQuickFilter = (_tmQuickFilter === key) ? null : key;
+  tmRender();
+}
+
+function tmToggleSelectMode() {
+  _tmSelectMode = !_tmSelectMode;
+  _tmSelected = {};
+  var btn = document.getElementById('tm-select-btn');
+  if (btn) {
+    btn.textContent = _tmSelectMode ? 'Cancel' : 'Select';
+    btn.style.background = _tmSelectMode ? '#003768' : 'transparent';
+    btn.style.color = _tmSelectMode ? '#fff' : '#6b7c8f';
+  }
+  tmRender();
+}
+
+function tmToggleSelect(taskId) {
+  if (_tmSelected[taskId]) delete _tmSelected[taskId]; else _tmSelected[taskId] = true;
+  tmRender();
+}
+
+function tmClearSelection() {
+  _tmSelected = {};
+  tmRender();
+}
+
+function tmBulkMarkStatus(status) {
+  var ids = Object.keys(_tmSelected);
+  if (!ids.length) return;
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/task-manager/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: status }) }).then(function(r) { return r.json(); });
+  })).then(function(results) {
+    results.forEach(function(saved) {
+      if (saved && !saved.error) {
+        var idx = _tmTasks.findIndex(function(t) { return t.id === saved.id; });
+        if (idx !== -1) _tmTasks[idx] = saved;
+      }
+    });
+    _tmSelected = {};
+    tmRender();
+  }).catch(function() { alert('Could not update some tasks.'); });
+}
+
+function tmBulkMoveSection() {
+  var ids = Object.keys(_tmSelected);
+  if (!ids.length) return;
+  var target = (document.getElementById('tm-bulk-section') || {}).value;
+  if (!target) return;
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/task-manager/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ area: target }) }).then(function(r) { return r.json(); });
+  })).then(function(results) {
+    results.forEach(function(saved) {
+      if (saved && !saved.error) {
+        var idx = _tmTasks.findIndex(function(t) { return t.id === saved.id; });
+        if (idx !== -1) _tmTasks[idx] = saved;
+      }
+    });
+    _tmSelected = {};
+    tmRebuildSections();
+    tmRender();
+  }).catch(function() { alert('Could not move some tasks.'); });
+}
+
 // Renders the page as one collapsible section per area, each holding its
 // own filtered task cards — replaces the old single flat list + area
 // dropdown so sections are always visible and directly manageable.
@@ -8598,18 +8749,42 @@ function tmRender() {
   var listEl = document.getElementById('tm-list');
   if (!listEl || !_tmTasks) return;
 
+  tmRenderQuickFilters();
+
   var q = (document.getElementById('tm-search') || {}).value || '';
   q = q.trim().toLowerCase();
   var statusFilter = (document.getElementById('tm-status-filter') || {}).value || '';
-  var filtering = !!(q || statusFilter);
+  var sponsorFilter = (document.getElementById('tm-sponsor-filter') || {}).value || '';
+  var sortBy = (document.getElementById('tm-sort') || {}).value || 'priority';
+  var myEmail = (_currentUser && _currentUser.email || '').toLowerCase();
+  var filtering = !!(q || statusFilter || sponsorFilter || _tmQuickFilter);
 
   function matches(t) {
     if (statusFilter && t.status !== statusFilter) return false;
+    if (sponsorFilter && t.sponsorEmail !== sponsorFilter) return false;
+    if (_tmQuickFilter === 'overdue' && !tmIsOverdue(t)) return false;
+    if (_tmQuickFilter === 'mine' && t.sponsorEmail !== myEmail) return false;
     if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
   function sortTasks(arr) {
     arr.sort(function(a, b) {
+      if (sortBy === 'due') {
+        if (!a.dueDate && !b.dueDate) return (a.title || '').localeCompare(b.title || '');
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate < b.dueDate ? -1 : (a.dueDate > b.dueDate ? 1 : 0);
+      }
+      if (sortBy === 'sponsor') {
+        var na = a.sponsorEmail ? tmSponsorName(a.sponsorEmail) : '';
+        var nb = b.sponsorEmail ? tmSponsorName(b.sponsorEmail) : '';
+        if (!na && !nb) return (a.title || '').localeCompare(b.title || '');
+        if (!na) return 1;
+        if (!nb) return -1;
+        return na.localeCompare(nb);
+      }
+      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+      // Default: priority — active before done, highest priority first, then title
       if (a.status !== b.status) return a.status === 'Done' ? 1 : -1;
       var pa = a.priority == null ? -1 : a.priority, pb = b.priority == null ? -1 : b.priority;
       if (pa !== pb) return pb - pa;
@@ -8618,12 +8793,23 @@ function tmRender() {
     return arr;
   }
 
+  // Bulk toolbar
+  var bulkBar = document.getElementById('tm-bulk-bar');
+  var selectedCount = Object.keys(_tmSelected).length;
+  if (bulkBar) bulkBar.style.display = (_tmSelectMode && selectedCount) ? 'flex' : 'none';
+  var bulkCountEl = document.getElementById('tm-bulk-count');
+  if (bulkCountEl) bulkCountEl.textContent = selectedCount + ' selected';
+  var bulkSectionEl = document.getElementById('tm-bulk-section');
+  if (bulkSectionEl) {
+    bulkSectionEl.innerHTML = _tmSections.map(function(s) { return '<option value="' + tmEsc(s) + '">' + tmEsc(s) + '</option>'; }).join('');
+  }
+
   if (!_tmSections.length) {
     listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">No sections yet — click <strong>+ Add Section</strong> to create one.</div>';
     return;
   }
 
-  listEl.innerHTML = _tmSections.map(function(section) {
+  listEl.innerHTML = _tmSections.map(function(section, sectionIdx) {
     var all = _tmTasks.filter(function(t) { return t.area === section; });
     var shown = sortTasks(all.filter(matches));
     // While actively searching/filtering, sections with no matches collapse
@@ -8639,7 +8825,9 @@ function tmRender() {
             '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(section) + '</span>' +
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
-          '<div style="display:flex;gap:6px;" onclick="event.stopPropagation()">' +
+          '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
+            '<button onclick="tmMoveSection(' + sectionKey + ',-1)" title="Move section up"' + (sectionIdx === 0 ? ' disabled' : '') + ' style="background:transparent;border:1px solid #d1d5db;color:' + (sectionIdx === 0 ? '#c7d0d9' : '#6b7c8f') + ';padding:5px 8px;border-radius:7px;cursor:' + (sectionIdx === 0 ? 'default' : 'pointer') + ';font-family:inherit;line-height:0;">&uarr;</button>' +
+            '<button onclick="tmMoveSection(' + sectionKey + ',1)" title="Move section down"' + (sectionIdx === _tmSections.length - 1 ? ' disabled' : '') + ' style="background:transparent;border:1px solid #d1d5db;color:' + (sectionIdx === _tmSections.length - 1 ? '#c7d0d9' : '#6b7c8f') + ';padding:5px 8px;border-radius:7px;cursor:' + (sectionIdx === _tmSections.length - 1 ? 'default' : 'pointer') + ';font-family:inherit;line-height:0;">&darr;</button>' +
             '<button onclick="tmOpenModal(null,' + sectionKey + ')" title="Add task to this section" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ Task</button>' +
             (all.length === 0 ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
