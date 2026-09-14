@@ -8426,10 +8426,11 @@ function tmTaskCard(t) {
   return '' +
     '<div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">' +
       '<div onclick="tmToggleExpand(' + idArg + ')" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
+        '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transform:rotate(' + (expanded ? '0deg' : '-90deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-            '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(t.title) + '</span>' +
+            '<span style="color:#003768;font-size:14px;font-weight:700;' + (t.status === 'Done' ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</span>' +
             '<span style="background:' + statusColor.bg + ';color:' + statusColor.text + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + tmEsc(t.status) + '</span>' +
             (t.priority != null ? '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Priority ' + t.priority + '</span>' : '') +
           '</div>' +
@@ -8471,6 +8472,27 @@ function tmExpandedBody(t) {
 function tmToggleExpand(taskId) {
   _tmExpanded[taskId] = !_tmExpanded[taskId];
   tmRender();
+}
+
+// Checkbox on the card itself — flips Active/Done straight away, no need
+// to open the edit modal just to mark something complete.
+function tmToggleStatus(taskId) {
+  var task = _tmTasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  var nextStatus = task.status === 'Done' ? 'Active' : 'Done';
+  fetch('/api/task-manager/' + taskId, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: nextStatus })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(saved) {
+      if (saved.error) { alert(saved.error); return; }
+      var idx = _tmTasks.findIndex(function(t) { return t.id === taskId; });
+      if (idx !== -1) _tmTasks[idx] = saved;
+      tmRender();
+    })
+    .catch(function() { alert('Could not update task.'); });
 }
 
 // Persists a task's full subtask list to the server, updates the local
