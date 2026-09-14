@@ -4585,26 +4585,34 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   }
 });
 
+// Lightweight name+email list of every registered user — shared by the
+// Buddy picker typeahead and the Task Manager Sponsor dropdown.
+// excludeEmail is optional (Buddy picker excludes yourself; Sponsor doesn't,
+// since you can sponsor your own task).
+async function fetchAllUserNames(excludeEmail) {
+  let records = [], offset = '';
+  do {
+    const qs = `?fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+    const data = await atFetch(qs);
+    records = records.concat(data.records || []);
+    offset = data.offset || '';
+  } while (offset);
+  const excl = (excludeEmail || '').toLowerCase();
+  return records
+    .map(r => ({
+      name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ').trim(),
+      email: (r.fields[F_EMAIL] || '').toLowerCase()
+    }))
+    .filter(u => u.name && u.email && u.email !== excl)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // GET /api/users/names — lightweight name+email list of every user, for the
 // Buddy picker typeahead in My Account. Deliberately minimal (no admin gate,
 // no sensitive fields) so any signed-in adviser can search colleagues by name.
 app.get('/api/users/names', requireAuth, async (req, res) => {
   try {
-    let records = [], offset = '';
-    do {
-      const qs = `?fields[]=${F_FIRST}&fields[]=${F_LAST}&fields[]=${F_EMAIL}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
-      const data = await atFetch(qs);
-      records = records.concat(data.records || []);
-      offset = data.offset || '';
-    } while (offset);
-    const ownEmail = (req.session.user.email || '').toLowerCase();
-    const names = records
-      .map(r => ({
-        name: [r.fields[F_FIRST], r.fields[F_LAST]].filter(Boolean).join(' ').trim(),
-        email: (r.fields[F_EMAIL] || '').toLowerCase()
-      }))
-      .filter(u => u.name && u.email && u.email !== ownEmail)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const names = await fetchAllUserNames(req.session.user.email);
     res.json({ users: names });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -6000,11 +6008,13 @@ const TM_DURATION = 'fldDzYlgl33hYEWci';
 const TM_PRIORITY = 'fldmCzAM8WizA7g0a';
 const TM_SUB_DONE = 'fldcb5ZUCNCI6oOYa';
 const TM_SUB_TOT  = 'fldtiv48CIcEoiCiE';
+const TM_START    = 'fldbBl8FcPBmo0KWO';
 const TM_DUE      = 'fldCtuupDin4CEFP6';
 const TM_NOTES    = 'fldjLeEIAXCAasRHU';
 const TM_ADDED    = 'fld4gk31JmFdzQZng';
 const TM_STATUS   = 'fldmMMp1xKlEXME4g';
 const TM_SUBTASKS = 'flduPrEauGepX18Cj'; // JSON array of { text, done } — the actual checklist items
+const TM_SPONSOR  = 'fld18LNcGaGHovC26'; // Sponsor Email — a registered user's email, picked from a dropdown client-side
 const TM_AREAS = ['General Marketing', 'Brand Strategy', 'Recruitment', 'Recruitment Prospects', 'Retention Strategies', 'LeadGEN', 'Tech/Compliance', 'Data'];
 
 // Parses the Subtasks JSON field defensively (blank/malformed -> []).
@@ -6048,10 +6058,12 @@ function tmRecordToTask(record) {
     subtasks:      subtasks,
     subtasksDone:  hasList ? subtasks.filter(s => s.done).length : (typeof f[TM_SUB_DONE] === 'number' ? f[TM_SUB_DONE] : 0),
     subtasksTotal: hasList ? subtasks.length : (typeof f[TM_SUB_TOT] === 'number' ? f[TM_SUB_TOT] : 0),
+    startDate:     f[TM_START]    || '',
     dueDate:       f[TM_DUE]      || '',
     notes:         f[TM_NOTES]    || '',
     added:         f[TM_ADDED]    || record.createdTime.slice(0, 10),
-    status:        f[TM_STATUS]   || 'Active'
+    status:        f[TM_STATUS]   || 'Active',
+    sponsorEmail:  (f[TM_SPONSOR] || '').toLowerCase()
   };
 }
 
@@ -6067,7 +6079,8 @@ app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, 
       all = all.concat(data.records || []);
       offset = data.offset;
     } while (offset);
-    res.json({ tasks: all.map(tmRecordToTask), areas: TM_AREAS });
+    const sponsors = await fetchAllUserNames(null);
+    res.json({ tasks: all.map(tmRecordToTask), areas: TM_AREAS, sponsors });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -6083,7 +6096,7 @@ function tmSanitizeSubtasks(arr) {
 
 // POST /api/task-manager — create task
 app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
-  const { title, area, type, duration, priority, subtasks, subtasksTotal, dueDate, notes, status } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
     const fields = {
@@ -6097,12 +6110,14 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
     };
     if (duration) fields[TM_DURATION] = duration;
     if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
+    if (sponsorEmail) fields[TM_SPONSOR] = String(sponsorEmail).toLowerCase();
     const cleanSubtasks = tmSanitizeSubtasks(subtasks);
     if (cleanSubtasks && cleanSubtasks.length) {
       fields[TM_SUBTASKS] = JSON.stringify(cleanSubtasks);
     } else if (typeof subtasksTotal === 'number') {
       fields[TM_SUB_TOT] = subtasksTotal;
     }
+    if (startDate) fields[TM_START] = startDate;
     if (dueDate) fields[TM_DUE] = dueDate;
     if (notes) fields[TM_NOTES] = notes;
     const data = await tmFetch('', {
@@ -6120,7 +6135,7 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
 
 // PATCH /api/task-manager/:id — edit task (partial update; also used for subtask progress + status toggles)
 app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
-  const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, dueDate, notes, status } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   try {
     const fields = {};
     if (title !== undefined) fields[TM_TITLE] = title;
@@ -6128,6 +6143,7 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
     if (type !== undefined) fields[TM_TYPE] = type;
     if (duration !== undefined) fields[TM_DURATION] = duration;
     if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
+    if (sponsorEmail !== undefined) fields[TM_SPONSOR] = String(sponsorEmail || '').toLowerCase();
     if (subtasks !== undefined) {
       // Whole-checklist replace — the client always sends the full current
       // list (add/remove/tick all mutate it locally first), so this is a
@@ -6138,6 +6154,7 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
       if (typeof subtasksDone === 'number') fields[TM_SUB_DONE] = subtasksDone;
       if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
     }
+    if (startDate !== undefined) fields[TM_START] = startDate;
     if (dueDate !== undefined) fields[TM_DUE] = dueDate;
     if (notes !== undefined) fields[TM_NOTES] = notes;
     if (status !== undefined) fields[TM_STATUS] = status;

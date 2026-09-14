@@ -8360,12 +8360,14 @@ var _tmAreas = [];       // original fixed 8 areas from the migration (server.js
 var _tmSections = [];    // live section list shown on the page — starts as _tmAreas, grows with
                           // any area already used by a task plus any sections added this session
 var _tmCollapsed = {};   // { sectionName: true } for collapsed sections
+var _tmSponsors = [];    // { name, email }[] — every registered user, for the Sponsor dropdown
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
   fetch('/api/task-manager').then(function(r){ return r.json(); }).then(function(d) {
     _tmTasks = d.tasks || [];
     _tmAreas = d.areas || [];
+    _tmSponsors = d.sponsors || [];
     tmRebuildSections();
     tmRender();
   }).catch(function() {
@@ -8405,6 +8407,22 @@ function tmIdArg(id) {
   return '&quot;' + String(id).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '&quot;';
 }
 
+function tmSponsorName(email) {
+  var match = _tmSponsors.find(function(u) { return u.email === email; });
+  return match ? match.name : email;
+}
+
+// Builds the small grey meta line under a card's title — duration, start
+// date, due date, sponsor — only including whichever of those are set.
+function tmCardMeta(t) {
+  var parts = [];
+  if (t.duration) parts.push(tmEsc(t.duration));
+  if (t.startDate) parts.push('Start ' + tmFormatDate(t.startDate));
+  if (t.dueDate) parts.push('Due ' + tmFormatDate(t.dueDate));
+  if (t.sponsorEmail) parts.push('Sponsor: ' + tmEsc(tmSponsorName(t.sponsorEmail)));
+  return parts.join(' · ');
+}
+
 function tmFormatDate(iso) {
   if (!iso) return '';
   var d = new Date(iso + 'T00:00:00');
@@ -8434,7 +8452,7 @@ function tmTaskCard(t) {
             '<span style="background:' + statusColor.bg + ';color:' + statusColor.text + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + tmEsc(t.status) + '</span>' +
             (t.priority != null ? '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Priority ' + t.priority + '</span>' : '') +
           '</div>' +
-          '<div style="color:#6b7c8f;font-size:12.5px;">' + (t.duration ? tmEsc(t.duration) : '') + (t.dueDate ? (t.duration ? ' · ' : '') + 'Due ' + tmFormatDate(t.dueDate) : '') + '</div>' +
+          '<div style="color:#6b7c8f;font-size:12.5px;">' + tmCardMeta(t) + '</div>' +
         '</div>' +
         (progress != null ? '<div style="flex-shrink:0;width:80px;text-align:right;"><div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + t.subtasksDone + '/' + t.subtasksTotal + '</div><div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + progress + '%;background:#2e99d5;"></div></div></div>' : '') +
         (overdue ? '<span style="flex-shrink:0;background:#fef2f2;color:#b91c1c;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Overdue</span>' : '') +
@@ -8673,6 +8691,11 @@ function tmOpenModal(taskId, presetArea) {
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Duration</label>' +
         '<input type="text" id="tm-f-duration" value="' + (task ? tmEsc(task.duration) : '') + '" placeholder="e.g. 1 hr" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
       '</div>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Sponsor</label>' +
+      '<select id="tm-f-sponsor" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
+        '<option value="">— No sponsor —</option>' +
+        _tmSponsors.map(function(u) { return '<option value="' + tmEsc(u.email) + '"' + (task && task.sponsorEmail === u.email ? ' selected' : '') + '>' + tmEsc(u.name) + '</option>'; }).join('') +
+      '</select>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Subtasks</label>' +
       '<div id="tm-f-subtasks-wrap" style="background:#f9fafc;border:1px solid #d1d5db;border-radius:8px;padding:12px;margin-bottom:12px;">' +
         '<div id="tm-f-subtasks-progress" style="margin-bottom:10px;"></div>' +
@@ -8683,13 +8706,18 @@ function tmOpenModal(taskId, presetArea) {
         '</div>' +
       '</div>' +
       '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
+        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Start date</label>' +
+        '<input type="date" id="tm-f-start" value="' + (task ? task.startDate : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Due date</label>' +
         '<input type="date" id="tm-f-due" value="' + (task ? task.dueDate : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Status</label>' +
         '<select id="tm-f-status" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
           '<option value="Active"' + (!task || task.status === 'Active' ? ' selected' : '') + '>Active</option>' +
           '<option value="Done"' + (task && task.status === 'Done' ? ' selected' : '') + '>Done</option>' +
         '</select></div>' +
+        '<div style="flex:1;"></div>' +
       '</div>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
       '<textarea id="tm-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
@@ -8769,7 +8797,9 @@ function tmSaveTask(taskId) {
     type: (document.getElementById('tm-f-type') || {}).value,
     duration: (document.getElementById('tm-f-duration') || {}).value,
     priority: priorityVal !== '' ? parseInt(priorityVal, 10) : undefined,
+    sponsorEmail: (document.getElementById('tm-f-sponsor') || {}).value,
     subtasks: _tmModalSubtasks,
+    startDate: (document.getElementById('tm-f-start') || {}).value,
     dueDate: (document.getElementById('tm-f-due') || {}).value,
     notes: (document.getElementById('tm-f-notes') || {}).value,
     status: (document.getElementById('tm-f-status') || {}).value
