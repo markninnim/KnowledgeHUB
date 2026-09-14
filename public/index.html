@@ -8919,6 +8919,14 @@ function tmRender() {
     if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
+  // The Completed archive ignores the urgency quick-filters (Urgent/Overdue/
+  // Due Today/Due This Week don't mean anything for a task that's already
+  // done) — search and sponsor still apply.
+  function matchesCompleted(t) {
+    if (sponsorFilter && t.sponsorEmail !== sponsorFilter) return false;
+    if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  }
   function sortTasks(arr) {
     arr.sort(function(a, b) {
       if (sortBy === 'due') {
@@ -8989,7 +8997,7 @@ function tmRender() {
   var completedHtml = '';
   if (_tmShowCompleted) {
     var doneAll = _tmTasks.filter(function(t) { return t.status === 'Done'; });
-    var doneShown = sortTasks(doneAll.filter(matches));
+    var doneShown = sortTasks(doneAll.filter(matchesCompleted));
     var doneCollapsed = !!_tmCollapsed['__completed__'];
     completedHtml = '' +
       '<div class="tm-section">' +
