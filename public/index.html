@@ -8395,6 +8395,16 @@ function tmEsc(s) {
   });
 }
 
+// Builds a quoted JS string literal safe to drop straight into a
+// double-quoted onclick="..." attribute — JSON.stringify() alone produces
+// literal double-quote characters that prematurely close the attribute
+// (this previously broke every task-card click), so quotes are HTML-escaped
+// to &quot; instead, which the browser un-escapes back to " before running
+// the handler.
+function tmIdArg(id) {
+  return '&quot;' + String(id).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '&quot;';
+}
+
 function tmFormatDate(iso) {
   if (!iso) return '';
   var d = new Date(iso + 'T00:00:00');
@@ -8412,7 +8422,7 @@ function tmTaskCard(t) {
   var progress = t.subtasksTotal > 0 ? Math.round((t.subtasksDone / t.subtasksTotal) * 100) : null;
   var overdue = t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString());
   var expanded = !!_tmExpanded[t.id];
-  var idArg = JSON.stringify(t.id);
+  var idArg = tmIdArg(t.id);
   return '' +
     '<div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">' +
       '<div onclick="tmToggleExpand(' + idArg + ')" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
@@ -8437,7 +8447,7 @@ function tmTaskCard(t) {
 
 function tmExpandedBody(t) {
   var subtasks = t.subtasks || [];
-  var idArg = JSON.stringify(t.id);
+  var idArg = tmIdArg(t.id);
   return '' +
     '<div style="padding:0 16px 16px;border-top:1px solid #e8ecf0;">' +
       (t.notes ? '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.6;margin:12px 0;">' + tmEsc(t.notes) + '</div>' : '') +
@@ -8662,10 +8672,10 @@ function tmOpenModal(taskId, presetArea) {
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
       '<textarea id="tm-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
-        (task ? '<button onclick="tmDeleteTask(' + JSON.stringify(task.id) + ')" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        (task ? '<button onclick="tmDeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
           '<button onclick="tmCloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
-          '<button onclick="tmSaveTask(' + (task ? JSON.stringify(task.id) : 'null') + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+          '<button onclick="tmSaveTask(' + (task ? tmIdArg(task.id) : 'null') + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
         '</div>' +
       '</div>' +
     '</div>';
