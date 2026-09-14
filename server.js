@@ -6094,6 +6094,46 @@ function tmSanitizeSubtasks(arr) {
   return arr.slice(0, 100).map(s => ({ text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) })).filter(s => s.text);
 }
 
+// Notifies a task's sponsor by email when it's marked Done. Best-effort —
+// failures are logged but never block the status update itself (the task
+// is already saved by the time this runs).
+async function tmSendCompletedEmail(task, completedByUser) {
+  if (!task.sponsorEmail) return;
+  const completedByEmail = (completedByUser && completedByUser.email || '').toLowerCase();
+  if (task.sponsorEmail === completedByEmail) return; // don't notify yourself of your own action
+  if (!process.env.CM_API_KEY) {
+    console.log('[task-manager] Skipping completion email — CM_API_KEY not set');
+    return;
+  }
+  try {
+    const sponsors = await fetchAllUserNames(null);
+    const sponsor = sponsors.find(u => u.email === task.sponsorEmail);
+    const sponsorName = (sponsor && sponsor.name) || task.sponsorEmail;
+    const completedByName = (completedByUser && [completedByUser.firstName, completedByUser.lastName].filter(Boolean).join(' ')) || 'A KnowledgeHUB user';
+    const appUrl = process.env.APP_URL || 'https://knowledgehub.simflex.ai';
+    const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
+    await _mailer.sendMail({
+      from: `"KnowledgeHUB™" <${fromEmail}>`,
+      to: task.sponsorEmail,
+      subject: `Task completed: ${task.title}`,
+      html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+        <img src="${EMAIL_LOGO_DATA_URI}" alt="FPG" style="height:48px;margin-bottom:24px;">
+        <h2 style="color:#003768;margin:0 0 12px;">Task completed</h2>
+        <p style="color:#4a5a6a;line-height:1.6;">Hi ${sponsorName},<br><br>A task you sponsor has been marked complete by ${completedByName}:</p>
+        <div style="background:#f5f7fa;border:1px solid #e8ecf0;border-radius:8px;padding:16px 18px;margin:16px 0;">
+          <div style="color:#003768;font-weight:700;font-size:15px;margin-bottom:4px;">${task.title}</div>
+          <div style="color:#6b7c8f;font-size:13px;">${task.area}</div>
+        </div>
+        <a href="${appUrl}/lab" style="display:inline-block;margin:8px 0 20px;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">View in Task Manager</a>
+        <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
+        <p style="color:#6b7c8f;font-size:12px;">KnowledgeHUB&trade;</p>
+      </div>`
+    });
+  } catch (err) {
+    console.error('[task-manager] Failed to send completion email:', err.message);
+  }
+}
+
 // POST /api/task-manager — create task
 app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
   const { title, area, type, duration, priority, subtasks, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
@@ -6137,6 +6177,14 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
 app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
   const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   try {
+    // Grab the prior status first (only needed when status is actually
+    // being changed) so we can tell whether this PATCH is the moment the
+    // task flips to Done — that's the only time the sponsor gets emailed.
+    let priorStatus = null;
+    if (status !== undefined) {
+      const before = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+      priorStatus = before.fields[TM_STATUS] || 'Active';
+    }
     const fields = {};
     if (title !== undefined) fields[TM_TITLE] = title;
     if (area !== undefined) fields[TM_AREA] = area;
@@ -6163,7 +6211,11 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
       body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
     });
     const fresh = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
-    res.json(tmRecordToTask(fresh));
+    const freshTask = tmRecordToTask(fresh);
+    if (status !== undefined && priorStatus !== 'Done' && freshTask.status === 'Done') {
+      tmSendCompletedEmail(freshTask, req.session.user); // fire-and-forget — don't hold up the response
+    }
+    res.json(freshTask);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
