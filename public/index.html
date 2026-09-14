@@ -5175,6 +5175,7 @@ Consolidating debts will increase the loan to value which can impact future deal
             <option value="">All sponsors</option>
           </select>
           <select id="tm-sort" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
+            <option value="custom">Sort: Custom (drag)</option>
             <option value="priority">Sort: Priority</option>
             <option value="due">Sort: Due date</option>
             <option value="sponsor">Sort: Sponsor</option>
@@ -8389,6 +8390,8 @@ var _tmQuickFilter = null;  // 'overdue' | 'mine' | null
 var _tmSelectMode = false;
 var _tmSelected = {};    // { taskId: true } — only meaningful while _tmSelectMode is on
 var _tmShowCompleted = false;  // when true, reveals the archived "Completed" section
+var _tmTaskOrder = tmLoadTaskOrder();  // { sectionName: [taskId, ...] } — manual drag order, persisted
+var _tmDragId = null;   // taskId currently being dragged
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
@@ -8445,6 +8448,66 @@ function tmLoadSectionOrder() {
 
 function tmSaveSectionOrder() {
   try { localStorage.setItem('tm-section-order', JSON.stringify(_tmSections)); } catch (e) {}
+}
+
+function tmLoadTaskOrder() {
+  try {
+    var raw = localStorage.getItem('tm-task-order');
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function tmSaveTaskOrder() {
+  try { localStorage.setItem('tm-task-order', JSON.stringify(_tmTaskOrder)); } catch (e) {}
+}
+
+// Reorders an already-sorted list of tasks to match any saved manual drag
+// order for this section; tasks with no saved position keep their place
+// among the other unordered tasks (stable sort).
+function tmApplyCustomOrder(list, section) {
+  var order = _tmTaskOrder[section] || [];
+  return list.slice().sort(function(a, b) {
+    var ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+function tmDragStart(e, taskId, section) {
+  _tmDragId = taskId;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', taskId); } catch (err) {}
+  }
+}
+
+function tmDragOver(e) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+
+function tmDrop(e, targetTaskId, section) {
+  e.preventDefault();
+  if (!_tmDragId || _tmDragId === targetTaskId) { _tmDragId = null; return; }
+  var currentIds = _tmTasks.filter(function(t) { return t.area === section && t.status !== 'Done'; }).map(function(t) { return t.id; });
+  var order = (_tmTaskOrder[section] || []).filter(function(id) { return currentIds.indexOf(id) !== -1; });
+  currentIds.forEach(function(id) { if (order.indexOf(id) === -1) order.push(id); });
+  var fromIdx = order.indexOf(_tmDragId);
+  if (fromIdx !== -1) order.splice(fromIdx, 1);
+  var toIdx = order.indexOf(targetTaskId);
+  order.splice(toIdx === -1 ? order.length : toIdx, 0, _tmDragId);
+  _tmTaskOrder[section] = order;
+  tmSaveTaskOrder();
+  _tmDragId = null;
+  var sortSel = document.getElementById('tm-sort');
+  if (sortSel && sortSel.value !== 'custom') sortSel.value = 'custom';
+  tmRender();
+}
+
+function tmDragEnd() {
+  _tmDragId = null;
 }
 
 function tmMoveSection(section, dir) {
@@ -8563,9 +8626,15 @@ function tmTaskCard(t, opts) {
   var selected = !!_tmSelected[t.id];
   var headerClick = _tmSelectMode ? ('tmToggleSelect(' + idArg + ')') : ('tmToggleExpand(' + idArg + ')');
   var level = tmPriorityLevel(t.priority);
+  var draggable = !!opts.section && !_tmSelectMode;
+  var sectionArg = draggable ? tmIdArg(opts.section) : '';
+  var dragAttrs = draggable ?
+    ' draggable="true" ondragstart="tmDragStart(event,' + idArg + ',' + sectionArg + ')" ondragover="tmDragOver(event)" ondrop="tmDrop(event,' + idArg + ',' + sectionArg + ')" ondragend="tmDragEnd(event)"'
+    : '';
   return '' +
-    '<div style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';border-radius:8px;overflow:hidden;">' +
+    '<div' + dragAttrs + ' style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';border-radius:8px;overflow:hidden;">' +
       '<div onclick="' + headerClick + '" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
+        (draggable ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
         (_tmSelectMode ?
           '<input type="checkbox"' + (selected ? ' checked' : '') + ' onclick="event.stopPropagation();tmToggleSelect(' + idArg + ')" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">'
           : '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">') +
@@ -8879,6 +8948,7 @@ function tmRender() {
   var activeSectionsHtml = _tmSections.map(function(section, sectionIdx) {
     var all = _tmTasks.filter(function(t) { return t.area === section && t.status !== 'Done'; });
     var shown = sortTasks(all.filter(matches));
+    if (sortBy === 'custom') shown = tmApplyCustomOrder(shown, section);
     // While actively searching/filtering, sections with no matches collapse
     // out of the way entirely rather than showing an empty shell.
     if (filtering && !shown.length) return '';
@@ -8893,13 +8963,10 @@ function tmRender() {
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
-            '<button onclick="tmMoveSection(' + sectionKey + ',-1)" title="Move section up"' + (sectionIdx === 0 ? ' disabled' : '') + ' style="background:transparent;border:1px solid #d1d5db;color:' + (sectionIdx === 0 ? '#c7d0d9' : '#6b7c8f') + ';padding:5px 8px;border-radius:7px;cursor:' + (sectionIdx === 0 ? 'default' : 'pointer') + ';font-family:inherit;line-height:0;">&uarr;</button>' +
-            '<button onclick="tmMoveSection(' + sectionKey + ',1)" title="Move section down"' + (sectionIdx === _tmSections.length - 1 ? ' disabled' : '') + ' style="background:transparent;border:1px solid #d1d5db;color:' + (sectionIdx === _tmSections.length - 1 ? '#c7d0d9' : '#6b7c8f') + ';padding:5px 8px;border-radius:7px;cursor:' + (sectionIdx === _tmSections.length - 1 ? 'default' : 'pointer') + ';font-family:inherit;line-height:0;">&darr;</button>' +
-            '<button onclick="tmOpenModal(null,' + sectionKey + ')" title="Add task to this section" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ Task</button>' +
             (all.length === 0 ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
         '</div>' +
-        (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(tmTaskCard).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
+        (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(function(t) { return tmTaskCard(t, { section: section }); }).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
       '</div>';
   }).join('');
 
