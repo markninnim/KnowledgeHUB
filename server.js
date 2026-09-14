@@ -6073,8 +6073,11 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
     if (dueDate) fields[TM_DUE] = dueDate;
     if (notes) fields[TM_NOTES] = notes;
     const data = await tmFetch('', {
+      // typecast lets a brand-new section name (an Area value the user just
+      // typed in via + Add Section) auto-create as a new single-select
+      // option, rather than rejecting the write.
       method: 'POST',
-      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
+      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true, typecast: true })
     });
     res.json(tmRecordToTask(data.records[0]));
   } catch (err) {
@@ -6099,7 +6102,7 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
     if (status !== undefined) fields[TM_STATUS] = status;
     await tmFetch(`/${req.params.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
     });
     const fresh = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     res.json(tmRecordToTask(fresh));

@@ -5158,13 +5158,13 @@ Consolidating debts will increase the loan to value which can impact future deal
             <div style="font-size:15px;font-weight:700;color:var(--brand-navy);margin-bottom:4px;">Task Manager</div>
             <p style="color:#6b7c8f;font-size:13px;margin:0;line-height:1.6;">Migrated from the FPG Task Manager (tasks.readdy.co) — internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.</p>
           </div>
-          <button onclick="tmOpenModal()" style="flex-shrink:0;background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="tmOpenSectionModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Section</button>
+            <button onclick="tmOpenModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
+          </div>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-          <select id="tm-area-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
-            <option value="">All areas</option>
-          </select>
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
           <input type="text" id="tm-search" oninput="tmRender()" placeholder="Search tasks…" style="flex:1;min-width:200px;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#003768;">
           <select id="tm-status-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="">All statuses</option>
@@ -5173,7 +5173,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           </select>
         </div>
 
-        <div id="tm-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="tm-list" style="display:flex;flex-direction:column;gap:22px;"></div>
       </div>
     </div>
   </div>
@@ -8356,24 +8356,37 @@ function switchTab(tab, skipLeadSeen) {
 // Mark Ninnim only in the post-login block below. Server-side, every
 // /api/task-manager route is still enforced via requireAdminOrSupervisor.
 var _tmTasks = null;
-var _tmAreas = [];
+var _tmAreas = [];       // original fixed 8 areas from the migration (server.js TM_AREAS)
+var _tmSections = [];    // live section list shown on the page — starts as _tmAreas, grows with
+                          // any area already used by a task plus any sections added this session
+var _tmCollapsed = {};   // { sectionName: true } for collapsed sections
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
   fetch('/api/task-manager').then(function(r){ return r.json(); }).then(function(d) {
     _tmTasks = d.tasks || [];
     _tmAreas = d.areas || [];
-    var sel = document.getElementById('tm-area-filter');
-    if (sel) {
-      sel.innerHTML = '<option value="">All areas</option>' + _tmAreas.map(function(a) {
-        return '<option value="' + tmEsc(a) + '">' + tmEsc(a) + '</option>';
-      }).join('');
-    }
+    tmRebuildSections();
     tmRender();
   }).catch(function() {
     var el = document.getElementById('tm-list');
     if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:20px 0;">Could not load tasks.</div>';
   });
+}
+
+// Sections shown on the page = the fixed starting areas, plus any area a
+// task actually uses that isn't already in the list (keeps things in sync
+// if a task gets moved to a brand-new section from another browser tab).
+function tmRebuildSections() {
+  var seen = {};
+  var next = [];
+  _tmAreas.concat(_tmSections).forEach(function(a) {
+    if (a && !seen[a]) { seen[a] = true; next.push(a); }
+  });
+  _tmTasks.forEach(function(t) {
+    if (t.area && !seen[t.area]) { seen[t.area] = true; next.push(t.area); }
+  });
+  _tmSections = next;
 }
 
 function tmEsc(s) {
@@ -8389,59 +8402,132 @@ function tmFormatDate(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function tmTaskCard(t) {
+  var statusColor = t.status === 'Done' ? { bg: '#dcfce7', text: '#166534' } : { bg: '#dbeafe', text: '#003768' };
+  var progress = t.subtasksTotal > 0 ? Math.round((t.subtasksDone / t.subtasksTotal) * 100) : null;
+  var overdue = t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString());
+  return '' +
+    '<div onclick="tmOpenModal(' + JSON.stringify(t.id) + ')" style="cursor:pointer;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
+          '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(t.title) + '</span>' +
+          '<span style="background:' + statusColor.bg + ';color:' + statusColor.text + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + tmEsc(t.status) + '</span>' +
+          (t.priority != null ? '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Priority ' + t.priority + '</span>' : '') +
+        '</div>' +
+        '<div style="color:#6b7c8f;font-size:12.5px;">' + (t.duration ? tmEsc(t.duration) : '') + (t.dueDate ? (t.duration ? ' · ' : '') + 'Due ' + tmFormatDate(t.dueDate) : '') + '</div>' +
+      '</div>' +
+      (progress != null ? '<div style="flex-shrink:0;width:80px;text-align:right;"><div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + t.subtasksDone + '/' + t.subtasksTotal + '</div><div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + progress + '%;background:#2e99d5;"></div></div></div>' : '') +
+      (overdue ? '<span style="flex-shrink:0;background:#fef2f2;color:#b91c1c;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Overdue</span>' : '') +
+    '</div>';
+}
+
+// Renders the page as one collapsible section per area, each holding its
+// own filtered task cards — replaces the old single flat list + area
+// dropdown so sections are always visible and directly manageable.
 function tmRender() {
   var listEl = document.getElementById('tm-list');
   if (!listEl || !_tmTasks) return;
-  var countEl = document.getElementById('tm-sidebar-count');
-  if (countEl) countEl.textContent = _tmTasks.length;
 
   var q = (document.getElementById('tm-search') || {}).value || '';
   q = q.trim().toLowerCase();
   var statusFilter = (document.getElementById('tm-status-filter') || {}).value || '';
-  var areaFilter = (document.getElementById('tm-area-filter') || {}).value || '';
+  var filtering = !!(q || statusFilter);
 
-  var tasks = _tmTasks.filter(function(t) {
-    if (areaFilter && t.area !== areaFilter) return false;
+  function matches(t) {
     if (statusFilter && t.status !== statusFilter) return false;
     if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
     return true;
-  });
-  // Active first, then by priority desc, then title
-  tasks.sort(function(a, b) {
-    if (a.status !== b.status) return a.status === 'Done' ? 1 : -1;
-    var pa = a.priority == null ? -1 : a.priority, pb = b.priority == null ? -1 : b.priority;
-    if (pa !== pb) return pb - pa;
-    return (a.title || '').localeCompare(b.title || '');
-  });
+  }
+  function sortTasks(arr) {
+    arr.sort(function(a, b) {
+      if (a.status !== b.status) return a.status === 'Done' ? 1 : -1;
+      var pa = a.priority == null ? -1 : a.priority, pb = b.priority == null ? -1 : b.priority;
+      if (pa !== pb) return pb - pa;
+      return (a.title || '').localeCompare(b.title || '');
+    });
+    return arr;
+  }
 
-  if (!tasks.length) {
-    listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">No tasks found.</div>';
+  if (!_tmSections.length) {
+    listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">No sections yet — click <strong>+ Add Section</strong> to create one.</div>';
     return;
   }
 
-  listEl.innerHTML = tasks.map(function(t) {
-    var statusColor = t.status === 'Done' ? { bg: '#dcfce7', text: '#166534' } : { bg: '#dbeafe', text: '#003768' };
-    var progress = t.subtasksTotal > 0 ? Math.round((t.subtasksDone / t.subtasksTotal) * 100) : null;
-    var overdue = t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString());
+  listEl.innerHTML = _tmSections.map(function(section) {
+    var all = _tmTasks.filter(function(t) { return t.area === section; });
+    var shown = sortTasks(all.filter(matches));
+    // While actively searching/filtering, sections with no matches collapse
+    // out of the way entirely rather than showing an empty shell.
+    if (filtering && !shown.length) return '';
+    var collapsed = !!_tmCollapsed[section];
+    var sectionKey = JSON.stringify(section).replace(/"/g, '&quot;');
     return '' +
-      '<div onclick="tmOpenModal(' + JSON.stringify(t.id) + ')" style="cursor:pointer;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-            '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(t.title) + '</span>' +
-            '<span style="background:' + statusColor.bg + ';color:' + statusColor.text + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + tmEsc(t.status) + '</span>' +
-            (t.priority != null ? '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Priority ' + t.priority + '</span>' : '') +
+      '<div class="tm-section">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;" onclick="tmToggleSection(' + sectionKey + ')">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(' + (collapsed ? '-90deg' : '0deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
+            '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(section) + '</span>' +
+            '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
-          '<div style="color:#6b7c8f;font-size:12.5px;">' + tmEsc(t.area) + (t.duration ? ' · ' + tmEsc(t.duration) : '') + (t.dueDate ? ' · Due ' + tmFormatDate(t.dueDate) : '') + '</div>' +
+          '<div style="display:flex;gap:6px;" onclick="event.stopPropagation()">' +
+            '<button onclick="tmOpenModal(null,' + sectionKey + ')" title="Add task to this section" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ Task</button>' +
+            (all.length === 0 ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+          '</div>' +
         '</div>' +
-        (progress != null ? '<div style="flex-shrink:0;width:80px;text-align:right;"><div style="font-size:11px;color:#6b7c8f;margin-bottom:3px;">' + t.subtasksDone + '/' + t.subtasksTotal + '</div><div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + progress + '%;background:#2e99d5;"></div></div></div>' : '') +
-        (overdue ? '<span style="flex-shrink:0;background:#fef2f2;color:#b91c1c;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">Overdue</span>' : '') +
+        (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(tmTaskCard).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
       '</div>';
   }).join('');
 }
 
-function tmOpenModal(taskId) {
+function tmToggleSection(section) {
+  _tmCollapsed[section] = !_tmCollapsed[section];
+  tmRender();
+}
+
+function tmOpenSectionModal() {
+  var overlay = document.createElement('div');
+  overlay.id = 'tm-section-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Add Section</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
+      '<input type="text" id="tm-f-section-name" placeholder="e.g. Events" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="document.getElementById(' + "'tm-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button onclick="tmSaveSection()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Add</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm-f-section-name'); if (inp) inp.focus(); }, 0);
+}
+
+function tmSaveSection() {
+  var name = ((document.getElementById('tm-f-section-name') || {}).value || '').trim();
+  if (!name) { alert('Section name is required.'); return; }
+  if (_tmSections.indexOf(name) !== -1) { alert('That section already exists.'); return; }
+  _tmSections.push(name);
+  var overlay = document.getElementById('tm-section-modal-overlay');
+  if (overlay) overlay.remove();
+  tmRender();
+  // New sections only really "exist" in Airtable once a task uses them
+  // (single-select options are created on demand via typecast) — until
+  // then this section lives in the browser only and won't survive a reload.
+}
+
+function tmDeleteSection(section) {
+  var stillHasTasks = _tmTasks.some(function(t) { return t.area === section; });
+  if (stillHasTasks) { alert('Move or delete the tasks in this section first.'); return; }
+  if (!confirm('Delete the "' + section + '" section?')) return;
+  _tmSections = _tmSections.filter(function(s) { return s !== section; });
+  delete _tmCollapsed[section];
+  tmRender();
+}
+
+function tmOpenModal(taskId, presetArea) {
   var task = taskId ? _tmTasks.find(function(t) { return t.id === taskId; }) : null;
-  var areas = _tmAreas;
+  var areas = _tmSections;
   var overlay = document.createElement('div');
   overlay.id = 'tm-modal-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
@@ -8454,7 +8540,7 @@ function tmOpenModal(taskId) {
       '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Area</label>' +
         '<select id="tm-f-area" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
-          areas.map(function(a) { return '<option value="' + tmEsc(a) + '"' + (task && task.area === a ? ' selected' : '') + '>' + tmEsc(a) + '</option>'; }).join('') +
+          areas.map(function(a) { var sel = task ? (task.area === a) : (presetArea === a); return '<option value="' + tmEsc(a) + '"' + (sel ? ' selected' : '') + '>' + tmEsc(a) + '</option>'; }).join('') +
         '</select></div>' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Type</label>' +
         '<select id="tm-f-type" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
@@ -8531,6 +8617,7 @@ function tmSaveTask(taskId) {
       } else {
         _tmTasks.push(saved);
       }
+      tmRebuildSections();
       tmCloseModal();
       tmRender();
     })
