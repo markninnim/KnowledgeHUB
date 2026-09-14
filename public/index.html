@@ -8400,12 +8400,7 @@ function loadTaskManager() {
     _tmAreas = d.areas || [];
     _tmSponsors = d.sponsors || [];
     tmRebuildSections();
-    var sponsorSel = document.getElementById('tm-sponsor-filter');
-    if (sponsorSel) {
-      sponsorSel.innerHTML = '<option value="">All sponsors</option>' + _tmSponsors.map(function(u) {
-        return '<option value="' + tmEsc(u.email) + '">' + tmEsc(u.name) + '</option>';
-      }).join('');
-    }
+    tmPopulateSponsorFilter();
     tmRender();
   }).catch(function() {
     var el = document.getElementById('tm-list');
@@ -8448,6 +8443,27 @@ function tmLoadSectionOrder() {
 
 function tmSaveSectionOrder() {
   try { localStorage.setItem('tm-section-order', JSON.stringify(_tmSections)); } catch (e) {}
+}
+
+// The "All sponsors" filter should only list people who are actually
+// sponsoring a task right now — not every registered user (that full list
+// still powers the search-as-you-type picker in the edit modal).
+function tmPopulateSponsorFilter() {
+  var sponsorSel = document.getElementById('tm-sponsor-filter');
+  if (!sponsorSel || !_tmTasks) return;
+  var current = sponsorSel.value;
+  var seen = {};
+  var used = [];
+  _tmTasks.forEach(function(t) {
+    if (!t.sponsorEmail || seen[t.sponsorEmail]) return;
+    seen[t.sponsorEmail] = true;
+    used.push({ email: t.sponsorEmail, name: tmSponsorName(t.sponsorEmail) || t.sponsorEmail });
+  });
+  used.sort(function(a, b) { return a.name.localeCompare(b.name); });
+  sponsorSel.innerHTML = '<option value="">All sponsors</option>' + used.map(function(u) {
+    return '<option value="' + tmEsc(u.email) + '">' + tmEsc(u.name) + '</option>';
+  }).join('');
+  if (used.some(function(u) { return u.email === current; })) sponsorSel.value = current;
 }
 
 function tmLoadTaskOrder() {
@@ -9200,6 +9216,7 @@ function tmSaveTask(taskId) {
         _tmTasks.push(saved);
       }
       tmRebuildSections();
+      tmPopulateSponsorFilter();
       tmCloseModal();
       tmRender();
     })
@@ -9212,6 +9229,7 @@ function tmDeleteTask(taskId) {
     .then(function(r) { return r.json(); })
     .then(function() {
       _tmTasks = _tmTasks.filter(function(t) { return t.id !== taskId; });
+      tmPopulateSponsorFilter();
       tmCloseModal();
       tmRender();
     })
