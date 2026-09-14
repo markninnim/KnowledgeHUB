@@ -8543,8 +8543,8 @@ function tmTaskCard(t) {
     '<div style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';border-radius:8px;overflow:hidden;">' +
       '<div onclick="' + headerClick + '" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
         (_tmSelectMode ?
-          '<input type="checkbox"' + (selected ? ' checked' : '') + ' onclick="event.stopPropagation();tmToggleSelect(' + idArg + ')" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">'
-          : '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">') +
+          '<input type="checkbox"' + (selected ? ' checked' : '') + ' onclick="event.stopPropagation();tmToggleSelect(' + idArg + ')" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">'
+          : '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">') +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transform:rotate(' + (expanded ? '0deg' : '-90deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
@@ -8574,7 +8574,7 @@ function tmExpandedBody(t) {
         (subtasks.length ? subtasks.map(function(s, i) {
           return '' +
             '<div style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
-              '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmInlineToggleSubtask(' + idArg + ',' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;">' +
+              '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmInlineToggleSubtask(' + idArg + ',' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
               '<span style="flex:1;font-size:13px;' + (s.done ? 'color:#6b7c8f;text-decoration:line-through;' : 'color:#003768;') + '">' + tmEsc(s.text) + '</span>' +
               '<button type="button" onclick="tmInlineRemoveSubtask(' + idArg + ',' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
             '</div>';
@@ -8982,7 +8982,7 @@ function tmModalRenderSubtasks() {
   listEl.innerHTML = _tmModalSubtasks.map(function(s, i) {
     return '' +
       '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
-        '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmModalToggleSubtask(' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;">' +
+        '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmModalToggleSubtask(' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
         '<span style="flex:1;font-size:13px;' + (s.done ? 'color:#6b7c8f;text-decoration:line-through;' : 'color:#003768;') + '">' + tmEsc(s.text) + '</span>' +
         '<button type="button" onclick="tmModalRemoveSubtask(' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
       '</div>';
