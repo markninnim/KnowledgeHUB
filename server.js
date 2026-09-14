@@ -5989,6 +5989,135 @@ app.delete('/api/admin/learning/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Task Manager config ──────────────────────────────────────
+// Migrated from the external FPG Task Manager (tasks.readdy.co) on 2026-09-14.
+// Visible to admins + supervisors only (requireAdminOrSupervisor).
+const TM_TABLE    = 'tblaBd21p7rpQbwpl';
+const TM_TITLE    = 'fld6HbK7dJQapMORa';
+const TM_AREA     = 'fldXXdA7HoeCc5DMA';
+const TM_TYPE     = 'fldEq3S9dnHfBUw1l';
+const TM_DURATION = 'fldDzYlgl33hYEWci';
+const TM_PRIORITY = 'fldmCzAM8WizA7g0a';
+const TM_SUB_DONE = 'fldcb5ZUCNCI6oOYa';
+const TM_SUB_TOT  = 'fldtiv48CIcEoiCiE';
+const TM_DUE      = 'fldCtuupDin4CEFP6';
+const TM_NOTES    = 'fldjLeEIAXCAasRHU';
+const TM_ADDED    = 'fld4gk31JmFdzQZng';
+const TM_STATUS   = 'fldmMMp1xKlEXME4g';
+const TM_AREAS = ['General Marketing', 'Brand Strategy', 'Recruitment', 'Recruitment Prospects', 'Retention Strategies', 'LeadGEN', 'Tech/Compliance', 'Data'];
+
+async function tmFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${TM_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+function tmRecordToTask(record) {
+  const f = record.fields;
+  return {
+    id:            record.id,
+    title:         f[TM_TITLE]    || '',
+    area:          f[TM_AREA]     || '',
+    type:          f[TM_TYPE]     || 'One-off',
+    duration:      f[TM_DURATION] || '',
+    priority:      typeof f[TM_PRIORITY] === 'number' ? f[TM_PRIORITY] : null,
+    subtasksDone:  typeof f[TM_SUB_DONE] === 'number' ? f[TM_SUB_DONE] : 0,
+    subtasksTotal: typeof f[TM_SUB_TOT] === 'number' ? f[TM_SUB_TOT] : 0,
+    dueDate:       f[TM_DUE]      || '',
+    notes:         f[TM_NOTES]    || '',
+    added:         f[TM_ADDED]    || record.createdTime.slice(0, 10),
+    status:        f[TM_STATUS]   || 'Active'
+  };
+}
+
+// GET /api/task-manager — all tasks, paginated fetch (108 records fits well under one page's max of 100, so page through if needed)
+app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tmFetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    res.json({ tasks: all.map(tmRecordToTask), areas: TM_AREAS });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/task-manager — create task
+app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+  const { title, area, type, duration, priority, subtasksTotal, dueDate, notes, status } = req.body;
+  if (!title) return res.status(400).json({ error: 'Title required' });
+  try {
+    const fields = {
+      [TM_TITLE]: title,
+      [TM_AREA]: area || TM_AREAS[0],
+      [TM_TYPE]: type || 'One-off',
+      [TM_STATUS]: status || 'Active',
+      // Added is a plain "date" field in Airtable (no time component) — send
+      // just YYYY-MM-DD, same fix applied to the Learning Videos "Added" field.
+      [TM_ADDED]: new Date().toISOString().slice(0, 10)
+    };
+    if (duration) fields[TM_DURATION] = duration;
+    if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
+    if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
+    if (dueDate) fields[TM_DUE] = dueDate;
+    if (notes) fields[TM_NOTES] = notes;
+    const data = await tmFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true })
+    });
+    res.json(tmRecordToTask(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/task-manager/:id — edit task (partial update; also used for subtask progress + status toggles)
+app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+  const { title, area, type, duration, priority, subtasksDone, subtasksTotal, dueDate, notes, status } = req.body;
+  try {
+    const fields = {};
+    if (title !== undefined) fields[TM_TITLE] = title;
+    if (area !== undefined) fields[TM_AREA] = area;
+    if (type !== undefined) fields[TM_TYPE] = type;
+    if (duration !== undefined) fields[TM_DURATION] = duration;
+    if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
+    if (typeof subtasksDone === 'number') fields[TM_SUB_DONE] = subtasksDone;
+    if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
+    if (dueDate !== undefined) fields[TM_DUE] = dueDate;
+    if (notes !== undefined) fields[TM_NOTES] = notes;
+    if (status !== undefined) fields[TM_STATUS] = status;
+    await tmFetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
+    });
+    const fresh = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    res.json(tmRecordToTask(fresh));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/task-manager/:id
+app.delete('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+  try {
+    await tmFetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── CPD Log config ────────────────────────────────────────────
 const CPD_TABLE    = 'tblajx6AAKFtI6K1N';
 const CPD_ACTIVITY = 'fldE8v8i9jHThIkv3';
