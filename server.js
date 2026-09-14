@@ -5949,7 +5949,10 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
   try {
     const data = await lvFetch('', {
       method: 'POST',
-      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString(), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
+      // Added is a plain "date" field in Airtable (no time component) — a
+      // full ISO timestamp is rejected ("Field 'Added' cannot accept the
+      // provided value"). Send just the YYYY-MM-DD date part.
+      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString().slice(0, 10), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
     });
     const recordId = data.records[0].id;
     await lvUploadPresentations(recordId, presentation1, presentation2);
