@@ -8412,6 +8412,39 @@ function tmSponsorName(email) {
   return match ? match.name : email;
 }
 
+// Sponsor picker in the task modal — search-as-you-type over _tmSponsors,
+// same pattern as the Buddy picker in My Account (accFilterBuddy).
+function tmFilterSponsor(query) {
+  var resultsEl = document.getElementById('tm-f-sponsor-results');
+  if (!resultsEl) return;
+  var q = (query || '').trim().toLowerCase();
+  if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; return; }
+  var matches = _tmSponsors.filter(function(u) { return u.name.toLowerCase().indexOf(q) === 0; }).slice(0, 8);
+  if (!matches.length) {
+    resultsEl.innerHTML = '<div style="padding:9px 12px;font-size:12.5px;color:#6b7c8f;">No matches</div>';
+  } else {
+    resultsEl.innerHTML = matches.map(function(u) {
+      return '<div onmousedown="tmSelectSponsor(' + tmIdArg(u.name) + ',' + tmIdArg(u.email) + ')" ' +
+        'style="padding:9px 12px;font-size:13px;color:#003768;cursor:pointer;" ' +
+        'onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'#fff\'">' + tmEsc(u.name) + '</div>';
+    }).join('');
+  }
+  resultsEl.style.display = 'block';
+}
+
+function tmSelectSponsor(name, email) {
+  document.getElementById('tm-f-sponsor-email').value = email;
+  document.getElementById('tm-f-sponsor-search').value = '';
+  document.getElementById('tm-f-sponsor-results').style.display = 'none';
+  document.getElementById('tm-f-sponsor-selected').innerHTML = 'Sponsor: ' + tmEsc(name) + ' — <a href="#" onmousedown="event.preventDefault();tmClearSponsor()" style="color:#6b7c8f;text-decoration:underline;">clear</a>';
+}
+
+function tmClearSponsor() {
+  document.getElementById('tm-f-sponsor-email').value = '';
+  document.getElementById('tm-f-sponsor-search').value = '';
+  document.getElementById('tm-f-sponsor-selected').innerHTML = '';
+}
+
 // Builds the small grey meta line under a card's title — duration, start
 // date, due date, sponsor — only including whichever of those are set.
 function tmCardMeta(t) {
@@ -8692,10 +8725,12 @@ function tmOpenModal(taskId, presetArea) {
         '<input type="text" id="tm-f-duration" value="' + (task ? tmEsc(task.duration) : '') + '" placeholder="e.g. 1 hr" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
       '</div>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Sponsor</label>' +
-      '<select id="tm-f-sponsor" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
-        '<option value="">— No sponsor —</option>' +
-        _tmSponsors.map(function(u) { return '<option value="' + tmEsc(u.email) + '"' + (task && task.sponsorEmail === u.email ? ' selected' : '') + '>' + tmEsc(u.name) + '</option>'; }).join('') +
-      '</select>' +
+      '<div style="position:relative;margin-bottom:12px;">' +
+        '<input id="tm-f-sponsor-search" type="text" autocomplete="off" placeholder="Type a few letters of a name…" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;" oninput="tmFilterSponsor(this.value)" onfocus="tmFilterSponsor(this.value)" onblur="setTimeout(function(){ var r=document.getElementById(\'tm-f-sponsor-results\'); if (r) r.style.display=\'none\'; }, 150)">' +
+        '<input type="hidden" id="tm-f-sponsor-email" value="' + (task && task.sponsorEmail ? tmEsc(task.sponsorEmail) : '') + '">' +
+        '<div id="tm-f-sponsor-results" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:10;background:#fff;border:1px solid #d1d5db;border-radius:7px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.1);"></div>' +
+        '<div id="tm-f-sponsor-selected" style="margin-top:6px;font-size:12.5px;color:#6b7c8f;">' + (task && task.sponsorEmail ? 'Sponsor: ' + tmEsc(tmSponsorName(task.sponsorEmail)) + ' — <a href="#" onmousedown="event.preventDefault();tmClearSponsor()" style="color:#6b7c8f;text-decoration:underline;">clear</a>' : '') + '</div>' +
+      '</div>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Subtasks</label>' +
       '<div id="tm-f-subtasks-wrap" style="background:#f9fafc;border:1px solid #d1d5db;border-radius:8px;padding:12px;margin-bottom:12px;">' +
         '<div id="tm-f-subtasks-progress" style="margin-bottom:10px;"></div>' +
@@ -8797,7 +8832,7 @@ function tmSaveTask(taskId) {
     type: (document.getElementById('tm-f-type') || {}).value,
     duration: (document.getElementById('tm-f-duration') || {}).value,
     priority: priorityVal !== '' ? parseInt(priorityVal, 10) : undefined,
-    sponsorEmail: (document.getElementById('tm-f-sponsor') || {}).value,
+    sponsorEmail: (document.getElementById('tm-f-sponsor-email') || {}).value,
     subtasks: _tmModalSubtasks,
     startDate: (document.getElementById('tm-f-start') || {}).value,
     dueDate: (document.getElementById('tm-f-due') || {}).value,
