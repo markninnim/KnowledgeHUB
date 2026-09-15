@@ -212,6 +212,26 @@
 
   <div class="version-card milestone">
     <div class="version-head">
+      <span class="version-tag">v3.14</span>
+      <span class="milestone-tag">Milestone</span>
+      <span class="version-title">Task Manager Goes Multi-Board, Plus a Big Round of Polish</span>
+      <span class="version-date">15 September 2026</span>
+    </div>
+    <p class="version-summary">Task Manager now supports separate boards per person or team, not just Mark's own list, with a new directory for creating, renaming and (admin-only) deleting boards. Alongside that, a long list of fixes and refinements landed across permissions, priorities, sorting, digest emails and styling.</p>
+    <ul class="changes">
+      <li>Added a multi-board Task Manager: anyone can now get their own board via the new sidebar directory, with full feature parity to the original board, per-person setup, and rename/delete controls (delete is admin-only and requires typing the name to confirm).</li>
+      <li>Added an In Progress status and an "In Play" view/sort so active work surfaces first, plus a Priority filter defaulting to High & Critical, and Critical/High priority pills editable inline from the card.</li>
+      <li>Tightened access: full Task Manager access is Mark-only rather than tied to the general admin flag; supervisors see only their own tasks; Pete Burgess gets a scoped Marketing/sponsor view; the feature correctly follows the currently-acting user under Guardian Mode impersonation.</li>
+      <li>Added a Total Working Days stat and per-task working-day counts (shown only for High/Critical or In Progress tasks), backfilling start dates automatically for existing tasks.</li>
+      <li>Added a manual "Send Digest" button to email a sponsor their task digest on demand, and fixed several digest/completion email bugs (broken Lab links, greeting format, Marketing title, stray HTML entity).</li>
+      <li>Imported named subtask checklists from the original Readdy site, and fixed completed tasks to reappear in their original section when the Completed archive is expanded.</li>
+      <li>Added hover-to-rename for board and section labels, sidebar highlight and duplicate-caption fixes, and cleaned up the priority pill dropdown's styling (sizing, double arrow).</li>
+      <li>Gave the CEO default Lab access and supervisors default Lab tab access; added a Compliance News story on Guardian dual life protection applications.</li>
+    </ul>
+  </div>
+
+  <div class="version-card milestone">
+    <div class="version-head">
       <span class="version-tag">v3.13</span>
       <span class="milestone-tag">Milestone</span>
       <span class="version-title">New Task Manager, Built Into KnowledgeHUB&#8482;</span>
