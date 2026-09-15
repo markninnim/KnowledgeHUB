@@ -6712,7 +6712,10 @@ app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async 
     if (area !== undefined) fields[TM_AREA] = area;
     if (type !== undefined) fields[TM_TYPE] = type;
     if (duration !== undefined) fields[TM_DURATION] = duration;
-    if (typeof priority === 'number') fields[TM_PRIORITY] = priority;
+    // priority is sent explicitly as null when the user picks "None" from
+    // the quick-set dropdown or the edit modal, so it must be distinguished
+    // from simply not being included in the request at all (undefined).
+    if (priority !== undefined) fields[TM_PRIORITY] = typeof priority === 'number' ? priority : null;
     if (sponsorEmail !== undefined) fields[TM_SPONSOR] = String(sponsorEmail || '').toLowerCase();
     if (subtasks !== undefined) {
       // Whole-checklist replace — the client always sends the full current

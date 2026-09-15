@@ -8724,7 +8724,7 @@ function tmTaskCard(t, opts) {
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
             '<span style="color:#003768;font-size:14px;font-weight:700;' + (t.status === 'Done' ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</span>' +
             ((level.key === 'high' || level.key === 'urgent') ?
-              '<select onclick="event.stopPropagation()" onchange="event.stopPropagation();tmQuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 20px 2px 9px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27' + encodeURIComponent(level.color) + '%27 stroke-width=%273%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 6px center;background-size:9px;">' +
+              '<select onclick="event.stopPropagation()" onchange="event.stopPropagation();tmQuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 6px 2px 9px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;">' +
                 TM_PRIORITY_LEVELS.map(function(l) {
                   return '<option value="' + (l.value == null ? '' : l.value) + '"' + (l.key === level.key ? ' selected' : '') + '>' + l.label + '</option>';
                 }).join('') +
