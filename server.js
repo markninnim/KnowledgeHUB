@@ -6238,9 +6238,12 @@ app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (re
     let all = [];
     let offset;
     do {
-      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100', filterByFormula: formula });
-      if (offset) qs.set('offset', offset);
-      const data = await tm2Fetch(`?${qs.toString()}`);
+      // formula is already URI-encoded above — building this by hand (rather
+      // than via URLSearchParams, which would re-encode it and produce an
+      // "Invalid formula" error from Airtable) keeps it encoded exactly once.
+      let qs = `returnFieldsByFieldId=true&pageSize=100&filterByFormula=${formula}`;
+      if (offset) qs += `&offset=${encodeURIComponent(offset)}`;
+      const data = await tm2Fetch(`?${qs}`);
       all = all.concat(data.records || []);
       offset = data.offset;
     } while (offset);
