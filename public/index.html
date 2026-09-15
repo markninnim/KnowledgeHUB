@@ -5230,7 +5230,6 @@ Consolidating debts will increase the loan to value which can impact future deal
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <h2 id="tm2-page-title" style="color:#003768;font-size:20px;margin:0;">Task Manager</h2>
-              <button id="tm2-rename-board-btn" onclick="tm2OpenRenameBoardModal()" title="Rename this board" style="display:none;background:transparent;border:none;color:#6b7c8f;padding:4px;border-radius:7px;cursor:pointer;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
             </div>
             <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">A separate task board, independent from the main Task Manager.</p>
           </div>
@@ -9464,11 +9463,20 @@ function tm2RenderBoardLinks() {
   wrap.innerHTML = _tm2Boards.map(function(b) {
     var active = b.id === _tm2CurrentBoardId;
     var idArg = tmIdArg(b.id);
-    return '<a href="#" data-tm2-board="' + tmEsc(b.id) + '" class="' + (active ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:space-between;gap:6px;" ' +
+    var icons = '';
+    // Pencil (rename) is available to anyone who can reach this list at all
+    // — same permission as creating a board. The x (delete) stays
+    // admin-only. Both are hidden until the row is hovered.
+    icons += '<span class="tm2-row-icon" title="Rename board" onclick="event.preventDefault();event.stopPropagation();tm2OpenRenameBoardModal(' + idArg + ')" style="opacity:0;transition:opacity .1s;flex-shrink:0;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;padding:2px;">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>';
+    if (isAdmin) {
+      icons += '<span class="tm2-row-icon" title="Delete board" onclick="event.preventDefault();event.stopPropagation();tm2QuickDeleteBoard(' + idArg + ')" style="opacity:0;transition:opacity .1s;flex-shrink:0;color:rgba(255,255,255,.6);font-size:15px;line-height:1;padding:2px 4px;cursor:pointer;">&times;</span>';
+    }
+    return '<a href="#" data-tm2-board="' + tmEsc(b.id) + '" class="' + (active ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:space-between;gap:2px;" ' +
       'onclick="tm2SelectBoard(' + idArg + ',this);return false;" ' +
-      (isAdmin ? 'onmouseenter="var x=this.querySelector(\'.tm2-x-del\');if(x)x.style.opacity=1;" onmouseleave="var x=this.querySelector(\'.tm2-x-del\');if(x)x.style.opacity=0;"' : '') + '>' +
+      'onmouseenter="this.querySelectorAll(\'.tm2-row-icon\').forEach(function(x){x.style.opacity=1;})" onmouseleave="this.querySelectorAll(\'.tm2-row-icon\').forEach(function(x){x.style.opacity=0;})">' +
       '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + tmEsc(b.ownerName || b.name) + '</span>' +
-      (isAdmin ? '<span class="tm2-x-del" title="Delete board" onclick="event.preventDefault();event.stopPropagation();tm2QuickDeleteBoard(' + idArg + ')" style="opacity:0;transition:opacity .1s;flex-shrink:0;color:rgba(255,255,255,.6);font-size:15px;line-height:1;padding:2px 4px;cursor:pointer;">&times;</span>' : '') +
+      '<span style="display:flex;align-items:center;flex-shrink:0;">' + icons + '</span>' +
     '</a>';
   }).join('');
 }
@@ -9558,9 +9566,15 @@ function tm2SaveAddNew() {
     .catch(function() { alert('Could not create the task manager.'); if (btn) { btn.disabled = false; btn.textContent = 'Create'; } });
 }
 
-function tm2OpenRenameBoardModal() {
-  if (!_tm2CurrentBoardId) return;
-  var current = _tm2Boards.find(function(b) { return b.id === _tm2CurrentBoardId; });
+// Reachable from the pencil on any board's sidebar link (hover to reveal),
+// so it works for whichever board you're pointing at — not just whichever
+// one happens to be open on the page. Falls back to the open board if
+// called with no id (kept for safety, though nothing calls it that way now).
+var _tm2RenameTargetId = null;
+function tm2OpenRenameBoardModal(boardId) {
+  _tm2RenameTargetId = boardId || _tm2CurrentBoardId;
+  if (!_tm2RenameTargetId) return;
+  var current = _tm2Boards.find(function(b) { return b.id === _tm2RenameTargetId; });
   var isAdmin = !!(_currentUser && _currentUser.isAdmin);
   var overlay = document.createElement('div');
   overlay.id = 'tm2-rename-board-modal-overlay';
@@ -9587,20 +9601,19 @@ function tm2OpenRenameBoardModal() {
 // the highest-stakes delete in Task Manager and gets the strictest
 // confirmation: typing the board's own name, not just a fixed word.
 function tm2DeleteBoard() {
-  if (!_tm2CurrentBoardId) return;
-  var current = _tm2Boards.find(function(b) { return b.id === _tm2CurrentBoardId; });
-  var name = current ? current.ownerName : _tm2CurrentBoardId;
+  var boardId = _tm2RenameTargetId || _tm2CurrentBoardId;
+  if (!boardId) return;
+  var current = _tm2Boards.find(function(b) { return b.id === boardId; });
+  var name = current ? current.ownerName : boardId;
   tmConfirmDelete('Delete Board', 'This permanently deletes <strong>' + tmEsc(name) + '\'s Task Manager</strong> and every task in it. This cannot be undone.', name, function() {
-    var boardId = _tm2CurrentBoardId;
     fetch('/api/task-manager-2/board?boardId=' + encodeURIComponent(boardId), { method: 'DELETE' })
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.error) { alert(d.error); return; }
         var overlay = document.getElementById('tm2-rename-board-modal-overlay');
         if (overlay) overlay.remove();
-        _tm2CurrentBoardId = null;
+        if (_tm2CurrentBoardId === boardId) { _tm2CurrentBoardId = null; loadTaskManager2(); }
         tm2LoadBoards();
-        loadTaskManager2();
       })
       .catch(function() { alert('Could not delete board.'); });
   });
@@ -9609,13 +9622,17 @@ function tm2DeleteBoard() {
 function tm2SaveBoardName() {
   var name = ((document.getElementById('tm2-f-board-name') || {}).value || '').trim();
   if (!name) { alert('Board name is required.'); return; }
+  var boardId = _tm2RenameTargetId || _tm2CurrentBoardId;
   var btn = document.getElementById('tm2-rename-board-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: _tm2CurrentBoardId, name: name }) })
+  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: boardId, name: name }) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.error) { alert(d.error); return; }
-      tm2ApplyBoardName(d.name);
+      // The page title only changes if you're renaming whichever board is
+      // currently open — renaming a different one from the sidebar updates
+      // its link text but leaves the open board's page alone.
+      if (boardId === _tm2CurrentBoardId) tm2ApplyBoardName(d.name);
       tm2LoadBoards();
       var overlay = document.getElementById('tm2-rename-board-modal-overlay');
       if (overlay) overlay.remove();
@@ -9632,16 +9649,13 @@ function tm2ApplyBoardName(name) {
 function loadTaskManager2() {
   var listEl = document.getElementById('tm2-list');
   var adminActions = document.getElementById('tm2-admin-actions');
-  var renameBtn = document.getElementById('tm2-rename-board-btn');
   if (!_tm2CurrentBoardId) {
     if (adminActions) adminActions.style.display = 'none';
-    if (renameBtn) renameBtn.style.display = 'none';
     tm2ApplyBoardName('Task Manager');
     if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Pick a task manager from the sidebar, or click <strong>Add New</strong> to create one.</div>';
     return;
   }
   if (adminActions) adminActions.style.display = 'flex';
-  if (renameBtn) renameBtn.style.display = 'flex';
   fetch('/api/task-manager-2?boardId=' + encodeURIComponent(_tm2CurrentBoardId)).then(function(r) { return r.json(); }).then(function(d) {
     if (d.error) {
       console.error('[task-manager-2] load failed:', d.error);
@@ -14835,13 +14849,16 @@ function labShowSection(section, link) {
     var sec = document.getElementById('lab-section-' + s);
     if (sec) sec.style.display = (s === section) ? '' : 'none';
   });
-  // Task Manager can be reached via two different sidebar links (Mark's
-  // full view and Pete's scoped Marketing view) pointing at the same
-  // section, so active state is driven by which link was actually clicked
-  // rather than a 1:1 section-to-nav-id mapping.
-  ['lab-nav-payslip', 'lab-nav-bank', 'lab-nav-task', 'lab-nav-marketing', 'lab-nav-task2'].forEach(function(navId) {
-    var nav = document.getElementById(navId);
-    if (nav) nav.classList.toggle('active', nav === link);
+  // Task Manager can be reached via several different sidebar links (Mark's
+  // full view, Pete's scoped Marketing view, and any number of dynamically
+  // rendered board links in the Task Manager 2 directory) pointing at the
+  // same section, so active state is driven by which link was actually
+  // clicked. This clears every link in the Lab sidebar — not just a fixed
+  // list of ids — so a dynamically added board link doesn't stay stuck
+  // highlighted after switching to a different link (it used to, since it
+  // isn't one of the ids the old fixed list knew about).
+  document.querySelectorAll('#sidebar-lab a').forEach(function(nav) {
+    nav.classList.toggle('active', nav === link);
   });
   // Task Manager (either board) gets its own full-width page feel — the
   // shared "Lab / MVP build" heading and its 820px text-column width are
