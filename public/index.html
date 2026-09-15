@@ -9417,9 +9417,22 @@ function tm2RenderBoardLinks() {
 
 function tm2SelectBoard(boardId, link) {
   _tm2CurrentBoardId = boardId;
+  // Fully reset per-board state before loading the new board's data — this
+  // used to carry over the previous board's sections/tasks/filters for a
+  // moment, which could let a task get saved against the wrong board's
+  // section (or a name left over from another board entirely).
+  _tm2Tasks = null;
+  _tm2Areas = [];
+  _tm2Sections = [];
+  _tm2Collapsed = {};
+  _tm2QuickFilter = null;
+  _tm2SelectMode = false;
+  _tm2Selected = {};
+  _tm2ShowCompleted = false;
   tm2RenderBoardLinks();
   labShowSection('task-manager-2', link || document.querySelector('[data-tm2-board="' + boardId + '"]'));
-  loadTaskManager2();
+  // labShowSection already triggers loadTaskManager2() for this section —
+  // no need to call it again here (that caused a duplicate fetch).
 }
 
 // "Add New" — creates a task manager for any named person. Any
@@ -9525,7 +9538,11 @@ function loadTaskManager2() {
   if (adminActions) adminActions.style.display = 'flex';
   if (renameBtn) renameBtn.style.display = 'flex';
   fetch('/api/task-manager-2?boardId=' + encodeURIComponent(_tm2CurrentBoardId)).then(function(r) { return r.json(); }).then(function(d) {
-    if (d.error) { if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>'; return; }
+    if (d.error) {
+      console.error('[task-manager-2] load failed:', d.error);
+      if (listEl) listEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:20px 0;">Could not load tasks — ' + tmEsc(d.error) + '</div>';
+      return;
+    }
     if (d.noBoard) {
       _tm2CurrentBoardId = null;
       if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">That task manager no longer exists.</div>';
@@ -9538,8 +9555,9 @@ function loadTaskManager2() {
     tm2RebuildSections();
     tm2PopulateSponsorFilter();
     tm2Render();
-  }).catch(function() {
-    if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>';
+  }).catch(function(err) {
+    console.error('[task-manager-2] load request failed:', err);
+    if (listEl) listEl.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:20px 0;">Could not load tasks — network or server error, check the console.</div>';
   });
 }
 
