@@ -9460,10 +9460,37 @@ function tm2LoadBoards() {
 function tm2RenderBoardLinks() {
   var wrap = document.getElementById('lab-nav-task2-boards');
   if (!wrap) return;
+  var isAdmin = !!(_currentUser && _currentUser.isAdmin);
   wrap.innerHTML = _tm2Boards.map(function(b) {
     var active = b.id === _tm2CurrentBoardId;
-    return '<a href="#" data-tm2-board="' + tmEsc(b.id) + '" class="' + (active ? 'active' : '') + '" onclick="tm2SelectBoard(' + tmIdArg(b.id) + ',this);return false;">' + tmEsc(b.ownerName || b.name) + '</a>';
+    var idArg = tmIdArg(b.id);
+    return '<a href="#" data-tm2-board="' + tmEsc(b.id) + '" class="' + (active ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:space-between;gap:6px;" ' +
+      'onclick="tm2SelectBoard(' + idArg + ',this);return false;" ' +
+      (isAdmin ? 'onmouseenter="var x=this.querySelector(\'.tm2-x-del\');if(x)x.style.opacity=1;" onmouseleave="var x=this.querySelector(\'.tm2-x-del\');if(x)x.style.opacity=0;"' : '') + '>' +
+      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + tmEsc(b.ownerName || b.name) + '</span>' +
+      (isAdmin ? '<span class="tm2-x-del" title="Delete board" onclick="event.preventDefault();event.stopPropagation();tm2QuickDeleteBoard(' + idArg + ')" style="opacity:0;transition:opacity .1s;flex-shrink:0;color:rgba(255,255,255,.6);font-size:15px;line-height:1;padding:2px 4px;cursor:pointer;">&times;</span>' : '') +
+    '</a>';
   }).join('');
+}
+
+// Same admin-only, type-the-name confirmation as deleting from inside the
+// board itself — this is just a faster way in from the sidebar.
+function tm2QuickDeleteBoard(boardId) {
+  var board = _tm2Boards.find(function(b) { return b.id === boardId; });
+  var name = board ? board.ownerName : boardId;
+  tmConfirmDelete('Delete Board', 'This permanently deletes <strong>' + tmEsc(name) + '\'s Task Manager</strong> and every task in it. This cannot be undone.', name, function() {
+    fetch('/api/task-manager-2/board?boardId=' + encodeURIComponent(boardId), { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) { alert(d.error); return; }
+        if (_tm2CurrentBoardId === boardId) {
+          _tm2CurrentBoardId = null;
+          loadTaskManager2();
+        }
+        tm2LoadBoards();
+      })
+      .catch(function() { alert('Could not delete board.'); });
+  });
 }
 
 function tm2SelectBoard(boardId, link) {
