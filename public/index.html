@@ -8505,15 +8505,23 @@ function tmMaybeAutoBackfillSubtasks() {
 
 // Sidebar/label for the original board — cosmetic only (see server.js
 // comment near /api/task-manager/label). Loaded once per page, same
-// once-only pattern as tm2LoadBoards.
+// once-only pattern as tm2LoadBoards. Also drives the page title itself
+// (tmApplyScopeUi reads _tmLabel) so renaming in the sidebar changes both
+// in one place.
+var _tmLabel = 'Task Manager';
 var _tmLabelLoaded = false;
 function tmLoadLabel() {
   if (_tmLabelLoaded) return;
   _tmLabelLoaded = true;
   fetch('/api/task-manager/label').then(function(r) { return r.json(); }).then(function(d) {
     if (d.error || !d.label) return;
+    _tmLabel = d.label;
     var el = document.getElementById('lab-nav-task-label');
     if (el) el.textContent = d.label;
+    if (_tmScope !== 'own') {
+      var title = document.getElementById('tm-page-title');
+      if (title) title.textContent = _tmLabel;
+    }
   }).catch(function() {});
 }
 
@@ -8546,8 +8554,13 @@ function tmSaveLabel() {
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.error) { alert(d.error); return; }
+      _tmLabel = d.label;
       var el = document.getElementById('lab-nav-task-label');
       if (el) el.textContent = d.label;
+      if (_tmScope !== 'own') {
+        var title = document.getElementById('tm-page-title');
+        if (title) title.textContent = _tmLabel;
+      }
       var overlay = document.getElementById('tm-rename-label-modal-overlay');
       if (overlay) overlay.remove();
     })
@@ -8588,7 +8601,7 @@ function tmApplyScopeUi() {
     if (title) title.textContent = 'My Tasks';
     if (subtitle) subtitle.textContent = 'Tasks you sponsor, across every area.';
   } else {
-    if (title) title.textContent = 'Task Manager';
+    if (title) title.textContent = _tmLabel;
     if (subtitle) subtitle.textContent = 'Internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.';
   }
 }
