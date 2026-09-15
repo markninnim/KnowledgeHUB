@@ -6075,11 +6075,16 @@ function tmRecordToTask(record) {
 // and act on tasks where they're the sponsor (which may be none at all;
 // that's just an empty list, not a 403).
 const TM_FULL_ACCESS_EMAIL = 'mark.ninnim@financeplanning.co.uk';
+// Unlike most permission checks in this app (which use the *original*
+// identity under Guardian Mode, so an admin's own permissions always
+// apply regardless of who they're viewing as), Task Manager scope is
+// keyed off whoever is currently being acted as. This is deliberate: the
+// whole point is "what does this account see", so if Mark uses Guardian
+// Mode to check Pete's session, he should see Pete's scoped view, not his
+// own full one.
 function requireTaskManagerAccess(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
-  const u = req.session.user;
-  const orig = req.session.originalUser;
-  const effective = orig || u; // in Guardian Mode, check original identity
+  const effective = req.session.user;
   if (!effective) return res.status(403).json({ error: 'Forbidden' });
   req.tmScope = (effective.email || '').toLowerCase() === TM_FULL_ACCESS_EMAIL ? 'all' : 'own';
   next();
@@ -6089,7 +6094,7 @@ function requireTaskManagerAccess(req, res, next) {
 // just without setting req.tmScope since these routes don't need it.
 function requireTaskManagerFullAccess(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
-  const effective = req.session.originalUser || req.session.user;
+  const effective = req.session.user;
   if (!effective || (effective.email || '').toLowerCase() !== TM_FULL_ACCESS_EMAIL) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -6110,8 +6115,7 @@ app.get('/api/task-manager', requireAuth, requireTaskManagerAccess, async (req, 
     } while (offset);
     let tasks = all.map(tmRecordToTask);
     if (req.tmScope === 'own') {
-      const effective = (req.session.originalUser || req.session.user);
-      const myEmail = (effective.email || '').toLowerCase();
+      const myEmail = (req.session.user.email || '').toLowerCase();
       tasks = tasks.filter(t => t.sponsorEmail === myEmail);
     }
     const sponsors = await fetchAllUserNames(null);
@@ -6391,8 +6395,7 @@ app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async 
       const before = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
       priorStatus = before.fields[TM_STATUS] || 'Active';
       if (req.tmScope === 'own') {
-        const effective = (req.session.originalUser || req.session.user);
-        const myEmail = (effective.email || '').toLowerCase();
+        const myEmail = (req.session.user.email || '').toLowerCase();
         if ((before.fields[TM_SPONSOR] || '').toLowerCase() !== myEmail) {
           return res.status(403).json({ error: 'You can only edit tasks you sponsor.' });
         }
@@ -6439,8 +6442,7 @@ app.delete('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async
   try {
     if (req.tmScope === 'own') {
       const before = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
-      const effective = (req.session.originalUser || req.session.user);
-      const myEmail = (effective.email || '').toLowerCase();
+      const myEmail = (req.session.user.email || '').toLowerCase();
       if ((before.fields[TM_SPONSOR] || '').toLowerCase() !== myEmail) {
         return res.status(403).json({ error: 'You can only delete tasks you sponsor.' });
       }
