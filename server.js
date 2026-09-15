@@ -6469,6 +6469,30 @@ function requireTaskManagerFullAccess(req, res, next) {
   next();
 }
 
+// The original board's sidebar/page label is cosmetic-only — unlike the
+// Task Manager 2 boards, this table is one shared set of real tasks used
+// across the org, so there's no delete here, just a display name. Stored
+// in App Settings alongside the Task Manager 2 board names.
+const TM1_LABEL_KEY = 'task_board_1_label';
+app.get('/api/task-manager/label', requireAuth, requireTaskManagerAccess, async (req, res) => {
+  try {
+    const label = await getAppSetting(TM1_LABEL_KEY, 'Mark Ninnim');
+    res.json({ label });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.put('/api/task-manager/label', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
+  const label = String(req.body.label || '').trim();
+  if (!label) return res.status(400).json({ error: 'Name required' });
+  try {
+    await setAppSetting(TM1_LABEL_KEY, label);
+    res.json({ label });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/task-manager — all tasks, paginated fetch (108 records fits well under one page's max of 100, so page through if needed)
 app.get('/api/task-manager', requireAuth, requireTaskManagerAccess, async (req, res) => {
   try {
