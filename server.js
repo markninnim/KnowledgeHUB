@@ -6067,8 +6067,26 @@ function tmRecordToTask(record) {
   };
 }
 
+// Task Manager access: full (all tasks, section/task management) for
+// admins and supervisors. A named list of sponsors who aren't otherwise
+// admins/supervisors — currently just Pete Burgess — get a scoped view:
+// they can only see and act on tasks where they're the sponsor.
+const TM_SCOPED_SPONSOR_EMAILS = [PETE_BURGESS_EMAIL];
+function requireTaskManagerAccess(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const u = req.session.user;
+  const orig = req.session.originalUser;
+  const effective = orig || u; // in Guardian Mode, check original identity
+  if (effective && (effective.isAdmin || effective.isSupervisor)) { req.tmScope = 'all'; return next(); }
+  if (effective && TM_SCOPED_SPONSOR_EMAILS.indexOf((effective.email || '').toLowerCase()) !== -1) {
+    req.tmScope = 'own';
+    return next();
+  }
+  res.status(403).json({ error: 'Forbidden' });
+}
+
 // GET /api/task-manager — all tasks, paginated fetch (108 records fits well under one page's max of 100, so page through if needed)
-app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+app.get('/api/task-manager', requireAuth, requireTaskManagerAccess, async (req, res) => {
   try {
     let all = [];
     let offset;
@@ -6079,19 +6097,152 @@ app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, 
       all = all.concat(data.records || []);
       offset = data.offset;
     } while (offset);
+    let tasks = all.map(tmRecordToTask);
+    if (req.tmScope === 'own') {
+      const effective = (req.session.originalUser || req.session.user);
+      const myEmail = (effective.email || '').toLowerCase();
+      tasks = tasks.filter(t => t.sponsorEmail === myEmail);
+    }
     const sponsors = await fetchAllUserNames(null);
-    res.json({ tasks: all.map(tmRecordToTask), areas: TM_AREAS, sponsors });
+    res.json({ tasks, areas: TM_AREAS, sponsors, scope: req.tmScope });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Exact "Added DD Mon YY" dates scraped from the original tasks.readdy.co
+// site (the source of the 108 migrated tasks) on 2026-09-15 — the site
+// never had a distinct start-date field, so this is the closest source of
+// truth for when each task actually started. Keyed by title, normalised at
+// match time so a stray dash/quote style difference doesn't cause a miss.
+const TM_READDY_ADDED_DATES = {
+  'order paul gent brochures': '2026-09-13',
+  'restore - refer a friend webpage': '2026-06-10',
+  'pg website changes': '2026-06-26',
+  'update staff buys for andrew drake': '2026-09-04',
+  'order protection leaflet for paul gent': '2026-09-13',
+  'update fee agreement.': '2026-08-06',
+  'pg new brochure': '2026-04-13',
+  'teaser video for summer conference': '2026-09-04',
+  'new protection sales aid - update for 5th product': '2026-04-13',
+  'redesign fpg folders & order': '2026-05-15',
+  'jack savory graphic': '2026-05-28',
+  'staff buys - joe white employee version': '2026-05-15',
+  'scott sutton display board': '2026-06-10',
+  'conference invite - friday 11th september': '2026-06-15',
+  'ian court - marketing support': '2026-06-18',
+  '5000 review pr': '2026-06-07',
+  'add asu 5th way to brochure': '2026-06-26',
+  'paul gent ea leaflet': '2026-07-13',
+  'arbin business cards': '2026-04-27',
+  'daniel grant - website': '2026-06-10',
+  'pi return': '2026-08-06',
+  'staff buy graphics': '2026-05-29',
+  'pg folders re-order': '2026-04-13',
+  'new paul gent awards graphic': '2026-05-07',
+  'staff buys - joe white edition': '2026-04-24',
+  'staff buy - alex version': '2026-05-15',
+  'claire lipscomb a5 ea leaflet': '2026-06-26',
+  'ian court - powerpoint presentation': '2026-06-15',
+  'drake - flags & leaflets': '2026-05-11',
+  'andrew drake - website': '2026-06-10',
+  'joe white - mansells flyer': '2026-07-13',
+  'bryce business cards': '2026-06-26',
+  'advert for awards event': '2026-04-13',
+  'order door signs for ms': '2026-04-16',
+  'email signature': '2026-04-13',
+  'how can we make broker labels - knowledgehub™': '2026-07-27',
+  'individual broker branding and logo': '2026-04-13',
+  'apply trusted.local.advice': '2026-04-13',
+  'recruitment jv partner proposal': '2026-04-13',
+  'straightin - linkedin marketing': '2026-06-08',
+  'recruitment social media': '2026-04-13',
+  'linkedin network page': '2026-04-13',
+  'fitch & fitch - onboarding': '2026-04-13',
+  'clearscore - meeting with reuben': '2026-04-13',
+  'follow up andrew drake': '2026-04-20',
+  'autocrm update 2.0': '2026-04-13',
+  'broker websites': '2026-04-13',
+  'broker nps': '2026-04-13',
+  'ms advice': '2026-06-18',
+  'auto crm ai': '2026-06-08',
+  'mortgage booked - due diligence': '2026-06-18',
+  'fps lead source': '2026-04-13',
+  'lokesh gurung leadgen support': '2026-07-02',
+  'induction leadgen': '2026-04-13',
+  'estate agent jv partner proposal': '2026-04-13',
+  'distribute facebook video with social media activities': '2026-06-07',
+  'staff buy - local.trusted.advice': '2026-04-13',
+  'build equity release consumer duty questionnaire': '2026-09-13',
+  'build protection consumer duty questionannire': '2026-09-13',
+  'new consumer duty questionnaire email and process': '2026-06-26',
+  'calendar overhaul': '2026-04-13',
+  'secure uploads - deprecation': '2026-04-13',
+  'quickstart - deprecation': '2026-04-13',
+  'new knowledgehub™ - post mvp': '2026-04-13',
+  'legacy websites - deprication': '2026-04-13',
+  'site ranking on llm ai': '2026-04-13',
+  'fee collection tool overhaul': '2026-04-13',
+  'website broker customer tracking': '2026-04-13',
+  'cpd update': '2026-05-17',
+  'add l&g certificate to network site': '2026-07-03',
+  'andrew drake - scripts': '2026-06-10',
+  'language option on the website': '2026-05-15',
+  'update locations on calendar': '2026-06-10',
+  'ben burgess signable': '2026-04-27',
+  'suitability understanding model - no appetite': '2026-05-29',
+  'consumer duty questionnaire': '2026-06-15',
+  'change rooms in online calendar': '2026-06-15',
+  'insurer logos - complete fs': '2026-04-13',
+  'keyfs.com changes': '2026-04-13',
+  'swap chris to joe m': '2026-09-02',
+  'autocrm data update - reengage with expired renewals': '2026-04-13',
+  'quickstart data - remove from jotform.com': '2026-04-13',
+  'secure upload data - remove from jotform.com': '2026-04-13',
+  'link between acre and pb developer': '2026-07-06',
+  'month end auto crm and feefo uploads.': '2026-06-07',
+  'alex strange - introduction': '2026-06-09',
+  'change case ownership karen looker > alex strange': '2026-06-08',
+  'remove - lynne.blackman@btinternet.com': '2026-07-06',
+  'remove - debbiebremner64@gmail.com': '2026-06-09',
+  'find data for andrew drake - giuseppe': '2026-07-03',
+  'remove - bob.peircev8@gmail.com': '2026-07-21',
+  'chris bartrip - feefo': '2026-05-15',
+  'change case ownership for lee pullings clients > andrew drake': '2026-06-01',
+  'lee pulling - leaving email': '2026-06-01',
+  'remove - fkwandahor@hotmail.com': '2026-06-09',
+  'rachel alder and joseph alder - re-invite': '2026-04-27',
+  'c.a.scotland@googlemail.com - remove': '2026-06-22',
+  'andrew drake introduction email': '2026-06-09',
+  'remove lee from campaign monitor': '2026-06-01',
+  'remove james flook': '2026-07-03',
+  'find data for andrew drake - juliet grenville': '2026-07-03',
+  'karen looker - leaving email': '2026-06-09',
+  'remove - c.a.scotland@googlemail.com': '2026-06-26',
+  'removal: francesca.millar@outlook.com': '2026-04-13',
+  'removal: rory.millar@hampsonwall.com': '2026-04-13',
+  'removal: agiehwek@yahoo.co.uk': '2026-04-13',
+  'change - markbaldock88@gmail.com': '2026-04-16',
+  'dead - karen@edgerton.biz': '2026-04-16'
+};
+
+function tmNormTitle(s) {
+  return String(s || '')
+    .replace(/[–—]/g, '-')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 // POST /api/task-manager/backfill-start-dates — one-time migration helper.
-// The original Readdy site only ever showed one date per task ("Added DD Mon
-// YY"), which is exactly what's already stored in our TM_ADDED field from
-// the 2026-09-14 migration. This copies that date into TM_START (Start
+// The original Readdy site (the source of these 108 tasks) only ever showed
+// one date per task ("Added DD Mon YY"); TM_READDY_ADDED_DATES above is that
+// exact list, scraped on 2026-09-15. This copies it into TM_START (Start
 // date) for any task that doesn't already have one — never overwrites a
-// start date that's already been set by hand. Safe to call more than once.
+// start date that's already been set by hand, and is safe to call more than
+// once. Matches by normalised title, so unmatched titles come back in the
+// response for a manual check rather than silently failing.
 app.post('/api/task-manager/backfill-start-dates', requireAuth, requireAdminOrSupervisor, async (req, res) => {
   try {
     let all = [];
@@ -6104,9 +6255,16 @@ app.post('/api/task-manager/backfill-start-dates', requireAuth, requireAdminOrSu
       offset = data.offset;
     } while (offset);
 
-    const toUpdate = all
-      .filter(r => !r.fields[TM_START] && r.fields[TM_ADDED])
-      .map(r => ({ id: r.id, fields: { [TM_START]: r.fields[TM_ADDED] } }));
+    const toUpdate = [];
+    const unmatched = [];
+    const alreadySet = [];
+    all.forEach(r => {
+      const title = r.fields[TM_TITLE] || '';
+      if (r.fields[TM_START]) { alreadySet.push(title); return; }
+      const date = TM_READDY_ADDED_DATES[tmNormTitle(title)];
+      if (date) toUpdate.push({ id: r.id, fields: { [TM_START]: date } });
+      else unmatched.push(title);
+    });
 
     let updated = 0;
     for (let i = 0; i < toUpdate.length; i += 10) {
@@ -6115,12 +6273,7 @@ app.post('/api/task-manager/backfill-start-dates', requireAuth, requireAdminOrSu
       updated += batch.length;
     }
 
-    res.json({
-      totalTasks: all.length,
-      updated,
-      alreadyHadStartDate: all.filter(r => r.fields[TM_START]).length,
-      noAddedDate: all.filter(r => !r.fields[TM_START] && !r.fields[TM_ADDED]).length
-    });
+    res.json({ totalTasks: all.length, updated, alreadyHadStartDate: alreadySet.length, unmatchedTitles: unmatched });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -6214,16 +6367,25 @@ app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req,
 });
 
 // PATCH /api/task-manager/:id — edit task (partial update; also used for subtask progress + status toggles)
-app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async (req, res) => {
   const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   try {
     // Grab the prior status first (only needed when status is actually
     // being changed) so we can tell whether this PATCH is the moment the
-    // task flips to Done — that's the only time the sponsor gets emailed.
+    // task flips to Done — that's the only time the sponsor gets emailed. A
+    // scoped (sponsor-only) user also needs this fetch to confirm they
+    // actually sponsor the task before any write is allowed.
     let priorStatus = null;
-    if (status !== undefined) {
+    if (status !== undefined || req.tmScope === 'own') {
       const before = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
       priorStatus = before.fields[TM_STATUS] || 'Active';
+      if (req.tmScope === 'own') {
+        const effective = (req.session.originalUser || req.session.user);
+        const myEmail = (effective.email || '').toLowerCase();
+        if ((before.fields[TM_SPONSOR] || '').toLowerCase() !== myEmail) {
+          return res.status(403).json({ error: 'You can only edit tasks you sponsor.' });
+        }
+      }
     }
     const fields = {};
     if (title !== undefined) fields[TM_TITLE] = title;
@@ -6262,8 +6424,16 @@ app.patch('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async 
 });
 
 // DELETE /api/task-manager/:id
-app.delete('/api/task-manager/:id', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+app.delete('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async (req, res) => {
   try {
+    if (req.tmScope === 'own') {
+      const before = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+      const effective = (req.session.originalUser || req.session.user);
+      const myEmail = (effective.email || '').toLowerCase();
+      if ((before.fields[TM_SPONSOR] || '').toLowerCase() !== myEmail) {
+        return res.status(403).json({ error: 'You can only delete tasks you sponsor.' });
+      }
+    }
     await tmFetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ ok: true });
   } catch (err) {

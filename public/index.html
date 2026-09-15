@@ -407,6 +407,10 @@ select:focus { outline:none; }
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK</span></div>
       <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
     </div>
+    <div id="lab-nav-marketing-wrap" style="display:none;">
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">MARKETING</span></div>
+      <a href="#" id="lab-nav-marketing" onclick="labShowSection('task-manager',this);return false;">Pete Burgess</a>
+    </div>
   </div>
   <!-- AutoCRM sidebar -->
   <div id="sidebar-autocrm" style="display:none">
@@ -5157,10 +5161,10 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="lab-section-task-manager" style="display:none;max-width:100%;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;">
           <div>
-            <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">Task Manager</h2>
-            <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.</p>
+            <h2 id="tm-page-title" style="color:#003768;font-size:20px;margin:0 0 4px;">Task Manager</h2>
+            <p id="tm-page-subtitle" style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">Internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.</p>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0;">
+          <div id="tm-admin-actions" style="display:flex;gap:8px;flex-shrink:0;">
             <button id="tm-select-btn" onclick="tmToggleSelectMode()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Select</button>
             <button onclick="tmOpenSectionModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Section</button>
             <button onclick="tmOpenModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
@@ -8386,6 +8390,7 @@ var _tmSelected = {};    // { taskId: true } — only meaningful while _tmSelect
 var _tmShowCompleted = false;  // when true, reveals the archived "Completed" section
 var _tmTaskOrder = tmLoadTaskOrder();  // { sectionName: [taskId, ...] } — manual drag order, persisted
 var _tmDragId = null;   // taskId currently being dragged
+var _tmScope = 'all';   // 'all' (admin/supervisor — full control) | 'own' (sponsor-only, e.g. Pete Burgess)
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
@@ -8393,6 +8398,8 @@ function loadTaskManager() {
     _tmTasks = d.tasks || [];
     _tmAreas = d.areas || [];
     _tmSponsors = d.sponsors || [];
+    _tmScope = d.scope || 'all';
+    tmApplyScopeUi();
     tmRebuildSections();
     tmPopulateSponsorFilter();
     tmRender();
@@ -8400,6 +8407,25 @@ function loadTaskManager() {
     var el = document.getElementById('tm-list');
     if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:20px 0;">Could not load tasks.</div>';
   });
+}
+
+// A scoped viewer (currently just Pete Burgess, via the Marketing sidebar
+// link) only sees tasks they sponsor, so section/task management controls
+// that only make sense for the full admin view are hidden entirely rather
+// than shown-then-403'd.
+function tmApplyScopeUi() {
+  var isScoped = _tmScope === 'own';
+  var adminActions = document.getElementById('tm-admin-actions');
+  if (adminActions) adminActions.style.display = isScoped ? 'none' : 'flex';
+  var title = document.getElementById('tm-page-title');
+  var subtitle = document.getElementById('tm-page-subtitle');
+  if (isScoped) {
+    if (title) title.textContent = 'My Tasks';
+    if (subtitle) subtitle.textContent = 'Tasks you sponsor, across every area.';
+  } else {
+    if (title) title.textContent = 'Task Manager';
+    if (subtitle) subtitle.textContent = 'Internal marketing, brand, recruitment, retention, leadgen, tech/compliance and data tasks.';
+  }
 }
 
 // Sections shown on the page = the fixed starting areas, plus any area a
@@ -8985,7 +9011,7 @@ function tmRender() {
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
-            (all.length === 0 ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+            (all.length === 0 && _tmScope !== 'own' ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
         '</div>' +
         (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(function(t) { return tmTaskCard(t, { section: section }); }).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
@@ -11693,6 +11719,12 @@ var _currentUser = null;
       var tmWrap = document.getElementById('lab-nav-task-wrap');
       if (tmWrap) tmWrap.style.display = 'block';
     }
+    // Pete Burgess gets a scoped Task Manager entry — sees only tasks he
+    // sponsors (server also enforces this via requireTaskManagerAccess).
+    if (user && (user.email || '').toLowerCase() === 'pete.burgess@financeplanning.co.uk') {
+      var tmMktWrap = document.getElementById('lab-nav-marketing-wrap');
+      if (tmMktWrap) tmMktWrap.style.display = 'block';
+    }
     if (user && (user.isSupervisor || user.isAdmin)) {
       var nlup = document.getElementById('nl-upload-wrap');
       if (nlup) nlup.style.display = 'block';
@@ -13424,9 +13456,15 @@ function labInvestigatingHtml(text) {
 function labShowSection(section, link) {
   ['payslip', 'bank', 'task-manager'].forEach(function(s) {
     var sec = document.getElementById('lab-section-' + s);
-    var nav = document.getElementById('lab-nav-' + (s === 'task-manager' ? 'task' : s));
     if (sec) sec.style.display = (s === section) ? '' : 'none';
-    if (nav) nav.classList.toggle('active', s === section);
+  });
+  // Task Manager can be reached via two different sidebar links (Mark's
+  // full view and Pete's scoped Marketing view) pointing at the same
+  // section, so active state is driven by which link was actually clicked
+  // rather than a 1:1 section-to-nav-id mapping.
+  ['lab-nav-payslip', 'lab-nav-bank', 'lab-nav-task', 'lab-nav-marketing'].forEach(function(navId) {
+    var nav = document.getElementById(navId);
+    if (nav) nav.classList.toggle('active', nav === link);
   });
   // Task Manager gets its own full-width page feel — the shared "Lab / MVP
   // build" heading and its 820px text-column width are for the payslip/bank
