@@ -9583,8 +9583,8 @@ function tm2OpenRenameBoardModal(boardId) {
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
       '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Edit Board</h3>' +
-      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Board name</label>' +
-      '<input type="text" id="tm2-f-board-name" value="' + tmEsc(current ? current.name : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Name of person</label>' +
+      '<input type="text" id="tm2-f-board-name" value="' + tmEsc(current ? current.ownerName : '') + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tm2SaveBoardName();}" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
         (isAdmin ? '<button onclick="tm2DeleteBoard()" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete Board</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
@@ -9620,12 +9620,12 @@ function tm2DeleteBoard() {
 }
 
 function tm2SaveBoardName() {
-  var name = ((document.getElementById('tm2-f-board-name') || {}).value || '').trim();
-  if (!name) { alert('Board name is required.'); return; }
+  var ownerName = ((document.getElementById('tm2-f-board-name') || {}).value || '').trim();
+  if (!ownerName) { alert('Name is required.'); return; }
   var boardId = _tm2RenameTargetId || _tm2CurrentBoardId;
   var btn = document.getElementById('tm2-rename-board-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: boardId, name: name }) })
+  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: boardId, ownerName: ownerName }) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.error) { alert(d.error); return; }

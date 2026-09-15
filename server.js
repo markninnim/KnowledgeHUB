@@ -6213,7 +6213,15 @@ app.put('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, asy
   try {
     const board = await tm2GetBoard(boardId);
     if (!board) return res.status(404).json({ error: 'No task manager found' });
-    if (req.body.name !== undefined) {
+    // ownerName is what actually drives the sidebar link and page title —
+    // renaming it also re-derives the full board name from it, so the two
+    // never drift apart the way they could when name was edited on its own.
+    if (req.body.ownerName !== undefined) {
+      const ownerName = String(req.body.ownerName || '').trim();
+      if (!ownerName) return res.status(400).json({ error: 'Name required' });
+      board.ownerName = ownerName;
+      board.name = ownerName + "'s Task Manager";
+    } else if (req.body.name !== undefined) {
       const name = String(req.body.name || '').trim();
       if (!name) return res.status(400).json({ error: 'Name required' });
       board.name = name;
