@@ -6067,19 +6067,32 @@ function tmRecordToTask(record) {
   };
 }
 
-// Task Manager access: full (all tasks, section/task management) for
-// admins only — isSupervisor is a much broader flag (any team lead, for
-// holiday/CPD purposes) and does not imply Task Manager oversight. Every
-// other authenticated user, including supervisors, gets a scoped view —
-// they can only see and act on tasks where they're the sponsor (which may
-// be none at all; that's just an empty list, not a 403).
+// Task Manager access: full (all tasks, section/task management) is for
+// Mark Ninnim only — the general Airtable isAdmin/isSupervisor flags are
+// used for many unrelated features (several directors are flagged admin
+// for other reasons) and don't imply Task Manager oversight specifically.
+// Every other authenticated user gets a scoped view — they can only see
+// and act on tasks where they're the sponsor (which may be none at all;
+// that's just an empty list, not a 403).
+const TM_FULL_ACCESS_EMAIL = 'mark.ninnim@financeplanning.co.uk';
 function requireTaskManagerAccess(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
   const u = req.session.user;
   const orig = req.session.originalUser;
   const effective = orig || u; // in Guardian Mode, check original identity
   if (!effective) return res.status(403).json({ error: 'Forbidden' });
-  req.tmScope = effective.isAdmin ? 'all' : 'own';
+  req.tmScope = (effective.email || '').toLowerCase() === TM_FULL_ACCESS_EMAIL ? 'all' : 'own';
+  next();
+}
+// Stricter gate for actions that only make sense for full access (creating
+// tasks/sections, the one-time backfill) — same identity check as above,
+// just without setting req.tmScope since these routes don't need it.
+function requireTaskManagerFullAccess(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const effective = req.session.originalUser || req.session.user;
+  if (!effective || (effective.email || '').toLowerCase() !== TM_FULL_ACCESS_EMAIL) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   next();
 }
 
@@ -6241,7 +6254,7 @@ function tmNormTitle(s) {
 // start date that's already been set by hand, and is safe to call more than
 // once. Matches by normalised title, so unmatched titles come back in the
 // response for a manual check rather than silently failing.
-app.post('/api/task-manager/backfill-start-dates', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+app.post('/api/task-manager/backfill-start-dates', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
   try {
     let all = [];
     let offset;
@@ -6326,7 +6339,7 @@ async function tmSendCompletedEmail(task, completedByUser) {
 }
 
 // POST /api/task-manager — create task
-app.post('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+app.post('/api/task-manager', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
   const { title, area, type, duration, priority, subtasks, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
