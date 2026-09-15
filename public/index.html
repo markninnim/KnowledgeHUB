@@ -165,6 +165,13 @@ body.mz-printing-data #mz-data-print-header { display: block !important; }
 select { -webkit-appearance:none; -moz-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b7c8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E") !important; background-repeat:no-repeat !important; background-position:right 10px center !important; background-size:12px !important; padding-right:30px !important; }
 select::-ms-expand { display:none; }
 select:focus { outline:none; }
+/* Priority pill dropdowns on Task Manager cards are much smaller than a
+   normal form select, so the generic select rule above (30px right padding,
+   12px arrow at a fixed 10px offset) doesn't fit — it was rendering
+   alongside the pill's own inline arrow, showing two. This overrides it
+   with a smaller arrow sized for the pill instead of turning appearance
+   off entirely (which the generic rule's !important would still fight). */
+select.tm-priority-pill { background-size:8px !important; background-position:right 5px center !important; padding-right:16px !important; }
 .brand-filter-input { outline:none; }
 .brand-filter-input:focus { outline:none; border-color:var(--brand-navy); box-shadow:0 0 0 3px rgba(0,55,104,.12); }
 .cd-wrap { line-height:0; }
@@ -8948,7 +8955,7 @@ function tmTaskCard(t, opts) {
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
             '<span style="color:#003768;font-size:14px;font-weight:700;' + (t.status === 'Done' ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</span>' +
             ((level.key === 'high' || level.key === 'urgent') ?
-              '<select onclick="event.stopPropagation()" onchange="event.stopPropagation();tmQuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 16px 2px 8px;font-size:9px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;width:auto;max-width:fit-content;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2710%27 height=%2710%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27' + level.color.replace('#','%23') + '%27 stroke-width=%273%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 5px center;background-size:8px;">' +
+              '<select class="tm-priority-pill" onclick="event.stopPropagation()" onchange="event.stopPropagation();tmQuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background-color:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 16px 2px 8px;font-size:9px;font-weight:700;font-family:inherit;cursor:pointer;width:auto;max-width:fit-content;">' +
                 TM_PRIORITY_LEVELS.map(function(l) {
                   return '<option value="' + (l.value == null ? '' : l.value) + '"' + (l.key === level.key ? ' selected' : '') + '>' + l.label + '</option>';
                 }).join('') +
@@ -9902,7 +9909,7 @@ function tm2TaskCard(t, opts) {
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
             '<span style="color:#003768;font-size:14px;font-weight:700;' + (t.status === 'Done' ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</span>' +
             ((level.key === 'high' || level.key === 'urgent') ?
-              '<select onclick="event.stopPropagation()" onchange="event.stopPropagation();tm2QuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 16px 2px 8px;font-size:9px;font-weight:700;font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;width:auto;max-width:fit-content;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2710%27 height=%2710%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27' + level.color.replace('#','%23') + '%27 stroke-width=%273%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 5px center;background-size:8px;">' +
+              '<select class="tm-priority-pill" onclick="event.stopPropagation()" onchange="event.stopPropagation();tm2QuickSetPriority(' + idArg + ',this.value)" title="Change priority" style="background-color:' + level.bg + ';color:' + level.color + ';border:none;border-radius:20px;padding:2px 16px 2px 8px;font-size:9px;font-weight:700;font-family:inherit;cursor:pointer;width:auto;max-width:fit-content;">' +
                 TM_PRIORITY_LEVELS.map(function(l) {
                   return '<option value="' + (l.value == null ? '' : l.value) + '"' + (l.key === level.key ? ' selected' : '') + '>' + l.label + '</option>';
                 }).join('') +
