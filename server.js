@@ -6731,6 +6731,7 @@ function tmDigestSection(title, dotColor, rowsHtml) {
 // Completed (Done), matching the on-screen card styling and the KnowledgeHUB
 // brand palette (STYLE-GUIDE.md).
 function tmBuildDigestHtml(sponsorName, areaLabel, tasks) {
+  const sponsorFirstName = (sponsorName || '').trim().split(/\s+/)[0] || sponsorName;
   const inPlay = tasks.filter(t => t.status === 'In Progress');
   const queued = tasks.filter(t => t.status !== 'In Progress' && t.status !== 'Done');
   const completed = tasks.filter(t => t.status === 'Done');
@@ -6748,7 +6749,7 @@ function tmBuildDigestHtml(sponsorName, areaLabel, tasks) {
     <td align="right" style="color:#9db3c8;font-size:12px;font-weight:600;">${tmEscHtml(areaLabel)}</td>
   </tr></table></td></tr>
   <tr><td style="padding:36px 40px 8px;"><h1 style="margin:0 0 6px;color:#003768;font-size:22px;font-weight:800;">Your ${tmEscHtml(areaLabel)} task digest</h1>
-    <p style="margin:0;color:#6b7c8f;font-size:13.5px;line-height:1.6;">Hi ${tmEscHtml(sponsorName)}, here's a summary of every task you sponsor: what's currently in play, what's queued up next, and what's been completed in the period prior.</p>
+    <p style="margin:0;color:#6b7c8f;font-size:13.5px;line-height:1.6;">Hi ${tmEscHtml(sponsorFirstName)},<br>Here is your weekly summary of marketing tasks that you sponsor. You can see what's currently in play, what's queued up next, and what's been completed in the period prior.</p>
   </td></tr>
   <tr><td style="padding:28px 40px 4px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
     <td width="33.33%" align="center" style="background:#dbeafe;border-radius:10px 0 0 10px;padding:18px 8px;border-right:1px solid #ffffff;"><div style="color:#003768;font-size:26px;font-weight:800;line-height:1;">${inPlay.length}</div><div style="color:#003768;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;">In play</div></td>
