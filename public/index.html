@@ -5175,9 +5175,10 @@ Consolidating debts will increase the loan to value which can impact future deal
 
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
           <input type="text" id="tm-search" oninput="tmRender()" placeholder="Search tasks…" style="flex:1;min-width:200px;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#003768;">
-          <select id="tm-sponsor-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
+          <select id="tm-sponsor-filter" onchange="tmRender();tmUpdateSendDigestBtn();" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="">All sponsors</option>
           </select>
+          <button id="tm-send-digest-btn" onclick="tmSendDigest()" style="display:none;background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Send Digest</button>
           <select id="tm-sort" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="custom">Sort: Custom (drag)</option>
             <option value="priority">Sort: Priority</option>
@@ -8524,6 +8525,43 @@ function tmPopulateSponsorFilter() {
     return '<option value="' + tmEsc(u.email) + '">' + tmEsc(u.name) + '</option>';
   }).join('');
   if (used.some(function(u) { return u.email === current; })) sponsorSel.value = current;
+  tmUpdateSendDigestBtn();
+}
+
+// Send Digest only makes sense once a single sponsor is picked (it's their
+// personal digest) and only for the full-access (Mark) scope — sponsors
+// can't email themselves a digest from their own scoped view.
+function tmUpdateSendDigestBtn() {
+  var btn = document.getElementById('tm-send-digest-btn');
+  var sel = document.getElementById('tm-sponsor-filter');
+  if (!btn || !sel) return;
+  btn.style.display = (_tmScope === 'all' && sel.value) ? '' : 'none';
+}
+
+function tmSendDigest() {
+  var sel = document.getElementById('tm-sponsor-filter');
+  var sponsorEmail = sel && sel.value;
+  if (!sponsorEmail) return;
+  var btn = document.getElementById('tm-send-digest-btn');
+  var sponsorName = tmSponsorName(sponsorEmail) || sponsorEmail;
+  if (!confirm('Send ' + sponsorName + ' their task digest email now?')) return;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  fetch('/api/task-manager/send-digest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sponsorEmail: sponsorEmail })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.error) { alert(result.error); return; }
+      alert('Digest sent to ' + sponsorName + ' (' + result.taskCount + ' tasks).');
+    })
+    .catch(function() { alert('Could not send digest — please try again.'); })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Send Digest';
+    });
 }
 
 function tmLoadTaskOrder() {

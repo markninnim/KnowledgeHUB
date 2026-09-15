@@ -6600,6 +6600,167 @@ app.post('/api/task-manager/backfill-subtasks', requireAuth, requireTaskManagerF
   }
 });
 
+// POST /api/task-manager/send-digest — manually send one sponsor their
+// weekly task digest email, on demand. Mark-only (requireTaskManagerFullAccess):
+// this is a "Send Digest" button in the admin Task Manager view, not
+// self-serve — a sponsor can't email themselves a digest.
+app.post('/api/task-manager/send-digest', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
+  const sponsorEmail = (req.body.sponsorEmail || '').toLowerCase().trim();
+  if (!sponsorEmail) return res.status(400).json({ error: 'sponsorEmail required' });
+  if (!process.env.CM_API_KEY) return res.status(400).json({ error: 'Email sending is not configured (CM_API_KEY missing).' });
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tmFetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    const tasks = all.map(tmRecordToTask).filter(t => t.sponsorEmail === sponsorEmail);
+    if (!tasks.length) return res.status(404).json({ error: 'No tasks found for that sponsor.' });
+
+    const sponsors = await fetchAllUserNames(null);
+    const sponsor = sponsors.find(u => u.email === sponsorEmail);
+    const sponsorName = (sponsor && sponsor.name) || sponsorEmail;
+    // The digest is framed around whichever area shows up most in this
+    // sponsor's tasks — a reasonable single label for the subject/header
+    // when a sponsor's tasks span more than one area.
+    const areaCounts = {};
+    tasks.forEach(t => { areaCounts[t.area] = (areaCounts[t.area] || 0) + 1; });
+    const areaLabel = Object.keys(areaCounts).sort((a, b) => areaCounts[b] - areaCounts[a])[0] || 'Task Manager';
+
+    const html = tmBuildDigestHtml(sponsorName, areaLabel, tasks);
+    const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
+    await _mailer.sendMail({
+      from: `"KnowledgeHUB™" <${fromEmail}>`,
+      to: sponsorEmail,
+      subject: `Your ${areaLabel} task digest`,
+      html
+    });
+    res.json({ sent: true, sponsorEmail, taskCount: tasks.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mon-Fri day count from startIso up to and including today — mirrors the
+// client's tmWorkingDaysSince() so the emailed digest matches what's shown
+// on-screen in Task Manager.
+function tmWorkingDaysSinceServer(startIso) {
+  if (!startIso) return null;
+  const start = new Date(startIso + 'T00:00:00Z');
+  const today = new Date();
+  const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  if (isNaN(start.getTime()) || start > end) return null;
+  let days = 0;
+  const d = new Date(start);
+  while (d <= end) {
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) days++;
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return days;
+}
+
+// Same 5-level bucketing as the client's TM_PRIORITY_LEVELS, just enough of
+// it (key/label/colours) to render the pill in the emailed digest.
+function tmPriorityLevelServer(n) {
+  if (n == null) return { key: 'none', label: 'None' };
+  if (n >= 9) return { key: 'urgent', label: 'Critical', color: '#b91c1c', bg: '#fef2f2' };
+  if (n >= 7) return { key: 'high', label: 'High', color: '#003768', bg: '#dbeafe' };
+  if (n >= 4) return { key: 'medium', label: 'Medium', color: '#003768', bg: '#dbeafe' };
+  if (n >= 1) return { key: 'low', label: 'Low', color: '#003768', bg: '#dbeafe' };
+  return { key: 'none', label: 'None' };
+}
+
+// Renders one task row for the digest email — mirrors the on-screen card
+// closely enough to feel familiar: priority pill (High/Critical only), an
+// In progress badge, subtask progress, and a working-days count (shown
+// under the same rule as the app: High/Critical priority or In Progress).
+function tmDigestTaskRow(t, opts) {
+  opts = opts || {};
+  const level = tmPriorityLevelServer(t.priority);
+  const inProgress = t.status === 'In Progress';
+  const showPriorityPill = level.key === 'high' || level.key === 'urgent';
+  const showDays = !opts.completed && t.startDate && (showPriorityPill || inProgress);
+  const days = showDays ? tmWorkingDaysSinceServer(t.startDate) : null;
+  const pills = [];
+  if (showPriorityPill) {
+    pills.push(`<span style="display:inline-block;background:${level.bg};color:${level.color};font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;margin-bottom:6px;">${level.label}</span>`);
+  }
+  if (inProgress) {
+    pills.push(`<span style="display:inline-block;background:#fff7e6;color:#92600a;font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;margin-bottom:6px;margin-left:${pills.length ? '6px' : '0'};">&#9654; In progress</span>`);
+  }
+  const meta = [t.area, (t.subtasksTotal > 0 ? `${t.subtasksDone}/${t.subtasksTotal} subtasks done` : '')].filter(Boolean).join(' &middot; ');
+  const titleStyle = opts.completed
+    ? 'color:#003768;font-size:13.5px;font-weight:700;text-decoration:line-through;text-decoration-color:#c7d0d9;'
+    : 'color:#003768;font-size:13.5px;font-weight:700;';
+  const rowBg = opts.completed ? '#f8fbf8' : '#ffffff';
+  const rowBorder = opts.completed
+    ? 'border:1px solid #e8ecf0;'
+    : (inProgress ? 'border:1px solid #d1d5db;border-left:4px solid #fcb034;' : 'border:1px solid #d1d5db;');
+  const rightCell = opts.completed
+    ? `<td align="right" width="30" valign="middle"><div style="width:20px;height:20px;border-radius:50%;background:#dcfce7;text-align:center;line-height:20px;color:#166534;font-size:12px;font-weight:700;">&#10003;</div></td>`
+    : (days != null ? `<td align="right" width="60" valign="top"><div style="color:#003768;font-size:18px;font-weight:800;line-height:1;">${days}</div><div style="color:#6b7c8f;font-size:10px;">day${days === 1 ? '' : 's'}</div></td>` : '');
+  return `<tr><td style="padding:14px 16px;background:${rowBg};${rowBorder}border-radius:10px;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td>` +
+    (pills.length ? pills.join('') + '<br>' : '') +
+    `<div style="${titleStyle}">${tmEscHtml(t.title)}</div>` +
+    (meta ? `<div style="color:#6b7c8f;font-size:11.5px;margin-top:3px;">${tmEscHtml(meta)}</div>` : '') +
+    `</td>${rightCell}</tr></table></td></tr>` +
+    `<tr><td style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>`;
+}
+
+function tmEscHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function tmDigestSection(title, dotColor, rowsHtml) {
+  if (!rowsHtml) return '';
+  return `<tr><td style="padding:32px 40px 0;"><div style="border-top:1px solid #e8ecf0;"></div></td></tr>` +
+    `<tr><td style="padding:28px 40px 0;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:8px;"></span><span style="color:#003768;font-size:15px;font-weight:800;vertical-align:middle;">${title}</span></td></tr>` +
+    `<tr><td style="padding:14px 40px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rowsHtml}</table></td></tr>`;
+}
+
+// Builds the full branded weekly digest email for one sponsor from their
+// real Task Manager data — grouped In play (In Progress) / Queued (Active) /
+// Completed (Done), matching the on-screen card styling and the KnowledgeHUB
+// brand palette (STYLE-GUIDE.md).
+function tmBuildDigestHtml(sponsorName, areaLabel, tasks) {
+  const inPlay = tasks.filter(t => t.status === 'In Progress');
+  const queued = tasks.filter(t => t.status !== 'In Progress' && t.status !== 'Done');
+  const completed = tasks.filter(t => t.status === 'Done');
+  const inPlayRows = inPlay.map(t => tmDigestTaskRow(t, {})).join('');
+  const queuedRows = queued.map(t => tmDigestTaskRow(t, {})).join('');
+  const completedRows = completed.map(t => tmDigestTaskRow(t, { completed: true })).join('');
+  const appUrl = process.env.APP_URL || 'https://knowledgehub.simflex.ai';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Task Digest</title></head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:'Plus Jakarta Sans',Arial,sans-serif;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your tasks: ${inPlay.length} in play, ${queued.length} queued, ${completed.length} completed recently.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f7fa;padding:32px 16px;"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e8ecf0;">
+  <tr><td style="background:#003768;padding:32px 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td><div style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:.2px;">KnowledgeHUB<span style="font-size:11px;vertical-align:super;">&#8482;</span></div><div style="color:#fcb034;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:2px;">Task Manager</div></td>
+    <td align="right" style="color:#9db3c8;font-size:12px;font-weight:600;">${tmEscHtml(areaLabel)}</td>
+  </tr></table></td></tr>
+  <tr><td style="padding:36px 40px 8px;"><h1 style="margin:0 0 6px;color:#003768;font-size:22px;font-weight:800;">Your ${tmEscHtml(areaLabel)} task digest</h1>
+    <p style="margin:0;color:#6b7c8f;font-size:13.5px;line-height:1.6;">Hi ${tmEscHtml(sponsorName)}, here's a summary of every task you sponsor: what's currently in play, what's queued up next, and what's been completed in the period prior.</p>
+  </td></tr>
+  <tr><td style="padding:28px 40px 4px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td width="33.33%" align="center" style="background:#dbeafe;border-radius:10px 0 0 10px;padding:18px 8px;border-right:1px solid #ffffff;"><div style="color:#003768;font-size:26px;font-weight:800;line-height:1;">${inPlay.length}</div><div style="color:#003768;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;">In play</div></td>
+    <td width="33.34%" align="center" style="background:#dbeafe;padding:18px 8px;border-right:1px solid #ffffff;"><div style="color:#003768;font-size:26px;font-weight:800;line-height:1;">${queued.length}</div><div style="color:#003768;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;">Queued</div></td>
+    <td width="33.33%" align="center" style="background:#dbeafe;border-radius:0 10px 10px 0;padding:18px 8px;"><div style="color:#003768;font-size:26px;font-weight:800;line-height:1;">${completed.length}</div><div style="color:#003768;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;">Completed</div></td>
+  </tr></table></td></tr>
+  ${tmDigestSection('In play: being worked on now', '#fcb034', inPlayRows)}
+  ${tmDigestSection('Queued: next up', '#c7d0d9', queuedRows)}
+  ${tmDigestSection('Completed in the period prior', '#22c55e', completedRows)}
+  <tr><td style="padding:36px 40px 8px;" align="center"><a href="${appUrl}/lab" style="display:inline-block;background:#003768;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:8px;">Open Task Manager</a></td></tr>
+  <tr><td style="padding:32px 40px 36px;"><div style="border-top:1px solid #e8ecf0;margin-bottom:20px;"></div><p style="margin:0;color:#6b7c8f;font-size:11.5px;line-height:1.7;text-align:center;">You're receiving this because you sponsor tasks in KnowledgeHUB&#8482; Task Manager.<br>Finance Planning Group</p></td></tr>
+</table></td></tr></table></body></html>`;
+}
+
 // Sanitises a subtasks array from the client into { text, done } pairs
 // ready to store as JSON — drops anything malformed rather than erroring,
 // and caps length/count so a stray paste can't blow up the field.
