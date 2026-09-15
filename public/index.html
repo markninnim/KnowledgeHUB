@@ -5168,6 +5168,7 @@ Consolidating debts will increase the loan to value which can impact future deal
             <button id="tm-select-btn" onclick="tmToggleSelectMode()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Select</button>
             <button onclick="tmOpenSectionModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Section</button>
             <button onclick="tmOpenModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
+            <button onclick="tmRunBackfillStartDates(this)" title="One-time: fills in Start date from the original Readdy site's Added date, for any task that doesn't have one yet" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Backfill Start Dates</button>
           </div>
         </div>
 
@@ -8391,6 +8392,30 @@ var _tmShowCompleted = false;  // when true, reveals the archived "Completed" se
 var _tmTaskOrder = tmLoadTaskOrder();  // { sectionName: [taskId, ...] } — manual drag order, persisted
 var _tmDragId = null;   // taskId currently being dragged
 var _tmScope = 'all';   // 'all' (admin/supervisor — full control) | 'own' (sponsor-only, e.g. Pete Burgess)
+
+// One-time admin action: copies the original Readdy site's "Added" date
+// into Start date for any task that doesn't already have one. Safe to run
+// more than once — it never overwrites a start date that's already set.
+function tmRunBackfillStartDates(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Working…'; }
+  fetch('/api/task-manager/backfill-start-dates', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.error) { alert(result.error); return; }
+      var msg = 'Updated ' + result.updated + ' of ' + result.totalTasks + ' tasks.\n' +
+        result.alreadyHadStartDate + ' already had a start date.';
+      if (result.unmatchedTitles && result.unmatchedTitles.length) {
+        msg += '\n\nCould not match ' + result.unmatchedTitles.length + ' title(s) — probably renamed or added since the migration:\n' + result.unmatchedTitles.join('\n');
+      }
+      alert(msg);
+      _tmTasks = null; // force a fresh fetch so the new dates show immediately
+      loadTaskManager();
+    })
+    .catch(function() { alert('Could not run the backfill.'); })
+    .then(function() {
+      if (btn) { btn.disabled = false; btn.textContent = 'Backfill Start Dates'; }
+    });
+}
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
