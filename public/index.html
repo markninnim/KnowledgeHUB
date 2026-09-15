@@ -8683,18 +8683,23 @@ function tmTaskCard(t, opts) {
   var headerClick = _tmSelectMode ? ('tmToggleSelect(' + idArg + ')') : ('tmToggleExpand(' + idArg + ')');
   var level = tmPriorityLevel(t.priority);
   var workingDays = (t.status !== 'Done' && t.startDate) ? tmWorkingDaysSince(t.startDate) : null;
+  var inProgress = t.status === 'In Progress';
   var draggable = !!opts.section && !_tmSelectMode;
   var sectionArg = draggable ? tmIdArg(opts.section) : '';
   var dragAttrs = draggable ?
     ' draggable="true" ondragstart="tmDragStart(event,' + idArg + ',' + sectionArg + ')" ondragover="tmDragOver(event)" ondrop="tmDrop(event,' + idArg + ',' + sectionArg + ')" ondragend="tmDragEnd(event)"'
     : '';
   return '' +
-    '<div' + dragAttrs + ' style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';border-radius:8px;overflow:hidden;">' +
+    '<div' + dragAttrs + ' style="background:' + (selected ? '#f0f6fc' : '#fff') + ';border:1px solid ' + (selected ? '#2e99d5' : '#d1d5db') + ';' + (inProgress ? 'border-left:4px solid #fcb034;' : '') + 'border-radius:8px;overflow:hidden;">' +
       '<div onclick="' + headerClick + '" style="cursor:pointer;padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
         (draggable ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
         (_tmSelectMode ?
           '<input type="checkbox"' + (selected ? ' checked' : '') + ' onclick="event.stopPropagation();tmToggleSelect(' + idArg + ')" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">'
           : '<input type="checkbox"' + (t.status === 'Done' ? ' checked' : '') + ' onclick="event.stopPropagation()" onchange="tmToggleStatus(' + idArg + ')" title="Mark task complete" style="flex-shrink:0;width:16px;height:16px;cursor:pointer;accent-color:#003768;">') +
+        (!_tmSelectMode && t.status !== 'Done' ?
+          '<button type="button" onclick="event.stopPropagation();tmToggleInProgress(' + idArg + ')" title="' + (inProgress ? 'Stop working on this' : 'Mark as working on this now') + '" style="flex-shrink:0;background:transparent;border:none;color:' + (inProgress ? '#fcb034' : '#c7d0d9') + ';cursor:pointer;padding:2px;display:flex;">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (inProgress ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>' +
+          '</button>' : '') +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transform:rotate(' + (expanded ? '0deg' : '-90deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
@@ -8748,6 +8753,29 @@ function tmToggleStatus(taskId) {
   var task = _tmTasks.find(function(t) { return t.id === taskId; });
   if (!task) return;
   var nextStatus = task.status === 'Done' ? 'Active' : 'Done';
+  fetch('/api/task-manager/' + taskId, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: nextStatus })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(saved) {
+      if (saved.error) { alert(saved.error); return; }
+      var idx = _tmTasks.findIndex(function(t) { return t.id === taskId; });
+      if (idx !== -1) _tmTasks[idx] = saved;
+      tmRender();
+    })
+    .catch(function() { alert('Could not update task.'); });
+}
+
+// Toggles a task between Active and In Progress (the little play-triangle
+// icon next to the checkbox) — a lightweight "I'm working on this now"
+// marker, shown graphically as an amber left-edge stripe on the card.
+// Never touches Done tasks (the icon is hidden on those).
+function tmToggleInProgress(taskId) {
+  var task = _tmTasks.find(function(t) { return t.id === taskId; });
+  if (!task || task.status === 'Done') return;
+  var nextStatus = task.status === 'In Progress' ? 'Active' : 'In Progress';
   fetch('/api/task-manager/' + taskId, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -8844,7 +8872,7 @@ var TM_STATS = [
   { key: 'completed',  label: 'Completed',     color: '#003768', bg: '#dbeafe', icon: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' }
 ];
 var TM_STAT_MATCH = {
-  active:    function(t) { return t.status === 'Active'; },
+  active:    function(t) { return t.status !== 'Done'; },
   urgent:    tmIsUrgent,
   overdue:   tmIsOverdue,
   'due-today': tmIsDueToday,
@@ -9004,8 +9032,10 @@ function tmRender() {
         return na.localeCompare(nb);
       }
       if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
-      // Default: priority — active before done, highest priority first, then title
-      if (a.status !== b.status) return a.status === 'Done' ? 1 : -1;
+      // Default: priority — not-done before done (In Progress counts as
+      // not-done here), highest priority first, then title
+      var aDone = a.status === 'Done', bDone = b.status === 'Done';
+      if (aDone !== bDone) return aDone ? 1 : -1;
       var pa = a.priority == null ? -1 : a.priority, pb = b.priority == null ? -1 : b.priority;
       if (pa !== pb) return pb - pa;
       return (a.title || '').localeCompare(b.title || '');
