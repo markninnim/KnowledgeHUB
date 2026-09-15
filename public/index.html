@@ -405,8 +405,11 @@ select:focus { outline:none; }
     <a href="#" id="lab-nav-bank" onclick="labShowSection('bank',this);return false;">Bank Statement Check</a>
     <div id="lab-nav-task-wrap" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK MANAGER</span></div>
-      <a href="#" id="lab-nav-task2" onclick="labShowSection('task-manager-2',this);return false;">New Task Manager</a>
       <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
+    </div>
+    <div id="lab-nav-task2-wrap" style="display:none;">
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK MANAGER</span></div>
+      <a href="#" id="lab-nav-task2" onclick="labShowSection('task-manager-2',this);return false;">+ Task Manager</a>
     </div>
     <div id="lab-nav-marketing-wrap" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">MY TASKS</span></div>
@@ -5223,7 +5226,7 @@ Consolidating debts will increase the loan to value which can impact future deal
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;">
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              <h2 id="tm2-page-title" style="color:#003768;font-size:20px;margin:0;">New Task Manager</h2>
+              <h2 id="tm2-page-title" style="color:#003768;font-size:20px;margin:0;">+ Task Manager</h2>
               <button onclick="tm2OpenRenameBoardModal()" title="Rename this board" style="background:transparent;border:none;color:#6b7c8f;padding:4px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
             </div>
             <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">A separate task board, independent from the main Task Manager.</p>
@@ -9220,7 +9223,7 @@ function tmRender() {
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
             (_tmScope !== 'own' ? '<button onclick="tmOpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
-            (all.length === 0 && _tmScope !== 'own' ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+            (all.length === 0 && _tmScope !== 'own' ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
         '</div>' +
         (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(function(t) { return tmTaskCard(t, { section: section }); }).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
@@ -9343,31 +9346,39 @@ function tmSaveRenameSection(oldName) {
   });
 }
 
-// ── Task Manager 2 — a second, fully independent board ──────────
+// ── Task Manager 2 — personal boards, one per person ──────────────
 // Its own tasks/sections, deliberately simpler than the main Task Manager
 // (no priority, subtasks, drag order or digest email — just title, section,
-// status, due date, notes, sponsor). Mark Ninnim only.
+// status, due date, notes, sponsor). Every signed-in user gets their own
+// private board the first time they open "+ Task Manager": a setup modal
+// asks for their name and section names, then "Create Task Manager" saves
+// it server-side (App Settings, backed by Airtable — survives Railway
+// redeploys, and is keyed to their email so it's the same board wherever
+// they sign in from).
 var _tm2Tasks = null;
 var _tm2Areas = [];
 var _tm2Sections = [];
 var _tm2Sponsors = [];
 var _tm2Collapsed = {};
-var _tm2Name = 'New Task Manager';
-var _tm2NameLoaded = false;
+var _tm2Name = '+ Task Manager';
+var _tm2Board = null; // null = not checked yet, false = no board, object = board
+var _tm2BoardChecked = false;
 
-// The board's display name is stored server-side (App Settings, backed by
-// Airtable — survives Railway redeploys unlike localStorage) so it's the
-// same for anyone who ever gets access to this board, not just this
-// browser. Fetched once and applied to both the sidebar link and the page
-// header; called as soon as the sidebar link itself becomes visible so the
-// name is right without having to open the section first.
+// Checks once whether the current user already has a board, applying its
+// name to the sidebar link as soon as the link itself becomes visible so
+// it's right without having to open the section first.
 function tm2LoadName() {
-  if (_tm2NameLoaded) return;
-  _tm2NameLoaded = true;
-  fetch('/api/task-manager-2/name').then(function(r) { return r.json(); }).then(function(d) {
-    if (d.error || !d.name) return;
-    _tm2Name = d.name;
-    tm2ApplyName();
+  if (_tm2BoardChecked) return;
+  _tm2BoardChecked = true;
+  fetch('/api/task-manager-2/board').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) return;
+    if (d.exists) {
+      _tm2Board = d;
+      _tm2Name = d.name || _tm2Name;
+      tm2ApplyName();
+    } else {
+      _tm2Board = false;
+    }
   }).catch(function() {});
 }
 
@@ -9402,11 +9413,12 @@ function tm2SaveBoardName() {
   if (!name) { alert('Board name is required.'); return; }
   var btn = document.getElementById('tm2-rename-board-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  fetch('/api/task-manager-2/name', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
+  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.error) { alert(d.error); return; }
       _tm2Name = d.name;
+      _tm2Board = d;
       tm2ApplyName();
       var overlay = document.getElementById('tm2-rename-board-modal-overlay');
       if (overlay) overlay.remove();
@@ -9415,11 +9427,65 @@ function tm2SaveBoardName() {
     .finally(function() { if (btn) { btn.disabled = false; btn.textContent = 'Save'; } });
 }
 
+// First-time setup modal: asks for the person's name and their section
+// names, then POSTs to create their board. Shown automatically whenever
+// the section is opened and no board exists yet for this user.
+function tm2OpenSetupModal() {
+  if (document.getElementById('tm2-setup-modal-overlay')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'tm2-setup-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:420px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 6px;">Create Your Task Manager</h3>' +
+      '<p style="color:#6b7c8f;font-size:13px;margin:0 0 18px;">Set this up once — it is your own private board.</p>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Your name</label>' +
+      '<input type="text" id="tm2-setup-name" placeholder="e.g. Jane Smith" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;">' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section names</label>' +
+      '<p style="color:#6b7c8f;font-size:12px;margin:0 0 6px;">One per line — these are the columns your tasks will be grouped into.</p>' +
+      '<textarea id="tm2-setup-sections" rows="5" placeholder="Section 1&#10;Section 2&#10;Section 3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;resize:vertical;"></textarea>' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button id="tm2-setup-create" onclick="tm2SaveSetup()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Create Task Manager</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm2-setup-name'); if (inp) inp.focus(); }, 0);
+}
+
+function tm2SaveSetup() {
+  var name = ((document.getElementById('tm2-setup-name') || {}).value || '').trim();
+  var sectionsRaw = ((document.getElementById('tm2-setup-sections') || {}).value || '');
+  var sections = sectionsRaw.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  if (!name) { alert('Please enter your name.'); return; }
+  var btn = document.getElementById('tm2-setup-create');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+  fetch('/api/task-manager-2/board', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ownerName: name, sections: sections }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert(d.error); if (btn) { btn.disabled = false; btn.textContent = 'Create Task Manager'; } return; }
+      _tm2Board = d;
+      _tm2Name = d.name;
+      tm2ApplyName();
+      var overlay = document.getElementById('tm2-setup-modal-overlay');
+      if (overlay) overlay.remove();
+      loadTaskManager2();
+    })
+    .catch(function() { alert('Could not create your task manager.'); if (btn) { btn.disabled = false; btn.textContent = 'Create Task Manager'; } });
+}
+
 function loadTaskManager2() {
   tm2LoadName();
   var listEl = document.getElementById('tm2-list');
   fetch('/api/task-manager-2').then(function(r) { return r.json(); }).then(function(d) {
     if (d.error) { if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>'; return; }
+    if (d.noBoard) {
+      _tm2Board = false;
+      if (listEl) listEl.innerHTML = '';
+      tm2OpenSetupModal();
+      return;
+    }
+    _tm2Name = d.name || _tm2Name;
+    tm2ApplyName();
     _tm2Tasks = d.tasks || [];
     _tm2Areas = d.areas || [];
     _tm2Sponsors = d.sponsors || [];
@@ -9467,7 +9533,6 @@ function tm2Render() {
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
             '<button onclick="tm2OpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
-            (all.length === 0 ? '<button onclick="tm2DeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
         '</div>' +
         (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(tm2TaskCard).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
@@ -9536,6 +9601,7 @@ function tm2SaveSection() {
   var overlay = document.getElementById('tm2-section-modal-overlay');
   if (overlay) overlay.remove();
   tm2Render();
+  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sections: _tm2Sections }) }).catch(function() {});
 }
 
 function tm2DeleteSection(section) {
@@ -9589,6 +9655,7 @@ function tm2SaveRenameSection(oldName) {
     var overlay = document.getElementById('tm2-rename-section-modal-overlay');
     if (overlay) overlay.remove();
     tm2Render();
+    fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sections: _tm2Sections }) }).catch(function() {});
   }).catch(function() {
     alert('Could not rename section — please try again.');
   }).finally(function() {
@@ -9621,7 +9688,7 @@ function tm2OpenModal(taskId) {
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
       '<textarea id="tm2-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
-        (task ? '<button onclick="tm2DeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        (task ? '<button onclick="tm2DeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
           '<button onclick="tm2CloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
           '<button onclick="tm2SaveTask(' + (task ? tmIdArg(task.id) : 'null') + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
@@ -9735,7 +9802,7 @@ function tmOpenModal(taskId, presetArea) {
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
       '<textarea id="tm-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
-        (task ? '<button onclick="tmDeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        (task ? '<button onclick="tmDeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
           '<button onclick="tmCloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
           '<button onclick="tmSaveTask(' + (task ? tmIdArg(task.id) : 'null') + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
@@ -12372,13 +12439,19 @@ var _currentUser = null;
     if (user && ['dan.maskell@financeplanning.co.uk','pete.burgess@financeplanning.co.uk','terry.mccutcheon@financeplanning.co.uk','david.riley@financeplanning.co.uk'].indexOf((user.email||'').toLowerCase()) !== -1) {
       loadHomeHolidayTicker();
     }
-    // Task Manager — for the moment, tucked away in Lab and visible to
+    // Original Task Manager board — tucked away in Lab, visible to
     // Mark Ninnim only (server-side routes still require admin/supervisor).
     if (user && (user.email || '').toLowerCase() === 'mark.ninnim@financeplanning.co.uk') {
       var tmWrap = document.getElementById('lab-nav-task-wrap');
       if (tmWrap) tmWrap.style.display = 'block';
       var tmHomeWidget = document.getElementById('home-tm-widget');
       if (tmHomeWidget) { tmHomeWidget.style.display = 'block'; loadHomeTaskManagerWidget(); }
+    }
+    // "+ Task Manager" — every signed-in user gets their own personal
+    // board here. First click with no board yet shows a setup modal.
+    if (user && user.email) {
+      var tm2Wrap = document.getElementById('lab-nav-task2-wrap');
+      if (tm2Wrap) tm2Wrap.style.display = 'block';
       if (typeof tm2LoadName === 'function') tm2LoadName();
     }
     // Every user (other than Mark, who already has the full-access link

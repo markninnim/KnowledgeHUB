@@ -6044,13 +6044,15 @@ async function tmFetch(endpoint, options = {}) {
   return body;
 }
 
-// ── Task Manager 2 — a second, fully independent board ──────────
-// Its own Airtable table, own tasks, own default sections (Section 1-5).
-// Deliberately a lighter schema than the original Task Manager (no
-// priority/subtasks/drag-order/digest email — just title, section, status,
-// due date, notes, sponsor) since this board starts from nothing and those
-// features can be added later if this board actually needs them. Visible to
-// Mark Ninnim only, same admin-only gate as the original board's full access.
+// ── Task Manager 2 — personal boards, one per person ─────────────
+// Its own Airtable table, own tasks. Deliberately a lighter schema than the
+// original Task Manager (no priority/subtasks/drag-order/digest email —
+// just title, section, status, due date, notes, sponsor). Any authenticated
+// user can open "+ Task Manager": the first time they do, they get a setup
+// modal (their name + section names) that creates their own private board;
+// after that they only ever see and edit their own board's tasks. Boards
+// are keyed by owner email and stored in App Settings (see below) so they
+// survive Railway redeploys without needing a new Airtable table per person.
 const TM2_TABLE   = 'tbl2zwZr9wxmosuDl';
 const TM2_TITLE   = 'fldiPJbcYn7r6yjAY';
 const TM2_AREA    = 'fld2hElEMJMOociTw';
@@ -6059,7 +6061,8 @@ const TM2_DUE     = 'fldtRuQAYSGz6jMCP';
 const TM2_NOTES   = 'fld2mK8zfYKRIZOqT';
 const TM2_SPONSOR = 'fldG9de8Rw6tj8gVV';
 const TM2_ADDED   = 'fldoxHkXoUUYOVcKI';
-const TM2_AREAS = ['Section 1', 'Section 2', 'Section 3', 'Section 4', 'Section 5'];
+const TM2_BOARD   = 'fld6rg2v5MmIzZZkT'; // which person's board this task belongs to (= owner email)
+const TM2_DEFAULT_AREAS = ['Section 1', 'Section 2', 'Section 3', 'Section 4', 'Section 5'];
 
 async function tm2Fetch(endpoint, options = {}) {
   const url = `https://api.airtable.com/v0/${AT_BASE}/${TM2_TABLE}${endpoint}`;
@@ -6082,27 +6085,104 @@ function tm2RecordToTask(record) {
     dueDate:      f[TM2_DUE]     || '',
     added:        f[TM2_ADDED]   || record.createdTime.slice(0, 10),
     status:       f[TM2_STATUS]  || 'Active',
-    sponsorEmail: (f[TM2_SPONSOR] || '').toLowerCase()
+    sponsorEmail: (f[TM2_SPONSOR] || '').toLowerCase(),
+    boardId:      f[TM2_BOARD]   || ''
   };
 }
 
-// Mark Ninnim only, full stop — no scoped view for other users on this
-// board (unlike the original Task Manager's "own" scope for sponsors).
+// Any authenticated user can use Task Manager 2 — access to a specific
+// board is enforced per-endpoint (a user can only read/write their own).
 function requireTaskManager2Access(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
-  const effective = req.session.user;
-  if (!effective || (effective.email || '').toLowerCase() !== TM_FULL_ACCESS_EMAIL) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
   next();
 }
 
+// A board's id is simply its owner's lowercased email — one board per
+// person, so there's nothing to look up or collide on.
+function tm2BoardId(req) {
+  return ((req.session.user || {}).email || '').toLowerCase();
+}
+function tm2BoardSettingKey(boardId) {
+  return 'task_board_2_' + boardId;
+}
+async function tm2GetBoard(boardId) {
+  const raw = await getAppSetting(tm2BoardSettingKey(boardId), '');
+  if (!raw) return null;
+  try {
+    const board = JSON.parse(raw);
+    if (!board || !Array.isArray(board.sections)) return null;
+    return board;
+  } catch (e) {
+    return null;
+  }
+}
+async function tm2SaveBoard(boardId, board) {
+  await setAppSetting(tm2BoardSettingKey(boardId), JSON.stringify(board));
+}
+
+// GET the current user's board — { exists:false } if they haven't set one
+// up yet, which the client uses to show the "Create Task Manager" modal.
+app.get('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
+  try {
+    const boardId = tm2BoardId(req);
+    const board = await tm2GetBoard(boardId);
+    if (!board) return res.json({ exists: false });
+    res.json({ exists: true, id: boardId, name: board.name, ownerName: board.ownerName, sections: board.sections });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create (or rename) the current user's board. Called from the setup modal
+// with { ownerName, sections }, or from the rename modal with just { name }.
+app.post('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const boardId = tm2BoardId(req);
+  if (!boardId) return res.status(400).json({ error: 'No user on session' });
+  const ownerName = (req.body.ownerName || '').trim();
+  let sections = Array.isArray(req.body.sections) ? req.body.sections.map(s => String(s || '').trim()).filter(Boolean) : [];
+  if (!ownerName) return res.status(400).json({ error: 'Name required' });
+  if (!sections.length) sections = TM2_DEFAULT_AREAS.slice();
+  try {
+    const existing = await tm2GetBoard(boardId);
+    if (existing) return res.status(409).json({ error: 'Task manager already exists for this user' });
+    const board = { ownerName, name: ownerName + "'s Task Manager", sections, createdAt: new Date().toISOString().slice(0, 10) };
+    await tm2SaveBoard(boardId, board);
+    res.json({ exists: true, id: boardId, name: board.name, ownerName: board.ownerName, sections: board.sections });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const boardId = tm2BoardId(req);
+  try {
+    const board = await tm2GetBoard(boardId);
+    if (!board) return res.status(404).json({ error: 'No task manager set up yet' });
+    if (req.body.name !== undefined) {
+      const name = String(req.body.name || '').trim();
+      if (!name) return res.status(400).json({ error: 'Name required' });
+      board.name = name;
+    }
+    if (Array.isArray(req.body.sections)) {
+      board.sections = req.body.sections.map(s => String(s || '').trim()).filter(Boolean);
+    }
+    await tm2SaveBoard(boardId, board);
+    res.json({ exists: true, id: boardId, name: board.name, ownerName: board.ownerName, sections: board.sections });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
+    const boardId = tm2BoardId(req);
+    const board = await tm2GetBoard(boardId);
+    if (!board) return res.json({ noBoard: true });
+    const formula = encodeURIComponent(`{${TM2_BOARD}}='${boardId}'`);
     let all = [];
     let offset;
     do {
-      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100', filterByFormula: formula });
       if (offset) qs.set('offset', offset);
       const data = await tm2Fetch(`?${qs.toString()}`);
       all = all.concat(data.records || []);
@@ -6110,21 +6190,25 @@ app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (re
     } while (offset);
     const tasks = all.map(tm2RecordToTask);
     const sponsors = await fetchAllUserNames(null);
-    res.json({ tasks, areas: TM2_AREAS, sponsors });
+    res.json({ tasks, areas: board.sections, name: board.name, sponsors });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const boardId = tm2BoardId(req);
   const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
+    const board = await tm2GetBoard(boardId);
+    if (!board) return res.status(404).json({ error: 'Set up your task manager first' });
     const fields = {
       [TM2_TITLE]: title,
-      [TM2_AREA]: area || TM2_AREAS[0],
+      [TM2_AREA]: area || board.sections[0],
       [TM2_STATUS]: status || 'Active',
-      [TM2_ADDED]: new Date().toISOString().slice(0, 10)
+      [TM2_ADDED]: new Date().toISOString().slice(0, 10),
+      [TM2_BOARD]: boardId
     };
     if (dueDate) fields[TM2_DUE] = dueDate;
     if (notes) fields[TM2_NOTES] = notes;
@@ -6139,9 +6223,22 @@ app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (r
   }
 });
 
+// Shared ownership check for PATCH/DELETE — a task can only be touched by
+// the owner of the board it belongs to.
+async function tm2AssertOwnsTask(req, taskId) {
+  const boardId = tm2BoardId(req);
+  const fresh = await tm2Fetch(`/${taskId}?returnFieldsByFieldId=true`);
+  const task = tm2RecordToTask(fresh);
+  if (task.boardId !== boardId) {
+    const err = new Error('Forbidden'); err.status = 403; throw err;
+  }
+  return task;
+}
+
 app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
   const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
   try {
+    await tm2AssertOwnsTask(req, req.params.id);
     const fields = {};
     if (title !== undefined) fields[TM2_TITLE] = title;
     if (area !== undefined) fields[TM2_AREA] = area;
@@ -6156,16 +6253,17 @@ app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, asy
     const fresh = await tm2Fetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     res.json(tm2RecordToTask(fresh));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
 app.delete('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
+    await tm2AssertOwnsTask(req, req.params.id);
     await tm2Fetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ deleted: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
@@ -6201,28 +6299,6 @@ async function setAppSetting(key, value) {
     await appSettingsFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields: { [APP_SETTINGS_KEY]: key, [APP_SETTINGS_VALUE]: value } }] }) });
   }
 }
-
-// GET/PUT the New Task Manager board's display name — shown in the sidebar
-// link and the page header, editable so it isn't stuck saying "New Task
-// Manager" forever once the board has a real purpose.
-app.get('/api/task-manager-2/name', requireAuth, requireTaskManager2Access, async (req, res) => {
-  try {
-    const name = await getAppSetting('task_manager_2_name', 'New Task Manager');
-    res.json({ name });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-app.put('/api/task-manager-2/name', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const name = (req.body.name || '').trim();
-  if (!name) return res.status(400).json({ error: 'Name required' });
-  try {
-    await setAppSetting('task_manager_2_name', name);
-    res.json({ name });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 function tmRecordToTask(record) {
   const f = record.fields;
