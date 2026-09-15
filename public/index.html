@@ -9012,6 +9012,9 @@ function tmRender() {
 function tmToggleShowCompleted(event) {
   if (event) event.stopPropagation();
   _tmShowCompleted = !_tmShowCompleted;
+  // Always open the archive fully expanded when it's switched on, so a
+  // stray earlier collapse-click on its header can't leave it looking empty.
+  if (_tmShowCompleted) _tmCollapsed['__completed__'] = false;
   tmRender();
 }
 
