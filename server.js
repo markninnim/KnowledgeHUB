@@ -6624,12 +6624,11 @@ app.post('/api/task-manager/send-digest', requireAuth, requireTaskManagerFullAcc
     const sponsors = await fetchAllUserNames(null);
     const sponsor = sponsors.find(u => u.email === sponsorEmail);
     const sponsorName = (sponsor && sponsor.name) || sponsorEmail;
-    // The digest is framed around whichever area shows up most in this
-    // sponsor's tasks — a reasonable single label for the subject/header
-    // when a sponsor's tasks span more than one area.
-    const areaCounts = {};
-    tasks.forEach(t => { areaCounts[t.area] = (areaCounts[t.area] || 0) + 1; });
-    const areaLabel = Object.keys(areaCounts).sort((a, b) => areaCounts[b] - areaCounts[a])[0] || 'Task Manager';
+    // Fixed label — this digest is always framed as the sponsor's overall
+    // Marketing task list (matches the "MY TASKS" / Marketing section it's
+    // sent from), not whichever individual task Area happens to be most
+    // common among their tasks.
+    const areaLabel = 'Marketing';
 
     const html = tmBuildDigestHtml(sponsorName, areaLabel, tasks);
     const fromEmail = process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk';
@@ -6693,7 +6692,10 @@ function tmDigestTaskRow(t, opts) {
   if (inProgress) {
     pills.push(`<span style="display:inline-block;background:#fff7e6;color:#92600a;font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;margin-bottom:6px;margin-left:${pills.length ? '6px' : '0'};">&#9654; In progress</span>`);
   }
-  const meta = [t.area, (t.subtasksTotal > 0 ? `${t.subtasksDone}/${t.subtasksTotal} subtasks done` : '')].filter(Boolean).join(' &middot; ');
+  // A literal middot character, not the &middot; HTML entity — the entity's
+  // own "&" would get double-escaped by tmEscHtml() below (into "&amp;
+  // middot;", rendering as the literal text "&middot;" in the sent email).
+  const meta = [t.area, (t.subtasksTotal > 0 ? `${t.subtasksDone}/${t.subtasksTotal} subtasks done` : '')].filter(Boolean).join(' · ');
   const titleStyle = opts.completed
     ? 'color:#003768;font-size:13.5px;font-weight:700;text-decoration:line-through;text-decoration-color:#c7d0d9;'
     : 'color:#003768;font-size:13.5px;font-weight:700;';
