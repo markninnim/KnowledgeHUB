@@ -9248,8 +9248,7 @@ function tmRender() {
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
-            (_tmScope !== 'own' ? '<button onclick="tmOpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
-            (all.length === 0 && _tmScope !== 'own' ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+            (_tmScope !== 'own' ? '<button onclick="tmOpenRenameSectionModal(' + sectionKey + ')" title="Edit section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
           '</div>' +
         '</div>' +
         (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(function(t) { return tmTaskCard(t, { section: section }); }).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
@@ -9306,22 +9305,28 @@ function tmDeleteSection(section) {
   if (!confirm('Delete the "' + section + '" section?')) return;
   _tmSections = _tmSections.filter(function(s) { return s !== section; });
   delete _tmCollapsed[section];
+  var overlay = document.getElementById('tm-rename-section-modal-overlay');
+  if (overlay) overlay.remove();
   tmRender();
 }
 
 function tmOpenRenameSectionModal(oldName) {
+  var isEmpty = !_tmTasks.some(function(t) { return t.area === oldName; });
   var overlay = document.createElement('div');
   overlay.id = 'tm-rename-section-modal-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
   overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
-      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Section</h3>' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Edit Section</h3>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
       '<input type="text" id="tm-f-rename-section" value="' + tmEsc(oldName) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
-      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
-        '<button onclick="document.getElementById(' + "'tm-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
-        '<button id="tm-rename-section-save" onclick="tmSaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;">' +
+        (isEmpty ? '<button onclick="tmDeleteSection(' + tmIdArg(oldName) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="document.getElementById(' + "'tm-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+          '<button id="tm-rename-section-save" onclick="tmSaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
@@ -10007,8 +10012,7 @@ function tm2Render() {
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
-            '<button onclick="tm2OpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
-            (all.length === 0 ? '<button onclick="tm2DeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+            '<button onclick="tm2OpenRenameSectionModal(' + sectionKey + ')" title="Edit section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
           '</div>' +
         '</div>' +
         (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(function(t) { return tm2TaskCard(t, { section: section }); }).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
@@ -10053,22 +10057,28 @@ function tm2DeleteSection(section) {
   if (!confirm('Delete the "' + section + '" section?')) return;
   _tm2Sections = _tm2Sections.filter(function(s) { return s !== section; });
   delete _tm2Collapsed[section];
+  var overlay = document.getElementById('tm2-rename-section-modal-overlay');
+  if (overlay) overlay.remove();
   tm2Render();
   fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: _tm2CurrentBoardId, sections: _tm2Sections }) }).catch(function() {});
 }
 function tm2OpenRenameSectionModal(oldName) {
+  var isEmpty = !_tm2Tasks.some(function(t) { return t.area === oldName; });
   var overlay = document.createElement('div');
   overlay.id = 'tm2-rename-section-modal-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
   overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
-      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Section</h3>' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Edit Section</h3>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
       '<input type="text" id="tm2-f-rename-section" value="' + tmEsc(oldName) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
-      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
-        '<button onclick="document.getElementById(' + "'tm2-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
-        '<button id="tm2-rename-section-save" onclick="tm2SaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;">' +
+        (isEmpty ? '<button onclick="tm2DeleteSection(' + tmIdArg(oldName) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="document.getElementById(' + "'tm2-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+          '<button id="tm2-rename-section-save" onclick="tm2SaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
