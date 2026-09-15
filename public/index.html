@@ -5178,12 +5178,6 @@ Consolidating debts will increase the loan to value which can impact future deal
           <select id="tm-sponsor-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="">All sponsors</option>
           </select>
-          <select id="tm-priority-filter" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
-            <option value="">All priorities</option>
-            <option value="high-critical" selected>High &amp; Critical</option>
-            <option value="urgent">Critical only</option>
-            <option value="medium-up">Medium &amp; above</option>
-          </select>
           <select id="tm-sort" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="custom">Sort: Custom (drag)</option>
             <option value="priority">Sort: Priority</option>
@@ -8729,7 +8723,7 @@ function tmTaskCard(t, opts) {
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
             '<span style="color:#003768;font-size:14px;font-weight:700;' + (t.status === 'Done' ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</span>' +
-            (level.key !== 'none' ? '<span style="background:' + level.bg + ';color:' + level.color + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + level.label + '</span>' : '') +
+            ((level.key === 'high' || level.key === 'urgent') ? '<span style="background:' + level.bg + ';color:' + level.color + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + level.label + '</span>' : '') +
           '</div>' +
           '<div style="color:#6b7c8f;font-size:12.5px;">' + (opts.showArea ? tmEsc(t.area) + (tmCardMeta(t) ? ' · ' : '') : '') + tmCardMeta(t) + '</div>' +
         '</div>' +
@@ -9023,31 +9017,20 @@ function tmRender() {
   var q = (document.getElementById('tm-search') || {}).value || '';
   q = q.trim().toLowerCase();
   var sponsorFilter = (document.getElementById('tm-sponsor-filter') || {}).value || '';
-  var priorityFilter = (document.getElementById('tm-priority-filter') || {}).value || '';
   var sortBy = (document.getElementById('tm-sort') || {}).value || 'priority';
-  var filtering = !!(q || sponsorFilter || priorityFilter || _tmQuickFilter);
+  var filtering = !!(q || sponsorFilter || _tmQuickFilter);
 
-  function matchesPriority(t) {
-    if (!priorityFilter) return true;
-    var idx = TM_PRIORITY_LEVELS.map(function(l) { return l.key; }).indexOf(tmPriorityLevel(t.priority).key);
-    if (priorityFilter === 'urgent') return idx === TM_PRIORITY_LEVELS.length - 1;
-    if (priorityFilter === 'high-critical') return idx >= TM_PRIORITY_LEVELS.map(function(l) { return l.key; }).indexOf('high');
-    if (priorityFilter === 'medium-up') return idx >= TM_PRIORITY_LEVELS.map(function(l) { return l.key; }).indexOf('medium');
-    return true;
-  }
   function matches(t) {
     if (sponsorFilter && t.sponsorEmail !== sponsorFilter) return false;
-    if (!matchesPriority(t)) return false;
     if (_tmQuickFilter && TM_STAT_MATCH[_tmQuickFilter] && !TM_STAT_MATCH[_tmQuickFilter](t)) return false;
     if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
   // The Completed archive ignores the urgency quick-filters (Urgent/Overdue/
   // Due Today/Due This Week don't mean anything for a task that's already
-  // done) — search, sponsor and priority still apply.
+  // done) — search and sponsor still apply.
   function matchesCompleted(t) {
     if (sponsorFilter && t.sponsorEmail !== sponsorFilter) return false;
-    if (!matchesPriority(t)) return false;
     if (q && (t.title || '').toLowerCase().indexOf(q) === -1 && (t.notes || '').toLowerCase().indexOf(q) === -1) return false;
     return true;
   }
