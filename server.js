@@ -6068,16 +6068,18 @@ function tmRecordToTask(record) {
 }
 
 // Task Manager access: full (all tasks, section/task management) for
-// admins and supervisors. Every other authenticated user gets a scoped
-// view — they can only see and act on tasks where they're the sponsor
-// (which may be none at all; that's just an empty list, not a 403).
+// admins only — isSupervisor is a much broader flag (any team lead, for
+// holiday/CPD purposes) and does not imply Task Manager oversight. Every
+// other authenticated user, including supervisors, gets a scoped view —
+// they can only see and act on tasks where they're the sponsor (which may
+// be none at all; that's just an empty list, not a 403).
 function requireTaskManagerAccess(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
   const u = req.session.user;
   const orig = req.session.originalUser;
   const effective = orig || u; // in Guardian Mode, check original identity
   if (!effective) return res.status(403).json({ error: 'Forbidden' });
-  req.tmScope = (effective.isAdmin || effective.isSupervisor) ? 'all' : 'own';
+  req.tmScope = effective.isAdmin ? 'all' : 'own';
   next();
 }
 
