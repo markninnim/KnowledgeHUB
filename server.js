@@ -6086,6 +6086,46 @@ app.get('/api/task-manager', requireAuth, requireAdminOrSupervisor, async (req, 
   }
 });
 
+// POST /api/task-manager/backfill-start-dates — one-time migration helper.
+// The original Readdy site only ever showed one date per task ("Added DD Mon
+// YY"), which is exactly what's already stored in our TM_ADDED field from
+// the 2026-09-14 migration. This copies that date into TM_START (Start
+// date) for any task that doesn't already have one — never overwrites a
+// start date that's already been set by hand. Safe to call more than once.
+app.post('/api/task-manager/backfill-start-dates', requireAuth, requireAdminOrSupervisor, async (req, res) => {
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tmFetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+
+    const toUpdate = all
+      .filter(r => !r.fields[TM_START] && r.fields[TM_ADDED])
+      .map(r => ({ id: r.id, fields: { [TM_START]: r.fields[TM_ADDED] } }));
+
+    let updated = 0;
+    for (let i = 0; i < toUpdate.length; i += 10) {
+      const batch = toUpdate.slice(i, i + 10);
+      await tmFetch('', { method: 'PATCH', body: JSON.stringify({ records: batch }) });
+      updated += batch.length;
+    }
+
+    res.json({
+      totalTasks: all.length,
+      updated,
+      alreadyHadStartDate: all.filter(r => r.fields[TM_START]).length,
+      noAddedDate: all.filter(r => !r.fields[TM_START] && !r.fields[TM_ADDED]).length
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sanitises a subtasks array from the client into { text, done } pairs
 // ready to store as JSON — drops anything malformed rather than erroring,
 // and caps length/count so a stray paste can't blow up the field.
