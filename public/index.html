@@ -8984,7 +8984,8 @@ function tmExpandedBody(t) {
       '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">' +
         (subtasks.length ? subtasks.map(function(s, i) {
           return '' +
-            '<div style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+            '<div draggable="true" ondragstart="tmSubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tmSubtaskDragOver(event)" ondrop="tmSubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tmSubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+              (subtasks.length > 1 ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
               '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmInlineToggleSubtask(' + idArg + ',' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
               '<span style="flex:1;font-size:13px;' + (s.done ? 'color:#6b7c8f;text-decoration:line-through;' : 'color:#003768;') + '">' + tmEsc(s.text) + '</span>' +
               '<button type="button" onclick="tmInlineRemoveSubtask(' + idArg + ',' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
@@ -9110,6 +9111,36 @@ function tmInlineAddSubtask(taskId) {
   next.push({ text: text, done: false });
   tmPersistSubtasks(taskId, next);
 }
+
+// Drag-to-reorder for the subtask checklist inside an expanded card — same
+// pattern as reordering whole task cards, just operating on one task's
+// subtasks array (and saved the same way as any other subtask edit, via
+// tmPersistSubtasks) rather than a separate order field.
+var _tmSubtaskDragIndex = null;
+function tmSubtaskDragStart(e, taskId, index) {
+  _tmSubtaskDragIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  }
+}
+function tmSubtaskDragOver(e) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+function tmSubtaskDrop(e, taskId, targetIndex) {
+  e.preventDefault();
+  var fromIndex = _tmSubtaskDragIndex;
+  _tmSubtaskDragIndex = null;
+  if (fromIndex == null || fromIndex === targetIndex) return;
+  var task = _tmTasks.find(function(t) { return t.id === taskId; });
+  if (!task || !task.subtasks) return;
+  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var moved = next.splice(fromIndex, 1)[0];
+  next.splice(targetIndex, 0, moved);
+  tmPersistSubtasks(taskId, next);
+}
+function tmSubtaskDragEnd() { _tmSubtaskDragIndex = null; }
 
 function tmIsOverdue(t) {
   return !!(t.dueDate && t.status !== 'Done' && new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString()));
@@ -9938,7 +9969,8 @@ function tm2ExpandedBody(t) {
       '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">' +
         (subtasks.length ? subtasks.map(function(s, i) {
           return '' +
-            '<div style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+            '<div draggable="true" ondragstart="tm2SubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tm2SubtaskDragOver(event)" ondrop="tm2SubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tm2SubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+              (subtasks.length > 1 ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
               '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tm2InlineToggleSubtask(' + idArg + ',' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
               '<span style="flex:1;font-size:13px;' + (s.done ? 'color:#6b7c8f;text-decoration:line-through;' : 'color:#003768;') + '">' + tmEsc(s.text) + '</span>' +
               '<button type="button" onclick="tm2InlineRemoveSubtask(' + idArg + ',' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
@@ -10031,6 +10063,32 @@ function tm2InlineAddSubtask(taskId) {
   next.push({ text: text, done: false });
   tm2PersistSubtasks(taskId, next);
 }
+
+var _tm2SubtaskDragIndex = null;
+function tm2SubtaskDragStart(e, taskId, index) {
+  _tm2SubtaskDragIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  }
+}
+function tm2SubtaskDragOver(e) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+function tm2SubtaskDrop(e, taskId, targetIndex) {
+  e.preventDefault();
+  var fromIndex = _tm2SubtaskDragIndex;
+  _tm2SubtaskDragIndex = null;
+  if (fromIndex == null || fromIndex === targetIndex) return;
+  var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
+  if (!task || !task.subtasks) return;
+  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var moved = next.splice(fromIndex, 1)[0];
+  next.splice(targetIndex, 0, moved);
+  tm2PersistSubtasks(taskId, next);
+}
+function tm2SubtaskDragEnd() { _tm2SubtaskDragIndex = null; }
 
 function tm2RenderStatsPanel() {
   var el = document.getElementById('tm2-stats-panel');
