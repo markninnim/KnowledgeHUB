@@ -6758,7 +6758,7 @@ function tmBuildDigestHtml(sponsorName, areaLabel, tasks) {
   ${tmDigestSection('In play: being worked on now', '#fcb034', inPlayRows)}
   ${tmDigestSection('Queued: next up', '#c7d0d9', queuedRows)}
   ${tmDigestSection('Completed in the period prior', '#22c55e', completedRows)}
-  <tr><td style="padding:36px 40px 8px;" align="center"><a href="${appUrl}/lab" style="display:inline-block;background:#003768;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:8px;">Open Task Manager</a></td></tr>
+  <tr><td style="padding:36px 40px 8px;" align="center"><a href="${appUrl}/#lab" style="display:inline-block;background:#003768;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 36px;border-radius:8px;">Open Task Manager</a></td></tr>
   <tr><td style="padding:32px 40px 36px;"><div style="border-top:1px solid #e8ecf0;margin-bottom:20px;"></div><p style="margin:0;color:#6b7c8f;font-size:11.5px;line-height:1.7;text-align:center;">You're receiving this because you sponsor tasks in KnowledgeHUB&#8482; Task Manager.<br>Finance Planning Group</p></td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -6801,7 +6801,7 @@ async function tmSendCompletedEmail(task, completedByUser) {
           <div style="color:#003768;font-weight:700;font-size:15px;margin-bottom:4px;">${task.title}</div>
           <div style="color:#6b7c8f;font-size:13px;">${task.area}</div>
         </div>
-        <a href="${appUrl}/lab" style="display:inline-block;margin:8px 0 20px;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">View in Task Manager</a>
+        <a href="${appUrl}/#lab" style="display:inline-block;margin:8px 0 20px;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">View in Task Manager</a>
         <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
         <p style="color:#6b7c8f;font-size:12px;">KnowledgeHUB&trade;</p>
       </div>`
