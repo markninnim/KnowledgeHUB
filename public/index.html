@@ -5197,6 +5197,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           <button id="tm-send-digest-btn" onclick="tmSendDigest()" style="display:none;background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Send Digest</button>
           <select id="tm-sort" onchange="tmRender()" style="padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#6b7c8f;background:#fff;">
             <option value="custom">Sort: Custom (drag)</option>
+            <option value="in-play">Sort: In play</option>
             <option value="priority">Sort: Priority</option>
             <option value="due">Sort: Due date</option>
             <option value="sponsor">Sort: Sponsor</option>
@@ -9134,6 +9135,17 @@ function tmRender() {
         return na.localeCompare(nb);
       }
       if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sortBy === 'in-play') {
+        // In Progress tasks float to the top (not-done before done first,
+        // then in-play before everything else), then by priority, then title.
+        var aDoneIp = a.status === 'Done', bDoneIp = b.status === 'Done';
+        if (aDoneIp !== bDoneIp) return aDoneIp ? 1 : -1;
+        var aIp = a.status === 'In Progress', bIp = b.status === 'In Progress';
+        if (aIp !== bIp) return aIp ? -1 : 1;
+        var pa2 = a.priority == null ? -1 : a.priority, pb2 = b.priority == null ? -1 : b.priority;
+        if (pa2 !== pb2) return pb2 - pa2;
+        return (a.title || '').localeCompare(b.title || '');
+      }
       // Default: priority — not-done before done (In Progress counts as
       // not-done here), highest priority first, then title
       var aDone = a.status === 'Done', bDone = b.status === 'Done';
