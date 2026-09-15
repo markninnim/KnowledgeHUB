@@ -6294,6 +6294,312 @@ app.post('/api/task-manager/backfill-start-dates', requireAuth, requireTaskManag
   }
 });
 
+// Named subtask checklists scraped from the original tasks.readdy.co site's
+// "FPG Task Report" print view on 2026-09-15 — the normal list view only
+// ever showed a done/total count (e.g. "2/6"), but the report view lists
+// every subtask by name with its own done state. Keyed by normalised title,
+// each value is the ordered checklist exactly as it appeared there.
+const TM_READDY_SUBTASKS = {
+  'restore - refer a friend webpage': [
+    { text: 'Speak to DW re personal website', done: false },
+    { text: 'Add page to main website', done: false }
+  ],
+  'pg website changes': [
+    { text: 'Add Adam', done: false }
+  ],
+  'update fee agreement.': [
+    { text: 'Please can the grey bit for the name be made longer', done: false },
+    { text: 'Please can the grey bit for the client address be made longer', done: false },
+    { text: 'Please can we bin off the Feefo boxes top right and add in our company name and trading address', done: false },
+    { text: 'The name and address can then be removed from the first line of text', done: false },
+    { text: 'Please can we show an alternative method of payment as being our bank account by BACS which is A/C Finance Planning Group Sort Code 40-15-16 A/C No. 21367005 Bank. HSBC', done: false },
+    { text: 'Finally, please can we have our small print at the bottom, i.e. this below….', done: false }
+  ],
+  'pg new brochure': [
+    { text: 'Q. Does Paul want new protection content in brochure?', done: true },
+    { text: 'If yes, redesign', done: true },
+    { text: 'Q. Will Paul have one big brochure or two?', done: true },
+    { text: 'Meeting planned for 17th 11am', done: true },
+    { text: 'Changes discussed', done: false }
+  ],
+  'new protection sales aid - update for 5th product': [
+    { text: 'Consult with MS', done: true },
+    { text: 'Feedback from MS', done: true },
+    { text: 'Design print version', done: true },
+    { text: 'Translate to online tool', done: true },
+    { text: 'Demo', done: true },
+    { text: 'Get feedback', done: true },
+    { text: 'Update', done: true },
+    { text: 'Meet with MS', done: true },
+    { text: 'Update small print for stats', done: true },
+    { text: 'Check with PB', done: true },
+    { text: 'Add R cover', done: true },
+    { text: 'Host', done: false },
+    { text: 'Rollout', done: false }
+  ],
+  'redesign fpg folders & order': [
+    { text: 'Redesign', done: false },
+    { text: 'Order', done: false }
+  ],
+  'staff buys - joe white employee version': [
+    { text: 'Amend design', done: false }
+  ],
+  '5000 review pr': [
+    { text: 'Identify 5000th review', done: true },
+    { text: 'Share with Maria for social media', done: true },
+    { text: 'Order prize', done: false },
+    { text: 'Get photo of broker with customer', done: false },
+    { text: 'Share on social media', done: false },
+    { text: 'Get Philip Smith address', done: false }
+  ],
+  'add asu 5th way to brochure': [
+    { text: 'Add 5th way to lose home to brochure', done: true }
+  ],
+  'staff buy graphics': [
+    { text: 'send to elle.heal@landg.com', done: true }
+  ],
+  'staff buys - joe white edition': [
+    { text: 'Meet with JW to discuss', done: true },
+    { text: 'Initial draft', done: true }
+  ],
+  'drake - flags & leaflets': [
+    { text: 'Flag', done: true },
+    { text: 'Leaflet', done: true }
+  ],
+  'bryce business cards': [
+    { text: 'Update', done: true },
+    { text: 'Order', done: true }
+  ],
+  'advert for awards event': [
+    { text: 'Design advert', done: false },
+    { text: 'Submit', done: false }
+  ],
+  'order door signs for ms': [
+    { text: 'Design', done: true },
+    { text: 'Get Approval', done: true },
+    { text: 'Order', done: true }
+  ],
+  'how can we make broker labels - knowledgehub™': [
+    { text: 'Design tool to automate logo creation', done: true }
+  ],
+  'individual broker branding and logo': [
+    { text: 'Design a broker first FPG logo', done: true }
+  ],
+  'email signature': [
+    { text: 'Build instructions', done: false },
+    { text: 'Distribute', done: false }
+  ],
+  'straightin - linkedin marketing': [
+    { text: 'Discovery meeting', done: true },
+    { text: 'Review proposal', done: true },
+    { text: 'Discuss with Dan', done: true },
+    { text: 'Close project', done: true }
+  ],
+  'recruitment social media': [
+    { text: 'Introduce recruitment led posts to social media', done: false }
+  ],
+  'linkedin network page': [
+    { text: 'Repurpose FPG LinkedIn page', done: false }
+  ],
+  'recruitment jv partner proposal': [
+    { text: 'Present to SMT', done: false }
+  ],
+  'fitch & fitch - onboarding': [
+    { text: 'Data import sheet from Acre', done: false },
+    { text: 'Training support from Acre', done: false }
+  ],
+  'follow up andrew drake': [
+    { text: 'Joined', done: true }
+  ],
+  'auto crm ai': [
+    { text: 'Build system', done: true },
+    { text: 'Give visibility to each broker on KnowledgeHUB™', done: true }
+  ],
+  'ms advice': [
+    { text: 'Due diligence for Jonathan Peachey', done: true },
+    { text: 'Review proposal from agency', done: true },
+    { text: 'Feedback to Dean Aspinal', done: true },
+    { text: 'Meet with Chris Miles', done: false }
+  ],
+  'autocrm update 2.0': [
+    { text: 'review current system', done: true },
+    { text: 'update for 2026', done: true },
+    { text: 'Functionality update: multiple loans', done: false },
+    { text: 'Funtionality update: funnel exit', done: false },
+    { text: 'Create new map for Equity release', done: false },
+    { text: 'Create new map for protection', done: false },
+    { text: 'Create new map for mortgages', done: false },
+    { text: 'Start template build', done: false },
+    { text: 'Start wording build', done: false },
+    { text: 'Design broker notication tool', done: false },
+    { text: 'Build suitability trigger - check Deans data', done: false },
+    { text: 'E1 suitability issued - CD', done: false },
+    { text: 'E2 thank you - reviews and renewal service', done: false },
+    { text: 'E3 challenge - anyting more we can do for you?', done: false },
+    { text: 'E4 Easter', done: false },
+    { text: 'E4 Christmas', done: false },
+    { text: 'E4 Birthday', done: false },
+    { text: 'E4 Annual review', done: false },
+    { text: 'E5 6 month email', done: false },
+    { text: 'E6 5 month email', done: false },
+    { text: 'E7 4 month email', done: false },
+    { text: 'E8 3 month email', done: false },
+    { text: 'E9 2 month email', done: false },
+    { text: 'E10 1 month email', done: false }
+  ],
+  'mortgage booked - due diligence': [
+    { text: 'On behalf of Jai Gohill', done: true },
+    { text: 'Approved', done: true }
+  ],
+  'broker websites': [
+    { text: 'Jane Hutchinson', done: false },
+    { text: 'Adeel Nadeem', done: false },
+    { text: 'Daniel Grant', done: false },
+    { text: 'Richard Lucy', done: false },
+    { text: 'Update all who have submitted content', done: true },
+    { text: 'Update all blank to generic content', done: false }
+  ],
+  'broker nps': [
+    { text: 'Design tool', done: true },
+    { text: 'Test', done: true },
+    { text: 'Design CEO email', done: true },
+    { text: 'Segment Data', done: true },
+    { text: 'Send Batch 1', done: true },
+    { text: 'Send Batch 2', done: false },
+    { text: 'Send Batch 3', done: false }
+  ],
+  'fps lead source': [
+    { text: 'Identify best way to generate more leads', done: true },
+    { text: 'identify best way to track leads', done: true },
+    { text: 'Redesign quote email', done: false },
+    { text: 'Design FPM advert to accompany quote', done: false },
+    { text: 'Design quote to accompany booking', done: false },
+    { text: 'Hard stop on FPS broker usage due to cross selling', done: false },
+    { text: 'Back end FP website work', done: false }
+  ],
+  'distribute facebook video with social media activities': [
+    { text: 'upload video to vimeo', done: true },
+    { text: 'distribute link', done: true }
+  ],
+  'staff buy - local.trusted.advice': [
+    { text: 'Adapt Joe White brochure', done: false },
+    { text: 'Introduce to LeadGEN', done: false }
+  ],
+  'estate agent jv partner proposal': [
+    { text: 'Define a model', done: false },
+    { text: 'Present to SMT', done: false }
+  ],
+  'new consumer duty questionnaire email and process': [
+    { text: 'Design tool', done: true },
+    { text: 'Build database behind tool', done: true },
+    { text: 'Add auto answers to save complaince responding', done: true },
+    { text: 'Create auto notifications on flags to compliance', done: true },
+    { text: 'Test', done: true },
+    { text: 'Enhance questions following testing', done: true },
+    { text: 'Build a language conversion tool into system', done: true },
+    { text: 'Create Variable and Fixed challenge - Build out solution', done: true },
+    { text: 'Add feedback into ComplianceHUB', done: true },
+    { text: 'Test', done: true },
+    { text: 'Build results into ComplianceHUB', done: true },
+    { text: 'design email', done: true },
+    { text: 'Update email as per Pete’s comments', done: false },
+    { text: 'Send to supervisors', done: false },
+    { text: 'Send to broker', done: false },
+    { text: 'design database', done: false },
+    { text: 'build workflow', done: false },
+    { text: 'test', done: false }
+  ],
+  'website broker customer tracking': [
+    { text: 'Implement changes to current site', done: true },
+    { text: 'Test changes', done: true }
+  ],
+  'suitability understanding model - no appetite': [
+    { text: 'Create tool', done: true },
+    { text: 'test', done: false }
+  ],
+  'consumer duty questionnaire': [
+    { text: 'Design aggrogating questionnaire', done: true }
+  ],
+  'change rooms in online calendar': [
+    { text: 'Change rooms on invite email', done: true }
+  ],
+  'calendar overhaul': [
+    { text: 'Review calendar', done: false },
+    { text: 'Address shortfalls if any', done: false },
+    { text: 'Apply fix', done: false }
+  ],
+  'secure uploads - deprecation': [
+    { text: 'Identify 2026 users', done: false },
+    { text: 'Commuicate change', done: false }
+  ],
+  'quickstart - deprecation': [
+    { text: 'Identify 2026 users', done: false },
+    { text: 'Communicate', done: false }
+  ],
+  'new knowledgehub™ - post mvp': [
+    { text: 'Scope project', done: true },
+    { text: 'Build out structure', done: true },
+    { text: 'Present MVP', done: false }
+  ],
+  'legacy websites - deprication': [
+    { text: 'Create forwarding from old website to new', done: false },
+    { text: 'Remove old site', done: false },
+    { text: 'Inform Goolge', done: false }
+  ],
+  'site ranking on llm ai': [
+    { text: 'Progress project to launch', done: false }
+  ],
+  'chris bartrip - feefo': [
+    { text: 'chase request for - russbaker@me.com', done: true }
+  ],
+  'secure upload data - remove from jotform.com': [
+    { text: 'Communicate with brokers', done: false },
+    { text: 'Delete data', done: false }
+  ]
+};
+
+// POST /api/task-manager/backfill-subtasks — one-time migration helper,
+// companion to the start-date backfill above. Writes the named checklist
+// from TM_READDY_SUBTASKS into TM_SUBTASKS for any task that doesn't
+// already have a real (non-empty) checklist — never overwrites subtasks a
+// user has since added by hand, and is safe to call more than once.
+app.post('/api/task-manager/backfill-subtasks', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tmFetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+
+    const toUpdate = [];
+    const skippedAlreadyHasSubtasks = [];
+    all.forEach(r => {
+      const title = r.fields[TM_TITLE] || '';
+      const existing = tmParseSubtasks(r.fields[TM_SUBTASKS]);
+      if (existing.length) { skippedAlreadyHasSubtasks.push(title); return; }
+      const list = TM_READDY_SUBTASKS[tmNormTitle(title)];
+      if (list && list.length) {
+        toUpdate.push({ id: r.id, fields: { [TM_SUBTASKS]: JSON.stringify(list) } });
+      }
+    });
+
+    let updated = 0;
+    for (let i = 0; i < toUpdate.length; i += 10) {
+      const batch = toUpdate.slice(i, i + 10);
+      await tmFetch('', { method: 'PATCH', body: JSON.stringify({ records: batch }) });
+      updated += batch.length;
+    }
+
+    res.json({ totalTasks: all.length, updated, skippedAlreadyHadSubtasks: skippedAlreadyHasSubtasks.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sanitises a subtasks array from the client into { text, done } pairs
 // ready to store as JSON — drops anything malformed rather than erroring,
 // and caps length/count so a stray paste can't blow up the field.

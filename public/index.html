@@ -8412,6 +8412,24 @@ function tmMaybeAutoBackfillStartDates() {
     .catch(function(err) { console.warn('[task-manager] start-date backfill request failed:', err); });
 }
 
+// Same one-time, no-button pattern as the start-date backfill above, but
+// for named subtask checklists — never overwrites a checklist that's
+// already there.
+function tmMaybeAutoBackfillSubtasks() {
+  if (_tmScope !== 'all') return;
+  try { if (localStorage.getItem('tm-subtasks-backfill-done')) return; } catch (e) { return; }
+  fetch('/api/task-manager/backfill-subtasks', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.error) { console.warn('[task-manager] subtasks backfill failed:', result.error); return; }
+      console.log('[task-manager] subtasks backfill: updated ' + result.updated + ' of ' + result.totalTasks + ' tasks (' + result.skippedAlreadyHadSubtasks + ' already had a checklist).');
+      try { localStorage.setItem('tm-subtasks-backfill-done', '1'); } catch (e) {}
+      _tmTasks = null; // force a fresh fetch so the new checklists show immediately
+      loadTaskManager();
+    })
+    .catch(function(err) { console.warn('[task-manager] subtasks backfill request failed:', err); });
+}
+
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
   fetch('/api/task-manager').then(function(r){ return r.json(); }).then(function(d) {
@@ -8424,6 +8442,7 @@ function loadTaskManager() {
     tmPopulateSponsorFilter();
     tmRender();
     tmMaybeAutoBackfillStartDates();
+    tmMaybeAutoBackfillSubtasks();
   }).catch(function() {
     var el = document.getElementById('tm-list');
     if (el) el.innerHTML = '<div style="color:#b91c1c;font-size:13px;padding:20px 0;">Could not load tasks.</div>';
