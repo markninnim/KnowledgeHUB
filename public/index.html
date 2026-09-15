@@ -546,6 +546,22 @@ select:focus { outline:none; }
         </div>
       </div>
 
+      <!-- Task Manager — in play / critical, Mark Ninnim's homepage only -->
+      <div id="home-tm-widget" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:var(--brand-navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            </div>
+            <div style="font-size:15px;font-weight:700;color:var(--brand-navy);">In play &amp; Critical tasks</div>
+          </div>
+          <a href="#" onclick="switchTab('lab');labShowSection('task-manager', document.getElementById('lab-nav-task'));return false;" style="font-size:12px;font-weight:600;color:var(--brand-navy);text-decoration:none;">Task Manager →</a>
+        </div>
+        <div id="home-tm-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="color:#6b7c8f;font-size:13px;text-align:center;padding:20px 0;">Loading...</div>
+        </div>
+      </div>
+
       <!-- Home grid (3 columns) -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;align-items:stretch;">
 
@@ -11205,6 +11221,57 @@ function renderFeefoPage() {
 }
 
 var _homeReengageLoaded = false;
+// Home page widget — Mark's own "at a glance" list of tasks that need eyes
+// on them right now: anything In Progress ("in play"), plus anything
+// Critical priority regardless of status (excluding tasks already Done).
+// Independent of the Task Manager page itself, so it works even if that
+// page has never been opened this session (fetches its own copy of the
+// task list and doesn't rely on _tmTasks being populated).
+function loadHomeTaskManagerWidget() {
+  var listEl = document.getElementById('home-tm-list');
+  if (!listEl) return;
+  fetch('/api/task-manager').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) { listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:12px 0;">Could not load tasks.</div>'; return; }
+    if (d.sponsors && d.sponsors.length) _tmSponsors = d.sponsors;
+    var tasks = (d.tasks || []).filter(function(t) {
+      if (t.status === 'Done') return false;
+      var level = tmPriorityLevel(t.priority);
+      return t.status === 'In Progress' || level.key === 'urgent';
+    });
+    if (!tasks.length) {
+      listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:12px 0;">Nothing in play or critical right now.</div>';
+      return;
+    }
+    // Critical-and-in-progress first, then critical, then in-progress; ties
+    // broken by title so the order doesn't jump around between loads.
+    tasks.sort(function(a, b) {
+      var aLevel = tmPriorityLevel(a.priority), bLevel = tmPriorityLevel(b.priority);
+      var aScore = (aLevel.key === 'urgent' ? 2 : 0) + (a.status === 'In Progress' ? 1 : 0);
+      var bScore = (bLevel.key === 'urgent' ? 2 : 0) + (b.status === 'In Progress' ? 1 : 0);
+      if (bScore !== aScore) return bScore - aScore;
+      return a.title.localeCompare(b.title);
+    });
+    listEl.innerHTML = tasks.slice(0, 8).map(function(t) {
+      var level = tmPriorityLevel(t.priority);
+      var inProgress = t.status === 'In Progress';
+      var days = t.startDate ? tmWorkingDaysSince(t.startDate) : 0;
+      var pills = '';
+      if (level.key === 'urgent') pills += '<span style="display:inline-block;background:' + level.bg + ';color:' + level.color + ';font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;margin-right:6px;">Critical</span>';
+      if (inProgress) pills += '<span style="display:inline-block;background:#fff7e6;color:#92600a;font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;">&#9654; In progress</span>';
+      return '<div onclick="switchTab(\'lab\');labShowSection(\'task-manager\',document.getElementById(\'lab-nav-task\'));" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #d1d5db;' + (inProgress ? 'border-left:4px solid #fcb034;' : '') + 'border-radius:8px;cursor:pointer;">' +
+        '<div style="min-width:0;">' +
+          (pills ? '<div style="margin-bottom:4px;">' + pills + '</div>' : '') +
+          '<div style="color:#003768;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + tmEsc(t.title) + '</div>' +
+          '<div style="color:#6b7c8f;font-size:11.5px;margin-top:2px;">' + tmEsc(t.area) + (t.sponsorEmail ? ' &middot; ' + tmEsc(tmSponsorName(t.sponsorEmail)) : '') + '</div>' +
+        '</div>' +
+        (days > 0 ? '<div style="text-align:right;flex-shrink:0;"><div style="color:#003768;font-size:15px;font-weight:800;line-height:1;">' + days + '</div><div style="color:#6b7c8f;font-size:10px;">day' + (days === 1 ? '' : 's') + '</div></div>' : '') +
+      '</div>';
+    }).join('');
+  }).catch(function() {
+    listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;text-align:center;padding:12px 0;">Could not load tasks.</div>';
+  });
+}
+
 function loadHomeReengage() {
   var box = document.getElementById('home-reengage-bars');
   if (!box) return;
@@ -11874,6 +11941,8 @@ var _currentUser = null;
     if (user && (user.email || '').toLowerCase() === 'mark.ninnim@financeplanning.co.uk') {
       var tmWrap = document.getElementById('lab-nav-task-wrap');
       if (tmWrap) tmWrap.style.display = 'block';
+      var tmHomeWidget = document.getElementById('home-tm-widget');
+      if (tmHomeWidget) { tmHomeWidget.style.display = 'block'; loadHomeTaskManagerWidget(); }
     }
     // Every user (other than Mark, who already has the full-access link
     // above) gets a scoped "My Tasks" entry — the page only ever shows
