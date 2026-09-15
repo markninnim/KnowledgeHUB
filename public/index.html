@@ -408,7 +408,7 @@ select:focus { outline:none; }
       <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
     </div>
     <div id="lab-nav-marketing-wrap" style="display:none;">
-      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">MARKETING</span></div>
+      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">MY TASKS</span></div>
       <a href="#" id="lab-nav-marketing" onclick="labShowSection('task-manager',this);return false;">Pete Burgess</a>
     </div>
   </div>
@@ -11719,10 +11719,15 @@ var _currentUser = null;
       var tmWrap = document.getElementById('lab-nav-task-wrap');
       if (tmWrap) tmWrap.style.display = 'block';
     }
-    // Pete Burgess gets a scoped Task Manager entry — sees only tasks he
-    // sponsors (server also enforces this via requireTaskManagerAccess).
-    if (user && (user.email || '').toLowerCase() === 'pete.burgess@financeplanning.co.uk') {
+    // Every user (other than Mark, who already has the full-access link
+    // above) gets a scoped "My Tasks" entry — the page only ever shows
+    // tasks they sponsor, whether that's none or many (server also
+    // enforces this via requireTaskManagerAccess, regardless of what the
+    // sidebar shows).
+    if (user && (user.email || '').toLowerCase() !== 'mark.ninnim@financeplanning.co.uk') {
       var tmMktWrap = document.getElementById('lab-nav-marketing-wrap');
+      var tmMktLink = document.getElementById('lab-nav-marketing');
+      if (tmMktLink) tmMktLink.textContent = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'My Tasks';
       if (tmMktWrap) tmMktWrap.style.display = 'block';
     }
     if (user && (user.isSupervisor || user.isAdmin)) {

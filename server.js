@@ -6068,21 +6068,17 @@ function tmRecordToTask(record) {
 }
 
 // Task Manager access: full (all tasks, section/task management) for
-// admins and supervisors. A named list of sponsors who aren't otherwise
-// admins/supervisors — currently just Pete Burgess — get a scoped view:
-// they can only see and act on tasks where they're the sponsor.
-const TM_SCOPED_SPONSOR_EMAILS = [PETE_BURGESS_EMAIL];
+// admins and supervisors. Every other authenticated user gets a scoped
+// view — they can only see and act on tasks where they're the sponsor
+// (which may be none at all; that's just an empty list, not a 403).
 function requireTaskManagerAccess(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
   const u = req.session.user;
   const orig = req.session.originalUser;
   const effective = orig || u; // in Guardian Mode, check original identity
-  if (effective && (effective.isAdmin || effective.isSupervisor)) { req.tmScope = 'all'; return next(); }
-  if (effective && TM_SCOPED_SPONSOR_EMAILS.indexOf((effective.email || '').toLowerCase()) !== -1) {
-    req.tmScope = 'own';
-    return next();
-  }
-  res.status(403).json({ error: 'Forbidden' });
+  if (!effective) return res.status(403).json({ error: 'Forbidden' });
+  req.tmScope = (effective.isAdmin || effective.isSupervisor) ? 'all' : 'own';
+  next();
 }
 
 // GET /api/task-manager — all tasks, paginated fetch (108 records fits well under one page's max of 100, so page through if needed)
