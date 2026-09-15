@@ -9195,6 +9195,7 @@ function tmRender() {
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
+            (_tmScope !== 'own' ? '<button onclick="tmOpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' : '') +
             (all.length === 0 && _tmScope !== 'own' ? '<button onclick="tmDeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
           '</div>' +
         '</div>' +
@@ -9253,6 +9254,69 @@ function tmDeleteSection(section) {
   _tmSections = _tmSections.filter(function(s) { return s !== section; });
   delete _tmCollapsed[section];
   tmRender();
+}
+
+function tmOpenRenameSectionModal(oldName) {
+  var overlay = document.createElement('div');
+  overlay.id = 'tm-rename-section-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Section</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
+      '<input type="text" id="tm-f-rename-section" value="' + tmEsc(oldName) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="document.getElementById(' + "'tm-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button id="tm-rename-section-save" onclick="tmSaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() {
+    var inp = document.getElementById('tm-f-rename-section');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 0);
+}
+
+// Renaming a section means: every task currently in it moves to the new
+// Area value (the single-select auto-creates the new option via typecast,
+// same as picking a brand-new area in the task modal), then the section
+// list/order/collapse-state are updated to match. Tasks with no other
+// section changes are otherwise untouched — this is purely a bulk area move
+// under the hood, same mechanism as tmBulkMoveSection.
+function tmSaveRenameSection(oldName) {
+  var newName = ((document.getElementById('tm-f-rename-section') || {}).value || '').trim();
+  if (!newName) { alert('Section name is required.'); return; }
+  if (newName === oldName) { var ov = document.getElementById('tm-rename-section-modal-overlay'); if (ov) ov.remove(); return; }
+  if (_tmSections.indexOf(newName) !== -1) { alert('That section already exists.'); return; }
+  var btn = document.getElementById('tm-rename-section-save');
+  var ids = _tmTasks.filter(function(t) { return t.area === oldName; }).map(function(t) { return t.id; });
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/task-manager/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ area: newName }) }).then(function(r) { return r.json(); });
+  })).then(function(results) {
+    var failed = results.some(function(r) { return !r || r.error; });
+    if (failed) { alert('Could not rename all tasks in this section — please try again.'); return; }
+    results.forEach(function(saved) {
+      var idx = _tmTasks.findIndex(function(t) { return t.id === saved.id; });
+      if (idx !== -1) _tmTasks[idx] = saved;
+    });
+    _tmSections = _tmSections.map(function(s) { return s === oldName ? newName : s; });
+    // The 8 original migration areas are a fixed server-side list — if the
+    // renamed section was one of those, drop it from _tmAreas too so an
+    // empty duplicate of the old name doesn't reappear on the next load.
+    _tmAreas = _tmAreas.filter(function(a) { return a !== oldName; });
+    if (_tmCollapsed[oldName]) { _tmCollapsed[newName] = _tmCollapsed[oldName]; delete _tmCollapsed[oldName]; }
+    if (_tmTaskOrder[oldName]) { _tmTaskOrder[newName] = _tmTaskOrder[oldName]; delete _tmTaskOrder[oldName]; tmSaveTaskOrder(); }
+    tmSaveSectionOrder();
+    var overlay = document.getElementById('tm-rename-section-modal-overlay');
+    if (overlay) overlay.remove();
+    tmRender();
+  }).catch(function() {
+    alert('Could not rename section — please try again.');
+  }).finally(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  });
 }
 
 function tmOpenModal(taskId, presetArea) {
