@@ -339,7 +339,7 @@ function computeNavDefaults(f) {
     compliance:      true,
     learning:        true,
     surveying:       true,
-    lab:             isAdmin,
+    lab:             supervisorOrAdmin,
     sellingZone:     true,
     pay:             true,
     autocrm:         true,
