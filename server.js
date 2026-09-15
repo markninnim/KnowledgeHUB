@@ -6043,11 +6043,11 @@ async function tmFetch(endpoint, options = {}) {
 function tmRecordToTask(record) {
   const f = record.fields;
   const subtasks = tmParseSubtasks(f[TM_SUBTASKS]);
-  // subtasksDone/subtasksTotal are derived from the checklist whenever it has
-  // items, so the progress bar can never drift out of sync with the list.
-  // Falls back to the plain numeric fields for the 108 migrated tasks that
-  // only ever had a done/total count, never a named checklist.
-  const hasList = subtasks.length > 0;
+  // subtasksDone/subtasksTotal are derived purely from the actual named
+  // checklist — a task with no checklist items shows 0/0 (and so no
+  // progress bar at all), rather than falling back to the plain leftover
+  // done/total numbers from the original migration, which had no named
+  // items behind them and just confused people ("0/2" with nothing to tick).
   return {
     id:            record.id,
     title:         f[TM_TITLE]    || '',
@@ -6056,8 +6056,8 @@ function tmRecordToTask(record) {
     duration:      f[TM_DURATION] || '',
     priority:      typeof f[TM_PRIORITY] === 'number' ? f[TM_PRIORITY] : null,
     subtasks:      subtasks,
-    subtasksDone:  hasList ? subtasks.filter(s => s.done).length : (typeof f[TM_SUB_DONE] === 'number' ? f[TM_SUB_DONE] : 0),
-    subtasksTotal: hasList ? subtasks.length : (typeof f[TM_SUB_TOT] === 'number' ? f[TM_SUB_TOT] : 0),
+    subtasksDone:  subtasks.filter(s => s.done).length,
+    subtasksTotal: subtasks.length,
     startDate:     f[TM_START]    || '',
     dueDate:       f[TM_DUE]      || '',
     notes:         f[TM_NOTES]    || '',
