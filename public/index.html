@@ -8701,8 +8701,12 @@ function tmTaskCard(t, opts) {
   var selected = !!_tmSelected[t.id];
   var headerClick = _tmSelectMode ? ('tmToggleSelect(' + idArg + ')') : ('tmToggleExpand(' + idArg + ')');
   var level = tmPriorityLevel(t.priority);
-  var workingDays = (t.status !== 'Done' && t.startDate) ? tmWorkingDaysSince(t.startDate) : null;
   var inProgress = t.status === 'In Progress';
+  // Working-days count is only shown for tasks that need eyes on them right
+  // now: High/Critical priority, or already flagged as In Progress ("in
+  // play") — not every task with a start date, which was cluttering the list.
+  var showWorkingDays = t.status !== 'Done' && t.startDate && (level.key === 'high' || level.key === 'urgent' || inProgress);
+  var workingDays = showWorkingDays ? tmWorkingDaysSince(t.startDate) : null;
   var draggable = !!opts.section && !_tmSelectMode;
   var sectionArg = draggable ? tmIdArg(opts.section) : '';
   var dragAttrs = draggable ?
