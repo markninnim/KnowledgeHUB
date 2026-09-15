@@ -8659,11 +8659,11 @@ function tmFormatDate(iso) {
 // Saving always writes the level's canonical value; existing migrated
 // tasks with odd in-between numbers (e.g. 6, 7) still bucket sensibly.
 var TM_PRIORITY_LEVELS = [
-  { key: 'none',   label: 'None',   value: null, min: -1 },
-  { key: 'low',    label: 'Low',    value: 2,    min: 1, color: '#1d6fa5', bg: 'rgba(46,153,213,.12)' },
-  { key: 'medium', label: 'Medium', value: 5,    min: 4, color: '#854d0e', bg: '#fef9c3' },
-  { key: 'high',   label: 'High',   value: 8,    min: 7, color: '#b8722a', bg: 'rgba(252,176,52,.15)' },
-  { key: 'urgent', label: 'Urgent', value: 10,   min: 9, color: '#b91c1c', bg: '#fef2f2' }
+  { key: 'none',     label: 'None',     value: null, min: -1 },
+  { key: 'low',      label: 'Low',      value: 2,    min: 1, color: '#003768', bg: '#dbeafe' },
+  { key: 'medium',   label: 'Medium',   value: 5,    min: 4, color: '#003768', bg: '#dbeafe' },
+  { key: 'high',     label: 'High',     value: 8,    min: 7, color: '#003768', bg: '#dbeafe' },
+  { key: 'urgent',   label: 'Critical', value: 10,   min: 9, color: '#b91c1c', bg: '#fef2f2' }
 ];
 function tmPriorityLevel(n) {
   if (n == null) return TM_PRIORITY_LEVELS[0];
@@ -8840,7 +8840,7 @@ function tmIsDueThisWeek(t) {
 // the numbers stay stable as you filter.
 var TM_STATS = [
   { key: 'active',    label: 'Active Tasks',  color: '#003768', bg: '#dbeafe', icon: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>' },
-  { key: 'urgent',     label: 'Urgent',        color: '#b91c1c', bg: '#fef2f2', icon: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>' },
+  { key: 'urgent',     label: 'Critical',      color: '#b91c1c', bg: '#fef2f2', icon: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>' },
   { key: 'overdue',    label: 'Overdue',       color: '#854d0e', bg: '#fef9c3', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' },
   { key: 'due-today',  label: 'Due Today',     color: '#b8722a', bg: 'rgba(252,176,52,.15)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
   { key: 'due-week',   label: 'Due This Week', color: '#1d6fa5', bg: 'rgba(46,153,213,.12)', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
