@@ -6118,10 +6118,14 @@ function requireTaskManager2Access(req, res, next) {
   next();
 }
 
-// A board's id is simply its owner's lowercased email — one board per
-// person, so there's nothing to look up or collide on.
-function tm2BoardId(req) {
-  return ((req.session.user || {}).email || '').toLowerCase();
+// Boards are a small directory, not tied to whoever is signed in — any
+// supervisor/admin can create a board "for" a named person (typing their
+// name in the Add New modal) and every supervisor/admin sees every board
+// that exists, same as they'd all see Mark's original board. The board id
+// is a slug of the owner's name, deduped with a numeric suffix if two
+// people share a name.
+function tm2Slugify(name) {
+  return String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'board';
 }
 function tm2BoardSettingKey(boardId) {
   return 'task_board_2_' + boardId;
@@ -6140,12 +6144,41 @@ async function tm2GetBoard(boardId) {
 async function tm2SaveBoard(boardId, board) {
   await setAppSetting(tm2BoardSettingKey(boardId), JSON.stringify(board));
 }
+// Lists every task_board_2_* entry in App Settings — the sidebar directory.
+async function tm2ListBoards() {
+  const prefix = 'task_board_2_';
+  const formula = encodeURIComponent(`FIND('${prefix}', {${APP_SETTINGS_KEY}}) = 1`);
+  const data = await appSettingsFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&pageSize=100`);
+  const boards = [];
+  for (const rec of (data.records || [])) {
+    const key = rec.fields[APP_SETTINGS_KEY] || '';
+    const boardId = key.slice(prefix.length);
+    try {
+      const board = JSON.parse(rec.fields[APP_SETTINGS_VALUE] || '');
+      if (board && Array.isArray(board.sections)) {
+        boards.push({ id: boardId, name: board.name, ownerName: board.ownerName });
+      }
+    } catch (e) { /* skip malformed entries */ }
+  }
+  boards.sort((a, b) => (a.ownerName || '').localeCompare(b.ownerName || ''));
+  return boards;
+}
 
-// GET the current user's board — { exists:false } if they haven't set one
-// up yet, which the client uses to show the "Create Task Manager" modal.
+app.get('/api/task-manager-2/boards', requireAuth, requireTaskManager2Access, async (req, res) => {
+  try {
+    const boards = await tm2ListBoards();
+    res.json({ boards });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET a single board's meta by id — { exists:false } if it's not a real
+// board (used to sanity-check a boardId before switching to it).
 app.get('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
-    const boardId = tm2BoardId(req);
+    const boardId = String(req.query.boardId || '');
+    if (!boardId) return res.status(400).json({ error: 'boardId required' });
     const board = await tm2GetBoard(boardId);
     if (!board) return res.json({ exists: false });
     res.json({ exists: true, id: boardId, name: board.name, ownerName: board.ownerName, sections: board.sections });
@@ -6154,18 +6187,18 @@ app.get('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, asy
   }
 });
 
-// Create (or rename) the current user's board. Called from the setup modal
-// with { ownerName, sections }, or from the rename modal with just { name }.
+// Create a new board — the "Add New" modal, { ownerName, sections }. Any
+// supervisor/admin can create one for any named person; it's not tied to
+// whoever is signed in.
 app.post('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const boardId = tm2BoardId(req);
-  if (!boardId) return res.status(400).json({ error: 'No user on session' });
   const ownerName = (req.body.ownerName || '').trim();
   let sections = Array.isArray(req.body.sections) ? req.body.sections.map(s => String(s || '').trim()).filter(Boolean) : [];
   if (!ownerName) return res.status(400).json({ error: 'Name required' });
   if (!sections.length) sections = TM2_DEFAULT_AREAS.slice();
   try {
-    const existing = await tm2GetBoard(boardId);
-    if (existing) return res.status(409).json({ error: 'Task manager already exists for this user' });
+    let boardId = tm2Slugify(ownerName);
+    let n = 2;
+    while (await tm2GetBoard(boardId)) { boardId = tm2Slugify(ownerName) + '-' + n; n++; }
     const board = { ownerName, name: ownerName + "'s Task Manager", sections, createdAt: new Date().toISOString().slice(0, 10) };
     await tm2SaveBoard(boardId, board);
     res.json({ exists: true, id: boardId, name: board.name, ownerName: board.ownerName, sections: board.sections });
@@ -6175,10 +6208,11 @@ app.post('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, as
 });
 
 app.put('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const boardId = tm2BoardId(req);
+  const boardId = String(req.body.boardId || '');
+  if (!boardId) return res.status(400).json({ error: 'boardId required' });
   try {
     const board = await tm2GetBoard(boardId);
-    if (!board) return res.status(404).json({ error: 'No task manager set up yet' });
+    if (!board) return res.status(404).json({ error: 'No task manager found' });
     if (req.body.name !== undefined) {
       const name = String(req.body.name || '').trim();
       if (!name) return res.status(400).json({ error: 'Name required' });
@@ -6196,7 +6230,8 @@ app.put('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, asy
 
 app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
-    const boardId = tm2BoardId(req);
+    const boardId = String(req.query.boardId || '');
+    if (!boardId) return res.status(400).json({ error: 'boardId required' });
     const board = await tm2GetBoard(boardId);
     if (!board) return res.json({ noBoard: true });
     const formula = encodeURIComponent(`{${TM2_BOARD}}='${boardId}'`);
@@ -6212,19 +6247,19 @@ app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (re
     const tasks = all.map(tm2RecordToTask);
     let sponsors = [];
     try { sponsors = await fetchAllUserNames(null); } catch (e) { sponsors = []; }
-    res.json({ tasks, areas: board.sections, name: board.name, sponsors });
+    res.json({ tasks, areas: board.sections, name: board.name, ownerName: board.ownerName, sponsors });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const boardId = tm2BoardId(req);
-  const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
+  const { boardId, title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail } = req.body;
+  if (!boardId) return res.status(400).json({ error: 'boardId required' });
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
     const board = await tm2GetBoard(boardId);
-    if (!board) return res.status(404).json({ error: 'Set up your task manager first' });
+    if (!board) return res.status(404).json({ error: 'That task manager no longer exists' });
     const fields = {
       [TM2_TITLE]: title,
       [TM2_AREA]: area || board.sections[0],
@@ -6232,6 +6267,15 @@ app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (r
       [TM2_ADDED]: new Date().toISOString().slice(0, 10),
       [TM2_BOARD]: boardId
     };
+    if (type) fields[TM2_TYPE] = type;
+    if (duration) fields[TM2_DURATION] = duration;
+    if (typeof priority === 'number') fields[TM2_PRIORITY] = priority;
+    if (Array.isArray(subtasks)) {
+      fields[TM2_SUBTASKS] = JSON.stringify(subtasks);
+      fields[TM2_SUB_DONE] = subtasks.filter(s => s.done).length;
+      fields[TM2_SUB_TOT] = subtasks.length;
+    }
+    if (startDate) fields[TM2_START] = startDate;
     if (dueDate) fields[TM2_DUE] = dueDate;
     if (notes) fields[TM2_NOTES] = notes;
     if (sponsorEmail) fields[TM2_SPONSOR] = String(sponsorEmail).toLowerCase();
@@ -6245,25 +6289,21 @@ app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (r
   }
 });
 
-// Shared ownership check for PATCH/DELETE — a task can only be touched by
-// the owner of the board it belongs to.
-async function tm2AssertOwnsTask(req, taskId) {
-  const boardId = tm2BoardId(req);
-  const fresh = await tm2Fetch(`/${taskId}?returnFieldsByFieldId=true`);
-  const task = tm2RecordToTask(fresh);
-  if (task.boardId !== boardId) {
-    const err = new Error('Forbidden'); err.status = 403; throw err;
-  }
-  return task;
-}
-
 app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
+  const { title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail } = req.body;
   try {
-    await tm2AssertOwnsTask(req, req.params.id);
     const fields = {};
     if (title !== undefined) fields[TM2_TITLE] = title;
     if (area !== undefined) fields[TM2_AREA] = area;
+    if (type !== undefined) fields[TM2_TYPE] = type;
+    if (duration !== undefined) fields[TM2_DURATION] = duration;
+    if (priority !== undefined) fields[TM2_PRIORITY] = priority;
+    if (Array.isArray(subtasks)) {
+      fields[TM2_SUBTASKS] = JSON.stringify(subtasks);
+      fields[TM2_SUB_DONE] = subtasks.filter(s => s.done).length;
+      fields[TM2_SUB_TOT] = subtasks.length;
+    }
+    if (startDate !== undefined) fields[TM2_START] = startDate;
     if (dueDate !== undefined) fields[TM2_DUE] = dueDate;
     if (notes !== undefined) fields[TM2_NOTES] = notes;
     if (status !== undefined) fields[TM2_STATUS] = status;
@@ -6281,7 +6321,6 @@ app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, asy
 
 app.delete('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
-    await tm2AssertOwnsTask(req, req.params.id);
     await tm2Fetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ deleted: true });
   } catch (err) {
