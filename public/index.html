@@ -8721,6 +8721,51 @@ function tmIdArg(id) {
   return '&quot;' + String(id).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '&quot;';
 }
 
+// Shared type-to-confirm modal for anything destructive — used by task
+// delete, section delete and board delete across both Task Managers. The
+// Delete button stays disabled until the exact phrase is typed, so it can't
+// go off from a stray click the way a plain confirm() dialog can.
+var _tmConfirmDeleteCb = null;
+function tmConfirmDelete(title, message, phrase, onConfirm) {
+  _tmConfirmDeleteCb = onConfirm;
+  var overlay = document.createElement('div');
+  overlay.id = 'tm-confirm-delete-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9500;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) tmCloseConfirmDelete(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:400px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 10px;">' + tmEsc(title) + '</h3>' +
+      '<p style="color:#6b7c8f;font-size:13px;margin:0 0 16px;line-height:1.6;">' + message + '</p>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Type <strong>' + tmEsc(phrase) + '</strong> to confirm</label>' +
+      '<input type="text" id="tm-confirm-delete-input" autocomplete="off" oninput="tmUpdateConfirmDeleteBtn(' + tmIdArg(phrase) + ')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();var b=document.getElementById(\'tm-confirm-delete-btn\');if(b&&!b.disabled)b.click();}" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="tmCloseConfirmDelete()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button id="tm-confirm-delete-btn" disabled onclick="tmRunConfirmDelete()" style="background:#b91c1c;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:not-allowed;font-family:inherit;opacity:.5;">Delete</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm-confirm-delete-input'); if (inp) inp.focus(); }, 0);
+}
+function tmUpdateConfirmDeleteBtn(phrase) {
+  var inp = document.getElementById('tm-confirm-delete-input');
+  var btn = document.getElementById('tm-confirm-delete-btn');
+  if (!inp || !btn) return;
+  var match = inp.value.trim() === phrase;
+  btn.disabled = !match;
+  btn.style.opacity = match ? '1' : '.5';
+  btn.style.cursor = match ? 'pointer' : 'not-allowed';
+}
+function tmCloseConfirmDelete() {
+  var overlay = document.getElementById('tm-confirm-delete-overlay');
+  if (overlay) overlay.remove();
+  _tmConfirmDeleteCb = null;
+}
+function tmRunConfirmDelete() {
+  var cb = _tmConfirmDeleteCb;
+  tmCloseConfirmDelete();
+  if (cb) cb();
+}
+
 function tmSponsorName(email) {
   var match = _tmSponsors.find(function(u) { return u.email === email; });
   return match ? match.name : email;
@@ -9302,12 +9347,13 @@ function tmSaveSection() {
 function tmDeleteSection(section) {
   var stillHasTasks = _tmTasks.some(function(t) { return t.area === section; });
   if (stillHasTasks) { alert('Move or delete the tasks in this section first.'); return; }
-  if (!confirm('Delete the "' + section + '" section?')) return;
-  _tmSections = _tmSections.filter(function(s) { return s !== section; });
-  delete _tmCollapsed[section];
-  var overlay = document.getElementById('tm-rename-section-modal-overlay');
-  if (overlay) overlay.remove();
-  tmRender();
+  tmConfirmDelete('Delete Section', 'This removes the "' + tmEsc(section) + '" section. It\'s empty, so there\'s nothing else to lose — but the section itself is gone.', section, function() {
+    _tmSections = _tmSections.filter(function(s) { return s !== section; });
+    delete _tmCollapsed[section];
+    var overlay = document.getElementById('tm-rename-section-modal-overlay');
+    if (overlay) overlay.remove();
+    tmRender();
+  });
 }
 
 function tmOpenRenameSectionModal(oldName) {
@@ -9488,22 +9534,49 @@ function tm2SaveAddNew() {
 function tm2OpenRenameBoardModal() {
   if (!_tm2CurrentBoardId) return;
   var current = _tm2Boards.find(function(b) { return b.id === _tm2CurrentBoardId; });
+  var isAdmin = !!(_currentUser && _currentUser.isAdmin);
   var overlay = document.createElement('div');
   overlay.id = 'tm2-rename-board-modal-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
   overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
-      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Board</h3>' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Edit Board</h3>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Board name</label>' +
       '<input type="text" id="tm2-f-board-name" value="' + tmEsc(current ? current.name : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
-      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
-        '<button onclick="document.getElementById(' + "'tm2-rename-board-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
-        '<button id="tm2-rename-board-save" onclick="tm2SaveBoardName()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;">' +
+        (isAdmin ? '<button onclick="tm2DeleteBoard()" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete Board</button>' : '<span></span>') +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="document.getElementById(' + "'tm2-rename-board-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+          '<button id="tm2-rename-board-save" onclick="tm2SaveBoardName()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
   setTimeout(function() { var inp = document.getElementById('tm2-f-board-name'); if (inp) { inp.focus(); inp.select(); } }, 0);
+}
+
+// Admin-only — deleting a board removes every task in it too, so this is
+// the highest-stakes delete in Task Manager and gets the strictest
+// confirmation: typing the board's own name, not just a fixed word.
+function tm2DeleteBoard() {
+  if (!_tm2CurrentBoardId) return;
+  var current = _tm2Boards.find(function(b) { return b.id === _tm2CurrentBoardId; });
+  var name = current ? current.ownerName : _tm2CurrentBoardId;
+  tmConfirmDelete('Delete Board', 'This permanently deletes <strong>' + tmEsc(name) + '\'s Task Manager</strong> and every task in it. This cannot be undone.', name, function() {
+    var boardId = _tm2CurrentBoardId;
+    fetch('/api/task-manager-2/board?boardId=' + encodeURIComponent(boardId), { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) { alert(d.error); return; }
+        var overlay = document.getElementById('tm2-rename-board-modal-overlay');
+        if (overlay) overlay.remove();
+        _tm2CurrentBoardId = null;
+        tm2LoadBoards();
+        loadTaskManager2();
+      })
+      .catch(function() { alert('Could not delete board.'); });
+  });
 }
 
 function tm2SaveBoardName() {
@@ -10054,13 +10127,14 @@ function tm2SaveSection() {
 function tm2DeleteSection(section) {
   var stillHasTasks = _tm2Tasks.some(function(t) { return t.area === section; });
   if (stillHasTasks) { alert('Move or delete the tasks in this section first.'); return; }
-  if (!confirm('Delete the "' + section + '" section?')) return;
-  _tm2Sections = _tm2Sections.filter(function(s) { return s !== section; });
-  delete _tm2Collapsed[section];
-  var overlay = document.getElementById('tm2-rename-section-modal-overlay');
-  if (overlay) overlay.remove();
-  tm2Render();
-  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: _tm2CurrentBoardId, sections: _tm2Sections }) }).catch(function() {});
+  tmConfirmDelete('Delete Section', 'This removes the "' + tmEsc(section) + '" section. It\'s empty, so there\'s nothing else to lose — but the section itself is gone.', section, function() {
+    _tm2Sections = _tm2Sections.filter(function(s) { return s !== section; });
+    delete _tm2Collapsed[section];
+    var overlay = document.getElementById('tm2-rename-section-modal-overlay');
+    if (overlay) overlay.remove();
+    tm2Render();
+    fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: _tm2CurrentBoardId, sections: _tm2Sections }) }).catch(function() {});
+  });
 }
 function tm2OpenRenameSectionModal(oldName) {
   var isEmpty = !_tm2Tasks.some(function(t) { return t.area === oldName; });
@@ -10263,16 +10337,18 @@ function tm2SaveTask(taskId) {
 }
 
 function tm2DeleteTask(taskId) {
-  if (!confirm('Delete this task? This cannot be undone.')) return;
-  fetch('/api/task-manager-2/' + taskId, { method: 'DELETE' })
-    .then(function(r) { return r.json(); })
-    .then(function() {
-      _tm2Tasks = _tm2Tasks.filter(function(t) { return t.id !== taskId; });
-      tm2PopulateSponsorFilter();
-      tm2CloseModal();
-      tm2Render();
-    })
-    .catch(function() { alert('Could not delete task.'); });
+  var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
+  tmConfirmDelete('Delete Task', 'This permanently deletes "' + tmEsc(task ? task.title : 'this task') + '". This cannot be undone.', 'DELETE', function() {
+    fetch('/api/task-manager-2/' + taskId, { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        _tm2Tasks = _tm2Tasks.filter(function(t) { return t.id !== taskId; });
+        tm2PopulateSponsorFilter();
+        tm2CloseModal();
+        tm2Render();
+      })
+      .catch(function() { alert('Could not delete task.'); });
+  });
 }
 function tmOpenModal(taskId, presetArea) {
   var task = taskId ? _tmTasks.find(function(t) { return t.id === taskId; }) : null;
@@ -10433,16 +10509,18 @@ function tmSaveTask(taskId) {
 }
 
 function tmDeleteTask(taskId) {
-  if (!confirm('Delete this task? This cannot be undone.')) return;
-  fetch('/api/task-manager/' + taskId, { method: 'DELETE' })
-    .then(function(r) { return r.json(); })
-    .then(function() {
-      _tmTasks = _tmTasks.filter(function(t) { return t.id !== taskId; });
-      tmPopulateSponsorFilter();
-      tmCloseModal();
-      tmRender();
-    })
-    .catch(function() { alert('Could not delete task.'); });
+  var task = _tmTasks.find(function(t) { return t.id === taskId; });
+  tmConfirmDelete('Delete Task', 'This permanently deletes "' + tmEsc(task ? task.title : 'this task') + '". This cannot be undone.', 'DELETE', function() {
+    fetch('/api/task-manager/' + taskId, { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        _tmTasks = _tmTasks.filter(function(t) { return t.id !== taskId; });
+        tmPopulateSponsorFilter();
+        tmCloseModal();
+        tmRender();
+      })
+      .catch(function() { alert('Could not delete task.'); });
+  });
 }
 
 // ── Contacts directory ───────────────────────────────────────────────

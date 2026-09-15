@@ -6228,6 +6228,36 @@ app.put('/api/task-manager-2/board', requireAuth, requireTaskManager2Access, asy
   }
 });
 
+// Deleting a whole board (and every task in it) is admin-only — a
+// supervisor can create/edit/rename boards and their sections, but only an
+// admin can remove one outright.
+app.delete('/api/task-manager-2/board', requireAuth, requireAdmin, async (req, res) => {
+  const boardId = String(req.query.boardId || req.body.boardId || '');
+  if (!boardId) return res.status(400).json({ error: 'boardId required' });
+  try {
+    const board = await tm2GetBoard(boardId);
+    if (!board) return res.status(404).json({ error: 'No task manager found' });
+    const formula = encodeURIComponent(`{${TM2_BOARD}}='${boardId}'`);
+    let all = [];
+    let offset;
+    do {
+      let qs = `filterByFormula=${formula}&pageSize=100`;
+      if (offset) qs += `&offset=${encodeURIComponent(offset)}`;
+      const data = await tm2Fetch(`?${qs}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    for (let i = 0; i < all.length; i += 10) {
+      const batch = all.slice(i, i + 10).map(r => r.id);
+      if (batch.length) await tm2Fetch(`?${batch.map(id => `records[]=${id}`).join('&')}`, { method: 'DELETE' });
+    }
+    await deleteAppSetting(tm2BoardSettingKey(boardId));
+    res.json({ deleted: true, tasksDeleted: all.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
   try {
     const boardId = String(req.query.boardId || '');
@@ -6362,6 +6392,12 @@ async function setAppSetting(key, value) {
   } else {
     await appSettingsFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields: { [APP_SETTINGS_KEY]: key, [APP_SETTINGS_VALUE]: value } }] }) });
   }
+}
+async function deleteAppSetting(key) {
+  const formula = encodeURIComponent(`{${APP_SETTINGS_KEY}}='${key}'`);
+  const data = await appSettingsFetch(`?filterByFormula=${formula}&maxRecords=1`);
+  const rec = (data.records || [])[0];
+  if (rec) await appSettingsFetch(`/${rec.id}`, { method: 'DELETE' });
 }
 
 function tmRecordToTask(record) {
