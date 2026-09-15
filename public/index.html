@@ -5222,7 +5222,10 @@ Consolidating debts will increase the loan to value which can impact future deal
       <div id="lab-section-task-manager-2" style="display:none;max-width:100%;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;">
           <div>
-            <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">New Task Manager</h2>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <h2 id="tm2-page-title" style="color:#003768;font-size:20px;margin:0;">New Task Manager</h2>
+              <button onclick="tm2OpenRenameBoardModal()" title="Rename this board" style="background:transparent;border:none;color:#6b7c8f;padding:4px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+            </div>
             <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">A separate task board, independent from the main Task Manager.</p>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
@@ -9349,8 +9352,71 @@ var _tm2Areas = [];
 var _tm2Sections = [];
 var _tm2Sponsors = [];
 var _tm2Collapsed = {};
+var _tm2Name = 'New Task Manager';
+var _tm2NameLoaded = false;
+
+// The board's display name is stored server-side (App Settings, backed by
+// Airtable — survives Railway redeploys unlike localStorage) so it's the
+// same for anyone who ever gets access to this board, not just this
+// browser. Fetched once and applied to both the sidebar link and the page
+// header; called as soon as the sidebar link itself becomes visible so the
+// name is right without having to open the section first.
+function tm2LoadName() {
+  if (_tm2NameLoaded) return;
+  _tm2NameLoaded = true;
+  fetch('/api/task-manager-2/name').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error || !d.name) return;
+    _tm2Name = d.name;
+    tm2ApplyName();
+  }).catch(function() {});
+}
+
+function tm2ApplyName() {
+  var navLink = document.getElementById('lab-nav-task2');
+  if (navLink) navLink.textContent = _tm2Name;
+  var pageTitle = document.getElementById('tm2-page-title');
+  if (pageTitle) pageTitle.textContent = _tm2Name;
+}
+
+function tm2OpenRenameBoardModal() {
+  var overlay = document.createElement('div');
+  overlay.id = 'tm2-rename-board-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Board</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Board name</label>' +
+      '<input type="text" id="tm2-f-board-name" value="' + tmEsc(_tm2Name) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="document.getElementById(' + "'tm2-rename-board-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button id="tm2-rename-board-save" onclick="tm2SaveBoardName()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm2-f-board-name'); if (inp) { inp.focus(); inp.select(); } }, 0);
+}
+
+function tm2SaveBoardName() {
+  var name = ((document.getElementById('tm2-f-board-name') || {}).value || '').trim();
+  if (!name) { alert('Board name is required.'); return; }
+  var btn = document.getElementById('tm2-rename-board-save');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  fetch('/api/task-manager-2/name', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert(d.error); return; }
+      _tm2Name = d.name;
+      tm2ApplyName();
+      var overlay = document.getElementById('tm2-rename-board-modal-overlay');
+      if (overlay) overlay.remove();
+    })
+    .catch(function() { alert('Could not save board name.'); })
+    .finally(function() { if (btn) { btn.disabled = false; btn.textContent = 'Save'; } });
+}
 
 function loadTaskManager2() {
+  tm2LoadName();
   var listEl = document.getElementById('tm2-list');
   fetch('/api/task-manager-2').then(function(r) { return r.json(); }).then(function(d) {
     if (d.error) { if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>'; return; }
@@ -12313,6 +12379,7 @@ var _currentUser = null;
       if (tmWrap) tmWrap.style.display = 'block';
       var tmHomeWidget = document.getElementById('home-tm-widget');
       if (tmHomeWidget) { tmHomeWidget.style.display = 'block'; loadHomeTaskManagerWidget(); }
+      if (typeof tm2LoadName === 'function') tm2LoadName();
     }
     // Every user (other than Mark, who already has the full-access link
     // above) gets a scoped "My Tasks" entry — the page only ever shows

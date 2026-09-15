@@ -6169,6 +6169,61 @@ app.delete('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, as
   }
 });
 
+// ── App Settings — tiny generic key/value store ─────────────────
+// Backed by Airtable (not a local JSON file) so it survives Railway
+// redeploys, same reasoning as Audit Log / Site Stats / Whereabouts Edits.
+const APP_SETTINGS_TABLE = 'tblXJkaXEaRGDc6UR';
+const APP_SETTINGS_KEY   = 'fldGNOCrFR0zsd8w0';
+const APP_SETTINGS_VALUE = 'fld9g2vwiAT3t1NVl';
+async function appSettingsFetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${APP_SETTINGS_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+async function getAppSetting(key, fallback) {
+  const formula = encodeURIComponent(`{${APP_SETTINGS_KEY}}='${key}'`);
+  const data = await appSettingsFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&maxRecords=1`);
+  const rec = (data.records || [])[0];
+  return rec ? (rec.fields[APP_SETTINGS_VALUE] || fallback) : fallback;
+}
+async function setAppSetting(key, value) {
+  const formula = encodeURIComponent(`{${APP_SETTINGS_KEY}}='${key}'`);
+  const data = await appSettingsFetch(`?filterByFormula=${formula}&returnFieldsByFieldId=true&maxRecords=1`);
+  const rec = (data.records || [])[0];
+  if (rec) {
+    await appSettingsFetch(`/${rec.id}`, { method: 'PATCH', body: JSON.stringify({ fields: { [APP_SETTINGS_VALUE]: value } }) });
+  } else {
+    await appSettingsFetch('', { method: 'POST', body: JSON.stringify({ records: [{ fields: { [APP_SETTINGS_KEY]: key, [APP_SETTINGS_VALUE]: value } }] }) });
+  }
+}
+
+// GET/PUT the New Task Manager board's display name — shown in the sidebar
+// link and the page header, editable so it isn't stuck saying "New Task
+// Manager" forever once the board has a real purpose.
+app.get('/api/task-manager-2/name', requireAuth, requireTaskManager2Access, async (req, res) => {
+  try {
+    const name = await getAppSetting('task_manager_2_name', 'New Task Manager');
+    res.json({ name });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.put('/api/task-manager-2/name', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const name = (req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Name required' });
+  try {
+    await setAppSetting('task_manager_2_name', name);
+    res.json({ name });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function tmRecordToTask(record) {
   const f = record.fields;
   const subtasks = tmParseSubtasks(f[TM_SUBTASKS]);
