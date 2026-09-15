@@ -6044,6 +6044,131 @@ async function tmFetch(endpoint, options = {}) {
   return body;
 }
 
+// ── Task Manager 2 — a second, fully independent board ──────────
+// Its own Airtable table, own tasks, own default sections (Section 1-5).
+// Deliberately a lighter schema than the original Task Manager (no
+// priority/subtasks/drag-order/digest email — just title, section, status,
+// due date, notes, sponsor) since this board starts from nothing and those
+// features can be added later if this board actually needs them. Visible to
+// Mark Ninnim only, same admin-only gate as the original board's full access.
+const TM2_TABLE   = 'tbl2zwZr9wxmosuDl';
+const TM2_TITLE   = 'fldiPJbcYn7r6yjAY';
+const TM2_AREA    = 'fld2hElEMJMOociTw';
+const TM2_STATUS  = 'fld3M8XtTjHWpJzk4';
+const TM2_DUE     = 'fldtRuQAYSGz6jMCP';
+const TM2_NOTES   = 'fld2mK8zfYKRIZOqT';
+const TM2_SPONSOR = 'fldG9de8Rw6tj8gVV';
+const TM2_ADDED   = 'fldoxHkXoUUYOVcKI';
+const TM2_AREAS = ['Section 1', 'Section 2', 'Section 3', 'Section 4', 'Section 5'];
+
+async function tm2Fetch(endpoint, options = {}) {
+  const url = `https://api.airtable.com/v0/${AT_BASE}/${TM2_TABLE}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${AT_KEY}`, 'Content-Type': 'application/json', ...options.headers }
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error?.message || `Airtable ${res.status}`);
+  return body;
+}
+
+function tm2RecordToTask(record) {
+  const f = record.fields;
+  return {
+    id:           record.id,
+    title:        f[TM2_TITLE]   || '',
+    area:         f[TM2_AREA]    || '',
+    notes:        f[TM2_NOTES]   || '',
+    dueDate:      f[TM2_DUE]     || '',
+    added:        f[TM2_ADDED]   || record.createdTime.slice(0, 10),
+    status:       f[TM2_STATUS]  || 'Active',
+    sponsorEmail: (f[TM2_SPONSOR] || '').toLowerCase()
+  };
+}
+
+// Mark Ninnim only, full stop — no scoped view for other users on this
+// board (unlike the original Task Manager's "own" scope for sponsors).
+function requireTaskManager2Access(req, res, next) {
+  if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const effective = req.session.user;
+  if (!effective || (effective.email || '').toLowerCase() !== TM_FULL_ACCESS_EMAIL) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
+
+app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tm2Fetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    const tasks = all.map(tm2RecordToTask);
+    const sponsors = await fetchAllUserNames(null);
+    res.json({ tasks, areas: TM2_AREAS, sponsors });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
+  if (!title) return res.status(400).json({ error: 'Title required' });
+  try {
+    const fields = {
+      [TM2_TITLE]: title,
+      [TM2_AREA]: area || TM2_AREAS[0],
+      [TM2_STATUS]: status || 'Active',
+      [TM2_ADDED]: new Date().toISOString().slice(0, 10)
+    };
+    if (dueDate) fields[TM2_DUE] = dueDate;
+    if (notes) fields[TM2_NOTES] = notes;
+    if (sponsorEmail) fields[TM2_SPONSOR] = String(sponsorEmail).toLowerCase();
+    const data = await tm2Fetch('', {
+      method: 'POST',
+      body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true, typecast: true })
+    });
+    res.json(tm2RecordToTask(data.records[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
+  const { title, area, dueDate, notes, status, sponsorEmail } = req.body;
+  try {
+    const fields = {};
+    if (title !== undefined) fields[TM2_TITLE] = title;
+    if (area !== undefined) fields[TM2_AREA] = area;
+    if (dueDate !== undefined) fields[TM2_DUE] = dueDate;
+    if (notes !== undefined) fields[TM2_NOTES] = notes;
+    if (status !== undefined) fields[TM2_STATUS] = status;
+    if (sponsorEmail !== undefined) fields[TM2_SPONSOR] = String(sponsorEmail || '').toLowerCase();
+    await tm2Fetch(`/${req.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
+    });
+    const fresh = await tm2Fetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    res.json(tm2RecordToTask(fresh));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
+  try {
+    await tm2Fetch(`/${req.params.id}`, { method: 'DELETE' });
+    res.json({ deleted: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function tmRecordToTask(record) {
   const f = record.fields;
   const subtasks = tmParseSubtasks(f[TM_SUBTASKS]);

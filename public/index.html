@@ -405,6 +405,7 @@ select:focus { outline:none; }
     <a href="#" id="lab-nav-bank" onclick="labShowSection('bank',this);return false;">Bank Statement Check</a>
     <div id="lab-nav-task-wrap" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK MANAGER</span></div>
+      <a href="#" id="lab-nav-task2" onclick="labShowSection('task-manager-2',this);return false;">New Task Manager</a>
       <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
     </div>
     <div id="lab-nav-marketing-wrap" style="display:none;">
@@ -5216,6 +5217,26 @@ Consolidating debts will increase the loan to value which can impact future deal
 
         <div id="tm-list" style="display:flex;flex-direction:column;gap:22px;"></div>
       </div>
+
+      <!-- New Task Manager (board 2) — separate, independent task list, starts with Section 1-5 -->
+      <div id="lab-section-task-manager-2" style="display:none;max-width:100%;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;">
+          <div>
+            <h2 style="color:#003768;font-size:20px;margin:0 0 4px;">New Task Manager</h2>
+            <p style="color:#6b7c8f;font-size:13.5px;margin:0;line-height:1.6;">A separate task board, independent from the main Task Manager.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="tm2OpenSectionModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Section</button>
+            <button onclick="tm2OpenModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">+ Add Task</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="tm2-search" oninput="tm2Render()" placeholder="Search tasks…" style="flex:1;min-width:200px;padding:9px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;color:#003768;">
+        </div>
+
+        <div id="tm2-list" style="display:flex;flex-direction:column;gap:22px;"></div>
+      </div>
     </div>
   </div>
 
@@ -9317,6 +9338,279 @@ function tmSaveRenameSection(oldName) {
   }).finally(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
   });
+}
+
+// ── Task Manager 2 — a second, fully independent board ──────────
+// Its own tasks/sections, deliberately simpler than the main Task Manager
+// (no priority, subtasks, drag order or digest email — just title, section,
+// status, due date, notes, sponsor). Mark Ninnim only.
+var _tm2Tasks = null;
+var _tm2Areas = [];
+var _tm2Sections = [];
+var _tm2Sponsors = [];
+var _tm2Collapsed = {};
+
+function loadTaskManager2() {
+  var listEl = document.getElementById('tm2-list');
+  fetch('/api/task-manager-2').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) { if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>'; return; }
+    _tm2Tasks = d.tasks || [];
+    _tm2Areas = d.areas || [];
+    _tm2Sponsors = d.sponsors || [];
+    tm2RebuildSections();
+    tm2Render();
+  }).catch(function() {
+    if (listEl) listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">Could not load tasks.</div>';
+  });
+}
+
+function tm2RebuildSections() {
+  var seen = {};
+  var next = [];
+  _tm2Areas.concat(_tm2Sections).forEach(function(a) { if (a && !seen[a]) { seen[a] = true; next.push(a); } });
+  _tm2Tasks.forEach(function(t) { if (t.area && !seen[t.area]) { seen[t.area] = true; next.push(t.area); } });
+  _tm2Sections = next;
+}
+
+function tm2SponsorName(email) {
+  var match = _tm2Sponsors.find(function(u) { return u.email === email; });
+  return match ? match.name : email;
+}
+
+function tm2Render() {
+  var listEl = document.getElementById('tm2-list');
+  if (!listEl || !_tm2Tasks) return;
+  var q = ((document.getElementById('tm2-search') || {}).value || '').trim().toLowerCase();
+  if (!_tm2Sections.length) {
+    listEl.innerHTML = '<div style="color:#6b7c8f;font-size:13px;padding:20px 0;">No sections yet — click <strong>+ Add Section</strong> to create one.</div>';
+    return;
+  }
+  listEl.innerHTML = _tm2Sections.map(function(section) {
+    var all = _tm2Tasks.filter(function(t) { return t.area === section; });
+    var shown = all.filter(function(t) { return !q || (t.title || '').toLowerCase().indexOf(q) !== -1 || (t.notes || '').toLowerCase().indexOf(q) !== -1; });
+    if (q && !shown.length) return '';
+    var collapsed = !!_tm2Collapsed[section];
+    var sectionKey = JSON.stringify(section).replace(/"/g, '&quot;');
+    return '' +
+      '<div class="tm-section">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;" onclick="tm2ToggleSection(' + sectionKey + ')">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(' + (collapsed ? '-90deg' : '0deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
+            '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(section) + '</span>' +
+            '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">' +
+            '<button onclick="tm2OpenRenameSectionModal(' + sectionKey + ')" title="Rename section" style="background:transparent;border:none;color:#6b7c8f;padding:5px;border-radius:7px;cursor:pointer;display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+            (all.length === 0 ? '<button onclick="tm2DeleteSection(' + sectionKey + ')" title="Delete empty section" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '') +
+          '</div>' +
+        '</div>' +
+        (collapsed ? '' : '<div style="display:flex;flex-direction:column;gap:10px;">' + (shown.length ? shown.map(tm2TaskCard).join('') : '<div style="color:#6b7c8f;font-size:12.5px;padding:4px 0 4px;">No tasks in this section yet.</div>') + '</div>') +
+      '</div>';
+  }).join('');
+}
+
+function tm2ToggleSection(section) { _tm2Collapsed[section] = !_tm2Collapsed[section]; tm2Render(); }
+
+function tm2TaskCard(t) {
+  var idArg = tmIdArg(t.id);
+  var done = t.status === 'Done';
+  var dueLabel = t.dueDate ? new Date(t.dueDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  var meta = [dueLabel ? 'Due ' + dueLabel : '', t.sponsorEmail ? 'Sponsor: ' + tmEsc(tm2SponsorName(t.sponsorEmail)) : ''].filter(Boolean).join(' &middot; ');
+  return '<div style="background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">' +
+    '<div style="padding:14px 16px;display:flex;align-items:center;gap:14px;">' +
+      '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tm2ToggleStatus(' + idArg + ')" style="width:18px;height:18px;flex-shrink:0;cursor:pointer;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="color:#003768;font-size:14px;font-weight:700;' + (done ? 'text-decoration:line-through;' : '') + '">' + tmEsc(t.title) + '</div>' +
+        (meta ? '<div style="color:#6b7c8f;font-size:12.5px;margin-top:2px;">' + meta + '</div>' : '') +
+      '</div>' +
+      '<button type="button" onclick="tm2OpenModal(' + idArg + ')" title="Edit task" style="background:transparent;border:none;color:#6b7c8f;cursor:pointer;padding:6px;display:flex;align-items:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>' +
+    '</div>' +
+  '</div>';
+}
+
+function tm2ToggleStatus(taskId) {
+  var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  var nextStatus = task.status === 'Done' ? 'Active' : 'Done';
+  fetch('/api/task-manager-2/' + taskId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: nextStatus }) })
+    .then(function(r) { return r.json(); })
+    .then(function(saved) {
+      if (saved.error) { alert(saved.error); return; }
+      var idx = _tm2Tasks.findIndex(function(t) { return t.id === taskId; });
+      if (idx !== -1) _tm2Tasks[idx] = saved;
+      tm2Render();
+    })
+    .catch(function() { alert('Could not update task.'); });
+}
+
+function tm2OpenSectionModal() {
+  var overlay = document.createElement('div');
+  overlay.id = 'tm2-section-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Add Section</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
+      '<input type="text" id="tm2-f-section-name" placeholder="e.g. Section 6" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="document.getElementById(' + "'tm2-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button onclick="tm2SaveSection()" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Add</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm2-f-section-name'); if (inp) inp.focus(); }, 0);
+}
+
+function tm2SaveSection() {
+  var name = ((document.getElementById('tm2-f-section-name') || {}).value || '').trim();
+  if (!name) { alert('Section name is required.'); return; }
+  if (_tm2Sections.indexOf(name) !== -1) { alert('That section already exists.'); return; }
+  _tm2Sections.push(name);
+  var overlay = document.getElementById('tm2-section-modal-overlay');
+  if (overlay) overlay.remove();
+  tm2Render();
+}
+
+function tm2DeleteSection(section) {
+  var stillHasTasks = _tm2Tasks.some(function(t) { return t.area === section; });
+  if (stillHasTasks) { alert('Move or delete the tasks in this section first.'); return; }
+  if (!confirm('Delete the "' + section + '" section?')) return;
+  _tm2Sections = _tm2Sections.filter(function(s) { return s !== section; });
+  delete _tm2Collapsed[section];
+  tm2Render();
+}
+
+function tm2OpenRenameSectionModal(oldName) {
+  var overlay = document.createElement('div');
+  overlay.id = 'tm2-rename-section-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:380px;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">Rename Section</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section name</label>' +
+      '<input type="text" id="tm2-f-rename-section" value="' + tmEsc(oldName) + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:10px;">' +
+        '<button onclick="document.getElementById(' + "'tm2-rename-section-modal-overlay'" + ').remove()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+        '<button id="tm2-rename-section-save" onclick="tm2SaveRenameSection(' + tmIdArg(oldName) + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm2-f-rename-section'); if (inp) { inp.focus(); inp.select(); } }, 0);
+}
+
+function tm2SaveRenameSection(oldName) {
+  var newName = ((document.getElementById('tm2-f-rename-section') || {}).value || '').trim();
+  if (!newName) { alert('Section name is required.'); return; }
+  if (newName === oldName) { var ov = document.getElementById('tm2-rename-section-modal-overlay'); if (ov) ov.remove(); return; }
+  if (_tm2Sections.indexOf(newName) !== -1) { alert('That section already exists.'); return; }
+  var btn = document.getElementById('tm2-rename-section-save');
+  var ids = _tm2Tasks.filter(function(t) { return t.area === oldName; }).map(function(t) { return t.id; });
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/task-manager-2/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ area: newName }) }).then(function(r) { return r.json(); });
+  })).then(function(results) {
+    var failed = results.some(function(r) { return !r || r.error; });
+    if (failed) { alert('Could not rename all tasks in this section — please try again.'); return; }
+    results.forEach(function(saved) {
+      var idx = _tm2Tasks.findIndex(function(t) { return t.id === saved.id; });
+      if (idx !== -1) _tm2Tasks[idx] = saved;
+    });
+    _tm2Sections = _tm2Sections.map(function(s) { return s === oldName ? newName : s; });
+    _tm2Areas = _tm2Areas.filter(function(a) { return a !== oldName; });
+    if (_tm2Collapsed[oldName]) { _tm2Collapsed[newName] = _tm2Collapsed[oldName]; delete _tm2Collapsed[oldName]; }
+    var overlay = document.getElementById('tm2-rename-section-modal-overlay');
+    if (overlay) overlay.remove();
+    tm2Render();
+  }).catch(function() {
+    alert('Could not rename section — please try again.');
+  }).finally(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+  });
+}
+
+function tm2OpenModal(taskId) {
+  var task = taskId ? _tm2Tasks.find(function(t) { return t.id === taskId; }) : null;
+  var areas = _tm2Sections;
+  var overlay = document.createElement('div');
+  overlay.id = 'tm2-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) tm2CloseModal(); };
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:100%;max-width:480px;max-height:86vh;overflow-y:auto;">' +
+      '<h3 style="color:#003768;font-size:18px;margin:0 0 16px;">' + (task ? 'Edit Task' : 'Add Task') + '</h3>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Title</label>' +
+      '<input type="text" id="tm2-f-title" value="' + (task ? tmEsc(task.title) : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section</label>' +
+      '<select id="tm2-f-area" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
+        areas.map(function(a) { return '<option value="' + tmEsc(a) + '"' + (task ? (task.area === a ? ' selected' : '') : (a === areas[0] ? ' selected' : '')) + '>' + tmEsc(a) + '</option>'; }).join('') +
+      '</select>' +
+      '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
+        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Due date</label>' +
+        '<input type="date" id="tm2-f-due" value="' + (task ? task.dueDate : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
+        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Sponsor email</label>' +
+        '<input type="text" id="tm2-f-sponsor" value="' + (task ? tmEsc(task.sponsorEmail) : '') + '" placeholder="name@financeplanning.co.uk" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
+      '</div>' +
+      '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
+      '<textarea id="tm2-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:18px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;">' +
+        (task ? '<button onclick="tm2DeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #d1d5db;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="tm2CloseModal()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>' +
+          '<button onclick="tm2SaveTask(' + (task ? tmIdArg(task.id) : 'null') + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Save</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function() { var inp = document.getElementById('tm2-f-title'); if (inp) inp.focus(); }, 0);
+}
+
+function tm2CloseModal() {
+  var overlay = document.getElementById('tm2-modal-overlay');
+  if (overlay) overlay.remove();
+}
+
+function tm2SaveTask(taskId) {
+  var title = ((document.getElementById('tm2-f-title') || {}).value || '').trim();
+  if (!title) { alert('Title is required.'); return; }
+  var payload = {
+    title: title,
+    area: (document.getElementById('tm2-f-area') || {}).value || '',
+    dueDate: (document.getElementById('tm2-f-due') || {}).value || null,
+    sponsorEmail: ((document.getElementById('tm2-f-sponsor') || {}).value || '').trim() || null,
+    notes: (document.getElementById('tm2-f-notes') || {}).value || ''
+  };
+  var url = taskId ? '/api/task-manager-2/' + taskId : '/api/task-manager-2';
+  var method = taskId ? 'PATCH' : 'POST';
+  fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    .then(function(r) { return r.json(); })
+    .then(function(saved) {
+      if (saved.error) { alert(saved.error); return; }
+      if (taskId) {
+        var idx = _tm2Tasks.findIndex(function(t) { return t.id === taskId; });
+        if (idx !== -1) _tm2Tasks[idx] = saved;
+      } else {
+        _tm2Tasks.push(saved);
+      }
+      tm2RebuildSections();
+      tm2CloseModal();
+      tm2Render();
+    })
+    .catch(function() { alert('Could not save task.'); });
+}
+
+function tm2DeleteTask(taskId) {
+  if (!confirm('Delete this task?')) return;
+  fetch('/api/task-manager-2/' + taskId, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.error) { alert(result.error); return; }
+      _tm2Tasks = _tm2Tasks.filter(function(t) { return t.id !== taskId; });
+      tm2CloseModal();
+      tm2Render();
+    })
+    .catch(function() { alert('Could not delete task.'); });
 }
 
 function tmOpenModal(taskId, presetArea) {
@@ -13760,7 +14054,7 @@ function labInvestigatingHtml(text) {
 
 // ── Lab: sidebar section switching ────────────────────────────
 function labShowSection(section, link) {
-  ['payslip', 'bank', 'task-manager'].forEach(function(s) {
+  ['payslip', 'bank', 'task-manager', 'task-manager-2'].forEach(function(s) {
     var sec = document.getElementById('lab-section-' + s);
     if (sec) sec.style.display = (s === section) ? '' : 'none';
   });
@@ -13768,19 +14062,20 @@ function labShowSection(section, link) {
   // full view and Pete's scoped Marketing view) pointing at the same
   // section, so active state is driven by which link was actually clicked
   // rather than a 1:1 section-to-nav-id mapping.
-  ['lab-nav-payslip', 'lab-nav-bank', 'lab-nav-task', 'lab-nav-marketing'].forEach(function(navId) {
+  ['lab-nav-payslip', 'lab-nav-bank', 'lab-nav-task', 'lab-nav-marketing', 'lab-nav-task2'].forEach(function(navId) {
     var nav = document.getElementById(navId);
     if (nav) nav.classList.toggle('active', nav === link);
   });
-  // Task Manager gets its own full-width page feel — the shared "Lab / MVP
-  // build" heading and its 820px text-column width are for the payslip/bank
-  // investigator tools, not this.
+  // Task Manager (either board) gets its own full-width page feel — the
+  // shared "Lab / MVP build" heading and its 820px text-column width are
+  // for the payslip/bank investigator tools, not this.
   var genericHeader = document.getElementById('lab-generic-header');
   var contentWrap = document.getElementById('lab-content-wrap');
-  var isTaskManager = section === 'task-manager';
+  var isTaskManager = section === 'task-manager' || section === 'task-manager-2';
   if (genericHeader) genericHeader.style.display = isTaskManager ? 'none' : '';
   if (contentWrap) contentWrap.style.maxWidth = isTaskManager ? 'none' : '820px';
-  if (isTaskManager && typeof loadTaskManager === 'function') loadTaskManager();
+  if (section === 'task-manager' && typeof loadTaskManager === 'function') loadTaskManager();
+  if (section === 'task-manager-2' && typeof loadTaskManager2 === 'function') loadTaskManager2();
 }
 
 // ── Lab: Payslip Check ───────────────────────────────────────
