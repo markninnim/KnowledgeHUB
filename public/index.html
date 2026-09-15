@@ -403,13 +403,15 @@ select:focus { outline:none; }
     <h2 style="margin-top: 8px;">Lab</h2>
     <a href="#" id="lab-nav-payslip" class="active" onclick="labShowSection('payslip',this);return false;">Payslip Check</a>
     <a href="#" id="lab-nav-bank" onclick="labShowSection('bank',this);return false;">Bank Statement Check</a>
-    <div id="lab-nav-task-wrap" style="display:none;">
+    <div id="lab-nav-task-group-wrap" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK MANAGER</span></div>
-      <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
-    </div>
-    <div id="lab-nav-task2-wrap" style="display:none;">
-      <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">TASK MANAGER</span></div>
-      <a href="#" id="lab-nav-task2" onclick="labShowSection('task-manager-2',this);return false;">+ Task Manager</a>
+      <div id="lab-nav-task-wrap" style="display:none;">
+        <a href="#" id="lab-nav-task" onclick="labShowSection('task-manager',this);return false;">Mark Ninnim</a>
+      </div>
+      <div id="lab-nav-task2-wrap" style="display:none;">
+        <a href="#" id="lab-nav-task2" onclick="labShowSection('task-manager-2',this);return false;">+ Task Manager</a>
+      </div>
+      <a href="#" id="lab-nav-task2-create" style="display:none;font-size:12.5px;color:rgba(255,255,255,.6);" onclick="tm2OpenSetupModal();return false;">+ Create new list</a>
     </div>
     <div id="lab-nav-marketing-wrap" style="display:none;">
       <div style="margin:16px 0 4px;padding:0 18px;"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--brand-orange);">MY TASKS</span></div>
@@ -9375,18 +9377,26 @@ function tm2LoadName() {
     if (d.exists) {
       _tm2Board = d;
       _tm2Name = d.name || _tm2Name;
-      tm2ApplyName();
     } else {
       _tm2Board = false;
     }
+    tm2ApplyName();
   }).catch(function() {});
 }
 
+// Toggles the sidebar between "+ Task Manager" (once a board exists) and a
+// permanent "+ Create new list" link (until it does) — so creating a board
+// is always discoverable rather than only offered once via auto-popup.
 function tm2ApplyName() {
   var navLink = document.getElementById('lab-nav-task2');
   if (navLink) navLink.textContent = _tm2Name;
   var pageTitle = document.getElementById('tm2-page-title');
   if (pageTitle) pageTitle.textContent = _tm2Name;
+  var linkWrap = document.getElementById('lab-nav-task2-wrap');
+  var createLink = document.getElementById('lab-nav-task2-create');
+  var hasBoard = !!_tm2Board;
+  if (linkWrap) linkWrap.style.display = hasBoard ? 'block' : 'none';
+  if (createLink) createLink.style.display = hasBoard ? 'none' : 'block';
 }
 
 function tm2OpenRenameBoardModal() {
@@ -12441,17 +12451,22 @@ var _currentUser = null;
     }
     // Original Task Manager board — tucked away in Lab, visible to
     // Mark Ninnim only (server-side routes still require admin/supervisor).
+    var tmGroupWrap = document.getElementById('lab-nav-task-group-wrap');
     if (user && (user.email || '').toLowerCase() === 'mark.ninnim@financeplanning.co.uk') {
       var tmWrap = document.getElementById('lab-nav-task-wrap');
       if (tmWrap) tmWrap.style.display = 'block';
+      if (tmGroupWrap) tmGroupWrap.style.display = 'block';
       var tmHomeWidget = document.getElementById('home-tm-widget');
       if (tmHomeWidget) { tmHomeWidget.style.display = 'block'; loadHomeTaskManagerWidget(); }
     }
-    // "+ Task Manager" — every signed-in user gets their own personal
-    // board here. First click with no board yet shows a setup modal.
-    if (user && user.email) {
-      var tm2Wrap = document.getElementById('lab-nav-task2-wrap');
-      if (tm2Wrap) tm2Wrap.style.display = 'block';
+    // "+ Task Manager" — every supervisor (and admin) gets their own
+    // personal board here, nested under the same TASK MANAGER caption as
+    // Mark's board. A permanent "+ Create new list" link handles first-time
+    // setup rather than relying on a one-off auto-popup, so it's always
+    // there to find even if someone dismisses the modal or doesn't have a
+    // board yet.
+    if (user && user.email && (user.isAdmin || user.isSupervisor)) {
+      if (tmGroupWrap) tmGroupWrap.style.display = 'block';
       if (typeof tm2LoadName === 'function') tm2LoadName();
     }
     // Every user (other than Mark, who already has the full-access link

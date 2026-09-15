@@ -6044,24 +6044,32 @@ async function tmFetch(endpoint, options = {}) {
   return body;
 }
 
-// ── Task Manager 2 — personal boards, one per person ─────────────
-// Its own Airtable table, own tasks. Deliberately a lighter schema than the
-// original Task Manager (no priority/subtasks/drag-order/digest email —
-// just title, section, status, due date, notes, sponsor). Any authenticated
-// user can open "+ Task Manager": the first time they do, they get a setup
-// modal (their name + section names) that creates their own private board;
-// after that they only ever see and edit their own board's tasks. Boards
-// are keyed by owner email and stored in App Settings (see below) so they
-// survive Railway redeploys without needing a new Airtable table per person.
-const TM2_TABLE   = 'tbl2zwZr9wxmosuDl';
-const TM2_TITLE   = 'fldiPJbcYn7r6yjAY';
-const TM2_AREA    = 'fld2hElEMJMOociTw';
-const TM2_STATUS  = 'fld3M8XtTjHWpJzk4';
-const TM2_DUE     = 'fldtRuQAYSGz6jMCP';
-const TM2_NOTES   = 'fld2mK8zfYKRIZOqT';
-const TM2_SPONSOR = 'fldG9de8Rw6tj8gVV';
-const TM2_ADDED   = 'fldoxHkXoUUYOVcKI';
-const TM2_BOARD   = 'fld6rg2v5MmIzZZkT'; // which person's board this task belongs to (= owner email)
+// ── Task Manager 2 — personal boards, one per supervisor ─────────
+// Its own Airtable table, own tasks. Same feature set as the original Task
+// Manager (priority, subtasks, drag order) but a separate board per owner
+// rather than one shared table — each supervisor (or Mark) gets their own
+// private board the first time they open "+ Task Manager": a setup modal
+// (their name + section names) creates it; after that they only ever see
+// and edit their own board's tasks. Boards are keyed by owner email and
+// stored in App Settings (see below) so they survive Railway redeploys
+// without needing a new Airtable table per person. No digest email here —
+// that's still specific to the original board's server-side route.
+const TM2_TABLE     = 'tbl2zwZr9wxmosuDl';
+const TM2_TITLE     = 'fldiPJbcYn7r6yjAY';
+const TM2_AREA      = 'fld2hElEMJMOociTw';
+const TM2_STATUS    = 'fld3M8XtTjHWpJzk4';
+const TM2_DUE       = 'fldtRuQAYSGz6jMCP';
+const TM2_NOTES     = 'fld2mK8zfYKRIZOqT';
+const TM2_SPONSOR   = 'fldG9de8Rw6tj8gVV';
+const TM2_ADDED     = 'fldoxHkXoUUYOVcKI';
+const TM2_TYPE      = 'fldDcQTLQJcXt67LJ';
+const TM2_DURATION  = 'fld5ppBkK8OOyu96S';
+const TM2_PRIORITY  = 'fld2vWJJxNd5ihFU4';
+const TM2_BOARD     = 'fld6rg2v5MmIzZZkT'; // which person's board this task belongs to (= owner email)
+const TM2_SUB_DONE  = 'fldFU0wrWgy0GffIU';
+const TM2_SUB_TOT   = 'fldTi8MlWRZAFtJL1';
+const TM2_SUBTASKS  = 'fldLrc2hyY3gFcrBS';
+const TM2_START     = 'fldD7frjg8AK27aNE';
 const TM2_DEFAULT_AREAS = ['Section 1', 'Section 2', 'Section 3', 'Section 4', 'Section 5'];
 
 async function tm2Fetch(endpoint, options = {}) {
@@ -6077,23 +6085,36 @@ async function tm2Fetch(endpoint, options = {}) {
 
 function tm2RecordToTask(record) {
   const f = record.fields;
+  const subtasks = tmParseSubtasks(f[TM2_SUBTASKS]);
   return {
-    id:           record.id,
-    title:        f[TM2_TITLE]   || '',
-    area:         f[TM2_AREA]    || '',
-    notes:        f[TM2_NOTES]   || '',
-    dueDate:      f[TM2_DUE]     || '',
-    added:        f[TM2_ADDED]   || record.createdTime.slice(0, 10),
-    status:       f[TM2_STATUS]  || 'Active',
-    sponsorEmail: (f[TM2_SPONSOR] || '').toLowerCase(),
-    boardId:      f[TM2_BOARD]   || ''
+    id:            record.id,
+    title:         f[TM2_TITLE]    || '',
+    area:          f[TM2_AREA]     || '',
+    type:          f[TM2_TYPE]     || 'One-off',
+    duration:      f[TM2_DURATION] || '',
+    priority:      typeof f[TM2_PRIORITY] === 'number' ? f[TM2_PRIORITY] : null,
+    subtasks:      subtasks,
+    subtasksDone:  subtasks.filter(s => s.done).length,
+    subtasksTotal: subtasks.length,
+    startDate:     f[TM2_START]    || '',
+    notes:         f[TM2_NOTES]    || '',
+    dueDate:       f[TM2_DUE]      || '',
+    added:         f[TM2_ADDED]    || record.createdTime.slice(0, 10),
+    status:        f[TM2_STATUS]   || 'Active',
+    sponsorEmail:  (f[TM2_SPONSOR] || '').toLowerCase(),
+    boardId:       f[TM2_BOARD]    || ''
   };
 }
 
-// Any authenticated user can use Task Manager 2 — access to a specific
-// board is enforced per-endpoint (a user can only read/write their own).
+// Task Manager 2 is for supervisors (and Mark, who's already an admin) —
+// not every authenticated user. Same isAdmin/isSupervisor check Lab itself
+// defaults on, kept separate from requireTaskManagerAccess/FullAccess
+// (the original board) since this is a different feature with its own
+// per-owner board model, not a scope split on one shared table.
 function requireTaskManager2Access(req, res, next) {
   if (!req.session.authenticated) return res.status(403).json({ error: 'Forbidden' });
+  const user = req.session.user;
+  if (!user || !(user.isAdmin || user.isSupervisor)) return res.status(403).json({ error: 'Forbidden' });
   next();
 }
 
@@ -6189,7 +6210,8 @@ app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (re
       offset = data.offset;
     } while (offset);
     const tasks = all.map(tm2RecordToTask);
-    const sponsors = await fetchAllUserNames(null);
+    let sponsors = [];
+    try { sponsors = await fetchAllUserNames(null); } catch (e) { sponsors = []; }
     res.json({ tasks, areas: board.sections, name: board.name, sponsors });
   } catch (err) {
     res.status(500).json({ error: err.message });
