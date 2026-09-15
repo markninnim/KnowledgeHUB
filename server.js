@@ -334,12 +334,16 @@ function computeNavDefaults(f) {
   const isSupervisor = f[F_IS_SUPERVISOR] || false;
   const business = (f[F_BUSINESS] || '').trim().toLowerCase();
   const supervisorOrAdmin = isAdmin || isSupervisor;
+  // The CEO gets Lab by default even though the role isn't flagged
+  // Admin/Supervisor in Airtable — Task Manager oversight (in Lab) should
+  // never depend on remembering to also tick those boxes for this person.
+  const isCeo = (f[F_EMAIL] || '').toLowerCase() === 'terry.mccutcheon@financeplanning.co.uk';
   return {
     marketing:       true,
     compliance:      true,
     learning:        true,
     surveying:       true,
-    lab:             supervisorOrAdmin,
+    lab:             supervisorOrAdmin || isCeo,
     sellingZone:     true,
     pay:             true,
     autocrm:         true,
