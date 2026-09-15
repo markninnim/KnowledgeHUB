@@ -8636,7 +8636,6 @@ function tmClearSponsor() {
 // date, due date, sponsor — only including whichever of those are set.
 function tmCardMeta(t) {
   var parts = [];
-  if (t.duration) parts.push(tmEsc(t.duration));
   if (t.startDate) parts.push('Start ' + tmFormatDate(t.startDate));
   if (t.dueDate) parts.push('Due ' + tmFormatDate(t.dueDate));
   if (t.sponsorEmail) parts.push('Sponsor: ' + tmEsc(tmSponsorName(t.sponsorEmail)));
