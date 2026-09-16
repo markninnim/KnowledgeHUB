@@ -6028,6 +6028,96 @@ app.delete('/api/admin/learning/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Returns a thumbnail image URL for a Learning Video's YouTube/Vimeo link,
+// used in the "new video" notification email. YouTube thumbnails are a
+// predictable static URL; Vimeo requires an oEmbed lookup.
+async function lvThumbnailUrl(url) {
+  const ytMatch = (url || '').match(/(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/)([\w-]{11})/);
+  if (ytMatch) return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+  const vmMatch = (url || '').match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) {
+    try {
+      const r = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent('https://vimeo.com/' + vmMatch[1])}`);
+      if (r.ok) {
+        const d = await r.json();
+        // Prefer a larger still than the default 295x166 thumb.
+        return (d.thumbnail_url || '').replace(/_\d+x\d+(\?|$)/, '_640x360$1') || d.thumbnail_url || null;
+      }
+    } catch (e) { /* fall through to no thumbnail */ }
+  }
+  return null;
+}
+
+// Builds the "new video" notification email body — same visual style as the
+// password reset email (logo, brand navy heading, #003768 button).
+function lvNotifyEmailHtml(firstName, video, deepLink, thumbUrl) {
+  const thumbHtml = thumbUrl ? `
+      <a href="${deepLink}" style="display:block;position:relative;margin:20px 0;text-decoration:none;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.15);">
+        <img src="${thumbUrl}" alt="${video.title}" style="display:block;width:100%;height:auto;">
+        <span style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15);">
+          <span style="width:0;height:0;border-top:16px solid transparent;border-bottom:16px solid transparent;border-left:26px solid #fff;margin-left:6px;"></span>
+        </span>
+      </a>` : '';
+  const downloadLinks = [
+    video.presentation1 ? `<p style="margin:0 0 6px;"><a href="${deepLink}" style="color:#2e99d5;font-size:14px;text-decoration:none;font-weight:600;">&#8595; Download Slide Deck (${video.presentation1.filename})</a></p>` : '',
+    video.presentation2 ? `<p style="margin:0 0 6px;"><a href="${deepLink}" style="color:#2e99d5;font-size:14px;text-decoration:none;font-weight:600;">&#8595; Download Slide Deck 2 (${video.presentation2.filename})</a></p>` : '',
+    video.transcript    ? `<p style="margin:0 0 20px;"><a href="${deepLink}" style="color:#2e99d5;font-size:14px;text-decoration:none;font-weight:600;">&#8595; Download Transcript (${video.transcript.filename})</a></p>` : ''
+  ].filter(Boolean).join('');
+  return `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+      <img src="${EMAIL_LOGO_DATA_URI}" alt="FPG" style="height:48px;margin-bottom:24px;">
+      <h2 style="color:#003768;margin:0 0 12px;">New webinar: ${video.title}</h2>
+      <p style="color:#4a5a6a;line-height:1.6;">Hi ${firstName},<br><br>A new webinar has just been added to Learning on KnowledgeHUB&trade; &mdash; <strong>${video.title}</strong>${video.description ? ': ' + video.description : ''}.</p>
+      <p style="color:#4a5a6a;line-height:1.6;">By watching this webinar, you will automatically be registered for the corresponding period of CPD learning. You can let it play in the background and learn while you work if time is short.</p>
+      ${thumbHtml}
+      <a href="${deepLink}" style="display:inline-block;margin:0 0 20px;background:#003768;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Watch the Webinar</a>
+      ${downloadLinks ? '<p style="color:#4a5a6a;line-height:1.6;">Also available to download from the same page:</p>' + downloadLinks : ''}
+      <p style="color:#6b7c8f;font-size:13px;">This link will take you straight to the video once you are logged in to KnowledgeHUB&trade;.</p>
+      <hr style="border:none;border-top:1px solid #e8ecf0;margin:24px 0;">
+      <p style="color:#6b7c8f;font-size:12px;">KnowledgeHUB&trade;</p>
+    </div>`;
+}
+
+// POST /api/admin/learning/:id/notify — email every user a "new webinar"
+// notification with a direct deep link to this video.
+app.post('/api/admin/learning/:id/notify', requireAdmin, async (req, res) => {
+  try {
+    const record = await lvFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    const video = lvRecordToVideo(record);
+    const deepLink = (process.env.APP_URL || 'https://knowledgehub.simflex.ai') + '/?video=' + encodeURIComponent(video.id);
+    const thumbUrl = await lvThumbnailUrl(video.url);
+
+    // Pull first name + email for every user, paginated.
+    let records = [], offset = '';
+    do {
+      const qs = `?fields[]=${F_FIRST}&fields[]=${F_EMAIL}&returnFieldsByFieldId=true&pageSize=100${offset ? '&offset=' + offset : ''}`;
+      const data = await atFetch(qs);
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+    const recipients = records
+      .map(r => ({ firstName: r.fields[F_FIRST] || 'there', email: (r.fields[F_EMAIL] || '').toLowerCase() }))
+      .filter(u => u.email);
+
+    let sent = 0, failed = 0;
+    const BATCH = 10;
+    for (let i = 0; i < recipients.length; i += BATCH) {
+      const batch = recipients.slice(i, i + BATCH);
+      const results = await Promise.allSettled(batch.map(u => _mailer.sendMail({
+        from: `"KnowledgeHUB™" <${process.env.CM_FROM_EMAIL || 'noreply@financeplanning.co.uk'}>`,
+        to: u.email,
+        subject: `New webinar: ${video.title}`,
+        html: lvNotifyEmailHtml(u.firstName, video, deepLink, thumbUrl)
+      })));
+      results.forEach(r => { if (r.status === 'fulfilled') sent++; else failed++; });
+    }
+    auditLog('learning_video_notify', { videoId: video.id, title: video.title, sent, failed, total: recipients.length }, req);
+    res.json({ ok: true, sent, failed, total: recipients.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Task Manager config ──────────────────────────────────────
 // Migrated from the external FPG Task Manager (tasks.readdy.co) on 2026-09-14.
 // Visible to admins + supervisors only (requireAdminOrSupervisor).

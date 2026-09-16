@@ -22135,6 +22135,7 @@ function renderAdminLvList(videos, featuredCount) {
       '</div>' +
       '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:10px;">' +
         '<button id="lv-copy-btn-' + v.id + '" onclick="copyLvDeepLink(\'' + v.id + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Copy link</button>' +
+        '<button id="lv-notify-btn-' + v.id + '" onclick="notifyLvVideo(\'' + v.id + '\',\'' + escAttr(v.title) + '\')" style="background:#e8f4fd;color:#2e99d5;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Notify all users</button>' +
         '<button onclick="openLvForm(\'' + v.id + '\')" style="background:#f5f7fa;color:var(--brand-navy);border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Edit</button>' +
         '<button onclick="deleteLvVideo(\'' + v.id + '\',\'' + escAttr(v.title) + '\')" style="background:#fff0f0;color:#c00;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Delete</button>' +
       '</div>' +
@@ -22156,6 +22157,23 @@ function copyLvDeepLink(id) {
   } else {
     prompt('Copy this link:', link);
   }
+}
+
+// Emails every user a "new webinar" notification for this video, with a
+// deep link straight to it (plus any presentation/transcript downloads).
+function notifyLvVideo(id, title) {
+  if (!confirm('Send a "new webinar" email to every user for "' + title + '"?\n\nThis will actually send emails — this cannot be undone.')) return;
+  var btn = document.getElementById('lv-notify-btn-' + id);
+  var originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  fetch('/api/admin/learning/' + id + '/notify', { method: 'POST' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      if (!res.ok) { alert(res.data.error || 'Failed to send notifications.'); return; }
+      alert('Sent to ' + res.data.sent + ' of ' + res.data.total + ' users' + (res.data.failed ? (' (' + res.data.failed + ' failed)') : '') + '.');
+    })
+    .catch(function() { alert('Network error — notifications may not have been sent.'); })
+    .finally(function() { if (btn) { btn.disabled = false; btn.textContent = originalText; } });
 }
 
 function openLvForm(id) {
