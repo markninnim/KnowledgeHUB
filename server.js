@@ -6078,6 +6078,22 @@ function lvNotifyEmailHtml(firstName, video, deepLink, thumbUrl) {
     </div>`;
 }
 
+// GET /api/admin/learning/:id/notify-preview — renders the exact HTML the
+// notify email would send, personalised with the viewing admin's own first
+// name, so it can be opened/checked before actually emailing everyone.
+app.get('/api/admin/learning/:id/notify-preview', requireAdmin, async (req, res) => {
+  try {
+    const record = await lvFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+    const video = lvRecordToVideo(record);
+    const deepLink = (process.env.APP_URL || 'https://knowledgehub.simflex.ai') + '/?video=' + encodeURIComponent(video.id);
+    const thumbUrl = await lvThumbnailUrl(video.url);
+    const firstName = (req.session.user && req.session.user.firstName) || 'there';
+    res.set('Content-Type', 'text/html').send(lvNotifyEmailHtml(firstName, video, deepLink, thumbUrl));
+  } catch (err) {
+    res.status(500).send('<p>Preview failed: ' + String(err.message || '').replace(/</g, '&lt;') + '</p>');
+  }
+});
+
 // POST /api/admin/learning/:id/notify — email every user a "new webinar"
 // notification with a direct deep link to this video.
 app.post('/api/admin/learning/:id/notify', requireAdmin, async (req, res) => {
