@@ -539,7 +539,11 @@ async function completeLoginRedirect(req, res, email, user) {
     const token = await createResetToken(email);
     return res.redirect('/reset-password?token=' + token + '&forced=1');
   }
-  res.redirect('/');
+  // Bounce back to whatever page the user originally requested (e.g. a
+  // /?video=recXXXX deep link) before requireAuth sent them to /login.
+  const dest = req.session.postLoginRedirect;
+  delete req.session.postLoginRedirect;
+  res.redirect(dest || '/');
 }
 
 // ── Asset dates manifest (persists upload dates across deploys) ──
@@ -1555,6 +1559,12 @@ app.post('/api/onboarding-complete', requireAuth, async (req, res) => {
 function requireAuth(req, res, next) {
   if (!req.session.authenticated) {
     if (req.originalUrl.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+    // Remember where they were headed (e.g. a deep link like /?video=recXXXX)
+    // so completeLoginRedirect()/2FA verify can send them straight back there
+    // instead of dropping the query string on the floor at the homepage.
+    if (req.originalUrl && req.originalUrl !== '/' && req.originalUrl !== '/login') {
+      req.session.postLoginRedirect = req.originalUrl;
+    }
     if (req.session.pendingTotp) return res.redirect('/2fa');
     return res.redirect('/login');
   }
@@ -5209,7 +5219,11 @@ app.post('/api/2fa/setup-verify', async (req, res) => {
     const token = await createResetToken(email, userId);
     return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
   }
-  res.json({ ok: true, redirect: '/' });
+  // Bounce back to whatever page the user originally requested (e.g. a
+  // /?video=recXXXX deep link) before requireAuth sent them to /login.
+  const dest = req.session.postLoginRedirect;
+  delete req.session.postLoginRedirect;
+  res.json({ ok: true, redirect: dest || '/' });
 });
 
 // ── 2FA: verify TOTP code during login (pendingTotp) ────────────
@@ -5246,7 +5260,11 @@ app.post('/api/2fa/verify', async (req, res) => {
     const token = await createResetToken(email, userId);
     return res.json({ ok: true, redirect: '/reset-password?token=' + token + '&forced=1' });
   }
-  res.json({ ok: true, redirect: '/' });
+  // Bounce back to whatever page the user originally requested (e.g. a
+  // /?video=recXXXX deep link) before requireAuth sent them to /login.
+  const dest = req.session.postLoginRedirect;
+  delete req.session.postLoginRedirect;
+  res.json({ ok: true, redirect: dest || '/' });
 });
 
 // ── 2FA: get new QR code for account modal (authenticated) ───────
