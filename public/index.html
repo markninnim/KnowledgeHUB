@@ -8785,6 +8785,23 @@ function tmEsc(s) {
   });
 }
 
+// A subtask is either a checkable item { text, done } or a section heading
+// { text, heading: true } — used to group a long checklist into labelled
+// sections. Typing "# Section name" into any add-subtask box creates a
+// heading instead of a checkable item (see tmParseNewSubtaskText below).
+// This clone helper keeps the heading flag intact whenever a subtask list
+// is copied to be mutated (add/remove/toggle/reorder) — a plain
+// { text: s.text, done: s.done } copy would silently turn headings back
+// into checkable items.
+function tmCloneSubtask(s) {
+  return s.heading ? { text: s.text, heading: true } : { text: s.text, done: s.done };
+}
+function tmParseNewSubtaskText(raw) {
+  var text = (raw || '').trim();
+  if (text.slice(0, 2) === '# ') return { text: text.slice(2).trim(), heading: true };
+  return { text: text, done: false };
+}
+
 // Builds a quoted JS string literal safe to drop straight into a
 // double-quoted onclick="..." attribute — JSON.stringify() alone produces
 // literal double-quote characters that prematurely close the attribute
@@ -8983,6 +9000,14 @@ function tmExpandedBody(t) {
       (t.notes ? '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.6;margin:12px 0;">' + tmEsc(t.notes) + '</div>' : '') +
       '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">' +
         (subtasks.length ? subtasks.map(function(s, i) {
+          if (s.heading) {
+            return '' +
+              '<div draggable="true" ondragstart="tmSubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tmSubtaskDragOver(event)" ondrop="tmSubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tmSubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;padding:10px 4px 4px;' + (i > 0 ? 'border-top:1px solid #e8ecf0;margin-top:4px;' : '') + '">' +
+                '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' +
+                '<span style="flex:1;font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.03em;">' + tmEsc(s.text) + '</span>' +
+                '<button type="button" onclick="tmInlineRemoveSubtask(' + idArg + ',' + i + ')" title="Remove section" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+              '</div>';
+          }
           return '' +
             '<div draggable="true" ondragstart="tmSubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tmSubtaskDragOver(event)" ondrop="tmSubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tmSubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
               (subtasks.length > 1 ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
@@ -8993,7 +9018,7 @@ function tmExpandedBody(t) {
         }).join('') : '<div style="font-size:12.5px;color:#6b7c8f;">No subtasks yet.</div>') +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-top:8px;">' +
-        '<input type="text" id="tm-inline-input-' + t.id + '" placeholder="Add a subtask…" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tmInlineAddSubtask(' + idArg + ');}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+        '<input type="text" id="tm-inline-input-' + t.id + '" placeholder="Add a subtask, or &quot;# Section name&quot; for a heading…" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tmInlineAddSubtask(' + idArg + ');}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
         '<button type="button" onclick="tmInlineAddSubtask(' + idArg + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Add</button>' +
       '</div>' +
     '</div>';
@@ -9089,7 +9114,7 @@ function tmPersistSubtasks(taskId, subtasks) {
 function tmInlineToggleSubtask(taskId, i) {
   var task = _tmTasks.find(function(t) { return t.id === taskId; });
   if (!task || !task.subtasks || !task.subtasks[i]) return;
-  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var next = task.subtasks.map(tmCloneSubtask);
   next[i].done = !next[i].done;
   tmPersistSubtasks(taskId, next);
 }
@@ -9103,12 +9128,12 @@ function tmInlineRemoveSubtask(taskId, i) {
 
 function tmInlineAddSubtask(taskId) {
   var input = document.getElementById('tm-inline-input-' + taskId);
-  var text = (input && input.value || '').trim();
-  if (!text) return;
+  var entry = tmParseNewSubtaskText(input && input.value);
+  if (!entry.text) return;
   var task = _tmTasks.find(function(t) { return t.id === taskId; });
   if (!task) return;
-  var next = (task.subtasks || []).map(function(s) { return { text: s.text, done: s.done }; });
-  next.push({ text: text, done: false });
+  var next = (task.subtasks || []).map(tmCloneSubtask);
+  next.push(entry);
   tmPersistSubtasks(taskId, next);
 }
 
@@ -9135,7 +9160,7 @@ function tmSubtaskDrop(e, taskId, targetIndex) {
   if (fromIndex == null || fromIndex === targetIndex) return;
   var task = _tmTasks.find(function(t) { return t.id === taskId; });
   if (!task || !task.subtasks) return;
-  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var next = task.subtasks.map(tmCloneSubtask);
   var moved = next.splice(fromIndex, 1)[0];
   next.splice(targetIndex, 0, moved);
   tmPersistSubtasks(taskId, next);
@@ -9968,6 +9993,14 @@ function tm2ExpandedBody(t) {
       (t.notes ? '<div style="color:#6b7c8f;font-size:12.5px;line-height:1.6;margin:12px 0;">' + tmEsc(t.notes) + '</div>' : '') +
       '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">' +
         (subtasks.length ? subtasks.map(function(s, i) {
+          if (s.heading) {
+            return '' +
+              '<div draggable="true" ondragstart="tm2SubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tm2SubtaskDragOver(event)" ondrop="tm2SubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tm2SubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;padding:10px 4px 4px;' + (i > 0 ? 'border-top:1px solid #e8ecf0;margin-top:4px;' : '') + '">' +
+                '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' +
+                '<span style="flex:1;font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.03em;">' + tmEsc(s.text) + '</span>' +
+                '<button type="button" onclick="tm2InlineRemoveSubtask(' + idArg + ',' + i + ')" title="Remove section" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+              '</div>';
+          }
           return '' +
             '<div draggable="true" ondragstart="tm2SubtaskDragStart(event,' + idArg + ',' + i + ')" ondragover="tm2SubtaskDragOver(event)" ondrop="tm2SubtaskDrop(event,' + idArg + ',' + i + ')" ondragend="tm2SubtaskDragEnd(event)" style="display:flex;align-items:center;gap:8px;background:#f9fafc;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
               (subtasks.length > 1 ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
@@ -9978,7 +10011,7 @@ function tm2ExpandedBody(t) {
         }).join('') : '<div style="font-size:12.5px;color:#6b7c8f;">No subtasks yet.</div>') +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-top:8px;">' +
-        '<input type="text" id="tm2-inline-input-' + t.id + '" placeholder="Add a subtask…" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tm2InlineAddSubtask(' + idArg + ');}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+        '<input type="text" id="tm2-inline-input-' + t.id + '" placeholder="Add a subtask, or &quot;# Section name&quot; for a heading…" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tm2InlineAddSubtask(' + idArg + ');}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
         '<button type="button" onclick="tm2InlineAddSubtask(' + idArg + ')" style="background:#003768;border:1px solid transparent;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Add</button>' +
       '</div>' +
     '</div>';
@@ -10043,7 +10076,7 @@ function tm2PersistSubtasks(taskId, subtasks) {
 function tm2InlineToggleSubtask(taskId, i) {
   var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
   if (!task || !task.subtasks || !task.subtasks[i]) return;
-  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var next = task.subtasks.map(tmCloneSubtask);
   next[i].done = !next[i].done;
   tm2PersistSubtasks(taskId, next);
 }
@@ -10055,12 +10088,12 @@ function tm2InlineRemoveSubtask(taskId, i) {
 }
 function tm2InlineAddSubtask(taskId) {
   var input = document.getElementById('tm2-inline-input-' + taskId);
-  var text = (input && input.value || '').trim();
-  if (!text) return;
+  var entry = tmParseNewSubtaskText(input && input.value);
+  if (!entry.text) return;
   var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
   if (!task) return;
-  var next = (task.subtasks || []).map(function(s) { return { text: s.text, done: s.done }; });
-  next.push({ text: text, done: false });
+  var next = (task.subtasks || []).map(tmCloneSubtask);
+  next.push(entry);
   tm2PersistSubtasks(taskId, next);
 }
 
@@ -10083,7 +10116,7 @@ function tm2SubtaskDrop(e, taskId, targetIndex) {
   if (fromIndex == null || fromIndex === targetIndex) return;
   var task = _tm2Tasks.find(function(t) { return t.id === taskId; });
   if (!task || !task.subtasks) return;
-  var next = task.subtasks.map(function(s) { return { text: s.text, done: s.done }; });
+  var next = task.subtasks.map(tmCloneSubtask);
   var moved = next.splice(fromIndex, 1)[0];
   next.splice(targetIndex, 0, moved);
   tm2PersistSubtasks(taskId, next);
@@ -10408,7 +10441,7 @@ function tm2OpenModal(taskId, presetArea) {
         '<div id="tm2-f-subtasks-progress" style="margin-bottom:10px;"></div>' +
         '<div id="tm2-f-subtasks-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>' +
         '<div style="display:flex;gap:8px;">' +
-          '<input type="text" id="tm2-f-subtask-input" placeholder="Add a subtask…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tm2ModalAddSubtask();}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+          '<input type="text" id="tm2-f-subtask-input" placeholder="Add a subtask, or &quot;# Section name&quot; for a heading…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tm2ModalAddSubtask();}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
           '<button type="button" onclick="tm2ModalAddSubtask()" style="background:#003768;border:1px solid transparent;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Add</button>' +
         '</div>' +
       '</div>' +
@@ -10429,7 +10462,7 @@ function tm2OpenModal(taskId, presetArea) {
       '</div>' +
     '</div>';
   document.body.appendChild(overlay);
-  _tm2ModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(function(s) { return { text: s.text, done: s.done }; });
+  _tm2ModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(tmCloneSubtask);
   tm2ModalRenderSubtasks();
   setTimeout(function() { var inp = document.getElementById('tm2-f-title'); if (inp) inp.focus(); }, 0);
 }
@@ -10444,14 +10477,22 @@ function tm2ModalRenderSubtasks() {
   var listEl = document.getElementById('tm2-f-subtasks-list');
   var progEl = document.getElementById('tm2-f-subtasks-progress');
   if (!listEl || !progEl) return;
-  var done = _tm2ModalSubtasks.filter(function(s) { return s.done; }).length;
-  var total = _tm2ModalSubtasks.length;
+  var checkable = _tm2ModalSubtasks.filter(function(s) { return !s.heading; });
+  var done = checkable.filter(function(s) { return s.done; }).length;
+  var total = checkable.length;
   var pct = total ? Math.round((done / total) * 100) : 0;
   progEl.innerHTML = total ?
     '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#6b7c8f;margin-bottom:4px;"><span>Progress</span><span style="color:#003768;font-weight:700;">' + done + '/' + total + ' done</span></div>' +
     '<div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:#2e99d5;"></div></div>'
     : '<div style="font-size:12.5px;color:#6b7c8f;">No subtasks yet.</div>';
   listEl.innerHTML = _tm2ModalSubtasks.map(function(s, i) {
+    if (s.heading) {
+      return '' +
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px 2px;' + (i > 0 ? 'border-top:1px solid #e8ecf0;margin-top:2px;' : '') + '">' +
+          '<span style="flex:1;font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.03em;">' + tmEsc(s.text) + '</span>' +
+          '<button type="button" onclick="tm2ModalRemoveSubtask(' + i + ')" title="Remove section" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+        '</div>';
+    }
     return '' +
       '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
         '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tm2ModalToggleSubtask(' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
@@ -10462,14 +10503,14 @@ function tm2ModalRenderSubtasks() {
 }
 function tm2ModalAddSubtask() {
   var input = document.getElementById('tm2-f-subtask-input');
-  var text = (input && input.value || '').trim();
-  if (!text) return;
-  _tm2ModalSubtasks.push({ text: text, done: false });
+  var entry = tmParseNewSubtaskText(input && input.value);
+  if (!entry.text) return;
+  _tm2ModalSubtasks.push(entry);
   if (input) input.value = '';
   tm2ModalRenderSubtasks();
   if (input) input.focus();
 }
-function tm2ModalToggleSubtask(i) { if (!_tm2ModalSubtasks[i]) return; _tm2ModalSubtasks[i].done = !_tm2ModalSubtasks[i].done; tm2ModalRenderSubtasks(); }
+function tm2ModalToggleSubtask(i) { if (!_tm2ModalSubtasks[i] || _tm2ModalSubtasks[i].heading) return; _tm2ModalSubtasks[i].done = !_tm2ModalSubtasks[i].done; tm2ModalRenderSubtasks(); }
 function tm2ModalRemoveSubtask(i) { _tm2ModalSubtasks.splice(i, 1); tm2ModalRenderSubtasks(); }
 
 function tm2SaveTask(taskId) {
@@ -10567,7 +10608,7 @@ function tmOpenModal(taskId, presetArea) {
         '<div id="tm-f-subtasks-progress" style="margin-bottom:10px;"></div>' +
         '<div id="tm-f-subtasks-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>' +
         '<div style="display:flex;gap:8px;">' +
-          '<input type="text" id="tm-f-subtask-input" placeholder="Add a subtask…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tmModalAddSubtask();}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
+          '<input type="text" id="tm-f-subtask-input" placeholder="Add a subtask, or &quot;# Section name&quot; for a heading…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();tmModalAddSubtask();}" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
           '<button type="button" onclick="tmModalAddSubtask()" style="background:#003768;border:1px solid transparent;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Add</button>' +
         '</div>' +
       '</div>' +
@@ -10591,7 +10632,7 @@ function tmOpenModal(taskId, presetArea) {
   // Subtasks are edited as an in-memory list scoped to this modal session —
   // ticking/adding/removing just re-renders locally; the whole list is sent
   // to the server together with the rest of the form on Save.
-  _tmModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(function(s) { return { text: s.text, done: s.done }; });
+  _tmModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(tmCloneSubtask);
   tmModalRenderSubtasks();
 }
 
@@ -10607,14 +10648,22 @@ function tmModalRenderSubtasks() {
   var listEl = document.getElementById('tm-f-subtasks-list');
   var progEl = document.getElementById('tm-f-subtasks-progress');
   if (!listEl || !progEl) return;
-  var done = _tmModalSubtasks.filter(function(s) { return s.done; }).length;
-  var total = _tmModalSubtasks.length;
+  var checkable = _tmModalSubtasks.filter(function(s) { return !s.heading; });
+  var done = checkable.filter(function(s) { return s.done; }).length;
+  var total = checkable.length;
   var pct = total ? Math.round((done / total) * 100) : 0;
   progEl.innerHTML = total ?
     '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#6b7c8f;margin-bottom:4px;"><span>Progress</span><span style="color:#003768;font-weight:700;">' + done + '/' + total + ' done</span></div>' +
     '<div style="height:5px;background:#e8ecf0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:#2e99d5;"></div></div>'
     : '<div style="font-size:12.5px;color:#6b7c8f;">No subtasks yet.</div>';
   listEl.innerHTML = _tmModalSubtasks.map(function(s, i) {
+    if (s.heading) {
+      return '' +
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px 2px;' + (i > 0 ? 'border-top:1px solid #e8ecf0;margin-top:2px;' : '') + '">' +
+          '<span style="flex:1;font-size:12px;font-weight:700;color:#003768;text-transform:uppercase;letter-spacing:.03em;">' + tmEsc(s.text) + '</span>' +
+          '<button type="button" onclick="tmModalRemoveSubtask(' + i + ')" title="Remove section" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+        '</div>';
+    }
     return '' +
       '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
         '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="tmModalToggleSubtask(' + i + ')" style="flex-shrink:0;width:15px;height:15px;cursor:pointer;accent-color:#003768;">' +
@@ -10626,16 +10675,16 @@ function tmModalRenderSubtasks() {
 
 function tmModalAddSubtask() {
   var input = document.getElementById('tm-f-subtask-input');
-  var text = (input && input.value || '').trim();
-  if (!text) return;
-  _tmModalSubtasks.push({ text: text, done: false });
+  var entry = tmParseNewSubtaskText(input && input.value);
+  if (!entry.text) return;
+  _tmModalSubtasks.push(entry);
   if (input) input.value = '';
   tmModalRenderSubtasks();
   if (input) input.focus();
 }
 
 function tmModalToggleSubtask(i) {
-  if (!_tmModalSubtasks[i]) return;
+  if (!_tmModalSubtasks[i] || _tmModalSubtasks[i].heading) return;
   _tmModalSubtasks[i].done = !_tmModalSubtasks[i].done;
   tmModalRenderSubtasks();
 }

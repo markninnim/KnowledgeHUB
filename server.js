@@ -6022,12 +6022,20 @@ const TM_SPONSOR  = 'fld18LNcGaGHovC26'; // Sponsor Email — a registered user'
 const TM_AREAS = ['General Marketing', 'Brand Strategy', 'Recruitment', 'Recruitment Prospects', 'Retention Strategies', 'LeadGEN', 'Tech/Compliance', 'Data'];
 
 // Parses the Subtasks JSON field defensively (blank/malformed -> []).
+// A subtask is either a checkable item { text, done } or a section heading
+// { text, heading: true } — headings group a long checklist into labelled
+// sections without needing a separate data structure; they're created
+// client-side by typing "# Section name" into the add-subtask box.
 function tmParseSubtasks(raw) {
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    return arr.map(s => ({ text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) }));
+    return arr.map(s => (
+      s && s.heading
+        ? { text: String(s.text || '').slice(0, 500), heading: true }
+        : { text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) }
+    ));
   } catch (e) {
     return [];
   }
@@ -6094,8 +6102,8 @@ function tm2RecordToTask(record) {
     duration:      f[TM2_DURATION] || '',
     priority:      typeof f[TM2_PRIORITY] === 'number' ? f[TM2_PRIORITY] : null,
     subtasks:      subtasks,
-    subtasksDone:  subtasks.filter(s => s.done).length,
-    subtasksTotal: subtasks.length,
+    subtasksDone:  subtasks.filter(s => !s.heading && s.done).length,
+    subtasksTotal: subtasks.filter(s => !s.heading).length,
     startDate:     f[TM2_START]    || '',
     notes:         f[TM2_NOTES]    || '',
     dueDate:       f[TM2_DUE]      || '',
@@ -6313,8 +6321,8 @@ app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (r
     if (typeof priority === 'number') fields[TM2_PRIORITY] = priority;
     if (Array.isArray(subtasks)) {
       fields[TM2_SUBTASKS] = JSON.stringify(subtasks);
-      fields[TM2_SUB_DONE] = subtasks.filter(s => s.done).length;
-      fields[TM2_SUB_TOT] = subtasks.length;
+      fields[TM2_SUB_DONE] = subtasks.filter(s => !s.heading && s.done).length;
+      fields[TM2_SUB_TOT] = subtasks.filter(s => !s.heading).length;
     }
     if (startDate) fields[TM2_START] = startDate;
     if (dueDate) fields[TM2_DUE] = dueDate;
@@ -6341,8 +6349,8 @@ app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, asy
     if (priority !== undefined) fields[TM2_PRIORITY] = priority;
     if (Array.isArray(subtasks)) {
       fields[TM2_SUBTASKS] = JSON.stringify(subtasks);
-      fields[TM2_SUB_DONE] = subtasks.filter(s => s.done).length;
-      fields[TM2_SUB_TOT] = subtasks.length;
+      fields[TM2_SUB_DONE] = subtasks.filter(s => !s.heading && s.done).length;
+      fields[TM2_SUB_TOT] = subtasks.filter(s => !s.heading).length;
     }
     if (startDate !== undefined) fields[TM2_START] = startDate;
     if (dueDate !== undefined) fields[TM2_DUE] = dueDate;
@@ -6424,8 +6432,8 @@ function tmRecordToTask(record) {
     duration:      f[TM_DURATION] || '',
     priority:      typeof f[TM_PRIORITY] === 'number' ? f[TM_PRIORITY] : null,
     subtasks:      subtasks,
-    subtasksDone:  subtasks.filter(s => s.done).length,
-    subtasksTotal: subtasks.length,
+    subtasksDone:  subtasks.filter(s => !s.heading && s.done).length,
+    subtasksTotal: subtasks.filter(s => !s.heading).length,
     startDate:     f[TM_START]    || '',
     dueDate:       f[TM_DUE]      || '',
     notes:         f[TM_NOTES]    || '',
@@ -7161,7 +7169,11 @@ function tmBuildDigestHtml(sponsorName, areaLabel, tasks) {
 // and caps length/count so a stray paste can't blow up the field.
 function tmSanitizeSubtasks(arr) {
   if (!Array.isArray(arr)) return null;
-  return arr.slice(0, 100).map(s => ({ text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) })).filter(s => s.text);
+  return arr.slice(0, 100).map(s => (
+    s && s.heading
+      ? { text: String(s.text || '').slice(0, 500), heading: true }
+      : { text: String((s && s.text) || '').slice(0, 500), done: !!(s && s.done) }
+  )).filter(s => s.text);
 }
 
 // Notifies a task's sponsor by email when it's marked Done. Best-effort —
