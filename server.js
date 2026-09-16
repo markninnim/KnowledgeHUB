@@ -5853,6 +5853,7 @@ const LV_ADDED    = 'fldBykZ17cGbybYAp';
 const LV_CPD_TYPE = 'fldQoRx2AsSvTdwY6';
 const LV_ATTACH1  = 'fldhaE5zoVgOiiZva'; // Presentation 1 — attachment (pptx or pdf)
 const LV_ATTACH2  = 'fldfD0bu5TjYChyfL'; // Presentation 2 — attachment (pptx or pdf)
+const LV_TRANSCRIPT = 'fldTJh9HZfNlsptcq'; // Transcript — attachment, uploaded the same way as the presentations
 // AI fields (Airtable "AI text") that auto-analyse the attached presentation.
 // Only populated once a presentation is uploaded — otherwise Airtable reports
 // state "error"/"emptyDependency" with a null value, which we treat as blank.
@@ -5906,6 +5907,7 @@ function lvRecordToVideo(record) {
     cpdType:     f[LV_CPD_TYPE]|| 'Mortgage',
     presentation1: lvAttachmentSummary(f[LV_ATTACH1]),
     presentation2: lvAttachmentSummary(f[LV_ATTACH2]),
+    transcript:  lvAttachmentSummary(f[LV_TRANSCRIPT]),
     docTitle:    lvAiText(f[LV_AI_TITLE]),
     docDate:     lvAiText(f[LV_AI_DATE]),
     keyTopics:   lvAiText(f[LV_KEY_TOPICS]),
@@ -5945,18 +5947,21 @@ app.get('/api/learning', requireAuth, async (req, res) => {
 // optional { filename, contentType, base64 } object) to their attachment
 // fields on an already-created/updated video record. Either slot can be a
 // PowerPoint or a PDF — the field itself doesn't care about file type.
-async function lvUploadPresentations(recordId, presentation1, presentation2) {
+async function lvUploadPresentations(recordId, presentation1, presentation2, transcript) {
   if (presentation1 && presentation1.base64) {
     await lvUploadAttachment(recordId, LV_ATTACH1, presentation1.filename || 'presentation1', presentation1.contentType || 'application/octet-stream', presentation1.base64);
   }
   if (presentation2 && presentation2.base64) {
     await lvUploadAttachment(recordId, LV_ATTACH2, presentation2.filename || 'presentation2', presentation2.contentType || 'application/octet-stream', presentation2.base64);
   }
+  if (transcript && transcript.base64) {
+    await lvUploadAttachment(recordId, LV_TRANSCRIPT, transcript.filename || 'transcript', transcript.contentType || 'application/octet-stream', transcript.base64);
+  }
 }
 
 // POST /api/admin/learning — add video
 app.post('/api/admin/learning', requireAdmin, async (req, res) => {
-  const { title, description, url, cpdType, presentation1, presentation2 } = req.body;
+  const { title, description, url, cpdType, added, presentation1, presentation2, transcript } = req.body;
   if (!title || !url) return res.status(400).json({ error: 'Title and URL required' });
   try {
     const data = await lvFetch('', {
@@ -5964,10 +5969,10 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
       // Added is a plain "date" field in Airtable (no time component) — a
       // full ISO timestamp is rejected ("Field 'Added' cannot accept the
       // provided value"). Send just the YYYY-MM-DD date part.
-      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: new Date().toISOString().slice(0, 10), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
+      body: JSON.stringify({ records: [{ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_ADDED]: (added || new Date().toISOString().slice(0, 10)), [LV_CPD_TYPE]: cpdType || 'Mortgage' } }], returnFieldsByFieldId: true })
     });
     const recordId = data.records[0].id;
-    await lvUploadPresentations(recordId, presentation1, presentation2);
+    await lvUploadPresentations(recordId, presentation1, presentation2, transcript);
     const fresh = await lvFetch(`/${recordId}?returnFieldsByFieldId=true`);
     res.json(lvRecordToVideo(fresh));
   } catch (err) {
@@ -5977,13 +5982,17 @@ app.post('/api/admin/learning', requireAdmin, async (req, res) => {
 
 // PUT /api/admin/learning/:id — edit video
 app.put('/api/admin/learning/:id', requireAdmin, async (req, res) => {
-  const { title, description, url, cpdType, presentation1, presentation2 } = req.body;
+  const { title, description, url, cpdType, added, presentation1, presentation2, transcript } = req.body;
   try {
+    const fields = { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_CPD_TYPE]: cpdType || 'Mortgage' };
+    // Added is a plain "date" field — only touch it when a value was sent,
+    // same YYYY-MM-DD-only rule as the create route above.
+    if (added) fields[LV_ADDED] = added;
     await lvFetch(`/${req.params.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ fields: { [LV_TITLE]: title, [LV_DESC]: description || '', [LV_URL]: url, [LV_CPD_TYPE]: cpdType || 'Mortgage' }, returnFieldsByFieldId: true })
+      body: JSON.stringify({ fields, returnFieldsByFieldId: true })
     });
-    await lvUploadPresentations(req.params.id, presentation1, presentation2);
+    await lvUploadPresentations(req.params.id, presentation1, presentation2, transcript);
     const fresh = await lvFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     res.json(lvRecordToVideo(fresh));
   } catch (err) {

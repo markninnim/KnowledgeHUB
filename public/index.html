@@ -6331,13 +6331,19 @@ Consolidating debts will increase the loan to value which can impact future deal
             <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">YouTube or Vimeo URL *</label>
             <input id="lvf-url" type="url" placeholder="https://www.youtube.com/watch?v=…" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
           </div>
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">CPD Type</label>
-            <select id="lvf-cpdtype" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
-              <option value="Mortgage">Mortgage</option>
-              <option value="Protection">Protection</option>
-              <option value="50/50">50/50 (Mortgage &amp; Protection)</option>
-            </select>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">CPD Type</label>
+              <select id="lvf-cpdtype" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;background:#fff;">
+                <option value="Mortgage">Mortgage</option>
+                <option value="Protection">Protection</option>
+                <option value="50/50">50/50 (Mortgage &amp; Protection)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Date</label>
+              <input id="lvf-added" type="date" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#2e99d5'" onblur="this.style.borderColor='#d1d5db'">
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
@@ -6350,6 +6356,11 @@ Consolidating debts will increase the loan to value which can impact future deal
               <input id="lvf-pres2" type="file" accept=".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf" style="width:100%;font-size:12.5px;font-family:inherit;">
               <div id="lvf-pres2-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
             </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--brand-navy);margin-bottom:4px;">Transcript <span style="font-weight:400;">(optional — same upload as the presentations)</span></label>
+            <input id="lvf-transcript" type="file" accept=".ppt,.pptx,.pdf,.doc,.docx,.txt,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="width:100%;font-size:12.5px;font-family:inherit;">
+            <div id="lvf-transcript-current" style="font-size:11.5px;color:#6b7c8f;margin-top:3px;"></div>
           </div>
         </div>
         <div id="lv-form-error" style="display:none;background:#fff0f0;border:1px solid #ffcccc;color:#c00;border-radius:7px;padding:8px 12px;font-size:13px;margin-top:10px;"></div>
@@ -11992,9 +12003,10 @@ function renderLvGrid(containerId, videos, isFeatured) {
     var thumb = makeLvThumb(v.title);
     var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
     var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
+    var transcriptArg = (v.transcript && v.transcript.url) ? ("{url:'" + escAttr(v.transcript.url) + "',filename:'" + escAttr(v.transcript.filename || '') + "'}") : 'null';
     _lvMeta[v.id] = { summary: v.summary || '', keyTopics: v.keyTopics || '' };
     cards.push(
-      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
+      '<div class="vc-card" onclick="openLvPlayer(\'' + escAttr(v.url) + '\',\'' + escAttr(v.title) + '\',\'' + escAttr(v.description) + '\',\'' + escAttr(v.cpdType || 'Mortgage') + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\',' + transcriptArg + ')" style="cursor:pointer;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 6px 24px rgba(0,0,0,.16)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.1)\'">' +
         '<div style="position:relative;padding-bottom:56.25%;background:#fff;">' +
           '<img src="' + thumb + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' +
         '</div>' +
@@ -12118,7 +12130,7 @@ function lvPresentationBtn(pres, label) {
     '</a>';
 }
 
-function openLvPlayer(url, title, desc, cpdType, pres1, pres2, id) {
+function openLvPlayer(url, title, desc, cpdType, pres1, pres2, id, transcript) {
   _lvCurrentTitle   = title   || 'Learning video';
   _lvCurrentCpdType = cpdType || 'Mortgage';
   var embedUrl = getEmbedUrl(url);
@@ -12127,8 +12139,8 @@ function openLvPlayer(url, title, desc, cpdType, pres1, pres2, id) {
   document.getElementById('lv-player-title').textContent = title || '';
   document.getElementById('lv-split-title').textContent  = title || '';
   document.getElementById('lv-split-desc').textContent   = desc  || '';
-  // Presentation downloads
-  var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2');
+  // Presentation & transcript downloads
+  var presHtml = lvPresentationBtn(pres1, 'Presentation 1') + lvPresentationBtn(pres2, 'Presentation 2') + lvPresentationBtn(transcript, 'Transcript');
   [['lv-presentations', 'lv-presentations-wrap'], ['lv-presentations-s', 'lv-presentations-s-wrap']].forEach(function(pair) {
     var el = document.getElementById(pair[0]);
     var wrap = document.getElementById(pair[1]);
@@ -12858,8 +12870,9 @@ function loadHomeData() {
               var type  = escAttr(res.type.key);
               var pres1Arg = (v.presentation1 && v.presentation1.url) ? ("{url:'" + escAttr(v.presentation1.url) + "',filename:'" + escAttr(v.presentation1.filename || '') + "'}") : 'null';
               var pres2Arg = (v.presentation2 && v.presentation2.url) ? ("{url:'" + escAttr(v.presentation2.url) + "',filename:'" + escAttr(v.presentation2.filename || '') + "'}") : 'null';
+              var transcriptArg = (v.transcript && v.transcript.url) ? ("{url:'" + escAttr(v.transcript.url) + "',filename:'" + escAttr(v.transcript.filename || '') + "'}") : 'null';
               _lvMeta[v.id] = { summary: v.summary || '', keyTopics: v.keyTopics || '' };
-              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\')" '
+              html += '<button onclick="openLvPlayer(\'' + url + '\',\'' + title + '\',\'' + desc + '\',\'' + type + '\',' + pres1Arg + ',' + pres2Arg + ',\'' + escAttr(v.id) + '\',' + transcriptArg + ')" '
                 + 'style="display:flex;align-items:center;gap:10px;width:100%;background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;transition:border-color .15s;" '
                 + 'onmouseover="this.style.borderColor=\'var(--brand-navy)\'" onmouseout="this.style.borderColor=\'#d1d5db\'">'
                 + '<div style="width:28px;height:28px;background:var(--brand-navy);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
@@ -22121,6 +22134,7 @@ function openLvForm(id) {
   errEl.style.display = 'none';
   document.getElementById('lvf-pres1').value = '';
   document.getElementById('lvf-pres2').value = '';
+  document.getElementById('lvf-transcript').value = '';
   if (id) {
     var v = _lvAdminVideos.find(function(x){ return x.id === id; });
     document.getElementById('lv-form-title').textContent = 'Edit Video';
@@ -22128,16 +22142,20 @@ function openLvForm(id) {
     document.getElementById('lvf-desc').value    = v.description || '';
     document.getElementById('lvf-url').value     = v.url || '';
     document.getElementById('lvf-cpdtype').value = v.cpdType || 'Mortgage';
+    document.getElementById('lvf-added').value   = v.added ? String(v.added).slice(0, 10) : '';
     document.getElementById('lvf-pres1-current').textContent = v.presentation1 ? ('Current: ' + v.presentation1.filename + ' (uploading a new file replaces it)') : '';
     document.getElementById('lvf-pres2-current').textContent = v.presentation2 ? ('Current: ' + v.presentation2.filename + ' (uploading a new file replaces it)') : '';
+    document.getElementById('lvf-transcript-current').textContent = v.transcript ? ('Current: ' + v.transcript.filename + ' (uploading a new file replaces it)') : '';
   } else {
     document.getElementById('lv-form-title').textContent = 'Add Video';
     document.getElementById('lvf-title').value   = '';
     document.getElementById('lvf-desc').value    = '';
     document.getElementById('lvf-url').value     = '';
     document.getElementById('lvf-cpdtype').value = 'Mortgage';
+    document.getElementById('lvf-added').value   = '';
     document.getElementById('lvf-pres1-current').textContent = '';
     document.getElementById('lvf-pres2-current').textContent = '';
+    document.getElementById('lvf-transcript-current').textContent = '';
   }
   document.getElementById('admin-lv-form').style.display = 'block';
   document.getElementById('lvf-title').focus();
@@ -22173,18 +22191,20 @@ function saveLvVideo() {
   var desc    = document.getElementById('lvf-desc').value.trim();
   var url     = document.getElementById('lvf-url').value.trim();
   var cpdType = document.getElementById('lvf-cpdtype').value;
+  var added   = document.getElementById('lvf-added').value;
   if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
   if (!url)   { errEl.textContent = 'URL is required.';   errEl.style.display = 'block'; return; }
   var endpoint = _lvEditingId ? '/api/admin/learning/' + _lvEditingId : '/api/admin/learning';
   var method   = _lvEditingId ? 'PUT' : 'POST';
   Promise.all([
     lvReadFileAsUpload(document.getElementById('lvf-pres1')),
-    lvReadFileAsUpload(document.getElementById('lvf-pres2'))
+    lvReadFileAsUpload(document.getElementById('lvf-pres2')),
+    lvReadFileAsUpload(document.getElementById('lvf-transcript'))
   ]).then(function(files) {
     return fetch(endpoint, {
       method: method,
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ title, description: desc, url, cpdType, presentation1: files[0], presentation2: files[1] })
+      body: JSON.stringify({ title, description: desc, url, cpdType, added, presentation1: files[0], presentation2: files[1], transcript: files[2] })
     });
   })
     .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
