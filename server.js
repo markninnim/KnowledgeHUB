@@ -7643,7 +7643,7 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       const subtasks = Array.isArray(t.subtasks) ? t.subtasks : [];
       if (subtasks.length) {
         ensureRoom(14);
-        page.drawText('Checklist:', { x: marginX + 14, y, size: 9, font: fontBold, color: grey });
+        page.drawText('Subtasks:', { x: marginX + 14, y, size: 9, font: fontBold, color: grey });
         y -= 14;
         subtasks.forEach(s => {
           if (s.heading) {
@@ -7661,16 +7661,9 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
         });
         y -= 2;
       }
-      // Space to jot discussion notes during the meeting
-      ensureRoom(34);
-      page.drawText('Discussion notes:', { x: marginX + 14, y, size: 9, font: fontBold, color: grey });
-      y -= 16;
-      page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
-      y -= 14;
-      page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
-      // Generous breathing room between tasks, with the divider line clear
-      // of both the notes lines above and the next task's number badge below.
-      y -= 30;
+      // Breathing room between tasks, with the divider line clear of the
+      // content above and the next task's number badge below.
+      y -= 10;
       if (idx < tasks.length - 1) {
         ensureRoom(30);
         page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 0.5, color: gold });
