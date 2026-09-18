@@ -8823,6 +8823,65 @@ function tmIdArg(id) {
   return '&quot;' + String(id).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '&quot;';
 }
 
+// Custom Area/Section picker used in the Add/Edit Task modals (both boards),
+// replacing a plain <select>. A native <select>'s dropdown list is rendered
+// by the OS/browser, not by our CSS — on some setups (reported: desktop) it
+// clips the list without letting you scroll to the bottom. This version is a
+// small in-page panel with an explicit max-height + overflow-y:auto, so it's
+// always scrollable regardless of platform. `prefix` is 'tm' or 'tm2' so the
+// two boards get independent, non-colliding element ids.
+function tmAreaDropdownHtml(prefix, areas, current, label) {
+  var value = (current && areas.indexOf(current) !== -1) ? current : (areas[0] || '');
+  return '' +
+    '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">' + tmEsc(label) + '</label>' +
+    '<div style="position:relative;">' +
+      '<div id="' + prefix + '-f-area-display" tabindex="0" onclick="tmToggleAreaDropdown(' + tmIdArg(prefix) + ')" ' +
+        'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();tmToggleAreaDropdown(' + tmIdArg(prefix) + ');}" ' +
+        'style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:6px;outline:none;">' +
+        '<span id="' + prefix + '-f-area-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#003768;">' + tmEsc(value) + '</span>' +
+        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" style="flex-shrink:0;"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</div>' +
+      '<input type="hidden" id="' + prefix + '-f-area" value="' + tmEsc(value) + '">' +
+      '<div id="' + prefix + '-f-area-list" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9200;background:#fff;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.15);">' +
+        areas.map(function(a) {
+          var sel = a === value;
+          return '<div onclick="tmSelectArea(' + tmIdArg(prefix) + ',' + tmIdArg(a) + ')" ' +
+            'onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'' + (sel ? '#eef2ff' : '#fff') + '\'" ' +
+            'style="padding:8px 12px;font-size:13px;cursor:pointer;background:' + (sel ? '#eef2ff' : '#fff') + ';color:#003768;' + (sel ? 'font-weight:700;' : '') + '">' + tmEsc(a) + '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+}
+function tmToggleAreaDropdown(prefix) {
+  var list = document.getElementById(prefix + '-f-area-list');
+  if (!list) return;
+  var opening = list.style.display !== 'block';
+  // Close any other open area dropdown first.
+  ['tm', 'tm2'].forEach(function(p) {
+    var l = document.getElementById(p + '-f-area-list');
+    if (l && l !== list) l.style.display = 'none';
+  });
+  list.style.display = opening ? 'block' : 'none';
+}
+function tmSelectArea(prefix, area) {
+  var input = document.getElementById(prefix + '-f-area');
+  var label = document.getElementById(prefix + '-f-area-label');
+  var list  = document.getElementById(prefix + '-f-area-list');
+  if (input) input.value = area;
+  if (label) label.textContent = area;
+  if (list)  list.style.display = 'none';
+}
+// Close an open area dropdown when clicking anywhere outside it.
+document.addEventListener('click', function(e) {
+  ['tm', 'tm2'].forEach(function(p) {
+    var list = document.getElementById(p + '-f-area-list');
+    var display = document.getElementById(p + '-f-area-display');
+    if (list && list.style.display === 'block' && e.target !== display && !display.contains(e.target) && !list.contains(e.target)) {
+      list.style.display = 'none';
+    }
+  });
+});
+
 // Shared type-to-confirm modal for anything destructive — used by task
 // delete, section delete and board delete across both Task Managers. The
 // Delete button stays disabled until the exact phrase is typed, so it can't
@@ -10422,10 +10481,7 @@ function tm2OpenModal(taskId, presetArea) {
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Title</label>' +
       '<input type="text" id="tm2-f-title" value="' + (task ? tmEsc(task.title) : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
       '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
-        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Section</label>' +
-        '<select id="tm2-f-area" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
-          areas.map(function(a) { var sel = task ? (task.area === a) : (presetArea === a || a === areas[0]); return '<option value="' + tmEsc(a) + '"' + (sel ? ' selected' : '') + '>' + tmEsc(a) + '</option>'; }).join('') +
-        '</select></div>' +
+        '<div style="flex:1;">' + tmAreaDropdownHtml('tm2', areas, task ? task.area : (presetArea || areas[0]), 'Section') + '</div>' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Type</label>' +
         '<select id="tm2-f-type" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
           '<option value="One-off"' + (task && task.type === 'One-off' ? ' selected' : '') + '>One-off</option>' +
@@ -10589,10 +10645,7 @@ function tmOpenModal(taskId, presetArea) {
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Title</label>' +
       '<input type="text" id="tm-f-title" value="' + (task ? tmEsc(task.title) : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">' +
       '<div style="display:flex;gap:10px;margin-bottom:12px;">' +
-        '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Area</label>' +
-        '<select id="tm-f-area" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
-          areas.map(function(a) { var sel = task ? (task.area === a) : (presetArea === a); return '<option value="' + tmEsc(a) + '"' + (sel ? ' selected' : '') + '>' + tmEsc(a) + '</option>'; }).join('') +
-        '</select></div>' +
+        '<div style="flex:1;">' + tmAreaDropdownHtml('tm', areas, task ? task.area : presetArea, 'Area') + '</div>' +
         '<div style="flex:1;"><label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Type</label>' +
         '<select id="tm-f-type" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">' +
           '<option value="One-off"' + (task && task.type === 'One-off' ? ' selected' : '') + '>One-off</option>' +
