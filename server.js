@@ -7576,7 +7576,7 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       page.drawImage(logoImg, { x: marginX, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
       page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: navy });
       page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: grey });
-      y = H - headerH - 28;
+      y = H - headerH - 42;
     }
     function ensureRoom(needed) {
       if (y - needed < 60) newPage();
