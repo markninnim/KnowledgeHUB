@@ -6152,6 +6152,7 @@ const TM_ADDED    = 'fld4gk31JmFdzQZng';
 const TM_STATUS   = 'fldmMMp1xKlEXME4g';
 const TM_SUBTASKS = 'flduPrEauGepX18Cj'; // JSON array of { text, done } — the actual checklist items
 const TM_SPONSOR  = 'fld18LNcGaGHovC26'; // Sponsor Email — a registered user's email, picked from a dropdown client-side
+const TM_ATTACH   = 'fldPgz1LBwG2O6jeZ'; // General-purpose file attachments on a task (any file type)
 const TM_AREAS = ['General Marketing', 'Brand Strategy', 'Recruitment', 'Recruitment Prospects', 'Retention Strategies', 'LeadGEN', 'Tech/Compliance', 'Data'];
 
 // Parses the Subtasks JSON field defensively (blank/malformed -> []).
@@ -6211,6 +6212,7 @@ const TM2_SUB_DONE  = 'fldFU0wrWgy0GffIU';
 const TM2_SUB_TOT   = 'fldTi8MlWRZAFtJL1';
 const TM2_SUBTASKS  = 'fldLrc2hyY3gFcrBS';
 const TM2_START     = 'fldD7frjg8AK27aNE';
+const TM2_ATTACH    = 'fldWeKfZKiD52W04v'; // General-purpose file attachments on a task (any file type)
 const TM2_DEFAULT_AREAS = ['Section 1', 'Section 2', 'Section 3', 'Section 4', 'Section 5'];
 
 async function tm2Fetch(endpoint, options = {}) {
@@ -6243,7 +6245,8 @@ function tm2RecordToTask(record) {
     added:         f[TM2_ADDED]    || record.createdTime.slice(0, 10),
     status:        f[TM2_STATUS]   || 'Active',
     sponsorEmail:  (f[TM2_SPONSOR] || '').toLowerCase(),
-    boardId:       f[TM2_BOARD]    || ''
+    boardId:       f[TM2_BOARD]    || '',
+    attachments:   (f[TM2_ATTACH] || []).map(a => ({ id: a.id, url: a.url, filename: a.filename }))
   };
 }
 
@@ -6436,7 +6439,7 @@ app.get('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (re
 });
 
 app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const { boardId, title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail } = req.body;
+  const { boardId, title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail, newAttachments } = req.body;
   if (!boardId) return res.status(400).json({ error: 'boardId required' });
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
@@ -6465,14 +6468,23 @@ app.post('/api/task-manager-2', requireAuth, requireTaskManager2Access, async (r
       method: 'POST',
       body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true, typecast: true })
     });
-    res.json(tm2RecordToTask(data.records[0]));
+    const newId = data.records[0].id;
+    if (Array.isArray(newAttachments)) {
+      for (const a of newAttachments) {
+        if (a && a.base64) {
+          await lvUploadAttachment(newId, TM2_ATTACH, a.filename || 'attachment', a.contentType || 'application/octet-stream', a.base64);
+        }
+      }
+    }
+    const fresh = newAttachments && newAttachments.length ? await tm2Fetch(`/${newId}?returnFieldsByFieldId=true`) : data.records[0];
+    res.json(tm2RecordToTask(fresh));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, async (req, res) => {
-  const { title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail } = req.body;
+  const { title, area, type, duration, priority, subtasks, startDate, dueDate, notes, status, sponsorEmail, newAttachments, removeAttachmentIds } = req.body;
   try {
     const fields = {};
     if (title !== undefined) fields[TM2_TITLE] = title;
@@ -6493,10 +6505,28 @@ app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, asy
     if (notes !== undefined) fields[TM2_NOTES] = notes;
     if (status !== undefined) fields[TM2_STATUS] = status;
     if (sponsorEmail !== undefined) fields[TM2_SPONSOR] = String(sponsorEmail || '').toLowerCase();
+    // Removing an attachment means resending the field with the survivors
+    // only ({id} is enough to keep an existing file) — Airtable replaces the
+    // whole attachment list on a normal field PATCH, it doesn't merge.
+    if (Array.isArray(removeAttachmentIds) && removeAttachmentIds.length) {
+      const current = await tm2Fetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+      const keep = (current.fields[TM2_ATTACH] || []).filter(a => !removeAttachmentIds.includes(a.id)).map(a => ({ id: a.id }));
+      fields[TM2_ATTACH] = keep;
+    }
     await tm2Fetch(`/${req.params.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
     });
+    // New attachments go through Airtable's dedicated upload API (one call per
+    // file) — it appends to whatever's already in the field, so this happens
+    // after the removal PATCH above rather than in the same request.
+    if (Array.isArray(newAttachments)) {
+      for (const a of newAttachments) {
+        if (a && a.base64) {
+          await lvUploadAttachment(req.params.id, TM2_ATTACH, a.filename || 'attachment', a.contentType || 'application/octet-stream', a.base64);
+        }
+      }
+    }
     const fresh = await tm2Fetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     res.json(tm2RecordToTask(fresh));
   } catch (err) {
@@ -6575,7 +6605,8 @@ function tmRecordToTask(record) {
     notes:         f[TM_NOTES]    || '',
     added:         f[TM_ADDED]    || record.createdTime.slice(0, 10),
     status:        f[TM_STATUS]   || 'Active',
-    sponsorEmail:  (f[TM_SPONSOR] || '').toLowerCase()
+    sponsorEmail:  (f[TM_SPONSOR] || '').toLowerCase(),
+    attachments:   (f[TM_ATTACH] || []).map(a => ({ id: a.id, url: a.url, filename: a.filename }))
   };
 }
 
@@ -7380,7 +7411,7 @@ async function tmSendCompletedEmail(task, completedByUser) {
 
 // POST /api/task-manager — create task
 app.post('/api/task-manager', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
-  const { title, area, type, duration, priority, subtasks, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail, newAttachments } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   try {
     const fields = {
@@ -7411,7 +7442,16 @@ app.post('/api/task-manager', requireAuth, requireTaskManagerFullAccess, async (
       method: 'POST',
       body: JSON.stringify({ records: [{ fields }], returnFieldsByFieldId: true, typecast: true })
     });
-    res.json(tmRecordToTask(data.records[0]));
+    const newId = data.records[0].id;
+    if (Array.isArray(newAttachments)) {
+      for (const a of newAttachments) {
+        if (a && a.base64) {
+          await lvUploadAttachment(newId, TM_ATTACH, a.filename || 'attachment', a.contentType || 'application/octet-stream', a.base64);
+        }
+      }
+    }
+    const fresh = newAttachments && newAttachments.length ? await tmFetch(`/${newId}?returnFieldsByFieldId=true`) : data.records[0];
+    res.json(tmRecordToTask(fresh));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -7419,7 +7459,7 @@ app.post('/api/task-manager', requireAuth, requireTaskManagerFullAccess, async (
 
 // PATCH /api/task-manager/:id — edit task (partial update; also used for subtask progress + status toggles)
 app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async (req, res) => {
-  const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail } = req.body;
+  const { title, area, type, duration, priority, subtasks, subtasksDone, subtasksTotal, startDate, dueDate, notes, status, sponsorEmail, newAttachments, removeAttachmentIds } = req.body;
   try {
     // Grab the prior status first (only needed when status is actually
     // being changed) so we can tell whether this PATCH is the moment the
@@ -7464,10 +7504,28 @@ app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async 
     if (dueDate !== undefined) fields[TM_DUE] = dueDate || null;
     if (notes !== undefined) fields[TM_NOTES] = notes;
     if (status !== undefined) fields[TM_STATUS] = status;
+    // Removing an attachment means resending the field with the survivors
+    // only ({id} is enough to keep an existing file) — Airtable replaces the
+    // whole attachment list on a normal field PATCH, it doesn't merge.
+    if (Array.isArray(removeAttachmentIds) && removeAttachmentIds.length) {
+      const current = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
+      const keep = (current.fields[TM_ATTACH] || []).filter(a => !removeAttachmentIds.includes(a.id)).map(a => ({ id: a.id }));
+      fields[TM_ATTACH] = keep;
+    }
     await tmFetch(`/${req.params.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields, returnFieldsByFieldId: true, typecast: true })
     });
+    // New attachments go through Airtable's dedicated upload API (one call per
+    // file) — it appends to whatever's already in the field, so this happens
+    // after the removal PATCH above rather than in the same request.
+    if (Array.isArray(newAttachments)) {
+      for (const a of newAttachments) {
+        if (a && a.base64) {
+          await lvUploadAttachment(req.params.id, TM_ATTACH, a.filename || 'attachment', a.contentType || 'application/octet-stream', a.base64);
+        }
+      }
+    }
     const fresh = await tmFetch(`/${req.params.id}?returnFieldsByFieldId=true`);
     const freshTask = tmRecordToTask(fresh);
     if (status !== undefined && priorStatus !== 'Done' && freshTask.status === 'Done') {

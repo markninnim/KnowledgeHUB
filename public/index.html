@@ -10591,6 +10591,76 @@ function tm2SaveRenameSection(oldName) {
   });
 }
 
+// Shared file-attachment widget for the tm / tm2 task modals — same markup,
+// state and behaviour for both boards, keyed by prefix ('tm' or 'tm2') so
+// each modal keeps its own pending adds/removes.
+var _tmAttachState = { tm: { existing: [], newFiles: [], removeIds: [] }, tm2: { existing: [], newFiles: [], removeIds: [] } };
+function tmAttachInit(prefix, task) {
+  _tmAttachState[prefix] = { existing: (task && Array.isArray(task.attachments)) ? task.attachments.slice() : [], newFiles: [], removeIds: [] };
+}
+function tmAttachHtml(prefix) {
+  return '' +
+    '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Attachments</label>' +
+    '<div id="' + prefix + '-f-attach-wrap" style="background:#f9fafc;border:1px solid #d1d5db;border-radius:8px;padding:12px;margin-bottom:16px;">' +
+      '<div id="' + prefix + '-f-attach-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>' +
+      '<input type="file" id="' + prefix + '-f-attach-input" multiple onchange="tmAttachPickFiles(' + tmIdArg(prefix) + ', this)" style="font-size:12.5px;">' +
+    '</div>';
+}
+function tmAttachRender(prefix) {
+  var listEl = document.getElementById(prefix + '-f-attach-list');
+  if (!listEl) return;
+  var st = _tmAttachState[prefix];
+  var rows = [];
+  st.existing.forEach(function(a) {
+    rows.push('' +
+      '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e8ecf0;border-radius:6px;padding:7px 10px;">' +
+        '<a href="' + tmEsc(a.url) + '" target="_blank" style="flex:1;font-size:13px;color:#003768;text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + tmEsc(a.filename) + '</a>' +
+        '<button type="button" onclick="tmAttachRemoveExisting(' + tmIdArg(prefix) + ',' + tmIdArg(a.id) + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+      '</div>');
+  });
+  st.newFiles.forEach(function(f, i) {
+    rows.push('' +
+      '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dbeafe;border-radius:6px;padding:7px 10px;">' +
+        '<span style="flex:1;font-size:13px;color:#003768;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + tmEsc(f.filename) + ' <span style="color:#6b7c8f;font-weight:600;">(new)</span></span>' +
+        '<button type="button" onclick="tmAttachRemoveNew(' + tmIdArg(prefix) + ',' + i + ')" title="Remove" style="flex-shrink:0;background:transparent;border:none;color:#b91c1c;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;">&times;</button>' +
+      '</div>');
+  });
+  listEl.innerHTML = rows.length ? rows.join('') : '<div style="font-size:12.5px;color:#6b7c8f;">No attachments yet.</div>';
+}
+function tmAttachPickFiles(prefix, input) {
+  var files = input.files ? Array.prototype.slice.call(input.files) : [];
+  if (!files.length) return;
+  Promise.all(files.map(function(file) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        var result = reader.result || '';
+        resolve({ filename: file.name, contentType: file.type || 'application/octet-stream', base64: result.substring(result.indexOf(',') + 1) });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  })).then(function(uploads) {
+    _tmAttachState[prefix].newFiles = _tmAttachState[prefix].newFiles.concat(uploads);
+    input.value = '';
+    tmAttachRender(prefix);
+  });
+}
+function tmAttachRemoveExisting(prefix, id) {
+  var st = _tmAttachState[prefix];
+  st.existing = st.existing.filter(function(a) { return a.id !== id; });
+  st.removeIds.push(id);
+  tmAttachRender(prefix);
+}
+function tmAttachRemoveNew(prefix, i) {
+  _tmAttachState[prefix].newFiles.splice(i, 1);
+  tmAttachRender(prefix);
+}
+function tmAttachPayload(prefix) {
+  var st = _tmAttachState[prefix];
+  return { newAttachments: st.newFiles, removeAttachmentIds: st.removeIds };
+}
+
 function tm2OpenModal(taskId, presetArea) {
   var task = taskId ? _tm2Tasks.find(function(t) { return t.id === taskId; }) : null;
   var areas = _tm2Sections;
@@ -10642,7 +10712,8 @@ function tm2OpenModal(taskId, presetArea) {
         '<input type="date" id="tm2-f-due" value="' + (task ? task.dueDate : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
       '</div>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
-      '<textarea id="tm2-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
+      '<textarea id="tm2-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
+      tmAttachHtml('tm2') +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
         (task ? '<button onclick="tm2DeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
@@ -10654,6 +10725,8 @@ function tm2OpenModal(taskId, presetArea) {
   document.body.appendChild(overlay);
   _tm2ModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(tmCloneSubtask);
   tm2ModalRenderSubtasks();
+  tmAttachInit('tm2', task);
+  tmAttachRender('tm2');
   setTimeout(function() { var inp = document.getElementById('tm2-f-title'); if (inp) inp.focus(); }, 0);
 }
 
@@ -10720,6 +10793,9 @@ function tm2SaveTask(taskId) {
     dueDate: (document.getElementById('tm2-f-due') || {}).value,
     notes: (document.getElementById('tm2-f-notes') || {}).value
   };
+  var attachPayload = tmAttachPayload('tm2');
+  payload.newAttachments = attachPayload.newAttachments;
+  payload.removeAttachmentIds = attachPayload.removeAttachmentIds;
   if (!taskId) payload.status = 'Active';
   var url = taskId ? '/api/task-manager-2/' + taskId : '/api/task-manager-2';
   var method = taskId ? 'PATCH' : 'POST';
@@ -10806,7 +10882,8 @@ function tmOpenModal(taskId, presetArea) {
         '<input type="date" id="tm-f-due" value="' + (task ? task.dueDate : '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;"></div>' +
       '</div>' +
       '<label style="display:block;font-size:12px;font-weight:600;color:#003768;margin-bottom:4px;">Notes</label>' +
-      '<textarea id="tm-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:16px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
+      '<textarea id="tm-f-notes" rows="3" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;resize:vertical;">' + (task ? tmEsc(task.notes) : '') + '</textarea>' +
+      tmAttachHtml('tm') +
       '<div style="display:flex;justify-content:space-between;gap:10px;">' +
         (task ? '<button onclick="tmDeleteTask(' + tmIdArg(task.id) + ')" style="background:transparent;border:1px solid #f3c6c6;color:#b91c1c;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>' : '<span></span>') +
         '<div style="display:flex;gap:10px;">' +
@@ -10821,6 +10898,8 @@ function tmOpenModal(taskId, presetArea) {
   // to the server together with the rest of the form on Save.
   _tmModalSubtasks = (task && task.subtasks ? task.subtasks : []).map(tmCloneSubtask);
   tmModalRenderSubtasks();
+  tmAttachInit('tm', task);
+  tmAttachRender('tm');
 }
 
 function tmCloseModal() {
@@ -10897,6 +10976,9 @@ function tmSaveTask(taskId) {
     dueDate: (document.getElementById('tm-f-due') || {}).value,
     notes: (document.getElementById('tm-f-notes') || {}).value
   };
+  var attachPayload = tmAttachPayload('tm');
+  payload.newAttachments = attachPayload.newAttachments;
+  payload.removeAttachmentIds = attachPayload.removeAttachmentIds;
   if (!taskId) payload.status = 'Active';
   var url = taskId ? '/api/task-manager/' + taskId : '/api/task-manager';
   var method = taskId ? 'PATCH' : 'POST';
