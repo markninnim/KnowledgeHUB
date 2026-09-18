@@ -7617,11 +7617,10 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       // label with a proper section divider (gold rule under the area name).
       if (t.area !== lastArea) {
         ensureRoom(34);
-        if (lastArea !== null) y -= 8;
         page.drawText(String(t.area || 'Uncategorised').toUpperCase(), { x: marginX, y, size: 10, font: fontBold, color: navy });
         y -= 8;
         page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 1.2, color: gold });
-        y -= 20;
+        y -= 26;
         lastArea = t.area;
       }
       ensureRoom(54);
@@ -7678,18 +7677,11 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
         });
         y -= 2;
       }
-      // Breathing room between tasks. A gold rule only separates tasks that
-      // share the same section — a new section gets its own header instead.
-      y -= 10;
+      // Even breathing room after every task, no divider line needed — the
+      // gold section-header rule is the only rule on the page now.
       if (idx < tasks.length - 1) {
-        const sameSectionNext = tasks[idx + 1].area === t.area;
-        ensureRoom(30);
-        if (sameSectionNext) {
-          page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
-          y -= 26;
-        } else {
-          y -= 8;
-        }
+        ensureRoom(24);
+        y -= 24;
       }
     });
     pages.forEach((pg, idx) => {
