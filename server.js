@@ -6485,8 +6485,11 @@ app.patch('/api/task-manager-2/:id', requireAuth, requireTaskManager2Access, asy
       fields[TM2_SUB_DONE] = subtasks.filter(s => !s.heading && s.done).length;
       fields[TM2_SUB_TOT] = subtasks.filter(s => !s.heading).length;
     }
-    if (startDate !== undefined) fields[TM2_START] = startDate;
-    if (dueDate !== undefined) fields[TM2_DUE] = dueDate;
+    // Airtable rejects an empty string for a date field (INVALID_VALUE_FOR_COLUMN) —
+    // clearing a date must send null, not '', or this PATCH throws and the edit
+    // silently fails to save (task/stat tiles then look "stuck" on the old date).
+    if (startDate !== undefined) fields[TM2_START] = startDate || null;
+    if (dueDate !== undefined) fields[TM2_DUE] = dueDate || null;
     if (notes !== undefined) fields[TM2_NOTES] = notes;
     if (status !== undefined) fields[TM2_STATUS] = status;
     if (sponsorEmail !== undefined) fields[TM2_SPONSOR] = String(sponsorEmail || '').toLowerCase();
@@ -7454,8 +7457,11 @@ app.patch('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async 
       if (typeof subtasksDone === 'number') fields[TM_SUB_DONE] = subtasksDone;
       if (typeof subtasksTotal === 'number') fields[TM_SUB_TOT] = subtasksTotal;
     }
-    if (startDate !== undefined) fields[TM_START] = startDate;
-    if (dueDate !== undefined) fields[TM_DUE] = dueDate;
+    // Airtable rejects an empty string for a date field (INVALID_VALUE_FOR_COLUMN) —
+    // clearing a date must send null, not '', or this PATCH throws and the edit
+    // silently fails to save (task/stat tiles then look "stuck" on the old date).
+    if (startDate !== undefined) fields[TM_START] = startDate || null;
+    if (dueDate !== undefined) fields[TM_DUE] = dueDate || null;
     if (notes !== undefined) fields[TM_NOTES] = notes;
     if (status !== undefined) fields[TM_STATUS] = status;
     await tmFetch(`/${req.params.id}`, {
