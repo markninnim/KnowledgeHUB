@@ -6634,6 +6634,32 @@ app.put('/api/task-manager/label', requireAuth, requireTaskManagerFullAccess, as
   }
 });
 
+// Section display order for the original board — stored the same way as the
+// label above (a generic App Settings key/value), so a reorder made by one
+// admin/supervisor is visible to everyone rather than sitting only in their
+// own browser's localStorage.
+const TM1_SECTION_ORDER_KEY = 'task_board_1_section_order';
+app.get('/api/task-manager/section-order', requireAuth, requireTaskManagerAccess, async (req, res) => {
+  try {
+    const raw = await getAppSetting(TM1_SECTION_ORDER_KEY, '[]');
+    let order = [];
+    try { order = JSON.parse(raw); } catch (e) { order = []; }
+    res.json({ order: Array.isArray(order) ? order : [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.put('/api/task-manager/section-order', requireAuth, requireTaskManagerAccess, async (req, res) => {
+  const order = Array.isArray(req.body.order) ? req.body.order.map(String).filter(Boolean) : null;
+  if (!order) return res.status(400).json({ error: 'order array required' });
+  try {
+    await setAppSetting(TM1_SECTION_ORDER_KEY, JSON.stringify(order));
+    res.json({ order });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/task-manager — all tasks, paginated fetch (108 records fits well under one page's max of 100, so page through if needed)
 app.get('/api/task-manager', requireAuth, requireTaskManagerAccess, async (req, res) => {
   try {
@@ -7459,6 +7485,174 @@ app.delete('/api/task-manager/:id', requireAuth, requireTaskManagerAccess, async
     }
     await tmFetch(`/${req.params.id}`, { method: 'DELETE' });
     res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Task Manager: meeting agenda PDF ───────────────────────────
+// POST /api/task-manager/agenda-pdf — { board: 'tm'|'tm2', taskIds: [...],
+// boardId (tm2 only) }. Tasks are re-fetched from Airtable server-side
+// (rather than trusting whatever the client sends) so the PDF always
+// reflects the current title/notes/subtasks, not a stale client copy.
+app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, async (req, res) => {
+  const board = req.body.board === 'tm2' ? 'tm2' : 'tm';
+  const taskIds = Array.isArray(req.body.taskIds) ? req.body.taskIds.filter(Boolean) : [];
+  if (!taskIds.length) return res.status(400).json({ error: 'No tasks selected.' });
+  try {
+    let tasks;
+    let sponsorMap = {};
+    try {
+      const names = await fetchAllUserNames(null);
+      names.forEach(u => { sponsorMap[u.email] = u.name; });
+    } catch (e) { /* sponsor names are a nice-to-have, not required */ }
+
+    if (board === 'tm2') {
+      const boardId = String(req.body.boardId || '');
+      if (!boardId) return res.status(400).json({ error: 'boardId required' });
+      const formula = encodeURIComponent(`{${TM2_BOARD}}='${boardId}'`);
+      let all = [], offset;
+      do {
+        let qs = `returnFieldsByFieldId=true&pageSize=100&filterByFormula=${formula}`;
+        if (offset) qs += `&offset=${encodeURIComponent(offset)}`;
+        const data = await tm2Fetch(`?${qs}`);
+        all = all.concat(data.records || []);
+        offset = data.offset;
+      } while (offset);
+      tasks = all.map(tm2RecordToTask).filter(t => taskIds.includes(t.id));
+    } else {
+      let all = [], offset;
+      do {
+        const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+        if (offset) qs.set('offset', offset);
+        const data = await tmFetch(`?${qs.toString()}`);
+        all = all.concat(data.records || []);
+        offset = data.offset;
+      } while (offset);
+      tasks = all.map(tmRecordToTask).filter(t => taskIds.includes(t.id));
+    }
+    // Keep the order the user picked them in, not Airtable's return order.
+    tasks.sort((a, b) => taskIds.indexOf(a.id) - taskIds.indexOf(b.id));
+    if (!tasks.length) return res.status(404).json({ error: 'None of the selected tasks could be found.' });
+
+    const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
+    const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    const fontBold = await pdfDoc.embedFont(fontBoldBytes);
+    const fontMed  = await pdfDoc.embedFont(fontMedBytes);
+    const darkBlue = rgb(0.043, 0.106, 0.216), grey = rgb(0.42, 0.49, 0.56), midGrey = rgb(0.6, 0.65, 0.7), accent = rgb(0.18, 0.6, 0.835);
+    const W = 595, H = 842; // A4 portrait
+    const marginX = 40, contentW = W - marginX * 2;
+    const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    let page, y;
+    const pages = [];
+    function newPage(withHeading) {
+      page = pdfDoc.addPage([W, H]);
+      pages.push(page);
+      y = H - 44;
+      if (withHeading) {
+        page.drawText('Meeting Agenda', { x: marginX, y, size: 20, font: fontBold, color: darkBlue });
+        y -= 20;
+        page.drawText(today, { x: marginX, y, size: 10, font: fontMed, color: grey });
+        y -= 24;
+        page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 1, color: accent });
+        y -= 22;
+      }
+    }
+    function ensureRoom(needed) {
+      if (y - needed < 60) newPage(false);
+    }
+    // Simple word-wrap: measures with the given font/size and breaks lines to fit contentW.
+    function wrapText(text, font, size, maxWidth) {
+      const words = String(text || '').split(/\s+/).filter(Boolean);
+      const lines = [];
+      let line = '';
+      words.forEach(w => {
+        const test = line ? line + ' ' + w : w;
+        if (font.widthOfTextAtSize(test, size) > maxWidth && line) {
+          lines.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
+      });
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    newPage(true);
+    tasks.forEach((t, idx) => {
+      ensureRoom(50);
+      // Task number + title
+      const numLabel = (idx + 1) + '. ';
+      page.drawText(numLabel, { x: marginX, y, size: 12.5, font: fontBold, color: accent });
+      const numWidth = fontBold.widthOfTextAtSize(numLabel, 12.5);
+      wrapText(t.title || '(untitled)', fontBold, 12.5, contentW - numWidth).forEach((line, i) => {
+        if (i > 0) { ensureRoom(16); }
+        page.drawText(line, { x: marginX + (i === 0 ? numWidth : 14), y, size: 12.5, font: fontBold, color: darkBlue });
+        y -= 16;
+      });
+      // Meta line: area, sponsor, due date
+      const sponsorName = t.sponsorEmail ? (sponsorMap[t.sponsorEmail] || t.sponsorEmail) : '';
+      const metaParts = [t.area, sponsorName ? ('Sponsor: ' + sponsorName) : '', t.dueDate ? ('Due: ' + t.dueDate) : ''].filter(Boolean);
+      if (metaParts.length) {
+        ensureRoom(14);
+        page.drawText(metaParts.join('   ·   '), { x: marginX + 14, y, size: 9, font: fontMed, color: grey });
+        y -= 16;
+      }
+      // Notes
+      if (t.notes) {
+        wrapText(t.notes, fontMed, 9.5, contentW - 14).forEach(line => {
+          ensureRoom(14);
+          page.drawText(line, { x: marginX + 14, y, size: 9.5, font: fontMed, color: darkBlue });
+          y -= 13;
+        });
+        y -= 2;
+      }
+      // Subtasks checklist (heading rows shown as bold sub-labels, no checkbox)
+      const subtasks = Array.isArray(t.subtasks) ? t.subtasks : [];
+      if (subtasks.length) {
+        ensureRoom(14);
+        page.drawText('Checklist:', { x: marginX + 14, y, size: 9, font: fontBold, color: grey });
+        y -= 14;
+        subtasks.forEach(s => {
+          if (s.heading) {
+            ensureRoom(14);
+            page.drawText(String(s.text || '').toUpperCase(), { x: marginX + 14, y, size: 8.5, font: fontBold, color: grey });
+            y -= 13;
+            return;
+          }
+          const box = s.done ? '☑' : '☐';
+          wrapText(box + '  ' + (s.text || ''), fontMed, 9.5, contentW - 28).forEach((line, i) => {
+            ensureRoom(14);
+            page.drawText(line, { x: marginX + 28, y, size: 9.5, font: fontMed, color: s.done ? midGrey : darkBlue }, );
+            y -= 13;
+          });
+        });
+        y -= 2;
+      }
+      // Space to jot discussion notes during the meeting
+      ensureRoom(34);
+      page.drawText('Discussion notes:', { x: marginX + 14, y, size: 9, font: fontBold, color: grey });
+      y -= 16;
+      page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
+      y -= 14;
+      page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
+      y -= 22;
+      if (idx < tasks.length - 1) {
+        ensureRoom(4);
+        page.drawLine({ start: { x: marginX, y: y + 6 }, end: { x: W - marginX, y: y + 6 }, thickness: 0.5, color: midGrey });
+      }
+    });
+    pages.forEach((pg, idx) => {
+      pg.drawText(`Generated by KnowledgeHUB™ · Page ${idx + 1} of ${pages.length}`, { x: marginX, y: 24, size: 7, font: fontMed, color: midGrey });
+    });
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="meeting-agenda.pdf"`);
+    res.send(Buffer.from(pdfBytes));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

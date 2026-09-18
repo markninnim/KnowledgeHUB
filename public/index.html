@@ -5225,6 +5225,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           <button onclick="tmBulkMarkStatus('Active')" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Mark Active</button>
           <select id="tm-bulk-section" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12.5px;font-family:inherit;color:#6b7c8f;background:#fff;"></select>
           <button onclick="tmBulkMoveSection()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Move</button>
+          <button id="tm-bulk-agenda-btn" onclick="tmBuildAgenda()" style="background:#003768;border:1px solid transparent;color:#fff;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Build Agenda PDF</button>
           <button onclick="tmClearSelection()" style="background:transparent;border:none;color:#6b7c8f;padding:6px 4px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;margin-left:auto;">Clear selection</button>
         </div>
 
@@ -5273,6 +5274,7 @@ Consolidating debts will increase the loan to value which can impact future deal
           <button onclick="tm2BulkMarkStatus('Active')" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Mark Active</button>
           <select id="tm2-bulk-section" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12.5px;font-family:inherit;color:#6b7c8f;background:#fff;"></select>
           <button onclick="tm2BulkMoveSection()" style="background:transparent;border:1px solid #d1d5db;color:#6b7c8f;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Move</button>
+          <button id="tm2-bulk-agenda-btn" onclick="tm2BuildAgenda()" style="background:#003768;border:1px solid transparent;color:#fff;padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Build Agenda PDF</button>
           <button onclick="tm2ClearSelection()" style="background:transparent;border:none;color:#6b7c8f;padding:6px 4px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;margin-left:auto;">Clear selection</button>
         </div>
 
@@ -8588,7 +8590,11 @@ function tmSaveLabel() {
 
 function loadTaskManager() {
   if (_tmTasks) { tmRender(); return; }
-  fetch('/api/task-manager').then(function(r){ return r.json(); }).then(function(d) {
+  Promise.all([
+    fetch('/api/task-manager').then(function(r){ return r.json(); }),
+    tmSyncSectionOrder()
+  ]).then(function(results) {
+    var d = results[0];
     _tmTasks = d.tasks || [];
     _tmAreas = d.areas || [];
     _tmSponsors = d.sponsors || [];
@@ -8657,8 +8663,25 @@ function tmLoadSectionOrder() {
   } catch (e) { return []; }
 }
 
+// Saves the current section order both locally (instant on this browser) and
+// to the server (so everyone else sees the same order too), mirroring how
+// Task Manager 2's board.sections order already syncs across browsers.
 function tmSaveSectionOrder() {
   try { localStorage.setItem('tm-section-order', JSON.stringify(_tmSections)); } catch (e) {}
+  fetch('/api/task-manager/section-order', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: _tmSections })
+  }).catch(function() {});
+}
+
+// Pulls the server-saved section order into localStorage before the first
+// render, so a reorder made on one device/browser shows up on another.
+function tmSyncSectionOrder() {
+  return fetch('/api/task-manager/section-order').then(function(r) { return r.json(); }).then(function(d) {
+    if (Array.isArray(d.order) && d.order.length) {
+      try { localStorage.setItem('tm-section-order', JSON.stringify(d.order)); } catch (e) {}
+    }
+  }).catch(function() {});
 }
 
 // The "All sponsors" filter should only list people who are actually
@@ -9207,6 +9230,35 @@ function tmInlineAddSubtask(taskId) {
   tmPersistSubtasks(taskId, next);
 }
 
+// Drag-to-reorder for whole sections (the board's section header row) —
+// same pattern as every other drag-and-drop in Task Manager, just operating
+// on the _tmSections array and persisted via tmSaveSectionOrder().
+var _tmSectionDragIndex = null;
+function tmSectionDragStart(e, index) {
+  _tmSectionDragIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  }
+}
+function tmSectionDragOver(e) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+function tmSectionDrop(e, targetIndex) {
+  e.preventDefault();
+  var fromIndex = _tmSectionDragIndex;
+  _tmSectionDragIndex = null;
+  if (fromIndex == null || fromIndex === targetIndex) return;
+  var next = _tmSections.slice();
+  var moved = next.splice(fromIndex, 1)[0];
+  next.splice(targetIndex, 0, moved);
+  _tmSections = next;
+  tmSaveSectionOrder();
+  tmRender();
+}
+function tmSectionDragEnd() { _tmSectionDragIndex = null; }
+
 // Drag-to-reorder for the subtask checklist inside an expanded card — same
 // pattern as reordering whole task cards, just operating on one task's
 // subtasks array (and saved the same way as any other subtask edit, via
@@ -9387,6 +9439,33 @@ function tmBulkMoveSection() {
   }).catch(function() { alert('Could not move some tasks.'); });
 }
 
+// Downloads a meeting-agenda PDF for whichever tasks are ticked in select
+// mode — title, area, sponsor, due date, notes and the full subtask
+// checklist for each, plus a couple of ruled lines to jot discussion notes.
+function tmBuildAgenda() { tmBuildAgendaGeneric('tm', Object.keys(_tmSelected), null); }
+function tmBuildAgendaGeneric(board, ids, boardId) {
+  if (!ids.length) { alert('Select at least one task first.'); return; }
+  var btn = document.getElementById(board + '-bulk-agenda-btn');
+  var originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Building…'; }
+  fetch('/api/task-manager/agenda-pdf', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ board: board, taskIds: ids, boardId: boardId })
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed to build agenda.'); });
+    return r.blob();
+  }).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'meeting-agenda.pdf'; a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  }).catch(function(e) {
+    alert(e.message || 'Could not build the agenda PDF.');
+  }).finally(function() {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  });
+}
+
 // Renders the page as one collapsible section per area, each holding its
 // own filtered task cards — replaces the old single flat list + area
 // dropdown so sections are always visible and directly manageable.
@@ -9484,10 +9563,12 @@ function tmRender() {
     if (filtering && !shown.length) return '';
     var collapsed = !!_tmCollapsed[section];
     var sectionKey = JSON.stringify(section).replace(/"/g, '&quot;');
+    var canReorder = _tmScope !== 'own' && !filtering && _tmSections.length > 1;
     return '' +
       '<div class="tm-section">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;" onclick="tmToggleSection(' + sectionKey + ')">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;"' + (canReorder ? ' draggable="true" ondragstart="tmSectionDragStart(event,' + sectionIdx + ')" ondragover="tmSectionDragOver(event)" ondrop="tmSectionDrop(event,' + sectionIdx + ')" ondragend="tmSectionDragEnd(event)"' : '') + ' onclick="tmToggleSection(' + sectionKey + ')">' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
+            (canReorder ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(' + (collapsed ? '-90deg' : '0deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
             '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(section) + '</span>' +
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
@@ -10167,6 +10248,35 @@ function tm2InlineAddSubtask(taskId) {
   tm2PersistSubtasks(taskId, next);
 }
 
+// Drag-to-reorder for whole sections — same pattern as board1's, just
+// persisted via a PUT of the board's sections array (same call the
+// add/rename/delete-section actions already use).
+var _tm2SectionDragIndex = null;
+function tm2SectionDragStart(e, index) {
+  _tm2SectionDragIndex = index;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  }
+}
+function tm2SectionDragOver(e) {
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+function tm2SectionDrop(e, targetIndex) {
+  e.preventDefault();
+  var fromIndex = _tm2SectionDragIndex;
+  _tm2SectionDragIndex = null;
+  if (fromIndex == null || fromIndex === targetIndex) return;
+  var next = _tm2Sections.slice();
+  var moved = next.splice(fromIndex, 1)[0];
+  next.splice(targetIndex, 0, moved);
+  _tm2Sections = next;
+  tm2Render();
+  fetch('/api/task-manager-2/board', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId: _tm2CurrentBoardId, sections: _tm2Sections }) }).catch(function() {});
+}
+function tm2SectionDragEnd() { _tm2SectionDragIndex = null; }
+
 var _tm2SubtaskDragIndex = null;
 function tm2SubtaskDragStart(e, taskId, index) {
   _tm2SubtaskDragIndex = index;
@@ -10272,6 +10382,10 @@ function tm2BulkMoveSection() {
   }).catch(function() { alert('Could not move some tasks.'); });
 }
 
+// Downloads a meeting-agenda PDF for whichever tasks are ticked in select
+// mode on this board — same generic builder used by board1 (tmBuildAgendaGeneric).
+function tm2BuildAgenda() { tmBuildAgendaGeneric('tm2', Object.keys(_tm2Selected), _tm2CurrentBoardId); }
+
 function tm2Render() {
   var listEl = document.getElementById('tm2-list');
   if (!listEl || !_tm2Tasks) return;
@@ -10345,7 +10459,7 @@ function tm2Render() {
     return;
   }
 
-  listEl.innerHTML = _tm2Sections.map(function(section) {
+  listEl.innerHTML = _tm2Sections.map(function(section, sectionIdx) {
     var all = _tm2Tasks.filter(function(t) { return t.area === section && (t.status !== 'Done' || _tm2ShowCompleted); });
     var matchFn = _tm2ShowCompleted ? matchesCompleted : matches;
     var shown = sortTasks(all.filter(matchFn));
@@ -10353,10 +10467,12 @@ function tm2Render() {
     if (filtering && !shown.length) return '';
     var collapsed = !!_tm2Collapsed[section];
     var sectionKey = JSON.stringify(section).replace(/"/g, '&quot;');
+    var canReorder = !filtering && _tm2Sections.length > 1;
     return '' +
       '<div class="tm-section">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;" onclick="tm2ToggleSection(' + sectionKey + ')">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #d1d5db;margin-bottom:12px;cursor:pointer;"' + (canReorder ? ' draggable="true" ondragstart="tm2SectionDragStart(event,' + sectionIdx + ')" ondragover="tm2SectionDragOver(event)" ondrop="tm2SectionDrop(event,' + sectionIdx + ')" ondragend="tm2SectionDragEnd(event)"' : '') + ' onclick="tm2ToggleSection(' + sectionKey + ')">' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
+            (canReorder ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:#c7d0d9;cursor:grab;" title="Drag to reorder"><circle cx="8" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg>' : '') +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7c8f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(' + (collapsed ? '-90deg' : '0deg') + ');transition:transform .12s;"><polyline points="6 9 12 15 18 9"/></svg>' +
             '<span style="color:#003768;font-size:14px;font-weight:700;">' + tmEsc(section) + '</span>' +
             '<span style="background:#dbeafe;color:#003768;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">' + all.length + '</span>' +
