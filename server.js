@@ -7534,6 +7534,11 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     // Keep the order the user picked them in, not Airtable's return order.
     tasks.sort((a, b) => taskIds.indexOf(a.id) - taskIds.indexOf(b.id));
     if (!tasks.length) return res.status(404).json({ error: 'None of the selected tasks could be found.' });
+    // Group by Section/Area so the agenda reads section-by-section rather than
+    // in raw pick order — stable sort keeps each section's own pick order intact.
+    const agendaAreaOrder = [];
+    tasks.forEach(t => { if (!agendaAreaOrder.includes(t.area)) agendaAreaOrder.push(t.area); });
+    tasks.sort((a, b) => agendaAreaOrder.indexOf(a.area) - agendaAreaOrder.indexOf(b.area));
 
     const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
     const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
@@ -7606,7 +7611,19 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     }
 
     newPage();
+    let lastArea = null;
     tasks.forEach((t, idx) => {
+      // Section header: draw once per Area, replacing the old per-task area
+      // label with a proper section divider (gold rule under the area name).
+      if (t.area !== lastArea) {
+        ensureRoom(34);
+        if (lastArea !== null) y -= 8;
+        page.drawText(String(t.area || 'Uncategorised').toUpperCase(), { x: marginX, y, size: 10, font: fontBold, color: navy });
+        y -= 8;
+        page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 1.2, color: gold });
+        y -= 20;
+        lastArea = t.area;
+      }
       ensureRoom(54);
       // Task number badge (pill-blue circle, navy digit), vertically centred
       // on the visual middle of the title's cap-height, not its baseline.
@@ -7622,9 +7639,9 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
         page.drawText(line, { x: titleX, y, size: 12.5, font: fontBold, color: navy });
         y -= 16;
       });
-      // Meta line: area, sponsor, due date
+      // Meta line: sponsor, due date (area now shown once as the section header above)
       const sponsorName = t.sponsorEmail ? (sponsorMap[t.sponsorEmail] || t.sponsorEmail) : '';
-      const metaParts = [t.area, sponsorName ? ('Sponsor: ' + sponsorName) : '', t.dueDate ? ('Due: ' + t.dueDate) : ''].filter(Boolean);
+      const metaParts = [sponsorName ? ('Sponsor: ' + sponsorName) : '', t.dueDate ? ('Due: ' + t.dueDate) : ''].filter(Boolean);
       if (metaParts.length) {
         ensureRoom(14);
         page.drawText(metaParts.join('   ·   '), { x: marginX + 14, y, size: 9, font: fontMed, color: grey });
@@ -7661,13 +7678,18 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
         });
         y -= 2;
       }
-      // Breathing room between tasks, with the divider line clear of the
-      // content above and the next task's number badge below.
+      // Breathing room between tasks. A gold rule only separates tasks that
+      // share the same section — a new section gets its own header instead.
       y -= 10;
       if (idx < tasks.length - 1) {
+        const sameSectionNext = tasks[idx + 1].area === t.area;
         ensureRoom(30);
-        page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 0.5, color: gold });
-        y -= 26;
+        if (sameSectionNext) {
+          page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
+          y -= 26;
+        } else {
+          y -= 8;
+        }
       }
     });
     pages.forEach((pg, idx) => {
