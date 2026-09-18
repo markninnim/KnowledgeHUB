@@ -7545,12 +7545,14 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     const logoImg  = await pdfDoc.embedPng(logoBytes);
     const logoDims = logoImg.scale(0.104);
     // Brand palette — matches style/STYLE-GUIDE.md exactly (navy #003768,
-    // gold accent #fcb034, body grey #6b7c8f, border #d1d5db).
-    const navy    = rgb(0 / 255, 55 / 255, 104 / 255);
-    const grey    = rgb(107 / 255, 124 / 255, 143 / 255);
-    const midGrey = rgb(209 / 255, 213 / 255, 219 / 255);
-    const gold    = rgb(252 / 255, 176 / 255, 52 / 255);
-    const white   = rgb(1, 1, 1);
+    // gold accent #fcb034, body grey #6b7c8f, border #d1d5db, wealth/accent
+    // blue #2e99d5 used here for the header bar).
+    const navy      = rgb(0 / 255, 55 / 255, 104 / 255);
+    const lightBlue = rgb(46 / 255, 153 / 255, 213 / 255);
+    const grey      = rgb(107 / 255, 124 / 255, 143 / 255);
+    const midGrey   = rgb(209 / 255, 213 / 255, 219 / 255);
+    const gold      = rgb(252 / 255, 176 / 255, 52 / 255);
+    const white     = rgb(1, 1, 1);
     const W = 595, H = 842; // A4 portrait
     const marginX = 40, contentW = W - marginX * 2;
     const headerH = 62;
@@ -7562,20 +7564,13 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       page = pdfDoc.addPage([W, H]);
       pages.push(page);
       // Header bar with logo on every page, same treatment as the other
-      // branded PDF exports (business card, DIP certificate, etc).
-      page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: navy });
-      // The logo artwork itself is navy/gold on a transparent background, so it
-      // has no contrast placed directly on the navy bar — give it a small white
-      // card behind it, matching how the brand hub itself displays this logo on
-      // dark backgrounds.
-      const logoPadX = 10, logoPadY = 7;
-      const logoBoxW = logoDims.width + logoPadX * 2;
-      const logoBoxH = logoDims.height + logoPadY * 2;
-      const logoBoxY = H - headerH + (headerH - logoBoxH) / 2;
-      page.drawRectangle({ x: marginX, y: logoBoxY, width: logoBoxW, height: logoBoxH, color: white });
-      page.drawImage(logoImg, { x: marginX + logoPadX, y: logoBoxY + logoPadY, width: logoDims.width, height: logoDims.height });
+      // branded PDF exports (business card, DIP certificate, etc). Uses the
+      // lighter brand blue rather than navy so the navy/gold logo artwork
+      // reads cleanly straight on top of it, no backing card needed.
+      page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: lightBlue });
+      page.drawImage(logoImg, { x: marginX, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
       page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: white });
-      page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: gold });
+      page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: navy });
       y = H - headerH - 28;
     }
     function ensureRoom(needed) {
@@ -7613,12 +7608,14 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     newPage();
     tasks.forEach((t, idx) => {
       ensureRoom(54);
-      // Task number badge (filled gold circle, navy digit) + title
+      // Task number badge (filled gold circle, navy digit), vertically centred
+      // on the title's first line of text rather than pinned to the top of it.
       const badgeR = 9;
-      page.drawEllipse({ x: marginX + badgeR, y: y - badgeR + 4, xScale: badgeR, yScale: badgeR, color: gold });
+      const badgeCenterY = y - 3.5;
+      page.drawEllipse({ x: marginX + badgeR, y: badgeCenterY, xScale: badgeR, yScale: badgeR, color: gold });
       const numStr = String(idx + 1);
       const numW = fontBold.widthOfTextAtSize(numStr, 9);
-      page.drawText(numStr, { x: marginX + badgeR - numW / 2, y: y - badgeR - 1, size: 9, font: fontBold, color: navy });
+      page.drawText(numStr, { x: marginX + badgeR - numW / 2, y: badgeCenterY - 3.2, size: 9, font: fontBold, color: navy });
       const titleX = marginX + badgeR * 2 + 8;
       wrapText(t.title || '(untitled)', fontBold, 12.5, contentW - (titleX - marginX)).forEach((line, i) => {
         if (i > 0) { ensureRoom(16); }
@@ -7671,10 +7668,13 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
       y -= 14;
       page.drawLine({ start: { x: marginX + 14, y }, end: { x: W - marginX, y }, thickness: 0.5, color: midGrey });
-      y -= 22;
+      // Generous breathing room between tasks, with the divider line clear
+      // of both the notes lines above and the next task's number badge below.
+      y -= 30;
       if (idx < tasks.length - 1) {
-        ensureRoom(4);
-        page.drawLine({ start: { x: marginX, y: y + 6 }, end: { x: W - marginX, y: y + 6 }, thickness: 0.5, color: gold });
+        ensureRoom(30);
+        page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 0.5, color: gold });
+        y -= 26;
       }
     });
     pages.forEach((pg, idx) => {
