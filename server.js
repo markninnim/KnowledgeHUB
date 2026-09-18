@@ -7564,7 +7564,16 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       // Header bar with logo on every page, same treatment as the other
       // branded PDF exports (business card, DIP certificate, etc).
       page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: navy });
-      page.drawImage(logoImg, { x: marginX, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
+      // The logo artwork itself is navy/gold on a transparent background, so it
+      // has no contrast placed directly on the navy bar — give it a small white
+      // card behind it, matching how the brand hub itself displays this logo on
+      // dark backgrounds.
+      const logoPadX = 10, logoPadY = 7;
+      const logoBoxW = logoDims.width + logoPadX * 2;
+      const logoBoxH = logoDims.height + logoPadY * 2;
+      const logoBoxY = H - headerH + (headerH - logoBoxH) / 2;
+      page.drawRectangle({ x: marginX, y: logoBoxY, width: logoBoxW, height: logoBoxH, color: white });
+      page.drawImage(logoImg, { x: marginX + logoPadX, y: logoBoxY + logoPadY, width: logoDims.width, height: logoDims.height });
       page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: white });
       page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: gold });
       y = H - headerH - 28;
