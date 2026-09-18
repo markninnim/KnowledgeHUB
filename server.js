@@ -7537,32 +7537,51 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
 
     const fontBoldBytes = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-ExtraBold.ttf'));
     const fontMedBytes  = fs.readFileSync(path.join(__dirname, 'public/static/fonts/PlusJakartaSans-Medium.ttf'));
+    const logoBytes = fs.readFileSync(path.join(__dirname, 'public/assets/logos/web/FPG-Logo-Transparent.png'));
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
     const fontBold = await pdfDoc.embedFont(fontBoldBytes);
     const fontMed  = await pdfDoc.embedFont(fontMedBytes);
-    const darkBlue = rgb(0.043, 0.106, 0.216), grey = rgb(0.42, 0.49, 0.56), midGrey = rgb(0.6, 0.65, 0.7), accent = rgb(0.18, 0.6, 0.835);
+    const logoImg  = await pdfDoc.embedPng(logoBytes);
+    const logoDims = logoImg.scale(0.104);
+    // Brand palette — matches style/STYLE-GUIDE.md exactly (navy #003768,
+    // gold accent #fcb034, body grey #6b7c8f, border #d1d5db).
+    const navy    = rgb(0 / 255, 55 / 255, 104 / 255);
+    const grey    = rgb(107 / 255, 124 / 255, 143 / 255);
+    const midGrey = rgb(209 / 255, 213 / 255, 219 / 255);
+    const gold    = rgb(252 / 255, 176 / 255, 52 / 255);
+    const white   = rgb(1, 1, 1);
     const W = 595, H = 842; // A4 portrait
     const marginX = 40, contentW = W - marginX * 2;
+    const headerH = 62;
     const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     let page, y;
     const pages = [];
-    function newPage(withHeading) {
+    function newPage() {
       page = pdfDoc.addPage([W, H]);
       pages.push(page);
-      y = H - 44;
-      if (withHeading) {
-        page.drawText('Meeting Agenda', { x: marginX, y, size: 20, font: fontBold, color: darkBlue });
-        y -= 20;
-        page.drawText(today, { x: marginX, y, size: 10, font: fontMed, color: grey });
-        y -= 24;
-        page.drawLine({ start: { x: marginX, y }, end: { x: W - marginX, y }, thickness: 1, color: accent });
-        y -= 22;
-      }
+      // Header bar with logo on every page, same treatment as the other
+      // branded PDF exports (business card, DIP certificate, etc).
+      page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: navy });
+      page.drawImage(logoImg, { x: marginX, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
+      page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: white });
+      page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: gold });
+      y = H - headerH - 28;
     }
     function ensureRoom(needed) {
-      if (y - needed < 60) newPage(false);
+      if (y - needed < 60) newPage();
+    }
+    // Hand-drawn checkbox — the Plus Jakarta Sans TTF embedded above has no
+    // ☐/☑ glyphs (they render as a garbled box), so ticks are vector shapes
+    // instead of relying on font glyph coverage.
+    function drawCheckbox(x, yPos, done) {
+      const size = 8;
+      page.drawRectangle({ x, y: yPos, width: size, height: size, borderColor: navy, borderWidth: 1, color: done ? navy : white });
+      if (done) {
+        page.drawLine({ start: { x: x + size * 0.18, y: yPos + size * 0.5 }, end: { x: x + size * 0.42, y: yPos + size * 0.2 }, thickness: 1.1, color: white });
+        page.drawLine({ start: { x: x + size * 0.42, y: yPos + size * 0.2 }, end: { x: x + size * 0.82, y: yPos + size * 0.78 }, thickness: 1.1, color: white });
+      }
     }
     // Simple word-wrap: measures with the given font/size and breaks lines to fit contentW.
     function wrapText(text, font, size, maxWidth) {
@@ -7582,16 +7601,19 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       return lines;
     }
 
-    newPage(true);
+    newPage();
     tasks.forEach((t, idx) => {
-      ensureRoom(50);
-      // Task number + title
-      const numLabel = (idx + 1) + '. ';
-      page.drawText(numLabel, { x: marginX, y, size: 12.5, font: fontBold, color: accent });
-      const numWidth = fontBold.widthOfTextAtSize(numLabel, 12.5);
-      wrapText(t.title || '(untitled)', fontBold, 12.5, contentW - numWidth).forEach((line, i) => {
+      ensureRoom(54);
+      // Task number badge (filled gold circle, navy digit) + title
+      const badgeR = 9;
+      page.drawEllipse({ x: marginX + badgeR, y: y - badgeR + 4, xScale: badgeR, yScale: badgeR, color: gold });
+      const numStr = String(idx + 1);
+      const numW = fontBold.widthOfTextAtSize(numStr, 9);
+      page.drawText(numStr, { x: marginX + badgeR - numW / 2, y: y - badgeR - 1, size: 9, font: fontBold, color: navy });
+      const titleX = marginX + badgeR * 2 + 8;
+      wrapText(t.title || '(untitled)', fontBold, 12.5, contentW - (titleX - marginX)).forEach((line, i) => {
         if (i > 0) { ensureRoom(16); }
-        page.drawText(line, { x: marginX + (i === 0 ? numWidth : 14), y, size: 12.5, font: fontBold, color: darkBlue });
+        page.drawText(line, { x: titleX, y, size: 12.5, font: fontBold, color: navy });
         y -= 16;
       });
       // Meta line: area, sponsor, due date
@@ -7606,7 +7628,7 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       if (t.notes) {
         wrapText(t.notes, fontMed, 9.5, contentW - 14).forEach(line => {
           ensureRoom(14);
-          page.drawText(line, { x: marginX + 14, y, size: 9.5, font: fontMed, color: darkBlue });
+          page.drawText(line, { x: marginX + 14, y, size: 9.5, font: fontMed, color: navy });
           y -= 13;
         });
         y -= 2;
@@ -7624,10 +7646,10 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
             y -= 13;
             return;
           }
-          const box = s.done ? '☑' : '☐';
-          wrapText(box + '  ' + (s.text || ''), fontMed, 9.5, contentW - 28).forEach((line, i) => {
+          wrapText(s.text || '', fontMed, 9.5, contentW - 32).forEach((line, i) => {
             ensureRoom(14);
-            page.drawText(line, { x: marginX + 28, y, size: 9.5, font: fontMed, color: s.done ? midGrey : darkBlue }, );
+            if (i === 0) drawCheckbox(marginX + 28, y + 1, !!s.done);
+            page.drawText(line, { x: marginX + 42, y, size: 9.5, font: fontMed, color: s.done ? grey : navy });
             y -= 13;
           });
         });
@@ -7643,11 +7665,11 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       y -= 22;
       if (idx < tasks.length - 1) {
         ensureRoom(4);
-        page.drawLine({ start: { x: marginX, y: y + 6 }, end: { x: W - marginX, y: y + 6 }, thickness: 0.5, color: midGrey });
+        page.drawLine({ start: { x: marginX, y: y + 6 }, end: { x: W - marginX, y: y + 6 }, thickness: 0.5, color: gold });
       }
     });
     pages.forEach((pg, idx) => {
-      pg.drawText(`Generated by KnowledgeHUB™ · Page ${idx + 1} of ${pages.length}`, { x: marginX, y: 24, size: 7, font: fontMed, color: midGrey });
+      pg.drawText(`Generated by KnowledgeHUB™ · Page ${idx + 1} of ${pages.length}`, { x: marginX, y: 24, size: 7, font: fontMed, color: grey });
     });
     const pdfBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
