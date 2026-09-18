@@ -7545,10 +7545,10 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     const logoImg  = await pdfDoc.embedPng(logoBytes);
     const logoDims = logoImg.scale(0.104);
     // Brand palette — matches style/STYLE-GUIDE.md exactly (navy #003768,
-    // gold accent #fcb034, body grey #6b7c8f, border #d1d5db, wealth/accent
-    // blue #2e99d5 used here for the header bar).
+    // gold accent #fcb034, body grey #6b7c8f, border #d1d5db, standard pill
+    // blue #dbeafe used here for the header bar and task-number badges).
     const navy      = rgb(0 / 255, 55 / 255, 104 / 255);
-    const lightBlue = rgb(46 / 255, 153 / 255, 213 / 255);
+    const lightBlue = rgb(219 / 255, 234 / 255, 254 / 255);
     const grey      = rgb(107 / 255, 124 / 255, 143 / 255);
     const midGrey   = rgb(209 / 255, 213 / 255, 219 / 255);
     const gold      = rgb(252 / 255, 176 / 255, 52 / 255);
@@ -7569,8 +7569,8 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
       // reads cleanly straight on top of it, no backing card needed.
       page.drawRectangle({ x: 0, y: H - headerH, width: W, height: headerH, color: lightBlue });
       page.drawImage(logoImg, { x: marginX, y: H - headerH + (headerH - logoDims.height) / 2, width: logoDims.width, height: logoDims.height });
-      page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: white });
-      page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: navy });
+      page.drawText('Meeting Agenda', { x: W - marginX - fontBold.widthOfTextAtSize('Meeting Agenda', 15), y: H - 30, size: 15, font: fontBold, color: navy });
+      page.drawText(today, { x: W - marginX - fontMed.widthOfTextAtSize(today, 9), y: H - 46, size: 9, font: fontMed, color: grey });
       y = H - headerH - 28;
     }
     function ensureRoom(needed) {
@@ -7608,11 +7608,11 @@ app.post('/api/task-manager/agenda-pdf', requireAuth, requireTaskManagerAccess, 
     newPage();
     tasks.forEach((t, idx) => {
       ensureRoom(54);
-      // Task number badge (filled gold circle, navy digit), vertically centred
-      // on the title's first line of text rather than pinned to the top of it.
+      // Task number badge (pill-blue circle, navy digit), vertically centred
+      // on the visual middle of the title's cap-height, not its baseline.
       const badgeR = 9;
-      const badgeCenterY = y - 3.5;
-      page.drawEllipse({ x: marginX + badgeR, y: badgeCenterY, xScale: badgeR, yScale: badgeR, color: gold });
+      const badgeCenterY = y + 4.5;
+      page.drawEllipse({ x: marginX + badgeR, y: badgeCenterY, xScale: badgeR, yScale: badgeR, color: lightBlue });
       const numStr = String(idx + 1);
       const numW = fontBold.widthOfTextAtSize(numStr, 9);
       page.drawText(numStr, { x: marginX + badgeR - numW / 2, y: badgeCenterY - 3.2, size: 9, font: fontBold, color: navy });
