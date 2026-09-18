@@ -9307,9 +9307,16 @@ function tmIsDueToday(t) {
 function tmIsDueThisWeek(t) {
   if (!t.dueDate || t.status === 'Done') return false;
   var today = new Date(); today.setHours(0, 0, 0, 0);
-  var weekOut = new Date(today); weekOut.setDate(weekOut.getDate() + 7);
+  // "This week" = the current Monday-to-Friday, not a rolling 7 days — a task
+  // due next Thursday shouldn't count just because it's within 7 days of a
+  // Friday. getDay(): 0=Sun..6=Sat; treat Sat/Sun as belonging to the week
+  // that just ended (i.e. no "this week" tasks show over the weekend).
+  var dow = today.getDay();
+  var mondayOffset = dow === 0 ? -6 : (1 - dow); // days from today back to Monday
+  var monday = new Date(today); monday.setDate(monday.getDate() + mondayOffset);
+  var saturday = new Date(monday); saturday.setDate(saturday.getDate() + 5); // exclusive upper bound
   var due = new Date(t.dueDate + 'T00:00:00');
-  return due >= today && due < weekOut;
+  return due >= monday && due < saturday;
 }
 
 // The KPI panel at the top of the page — six clickable stat cards, each
