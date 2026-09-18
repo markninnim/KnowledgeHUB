@@ -7237,6 +7237,37 @@ app.post('/api/task-manager/send-digest', requireAuth, requireTaskManagerFullAcc
   }
 });
 
+// GET /api/task-manager/digest-preview?sponsorEmail=... — renders the exact
+// same HTML send-digest would email, straight to the browser, so it can be
+// checked before actually sending. Same access restriction as send-digest.
+app.get('/api/task-manager/digest-preview', requireAuth, requireTaskManagerFullAccess, async (req, res) => {
+  const sponsorEmail = (req.query.sponsorEmail || '').toLowerCase().trim();
+  if (!sponsorEmail) return res.status(400).send('sponsorEmail required');
+  try {
+    let all = [];
+    let offset;
+    do {
+      const qs = new URLSearchParams({ returnFieldsByFieldId: 'true', pageSize: '100' });
+      if (offset) qs.set('offset', offset);
+      const data = await tmFetch(`?${qs.toString()}`);
+      all = all.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+    const tasks = all.map(tmRecordToTask).filter(t => t.sponsorEmail === sponsorEmail);
+    if (!tasks.length) return res.status(404).send('No tasks found for that sponsor.');
+
+    const sponsors = await fetchAllUserNames(null);
+    const sponsor = sponsors.find(u => u.email === sponsorEmail);
+    const sponsorName = (sponsor && sponsor.name) || sponsorEmail;
+    const areaLabel = 'Marketing';
+    const html = tmBuildDigestHtml(sponsorName, areaLabel, tasks);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // Mon-Fri day count from startIso up to and including today — mirrors the
 // client's tmWorkingDaysSince() so the emailed digest matches what's shown
 // on-screen in Task Manager.
